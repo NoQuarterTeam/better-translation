@@ -1,0 +1,220 @@
+{
+  "m_1rlgh6i": {
+    "defaultMessage": "Email is required",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "call",
+        "marker": "t",
+        "line": 36,
+        "column": 35,
+        "endLine": 36,
+        "endColumn": 57,
+        "start": 1092,
+        "end": 1114
+      }
+    ]
+  },
+  "m_asrnh0": {
+    "defaultMessage": "Password must be at least 8 characters long",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "call",
+        "marker": "t",
+        "line": 37,
+        "column": 46,
+        "endLine": 37,
+        "endColumn": 94,
+        "start": 1171,
+        "end": 1219
+      }
+    ]
+  },
+  "m_avzjqb": {
+    "defaultMessage": "Could not sign in",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "call",
+        "marker": "t",
+        "line": 53,
+        "column": 42,
+        "endLine": 53,
+        "endColumn": 64,
+        "start": 1805,
+        "end": 1827
+      }
+    ]
+  },
+  "m_hd339n": {
+    "defaultMessage": "Sign in",
+    "meta": {
+      "context": "The main login page header"
+    },
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 73,
+        "column": 15,
+        "endLine": 73,
+        "endColumn": 66,
+        "start": 2258,
+        "end": 2309
+      }
+    ]
+  },
+  "m_1byunvq": {
+    "defaultMessage": "Enter your email and password to continue.",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 76,
+        "column": 15,
+        "endLine": 76,
+        "endColumn": 64,
+        "start": 2379,
+        "end": 2428
+      }
+    ]
+  },
+  "m_inbfc7": {
+    "defaultMessage": "Email",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "call",
+        "marker": "t",
+        "line": 91,
+        "column": 51,
+        "endLine": 91,
+        "endColumn": 61,
+        "start": 2826,
+        "end": 2836
+      }
+    ]
+  },
+  "m_cf437c": {
+    "defaultMessage": "Password",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "call",
+        "marker": "t",
+        "line": 96,
+        "column": 41,
+        "endLine": 96,
+        "endColumn": 54,
+        "start": 3048,
+        "end": 3061
+      }
+    ]
+  },
+  "m_7dn7hr": {
+    "defaultMessage": "Signing in…",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 101,
+        "column": 50,
+        "endLine": 101,
+        "endColumn": 68,
+        "start": 3284,
+        "end": 3302
+      }
+    ]
+  },
+  "m_w9nig3": {
+    "defaultMessage": "Sign in",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 101,
+        "column": 71,
+        "endLine": 101,
+        "endColumn": 85,
+        "start": 3305,
+        "end": 3319
+      }
+    ]
+  },
+  "m_u0spf4": {
+    "defaultMessage": "Need a new account?",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 109,
+        "column": 11,
+        "endLine": 109,
+        "endColumn": 37,
+        "start": 3615,
+        "end": 3641
+      }
+    ]
+  },
+  "m_tjp6b5": {
+    "defaultMessage": "Sign up",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 111,
+        "column": 13,
+        "endLine": 111,
+        "endColumn": 27,
+        "start": 3750,
+        "end": 3764
+      }
+    ]
+  },
+  "m_1kgrdob": {
+    "defaultMessage": "Forgot your password?",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "/Users/jclackett/Apps/NoQuarter/better-translate/apps/web/src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 116,
+        "column": 13,
+        "endLine": 116,
+        "endColumn": 41,
+        "start": 4003,
+        "end": 4031
+      }
+    ]
+  }
+}

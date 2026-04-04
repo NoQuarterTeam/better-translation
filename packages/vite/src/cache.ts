@@ -3,8 +3,9 @@ import { dirname } from "node:path"
 
 import type { TranslationCache } from "./types.js"
 
-const CURRENT_VERSION = 1
+const CURRENT_VERSION = 2
 
+/** Loads the translation cache from disk, resetting it when the schema version changes. */
 export function loadCache(path: string): TranslationCache {
   if (!existsSync(path)) return { version: CURRENT_VERSION, entries: {} }
   try {
@@ -16,12 +17,14 @@ export function loadCache(path: string): TranslationCache {
   }
 }
 
+/** Persists the translation cache so future runs can reuse existing translations. */
 export function saveCache(path: string, cache: TranslationCache) {
   const dir = dirname(path)
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
   writeFileSync(path, JSON.stringify(cache, null, 2))
 }
 
-export function getCacheKey(sourceText: string, locale: string) {
-  return `${sourceText}\0${locale}`
+/** Builds the cache key used to distinguish translations by source text, meta, and locale. */
+export function getCacheKey(sourceText: string, locale: string, meta?: { context?: string }) {
+  return `${sourceText}\0${JSON.stringify(meta ?? {})}\0${locale}`
 }

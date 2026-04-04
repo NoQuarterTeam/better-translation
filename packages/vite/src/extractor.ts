@@ -1,20 +1,23 @@
 import type { Argument, CallExpression, JSXChild, StringLiteral, TemplateLiteral } from "oxc-parser"
 import { parseSync, Visitor } from "oxc-parser"
 
-import type { ExtractedMessage } from "./types.js"
+import type { ExtractedMessage, MessageSource } from "./types.js"
 
-import { getMessageId } from "./message-id.js"
+import { getCallMessageId, getMessageId } from "./message-id.js"
 
 interface Markers {
   call: string[]
   component: string[]
   taggedTemplate: string[]
+  logging: boolean
 }
 
+/** Extracts translatable messages from a source file using the configured marker conventions. */
 export function extractMessages(code: string, filename: string, markers: Markers): ExtractedMessage[] {
   const messages: ExtractedMessage[] = []
   const result = parseSync(filename, code)
   if (result.errors.length > 0) return messages
+  const lineStarts = getLineStarts(code)
 
   const visitor = new Visitor({
     CallExpression(node) {
@@ -25,7 +28,21 @@ export function extractMessages(code: string, filename: string, markers: Markers
         isStringLiteral(node.arguments[0]!)
       ) {
         const value = (node.arguments[0] as StringLiteral).value
-        messages.push({ id: value, defaultMessage: value, placeholders: [], file: filename })
+        const meta = getMetaArgument(node.arguments[1])
+        messages.push({
+          id: getCallMessageId(value, meta),
+          defaultMessage: value,
+          meta: meta ?? {},
+          placeholders: [],
+          source: createSource({
+            filename,
+            lineStarts,
+            marker: node.callee.name,
+            kind: "call",
+            start: node.start,
+            end: node.end,
+          }),
+        })
       }
     },
 
@@ -36,12 +53,29 @@ export function extractMessages(code: string, filename: string, markers: Markers
 
       const extraction = extractJSXChildren(node.children)
       if (!extraction.valid) {
-        console.warn(`[i18n] Non-static <${opening.name.name}> in ${filename}, skipping`)
+        if (markers.logging) {
+          console.warn(`[better-translation] Non-static <${opening.name.name}> in ${filename}, skipping`)
+        }
         return
       }
 
-      const id = getJSXStringAttribute(opening.attributes, "id") ?? getMessageId(extraction.message)
-      messages.push({ id, defaultMessage: extraction.message, placeholders: extraction.placeholders, file: filename })
+      const context = getJSXStringAttribute(opening.attributes, "context")
+      const meta = context ? { context } : undefined
+      const id = getJSXStringAttribute(opening.attributes, "id") ?? getMessageId(extraction.message, meta)
+      messages.push({
+        id,
+        defaultMessage: extraction.message,
+        meta: meta ?? {},
+        placeholders: extraction.placeholders,
+        source: createSource({
+          filename,
+          lineStarts,
+          marker: opening.name.name,
+          kind: "component",
+          start: node.start,
+          end: node.end,
+        }),
+      })
     },
 
     TaggedTemplateExpression(node) {
@@ -59,11 +93,26 @@ export function extractMessages(code: string, filename: string, markers: Markers
       const id = (tag.arguments[0] as StringLiteral).value
       const extraction = extractTaggedTemplate(node.quasi)
       if (!extraction.valid) {
-        console.warn(`[i18n] Non-static tagged template in ${filename}, skipping`)
+        if (markers.logging) {
+          console.warn(`[better-translation] Non-static tagged template in ${filename}, skipping`)
+        }
         return
       }
 
-      messages.push({ id, defaultMessage: extraction.message, placeholders: extraction.placeholders, file: filename })
+      messages.push({
+        id,
+        defaultMessage: extraction.message,
+        meta: {},
+        placeholders: extraction.placeholders,
+        source: createSource({
+          filename,
+          lineStarts,
+          marker: tag.callee.name,
+          kind: "tagged-template",
+          start: node.start,
+          end: node.end,
+        }),
+      })
     },
   })
 
@@ -71,8 +120,60 @@ export function extractMessages(code: string, filename: string, markers: Markers
   return messages
 }
 
+/** Returns insertion points for precomputing `id` props on static translation components. */
+export function extractComponentIdInsertions(code: string, filename: string, markers: Markers): Array<{ id: string; start: number }> {
+  const result = parseSync(filename, code)
+  if (result.errors.length > 0) return []
+
+  const insertions: Array<{ id: string; start: number }> = []
+  const visitor = new Visitor({
+    JSXElement(node) {
+      const opening = node.openingElement
+      if (opening.name.type !== "JSXIdentifier") return
+      if (!markers.component.includes(opening.name.name)) return
+      if (hasJSXAttribute(opening.attributes as Array<unknown>, "id")) return
+
+      const extraction = extractJSXChildren(node.children)
+      if (!extraction.valid) return
+
+      const context = getJSXStringAttribute(opening.attributes as Array<unknown>, "context")
+      const meta = context ? { context } : undefined
+      insertions.push({
+        id: getMessageId(extraction.message, meta),
+        start: opening.name.end,
+      })
+    },
+  })
+
+  visitor.visit(result.program)
+  return insertions
+}
+
 function isStringLiteral(node: Argument): node is StringLiteral {
   return node.type === "Literal" && typeof (node as StringLiteral).value === "string"
+}
+
+function getMetaArgument(node?: Argument) {
+  if (!node) return undefined
+  if (isStringLiteral(node)) return { context: node.value }
+
+  if (node.type !== "ObjectExpression") return undefined
+
+  for (const property of node.properties as Array<{
+    type: string
+    key?: { type: string; name?: string; value?: unknown }
+    value?: Argument
+  }>) {
+    if (
+      property.type === "ObjectProperty" &&
+      ((property.key?.type === "Identifier" && property.key.name === "context") ||
+        (property.key?.type === "Literal" && property.key.value === "context")) &&
+      property.value &&
+      isStringLiteral(property.value)
+    ) {
+      return { context: property.value.value }
+    }
+  }
 }
 
 function getJSXStringAttribute(attributes: Array<unknown>, name: string) {
@@ -91,6 +192,85 @@ function getJSXStringAttribute(attributes: Array<unknown>, name: string) {
       return attr.value.value as string
     }
   }
+}
+
+function hasJSXAttribute(attributes: Array<unknown>, name: string) {
+  return attributes.some((attr) => {
+    const attribute = attr as
+      | {
+          type?: string
+          name?: { type?: string; name?: string }
+        }
+      | undefined
+
+    return attribute?.type === "JSXAttribute" && attribute.name?.type === "JSXIdentifier" && attribute.name.name === name
+  })
+}
+
+function createSource({
+  filename,
+  lineStarts,
+  marker,
+  kind,
+  start,
+  end,
+}: {
+  filename: string
+  lineStarts: number[]
+  marker: string
+  kind: MessageSource["kind"]
+  start: number
+  end: number
+}): MessageSource {
+  const startPosition = getPosition(start, lineStarts)
+  const endPosition = getPosition(end, lineStarts)
+
+  return {
+    file: filename,
+    kind,
+    marker,
+    line: startPosition.line,
+    column: startPosition.column,
+    endLine: endPosition.line,
+    endColumn: endPosition.column,
+    start,
+    end,
+  }
+}
+
+function getLineStarts(code: string) {
+  const starts = [0]
+  for (let i = 0; i < code.length; i++) {
+    if (code[i] === "\n") starts.push(i + 1)
+  }
+  return starts
+}
+
+function getPosition(offset: number, lineStarts: number[]) {
+  let low = 0
+  let high = lineStarts.length - 1
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2)
+    const lineStart = lineStarts[mid]!
+    const nextLineStart = lineStarts[mid + 1] ?? Number.POSITIVE_INFINITY
+
+    if (offset < lineStart) {
+      high = mid - 1
+      continue
+    }
+
+    if (offset >= nextLineStart) {
+      low = mid + 1
+      continue
+    }
+
+    return { line: mid + 1, column: offset - lineStart + 1 }
+  }
+
+  const lastLine = lineStarts.length - 1
+  const lastStart = lineStarts[lastLine] ?? 0
+  return { line: lastLine + 1, column: offset - lastStart + 1 }
 }
 
 interface ExtractionResult {
