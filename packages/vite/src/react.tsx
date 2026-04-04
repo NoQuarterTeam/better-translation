@@ -4,14 +4,14 @@ import type { TranslateOptions } from "./types.js"
 
 import { getCallMessageId, getMessageId } from "./message-id.js"
 
-interface I18nContextValue {
+interface TranslateContextValue {
   messages: Record<string, string>
 }
 
-const I18nContext = createContext<I18nContextValue>({ messages: {} })
+const TranslateContext = createContext<TranslateContextValue>({ messages: {} })
 
-/** Props for `I18nProvider`. */
-export interface I18nProviderProps {
+/** Props for `TranslateProvider`. */
+export interface TranslateProviderProps {
   /** Flattened locale message map keyed by stable message id. */
   messages: Record<string, string>
   /** React subtree that should have access to translations. */
@@ -19,35 +19,33 @@ export interface I18nProviderProps {
 }
 
 /** Provides translated messages to React components below it. */
-export function I18nProvider({ messages, children }: I18nProviderProps) {
+export function TranslateProvider({ messages, children }: TranslateProviderProps) {
   const value = useMemo(() => ({ messages }), [messages])
-  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
+  return <TranslateContext.Provider value={value}>{children}</TranslateContext.Provider>
 }
 
 /** Returns the raw locale message map from the current provider. */
 export function useMessages() {
-  return useContext(I18nContext).messages
+  return useContext(TranslateContext).messages
 }
 
 type TranslateFn = (id: string, options?: TranslateOptions) => string
 
 /** Returns a translator function for text used in props, labels, and other non-JSX positions. */
 export function useT(): (id: string, options?: TranslateOptions) => string {
-  const { messages } = useContext(I18nContext)
+  const { messages } = useContext(TranslateContext)
   return useMemo<TranslateFn>(() => (id, options) => messages[getCallMessageId(id, options)] ?? id, [messages])
 }
 
 /** Props for `Var`. */
-export interface VarProps {
-  /** Placeholder name used inside the parent translation template. */
-  name: string
-  /** Runtime value that should replace the placeholder. */
-  children: ReactNode
-}
+export type VarProps = {
+  /** Optional shorthand child form, normalized at build time for simple identifiers. */
+  children?: ReactNode
+} & Record<string, ReactNode | undefined>
 
 /** Marks a runtime value for placeholder interpolation inside `<T>` content. */
-export function Var({ children }: VarProps) {
-  return <>{children}</>
+export function Var(props: VarProps) {
+  return <>{getRuntimeVarEntry(props)?.value ?? props.children}</>
 }
 
 /** Props for `T`. */
@@ -62,11 +60,11 @@ export interface TProps {
 
 /** Renders translated JSX content and supports placeholders through `<Var>`. */
 export function T({ id, context, children }: TProps) {
-  const { messages } = useContext(I18nContext)
+  const { messages } = useContext(TranslateContext)
   const resolvedMeta = context ? { context } : undefined
-  const fallbackExtraction = useMemo(() => (id ? undefined : extractRuntimeMessage(children)), [children, id])
-  const template = messages[id ?? (fallbackExtraction?.message ? getMessageId(fallbackExtraction.message, resolvedMeta) : "")]
-  const vars = useMemo(() => (template?.includes("{") ? extractRuntimeVars(children) : undefined), [children, template])
+  const runtimeContent = useMemo(() => extractRuntimeContent(children), [children])
+  const template = messages[id ?? (runtimeContent.message ? getMessageId(runtimeContent.message, resolvedMeta) : "")]
+  const vars = template?.includes("{") ? runtimeContent.vars : undefined
   const interpolated = useMemo(() => interpolate(template, vars), [template, vars])
 
   if (!template) return <>{children}</>
@@ -92,9 +90,9 @@ function interpolate(template?: string, vars?: Record<string, ReactNode>): React
   return result
 }
 
-function extractRuntimeMessage(children: ReactNode) {
+function extractRuntimeContent(children: ReactNode) {
   const parts: string[] = []
-  const vars = extractRuntimeVars(children)
+  const vars: Record<string, ReactNode> = {}
 
   Children.forEach(children, (child) => {
     if (typeof child === "string" || typeof child === "number") {
@@ -102,20 +100,29 @@ function extractRuntimeMessage(children: ReactNode) {
       return
     }
 
-    if (isValidElement<{ name: string }>(child) && child.type === Var) parts.push(`{${child.props.name}}`)
-  })
-
-  return { message: parts.join("").replace(/\s+/g, " ").trim(), vars }
-}
-
-function extractRuntimeVars(children: ReactNode) {
-  const vars: Record<string, ReactNode> = {}
-
-  Children.forEach(children, (child) => {
-    if (isValidElement<{ name: string; children: ReactNode }>(child) && child.type === Var) {
-      vars[child.props.name] = child.props.children
+    if (isValidElement<VarProps>(child) && child.type === Var) {
+      const entry = getRuntimeVarEntry(child.props)
+      if (entry) {
+        parts.push(`{${entry.name}}`)
+        vars[entry.name] = entry.value
+      }
     }
   })
 
-  return Object.keys(vars).length > 0 ? vars : undefined
+  return {
+    message: parts.join("").replace(/\s+/g, " ").trim(),
+    vars: Object.keys(vars).length > 0 ? vars : undefined,
+  }
+}
+
+function getRuntimeVarEntry(props: VarProps) {
+  if (typeof props.name === "string" && props.children !== undefined) {
+    return { name: props.name, value: props.children }
+  }
+
+  const entries = Object.entries(props).filter(([key]) => key !== "children")
+  if (entries.length !== 1) return undefined
+
+  const [name, value] = entries[0]!
+  return { name, value }
 }

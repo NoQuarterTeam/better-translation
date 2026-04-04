@@ -1,8 +1,8 @@
-export { i18nExtractPlugin } from "./plugin.js"
+export { betterTranslatePlugin } from "./plugin.js"
 export type {
-  I18nPluginOptions,
-  I18nScanOptions,
-  I18nStorageOptions,
+  BetterTranslatePluginOptions,
+  BetterTranslateScanOptions,
+  BetterTranslateStorageOptions,
   MessageManifestFile,
   RuntimeMessages,
   TranslateFn,

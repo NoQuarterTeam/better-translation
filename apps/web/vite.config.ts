@@ -6,12 +6,12 @@ import dedent from "dedent"
 import { nitro } from "nitro/vite"
 import { defineConfig } from "vite-plus"
 
-import { i18nExtractPlugin } from "@better-translate/vite"
+import { betterTranslatePlugin } from "@better-translate/vite"
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
-    i18nExtractPlugin({
+    betterTranslatePlugin({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
       scan: { roots: ["src"] },

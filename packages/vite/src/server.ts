@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import type { I18nStorageOptions, LocaleFile, RuntimeMessages, TranslateOptions } from "./types.js"
+import type { BetterTranslateStorageOptions, LocaleFile, RuntimeMessages, TranslateOptions } from "./types.js"
 
 import { getCallMessageId } from "./message-id.js"
 
@@ -26,8 +26,8 @@ let warnedHostedStub = false
 
 /** Options for loading locale messages on the server. */
 export interface GetMessagesOptions {
-  /** Storage backend to read messages from. */
-  storage?: I18nStorageOptions
+  /** Storage backend to read messages from. Local storage defaults to `locales` when no directory is provided. */
+  storage?: BetterTranslateStorageOptions
 }
 
 /** Loads the flattened message map for a locale from the configured storage backend. */
@@ -43,7 +43,7 @@ export async function getMessages(
       if (hostedMessages) return hostedMessages
     }
 
-    const dir = storage.type === "local" ? (storage.dir ?? process.env.I18N_LOCALES_DIR) : process.env.I18N_LOCALES_DIR
+    const dir = storage.type === "local" ? (storage.dir ?? "locales") : null
     if (!dir) return {}
     const filePath = resolve(dir, `${locale}.json`)
     if (!existsSync(filePath)) return {}
@@ -55,7 +55,7 @@ export async function getMessages(
 }
 
 async function getHostedMessages(locale: string, hostedUrl: string) {
-  const apiKey = process.env.I18N_API_KEY
+  const apiKey = process.env.BETTER_TRANSLATE_API_KEY
   if (!apiKey) return null
   if (!warnedHostedStub) {
     warnedHostedStub = true
@@ -98,13 +98,10 @@ export function createTranslator(messages: Record<string, string>): ServerTransl
         }, "")
       }
 
-      let result = template
-      for (const expr of expressions) {
-        if (expr?.__i18n) {
-          result = result.split(`{${expr.name}}`).join(String(expr.value))
-        }
-      }
-      return result
+      const values = Object.fromEntries(
+        expressions.filter((expr): expr is VarResult => Boolean(expr?.__i18n)).map((expr) => [expr.name, String(expr.value)]),
+      )
+      return template.replace(/\{(\w+)\}/g, (_, name: string) => values[name] ?? `{${name}}`)
     }
   }
 

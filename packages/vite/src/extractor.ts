@@ -12,11 +12,23 @@ interface Markers {
   logging: boolean
 }
 
-/** Extracts translatable messages from a source file using the configured marker conventions. */
-export function extractMessages(code: string, filename: string, markers: Markers): ExtractedMessage[] {
+export interface SourceEdit {
+  start: number
+  end: number
+  replacement: string
+}
+
+export interface SourceAnalysis {
+  messages: ExtractedMessage[]
+  edits: SourceEdit[]
+}
+
+/** Extracts messages and source edits from a file in one coordinated parse pass. */
+export function analyzeSourceFile(code: string, filename: string, markers: Markers): SourceAnalysis {
   const messages: ExtractedMessage[] = []
+  const edits: SourceEdit[] = []
   const result = parseSync(filename, code)
-  if (result.errors.length > 0) return messages
+  if (result.errors.length > 0) return { messages, edits }
   const lineStarts = getLineStarts(code)
 
   const visitor = new Visitor({
@@ -48,6 +60,17 @@ export function extractMessages(code: string, filename: string, markers: Markers
 
     JSXElement(node) {
       const opening = node.openingElement
+      if (opening.name.type === "JSXIdentifier" && opening.name.name === "Var" && (opening.attributes as Array<unknown>).length === 0) {
+        const identifier = getVarChildIdentifier(node.children)
+        if (identifier) {
+          edits.push({
+            start: node.start,
+            end: node.end,
+            replacement: `<Var ${identifier}={${identifier}} />`,
+          })
+        }
+      }
+
       if (opening.name.type !== "JSXIdentifier") return
       if (!markers.component.includes(opening.name.name)) return
 
@@ -76,6 +99,14 @@ export function extractMessages(code: string, filename: string, markers: Markers
           end: node.end,
         }),
       })
+
+      if (!hasJSXAttribute(opening.attributes as Array<unknown>, "id")) {
+        edits.push({
+          start: opening.name.end,
+          end: opening.name.end,
+          replacement: ` id="${id}"`,
+        })
+      }
     },
 
     TaggedTemplateExpression(node) {
@@ -117,36 +148,7 @@ export function extractMessages(code: string, filename: string, markers: Markers
   })
 
   visitor.visit(result.program)
-  return messages
-}
-
-/** Returns insertion points for precomputing `id` props on static translation components. */
-export function extractComponentIdInsertions(code: string, filename: string, markers: Markers): Array<{ id: string; start: number }> {
-  const result = parseSync(filename, code)
-  if (result.errors.length > 0) return []
-
-  const insertions: Array<{ id: string; start: number }> = []
-  const visitor = new Visitor({
-    JSXElement(node) {
-      const opening = node.openingElement
-      if (opening.name.type !== "JSXIdentifier") return
-      if (!markers.component.includes(opening.name.name)) return
-      if (hasJSXAttribute(opening.attributes as Array<unknown>, "id")) return
-
-      const extraction = extractJSXChildren(node.children)
-      if (!extraction.valid) return
-
-      const context = getJSXStringAttribute(opening.attributes as Array<unknown>, "context")
-      const meta = context ? { context } : undefined
-      insertions.push({
-        id: getMessageId(extraction.message, meta),
-        start: opening.name.end,
-      })
-    },
-  })
-
-  visitor.visit(result.program)
-  return insertions
+  return { messages, edits }
 }
 
 function isStringLiteral(node: Argument): node is StringLiteral {
@@ -295,7 +297,7 @@ function extractJSXChildren(children: Array<JSXChild>): ExtractionResult {
           return { message: "", placeholders: [], valid: false }
         }
 
-        const varName = getJSXStringAttribute(child.openingElement.attributes as Array<unknown>, "name")
+        const varName = getVarPlaceholderName(child)
         if (!varName) return { message: "", placeholders: [], valid: false }
 
         placeholders.push(varName)
@@ -316,6 +318,44 @@ function extractJSXChildren(children: Array<JSXChild>): ExtractionResult {
 
   const message = parts.join("").replace(/\s+/g, " ").trim()
   return { message, placeholders, valid: message.length > 0 }
+}
+
+function getVarPlaceholderName(node: {
+  openingElement: { attributes: Array<unknown> }
+  children: Array<JSXChild>
+}) {
+  const explicitName = getJSXStringAttribute(node.openingElement.attributes as Array<unknown>, "name")
+  if (explicitName) return explicitName
+
+  const customPropName = getSingleJSXAttributeName(node.openingElement.attributes as Array<unknown>)
+  if (customPropName) return customPropName
+
+  return getVarChildIdentifier(node.children)
+}
+
+function getSingleJSXAttributeName(attributes: Array<unknown>) {
+  const keys = attributes.flatMap((attr) => {
+    const attribute = attr as
+      | {
+          type?: string
+          name?: { type?: string; name?: string }
+        }
+      | undefined
+
+    if (attribute?.type !== "JSXAttribute" || attribute.name?.type !== "JSXIdentifier") return []
+    return [attribute.name.name]
+  })
+
+  return keys.length === 1 ? keys[0] : undefined
+}
+
+function getVarChildIdentifier(children: Array<JSXChild>) {
+  const meaningfulChildren = children.filter((child) => !(child.type === "JSXText" && child.value.trim().length === 0))
+  if (meaningfulChildren.length !== 1) return undefined
+
+  const [child] = meaningfulChildren
+  if (!child || child.type !== "JSXExpressionContainer" || child.expression.type !== "Identifier") return undefined
+  return child.expression.name
 }
 
 function extractTaggedTemplate(quasi: TemplateLiteral): ExtractionResult {

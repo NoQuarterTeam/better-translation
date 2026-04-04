@@ -3,7 +3,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
-import { T, useT } from "@better-translate/vite/react"
+import { T, useT, Var } from "@better-translate/vite/react"
 
 import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -64,13 +64,16 @@ function SignInPage() {
     },
   })
 
+  const name = "Jackyyyy"
   return (
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1.5">
             <CardTitle>
-              <T context="The main login page header">Sign in</T>
+              <T context="The main login page header">
+                Welcome <Var userName={name} />, get stuck in!
+              </T>
             </CardTitle>
             <CardDescription>
               <T>Enter your email and password to continue.</T>

@@ -58,11 +58,11 @@ At build time and during dev, the plugin:
 ```ts
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
-import { i18nExtractPlugin } from "@better-translate/vite"
+import { betterTranslatePlugin } from "@better-translate/vite"
 
 export default defineConfig({
   plugins: [
-    i18nExtractPlugin({
+    betterTranslatePlugin({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
       storage: { type: "local", dir: "locales" },
@@ -94,13 +94,13 @@ locales/en.json
 locales/nl.json
 locales/fr.json
 locales/es.json
-locales/_manifest.json
+locales/.better-translate-manifest.json
 ```
 
 ## Basic Configuration
 
 ```ts
-i18nExtractPlugin({
+betterTranslatePlugin({
   locales: ["en", "nl"],
   defaultLocale: "en",
   cacheFile: ".cache/better-translate.json",
@@ -293,7 +293,7 @@ import { T, Var } from "@better-translate/vite/react"
 function WelcomeMessage({ userName }: { userName: string }) {
   return (
     <T>
-      Welcome back, <Var name="name">{userName}</Var>
+      Welcome back, <Var userName={userName} />
     </T>
   )
 }
@@ -302,8 +302,10 @@ function WelcomeMessage({ userName }: { userName: string }) {
 That extracts the default message:
 
 ```text
-Welcome back, {name}
+Welcome back, {userName}
 ```
+
+For plain identifiers, the shorthand `<Var>{userName}</Var>` also works and is normalized at build time.
 
 ### On the Server with `v()`
 
@@ -324,7 +326,7 @@ The first argument is a single locale code. You do not pass the whole `locales` 
 The full list of supported locales belongs in the plugin config:
 
 ```ts
-i18nExtractPlugin({
+betterTranslatePlugin({
   locales: ["en", "nl", "fr"],
   defaultLocale: "en",
   storage: { type: "local", dir: "locales" },
@@ -341,6 +343,8 @@ const messages = await getMessages("nl", {
 })
 ```
 
+For local storage, `getMessages()` reads from the provided `dir`. If you omit it, it falls back to the conventional `locales` directory.
+
 Typical sources for that locale are:
 
 - route params
@@ -355,7 +359,7 @@ Example:
 import { createServerFn } from "@tanstack/react-start"
 import { getMessages } from "@better-translate/vite/server"
 
-export const getI18nMessagesFn = createServerFn({ method: "GET" })
+export const getTranslateMessagesFn = createServerFn({ method: "GET" })
   .handler(async () => {
     const locale = "nl"
 
@@ -367,18 +371,18 @@ export const getI18nMessagesFn = createServerFn({ method: "GET" })
 
 ## Using The React Components And Hooks
 
-### `I18nProvider`
+### `TranslateProvider`
 
 Wrap the part of your app that needs translations.
 
 ```tsx
-import { I18nProvider } from "@better-translate/vite/react"
+import { TranslateProvider } from "@better-translate/vite/react"
 
 export function App({ messages }: { messages: Record<string, string> }) {
   return (
-    <I18nProvider messages={messages}>
+    <TranslateProvider messages={messages}>
       <Routes />
-    </I18nProvider>
+    </TranslateProvider>
   )
 }
 ```
@@ -431,7 +435,7 @@ import { T, Var } from "@better-translate/vite/react"
 function InviteMessage({ count }: { count: number }) {
   return (
     <T>
-      You have <Var name="count">{count}</Var> pending invites
+      You have <Var count={count} /> pending invites
     </T>
   )
 }
@@ -452,11 +456,11 @@ Each message includes:
 Example using your own API:
 
 ```ts
-import { i18nExtractPlugin } from "@better-translate/vite"
+import { betterTranslatePlugin } from "@better-translate/vite"
 
 export default {
   plugins: [
-    i18nExtractPlugin({
+    betterTranslatePlugin({
       locales: ["en", "nl"],
       defaultLocale: "en",
       storage: { type: "local", dir: "locales" },
@@ -547,7 +551,7 @@ With local storage, each runtime locale file is a flat message map:
 }
 ```
 
-The plugin also writes a shared metadata manifest:
+It also keeps a private metadata manifest at `locales/.better-translate-manifest.json`:
 
 ```json
 {
@@ -559,7 +563,7 @@ The plugin also writes a shared metadata manifest:
     "placeholders": [],
     "sources": [
       {
-        "file": "/absolute/path/to/file.tsx",
+        "file": "src/routes/sign-in.tsx",
         "kind": "component",
         "marker": "T",
         "line": 12,
@@ -579,7 +583,7 @@ At runtime, `getMessages()` returns the flat locale map directly. It also keeps 
 ## Important Notes
 
 - `t()` only extracts static string literals.
-- `<T>` only extracts static text plus `<Var name="...">...</Var>` placeholders.
+- `<T>` only extracts static text plus `<Var someName={value} />` placeholders or `<Var>{identifier}</Var>` shorthand.
 - `msg("id")\`...\`` only extracts templates that use `v("name", value)` placeholders.
 - Missing translations fall back to the source text.
 - In local mode, locale files are written to disk and also emitted into the Vite build output.
@@ -591,6 +595,6 @@ At runtime, `getMessages()` returns the flat locale map directly. It also keeps 
 2. Configure `locales`, `defaultLocale`, and local storage.
 3. Mark text with `t()`, `<T>`, or `msg()`.
 4. Load one locale with `getMessages(locale, ...)`.
-5. Wrap your UI in `I18nProvider`.
+5. Wrap your UI in `TranslateProvider`.
 6. Use `useT()`, `T`, `Var`, `createTranslator()`, and `msg()` where appropriate.
 7. Let the plugin write locale files and call your custom translator for missing entries.

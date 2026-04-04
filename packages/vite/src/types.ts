@@ -14,7 +14,7 @@ export interface ExtractedMessage {
 
 /** Source metadata for a single extracted message occurrence. */
 export interface MessageSource {
-  /** Absolute file path where the message came from. */
+  /** File path relative to the Vite root where the message came from. */
   file: string
   /** Extraction marker that produced the message. */
   kind: "call" | "component" | "tagged-template"
@@ -49,7 +49,7 @@ export interface ManifestEntry {
 /** In-memory manifest keyed by stable message id. */
 export type MessageManifest = Record<string, ManifestEntry>
 
-/** Shared on-disk manifest keyed by stable message id. */
+/** Private on-disk manifest keyed by stable message id. */
 export type MessageManifestFile = MessageManifest
 
 /** Flat runtime message map keyed by stable message id. */
@@ -83,7 +83,7 @@ export interface LocaleFile {
 export interface TranslationCache {
   /** Cache schema version used for invalidation. */
   version: number
-  /** Cached translations keyed by source text, meta, and locale. */
+  /** Cached translations keyed by stable message id and locale. */
   entries: Record<
     string,
     {
@@ -130,7 +130,7 @@ export type TranslateFn = (
 ) => Promise<Record<string, string>>
 
 /** Controls which files the plugin should scan for messages. */
-export interface I18nScanOptions {
+export interface BetterTranslateScanOptions {
   /** Root directories, relative to the Vite root, that should be scanned. */
   roots?: string[]
   /** File extensions that should be parsed for translation markers. */
@@ -138,7 +138,7 @@ export interface I18nScanOptions {
 }
 
 /** Controls where translated locale files are stored and loaded from. */
-export type I18nStorageOptions =
+export type BetterTranslateStorageOptions =
   | {
       /** Stores messages in a hosted backend. */
       type: "hosted"
@@ -153,7 +153,7 @@ export type I18nStorageOptions =
     }
 
 /** Public configuration for the Better Translate Vite plugin. */
-export interface I18nPluginOptions {
+export interface BetterTranslatePluginOptions {
   /** All locale codes that should be emitted. */
   locales: string[]
   /** Locale code treated as the source language. */
@@ -163,9 +163,9 @@ export interface I18nPluginOptions {
   /** Enables or disables plugin logging. */
   logging?: boolean
   /** File scanning configuration. */
-  scan?: I18nScanOptions
+  scan?: BetterTranslateScanOptions
   /** Storage backend configuration. */
-  storage?: I18nStorageOptions
+  storage?: BetterTranslateStorageOptions
   /** Custom marker names to extract from source code. */
   markers?: {
     /** Function names that should be treated like `t("...")`. */

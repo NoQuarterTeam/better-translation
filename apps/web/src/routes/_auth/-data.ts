@@ -9,7 +9,7 @@ export const getAuthSessionFn = createServerFn({ method: "GET" }).handler(() => 
   return getSession()
 })
 
-export const getI18nMessagesFn = createServerFn({ method: "GET" })
+export const getTranslateMessagesFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ locale: z.string() }))
   .handler(async ({ data }) => {
     return getMessages(data.locale, { storage: { type: "local", dir: "locales" } })

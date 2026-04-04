@@ -1,16 +1,30 @@
 import type { TranslateOptions } from "./types.js"
 
-function serializeMeta(meta?: TranslateOptions) {
+export function normalizeMeta(meta?: TranslateOptions): TranslateOptions {
+  if (!meta) return {}
+
+  return Object.fromEntries(
+    Object.entries(meta)
+      .filter(([, value]) => value !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b)),
+  ) as TranslateOptions
+}
+
+export function serializeMeta(meta?: TranslateOptions) {
   if (!meta) return ""
 
-  const normalized = Object.fromEntries(Object.entries(meta).filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b)))
+  const normalized = normalizeMeta(meta)
   return Object.keys(normalized).length > 0 ? JSON.stringify(normalized) : ""
+}
+
+export function getMessageIdentity(message: string, meta?: TranslateOptions) {
+  const serializedMeta = serializeMeta(meta)
+  return serializedMeta ? `${message}\0${serializedMeta}` : message
 }
 
 /** Generates the stable hashed id used to store and look up a translated message. */
 export function getMessageId(message: string, meta?: TranslateOptions) {
-  const serializedMeta = serializeMeta(meta)
-  const value = serializedMeta ? `${message}\0${serializedMeta}` : message
+  const value = getMessageIdentity(message, meta)
   let hash = 2166136261
 
   for (let i = 0; i < value.length; i++) {

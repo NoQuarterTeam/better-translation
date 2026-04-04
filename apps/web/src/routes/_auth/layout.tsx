@@ -1,11 +1,11 @@
 import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router"
 import * as z from "zod"
 
-import { I18nProvider } from "@better-translate/vite/react"
+import { TranslateProvider } from "@better-translate/vite/react"
 
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 
-import { getAuthSessionFn, getI18nMessagesFn } from "./-data"
+import { getAuthSessionFn, getTranslateMessagesFn } from "./-data"
 
 export const Route = createFileRoute("/_auth")({
   validateSearch: z.object({ locale: z.enum(["en", "nl", "fr", "es"]).optional().catch(undefined) }),
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_auth")({
     const session = await getAuthSessionFn()
     if (session?.user) throw redirect({ to: "/dashboard" })
 
-    return { messages: await getI18nMessagesFn({ data: { locale: search.locale ?? "en" } }) }
+    return { messages: await getTranslateMessagesFn({ data: { locale: search.locale ?? "en" } }) }
   },
   component: AuthLayout,
 })
@@ -43,9 +43,9 @@ function AuthLayout() {
         </NativeSelect>
       </div>
       <div className="w-full max-w-md">
-        <I18nProvider messages={messages}>
+        <TranslateProvider messages={messages}>
           <Outlet />
-        </I18nProvider>
+        </TranslateProvider>
       </div>
     </main>
   )
