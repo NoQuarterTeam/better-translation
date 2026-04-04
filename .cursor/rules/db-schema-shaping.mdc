@@ -1,0 +1,17 @@
+---
+description: Shape inputs and types from the db schema
+alwaysApply: true
+---
+
+# DB Schema Shaping
+
+- Use the schema exported from `@/server/db/schema/index.ts` as the base source of truth for database-shaped inputs and types.
+- When only certain fields are needed, derive them from the schema with `pick(...)`, `omit(...)`, or similar schema composition instead of rebuilding them manually.
+- Prefer schema-derived validators and types over handwritten duplicates.
+- Let Drizzle Zod infer `pgEnum(...)` fields from the table definition. Do not repeat `pgEnum` columns in `customFields`.
+- Use `pgEnum(...)` for real Postgres enum columns like `status`.
+- Only define a custom `z.enum(...)` when the database column is still `text(...)` but the app needs a constrained string union, like `providerType`.
+- When a `text(...)` column uses a constrained string union, export the `z.enum(...)`, export its inferred type, use `.$type<...>()` on the table column, and reuse that same enum in `customFields`.
+- Keep `customFields` for things Drizzle should not infer on its own, like trimmed names, normalized emails, positive integers, or arrays of a reused custom enum.
+- Build app schemas from `createInsertSchema(table)` and `createSelectSchema(table)`, then `extend(customFields)` and `omit(...)` only where the server supplies fields.
+- Only create custom ad hoc schemas when the input is not actually a database-shaped payload.

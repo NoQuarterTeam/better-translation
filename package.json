@@ -1,0 +1,73 @@
+{
+  "name": "@better-translate/root",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*",
+      "tooling/*"
+    ],
+    "catalog": {
+      "@base-ui/react": "1.3.0",
+      "@neondatabase/serverless": "1.0.2",
+      "@tailwindcss/vite": "4.2.2",
+      "@tanstack/devtools-event-client": "0.4.3",
+      "@tanstack/devtools-vite": "0.6.0",
+      "@tanstack/match-sorter-utils": "8.19.4",
+      "@tanstack/query-db-collection": "1.0.33",
+      "@tanstack/react-db": "0.1.80",
+      "@tanstack/react-devtools": "0.10.1",
+      "@tanstack/react-form": "1.28.6",
+      "@tanstack/react-query": "5.96.2",
+      "@tanstack/react-router-devtools": "1.166.11",
+      "@tanstack/react-router-ssr-query": "1.166.10",
+      "@tanstack/react-router": "1.168.10",
+      "@tanstack/react-start": "1.167.16",
+      "@tanstack/react-store": "0.9.3",
+      "@tanstack/react-table": "8.21.3",
+      "@tanstack/router-plugin": "1.167.12",
+      "@tanstack/store": "0.9.3",
+      "@trpc/client": "11.16.0",
+      "@trpc/server": "11.16.0",
+      "@trpc/tanstack-react-query": "11.16.0",
+      "@types/node": "24.1.0",
+      "@types/react-dom": "19.2.3",
+      "@types/react": "19.2.14",
+      "@vitejs/plugin-react": "6.0.1",
+      "@webview-bridge/react-native": "1.7.9",
+      "better-auth": "1.5.6",
+      "class-variance-authority": "0.7.1",
+      "clsx": "2.1.1",
+      "dotenv-cli": "11.0.0",
+      "dotenv": "17.3.1",
+      "lucide-react": "1.7.0",
+      "react-dom": "19.2.4",
+      "react-native-webview": "13.16.0",
+      "react": "19.2.4",
+      "superjson": "2.2.6",
+      "tailwind-merge": "3.5.0",
+      "tailwindcss": "4.2.2",
+      "tw-animate-css": "1.4.0",
+      "typescript": "6.0.2",
+      "vite": "8.0.3",
+      "zod": "4.3.6"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "lint": "vp lint",
+    "format": "vp fmt",
+    "fix": "vp lint --fix && vp fmt",
+    "check": "vp check"
+  },
+  "devDependencies": {
+    "oxlint": "1.58.0",
+    "oxlint-tsgolint": "0.19.0",
+    "typescript": "catalog:",
+    "vite-plus": "0.1.15"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "bun@1.3.11"
+}

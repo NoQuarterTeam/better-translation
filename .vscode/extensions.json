@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "oxc.oxc-vscode",
+    "VoidZero.vite-plus-extension-pack",
+    "expo.vscode-expo-tools",
+    "antfu.file-nesting",
+    "bradlc.vscode-tailwindcss",
+    "naumovs.color-highlight"
+  ]
+}

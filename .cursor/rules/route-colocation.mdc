@@ -1,0 +1,11 @@
+---
+description: Keep route-specific logic colocated with the route
+alwaysApply: true
+---
+
+# Route Colocation
+
+- Put TanStack server functions in a `-data.ts` file next to the page or route that uses them.
+- Do not place page-specific mutations or queries in parent or shared route data files unless they are actually shared.
+- Prefer route-local structure over moving logic "up" the tree.
+- When a page owns the form and the mutation, the matching `-data.ts` should live beside that page.

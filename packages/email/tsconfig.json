@@ -1,0 +1,7 @@
+{
+  "extends": "@better-translate/tsconfig/base.json",
+  "include": ["./src/**/*.ts", "./src/**/*.tsx"],
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  }
+}

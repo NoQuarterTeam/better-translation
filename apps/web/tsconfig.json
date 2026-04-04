@@ -1,0 +1,13 @@
+{
+  "extends": "@better-translate/tsconfig/base.json",
+  "include": ["**/*.ts", "**/*.tsx", "reset.d.ts"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM"],
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": ["vite/client", "node"]
+  }
+}

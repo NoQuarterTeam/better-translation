@@ -1,0 +1,14 @@
+---
+description: Always follow existing examples before inventing patterns
+alwaysApply: true
+---
+
+# Example-First Development
+
+- Always look for an existing example in the codebase before implementing anything.
+- Reuse nearby patterns for forms, tables, static variables, pages, routing, loaders, validations, middleware, mutations, queries, and UI composition.
+- Do not invent new structure, naming, abstractions, or patterns when an existing example already covers the same kind of work.
+- Prefer the closest relevant example in the same app, route area, or feature before looking elsewhere.
+- Match the existing shape as closely as possible unless the user explicitly asks for a different pattern.
+- If no clear example exists, stop and ask the user how they want it done instead of making it up.
+- Never create early abstractions or helpers before an example exists. I really hate that.

@@ -1,0 +1,8 @@
+{
+  "name": "@better-translate/tsconfig",
+  "private": true,
+  "files": [
+    "*.json"
+  ],
+  "type": "module"
+}

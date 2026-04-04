@@ -1,0 +1,12 @@
+---
+description: Avoid unnecessary variables, helpers, and abstractions
+alwaysApply: true
+---
+
+# No Unnecessary Abstractions
+
+- Do not extract variables, helper functions, local components, or schema constants unless they are reused or clearly improve readability.
+- Inline single-use validators directly in `inputValidator(...)`.
+- Inline one-off mappings, constants, and helpers when they are only used once and are still readable.
+- Prefer flatter files over premature abstraction.
+- Follow the existing code shape in nearby files before introducing new structure.

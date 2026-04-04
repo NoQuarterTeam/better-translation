@@ -1,0 +1,41 @@
+{
+  // "explorer.sortOrder": "mixed",
+  "files.watcherExclude": {
+    "**/routeTree.gen.ts": true
+  },
+  "search.exclude": {
+    "**/routeTree.gen.ts": true
+  },
+  "files.readonlyInclude": {
+    "**/routeTree.gen.ts": true
+  },
+  "files.associations": {
+    "*.json": "jsonc"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.preferences.autoImportFileExcludePatterns": ["@base-ui/*", "cmdk"],
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "oxc.typeAware": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "explicit"
+  },
+  "tailwindCSS.classFunctions": ["cva", "cn", "cx", "clsx", "twMerge"],
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(((?:[^()]|\\([^()]*\\))*)\\)", "[\"'`]([^\"'`]*)[\"'`]"],
+    ["(?:cn|cx|clsx|twMerge)\\(((?:[^()]|\\([^()]*\\))*)\\)", "[\"'`]([^\"'`]*)[\"'`]"]
+  ],
+  "tailwindCSS.classAttributes": ["class", "className", "classNames", ".*Styles*", ".*ClassName*", ".*ClassNames*"],
+  "workbench.editor.customLabels.patterns": {
+    "**/**/layout.tsx": "${dirname} - layout"
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "//": "Last update at 11/01/2025, 16:44:32",
+    ".env": "*.env, .env.*, .envrc, env.d.ts",
+    "vite.config.*": " *.env, env.d.ts, next-env.d.ts, playwright.config.*, postcss.config.*, puppeteer.config.*, tailwind.config.*, tsconfig.*, reset.d.ts, sentry*, components.json",
+    "package.json": ".cursorignore, .gitignore, .cursorrules, .github*, turbo.json, .vscode*, bun.lock, bun.lockb, knip.*, pnpm*, renovate*, vercel*, .npmrc",
+    "app.config.*": "eas.json, expo-env.d.ts, validate-imports.js, metro.config.*, google-services*.json, nativewind-env.d.ts, tailwind.config.*, tsconfig.*, globals.css, babel.config.*"
+  }
+}
