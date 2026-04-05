@@ -48,7 +48,9 @@ export default defineConfig({
       },
     }),
     // devtools(),
-    nitro(),
+    nitro({
+      serverAssets: [{ baseName: "locales", dir: "./assets/locales", pattern: "*.json" }],
+    }),
     tailwindcss(),
     tanstackStart({
       importProtection: { client: { files: ["**/*.server.*", "**/server/**"] } },

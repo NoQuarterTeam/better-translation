@@ -12,5 +12,5 @@ export const getAuthSessionFn = createServerFn({ method: "GET" }).handler(() => 
 export const getTranslateMessagesFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ locale: z.string() }))
   .handler(async ({ data }) => {
-    return getNitroMessages(data.locale)
+    return getNitroMessages(data.locale, { mount: "locales", dir: "assets/locales" })
   })
