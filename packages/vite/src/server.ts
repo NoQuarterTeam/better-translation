@@ -12,7 +12,7 @@ import { getCallMessageId } from "./message-id.js"
 import {
   DEFAULT_LOCAL_OUTPUT_DIR,
   getLocalConfigCandidatePaths,
-  getRootRuntimeConfigCandidatePaths,
+  getRuntimeConfigCandidatePaths,
   readRuntimeConfigFromPaths,
 } from "./runtime-config.js"
 
@@ -47,7 +47,7 @@ export async function getMessages(
   options?: GetMessagesOptions,
 ): Promise<Record<string, string>> {
   try {
-    const runtimeConfig = readRuntimeConfig()
+    const runtimeConfig = readRuntimeConfig(options?.storage)
     const storage = resolveStorage(runtimeConfig, options?.storage)
 
     if (storage.type === "hosted") {
@@ -85,8 +85,9 @@ function getLocaleCandidatePaths(dir: string, locale: string) {
   return getLocalConfigCandidatePaths(dir, import.meta.url, `${locale}.json`)
 }
 
-function readRuntimeConfig() {
-  return readRuntimeConfigFromPaths(getRootRuntimeConfigCandidatePaths(import.meta.url))
+function readRuntimeConfig(override?: BetterTranslateStorageOptions) {
+  const dirs = override?.type === "local" && override.dir ? [override.dir] : undefined
+  return readRuntimeConfigFromPaths(getRuntimeConfigCandidatePaths(import.meta.url, dirs))
 }
 
 function resolveStorage(runtimeConfig: BetterTranslateRuntimeConfig | null, override?: BetterTranslateStorageOptions) {

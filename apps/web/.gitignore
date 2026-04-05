@@ -12,4 +12,5 @@ dist-ssr
 __unconfig*
 todos.json
 
-assets/locales/.better-translate-manifest.json
+assets/locales/.bt-manifest.json
+assets/locales/.bt-runtime.json

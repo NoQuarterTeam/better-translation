@@ -3,7 +3,7 @@ import type { BetterTranslateRuntimeConfig, LocaleFile, RuntimeMessages } from "
 import { getMessages } from "./server.js"
 import {
   DEFAULT_LOCAL_OUTPUT_DIR,
-  LOCAL_RUNTIME_CONFIG_FILENAME,
+  RUNTIME_CONFIG_FILENAME,
 } from "./runtime-config.js"
 
 const PREFIX = "\x1b[36m[better-translation]\x1b[0m"
@@ -46,7 +46,7 @@ export async function getNitroMessages(
 
 async function readRuntimeConfig(storage: NitroStorageLike, options?: GetNitroMessagesOptions) {
   const runtimeConfigKey = resolveRuntimeConfigKey(options)
-  const value = await readStorageValue(storage, runtimeConfigKey)
+  const value = decodeStorageValue(await readStorageValue(storage, runtimeConfigKey))
   if (!value) return null
 
   try {
@@ -61,8 +61,8 @@ async function readRuntimeConfig(storage: NitroStorageLike, options?: GetNitroMe
 }
 
 function resolveRuntimeConfigKey(options?: GetNitroMessagesOptions) {
-  if (options?.mount) return LOCAL_RUNTIME_CONFIG_FILENAME
-  return `${getNitroDir(options?.dir)}/${LOCAL_RUNTIME_CONFIG_FILENAME}`
+  if (options?.mount) return RUNTIME_CONFIG_FILENAME
+  return `${getNitroDir(options?.dir)}/${RUNTIME_CONFIG_FILENAME}`
 }
 
 function resolveLocaleKey(locale: string, runtimeConfig: BetterTranslateRuntimeConfig | null, options?: GetNitroMessagesOptions) {
@@ -94,7 +94,7 @@ async function getFilesystemMessages(
 }
 
 async function readStorageValue(storage: NitroStorageLike, key: string) {
-  return (await storage.getItem?.(key)) ?? (await storage.get?.(key)) ?? (await storage.getItemRaw?.(key))
+  return (await storage.getItemRaw?.(key)) ?? (await storage.getItem?.(key)) ?? (await storage.get?.(key))
 }
 
 async function loadNitroStorage(): Promise<{
@@ -110,6 +110,7 @@ async function loadNitroStorage(): Promise<{
 }
 
 function normalizeMessages(input: unknown): RuntimeMessages {
+  input = decodeStorageValue(input)
   if (!input) return {}
   if (typeof input === "string") {
     return normalizeMessages(JSON.parse(input) as RuntimeMessages | LocaleFile)
@@ -124,4 +125,14 @@ function normalizeMessages(input: unknown): RuntimeMessages {
     ) as RuntimeMessages
   }
   return input as RuntimeMessages
+}
+
+function decodeStorageValue(input: unknown) {
+  if (!input || typeof input !== "object" || input instanceof Uint8Array) return input
+
+  const entries = Object.entries(input)
+  if (entries.length === 0) return input
+  if (!entries.every(([key, value]) => /^\d+$/.test(key) && typeof value === "number")) return input
+
+  return Uint8Array.from(entries.sort(([left], [right]) => Number(left) - Number(right)).map(([, value]) => value))
 }

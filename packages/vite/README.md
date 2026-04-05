@@ -94,7 +94,7 @@ locales/en.json
 locales/nl.json
 locales/fr.json
 locales/es.json
-locales/.better-translate-manifest.json
+locales/.bt-manifest.json
 ```
 
 ## Basic Configuration
@@ -670,7 +670,7 @@ With local storage, each runtime locale file is a flat message map:
 }
 ```
 
-It also keeps a private metadata manifest at `locales/.better-translate-manifest.json`:
+It also keeps a private metadata manifest at `locales/.bt-manifest.json`:
 
 ```json
 {
@@ -697,10 +697,7 @@ It also keeps a private metadata manifest at `locales/.better-translate-manifest
 }
 ```
 
-For local storage, the plugin also writes runtime metadata for server helpers:
-
-- `.better-translate/runtime.json`
-- `locales/.better-translate-runtime.json`
+For local storage, the plugin also writes runtime metadata for server helpers at `locales/.bt-runtime.json`.
 
 At runtime, `getMessages()` returns the flat locale map by reading the requested locale JSON file from disk, and `getNitroMessages()` reads the same shape from Nitro server assets.
 

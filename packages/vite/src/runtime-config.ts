@@ -5,30 +5,19 @@ import { fileURLToPath } from "node:url"
 import type { BetterTranslateRuntimeConfig } from "./types.js"
 
 export const DEFAULT_LOCAL_OUTPUT_DIR = "locales"
-export const LOCAL_RUNTIME_CONFIG_FILENAME = ".better-translate-runtime.json"
-export const ROOT_RUNTIME_CONFIG_DIR = ".better-translate"
-export const ROOT_RUNTIME_CONFIG_FILENAME = "runtime.json"
+export const RUNTIME_CONFIG_FILENAME = ".bt-runtime.json"
+export const COMMON_RUNTIME_CONFIG_DIRS = [DEFAULT_LOCAL_OUTPUT_DIR, `assets/${DEFAULT_LOCAL_OUTPUT_DIR}`]
 
-export function getLocalRuntimeConfigPath(root: string, dir: string) {
-  return resolve(root, dir, LOCAL_RUNTIME_CONFIG_FILENAME)
+export function getRuntimeConfigPath(root: string, dir: string) {
+  return resolve(root, dir, RUNTIME_CONFIG_FILENAME)
 }
 
-export function getRootRuntimeConfigPath(root: string) {
-  return resolve(root, ROOT_RUNTIME_CONFIG_DIR, ROOT_RUNTIME_CONFIG_FILENAME)
-}
-
-export function getRootRuntimeConfigCandidatePaths(importMetaUrl: string) {
-  const currentDir = dirname(fileURLToPath(importMetaUrl))
-  return [
-    resolve(ROOT_RUNTIME_CONFIG_DIR, ROOT_RUNTIME_CONFIG_FILENAME),
-    resolve(currentDir, ROOT_RUNTIME_CONFIG_DIR, ROOT_RUNTIME_CONFIG_FILENAME),
-    resolve(currentDir, "..", ROOT_RUNTIME_CONFIG_DIR, ROOT_RUNTIME_CONFIG_FILENAME),
-  ]
+export function getRuntimeConfigCandidatePaths(importMetaUrl: string, dirs = COMMON_RUNTIME_CONFIG_DIRS) {
+  return getSearchBaseDirs(importMetaUrl).flatMap((baseDir) => dirs.map((dir) => resolve(baseDir, dir, RUNTIME_CONFIG_FILENAME)))
 }
 
 export function getLocalConfigCandidatePaths(dir: string, importMetaUrl: string, fileName: string) {
-  const currentDir = dirname(fileURLToPath(importMetaUrl))
-  return [resolve(dir, fileName), resolve(currentDir, dir, fileName), resolve(currentDir, "..", dir, fileName)]
+  return getSearchBaseDirs(importMetaUrl).map((baseDir) => resolve(baseDir, dir, fileName))
 }
 
 export function readRuntimeConfigFromPaths(paths: string[]) {
@@ -45,4 +34,24 @@ export function readRuntimeConfigFromPaths(paths: string[]) {
 
 function dedupe(paths: string[]) {
   return [...new Set(paths)]
+}
+
+function getSearchBaseDirs(importMetaUrl: string) {
+  const currentDir = dirname(fileURLToPath(importMetaUrl))
+  const candidates = [...collectParentDirs(process.cwd()), ...collectParentDirs(currentDir)]
+  return dedupe(candidates)
+}
+
+function collectParentDirs(startDir: string, maxDepth = 6) {
+  const dirs: string[] = []
+  let currentDir = startDir
+
+  for (let i = 0; i <= maxDepth; i++) {
+    dirs.push(currentDir)
+    const parentDir = dirname(currentDir)
+    if (parentDir === currentDir) break
+    currentDir = parentDir
+  }
+
+  return dirs
 }

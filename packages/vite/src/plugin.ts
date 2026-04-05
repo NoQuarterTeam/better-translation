@@ -18,7 +18,7 @@ import type {
 import { createEmptyCache, getCacheKey, loadCache, saveCache } from "./cache.js"
 import { analyzeSourceFile } from "./extractor.js"
 import { serializeMeta } from "./message-id.js"
-import { DEFAULT_LOCAL_OUTPUT_DIR, getLocalRuntimeConfigPath, getRootRuntimeConfigPath } from "./runtime-config.js"
+import { DEFAULT_LOCAL_OUTPUT_DIR, getRuntimeConfigPath } from "./runtime-config.js"
 
 const PREFIX = "\x1b[36m[better-translation]\x1b[0m"
 const DIM = "\x1b[2m"
@@ -29,7 +29,7 @@ const CYAN = "\x1b[36m"
 const HOSTED_API_BASE_URL = "https://better-translate.com"
 const HOSTED_STUB = `${YELLOW}stub${RESET}`
 const DEFAULT_SCAN_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"]
-const PRIVATE_MANIFEST_FILENAME = ".better-translate-manifest.json"
+const PRIVATE_MANIFEST_FILENAME = ".bt-manifest.json"
 
 function formatLocale(locale: string) {
   return locale.toUpperCase()
@@ -139,13 +139,10 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
     if (!usesLocalStorage) return
 
     const runtimeConfig = JSON.stringify(getRuntimeConfig(), null, 2) + "\n"
-    const rootPath = getRootRuntimeConfigPath(root)
-    const localPath = getLocalRuntimeConfigPath(root, localesDir)
-    for (const path of [rootPath, localPath]) {
-      const dir = dirname(path)
-      if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-      writeFileSync(path, runtimeConfig)
-    }
+    const path = getRuntimeConfigPath(root, localesDir)
+    const dir = dirname(path)
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    writeFileSync(path, runtimeConfig)
   }
 
   function getLocalePath(locale: string) {
