@@ -15,7 +15,7 @@ export default defineConfig({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
       scan: { roots: ["src"] },
-      storage: { type: "local", dir: "locales" },
+      storage: { type: "local", dir: "assets/locales" },
       async translate(messages, locale) {
         const result: Record<string, string> = {}
 

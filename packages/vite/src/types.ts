@@ -69,7 +69,7 @@ export interface LocaleMessageEntry {
   sources: MessageSource[]
 }
 
-/** Legacy on-disk JSON structure emitted for a locale. */
+/** Legacy on-disk JSON structure emitted by earlier local runtime modes. */
 export interface LocaleFile {
   /** Locale code represented by this file. */
   locale: string
@@ -137,20 +137,34 @@ export interface BetterTranslateScanOptions {
   extensions?: string[]
 }
 
-/** Controls where translated locale files are stored and loaded from. */
-export type BetterTranslateStorageOptions =
-  | {
-      /** Stores messages in a hosted backend. */
-      type: "hosted"
-      /** Optional hosted backend URL. */
-      url?: string
-    }
-  | {
-      /** Stores locale files on the local filesystem. */
-      type: "local"
-      /** Output directory for emitted locale JSON files. */
-      dir?: string
-    }
+/** Stores messages in a hosted backend. */
+export interface BetterTranslateHostedStorageOptions {
+  /** Selects hosted storage. */
+  type: "hosted"
+  /** Optional hosted backend URL. */
+  url?: string
+}
+
+/** Stores locale JSON files in the local app or deployed artifact. */
+export interface BetterTranslateLocalStorageOptions {
+  /** Selects local JSON file output. */
+  type: "local"
+  /** Directory where locale JSON files are written. */
+  dir?: string
+}
+
+/** Controls where translated locale artifacts are written or synced. */
+export type BetterTranslateStorageOptions = BetterTranslateHostedStorageOptions | BetterTranslateLocalStorageOptions
+
+/** Runtime metadata emitted by the plugin for server-side loaders. */
+export interface BetterTranslateRuntimeConfig {
+  /** Storage backend configured for emitted locale artifacts. */
+  storage: BetterTranslateStorageOptions
+  /** Locale code treated as the source language. */
+  defaultLocale: string
+  /** All locale codes emitted by the plugin. */
+  locales: string[]
+}
 
 /** Public configuration for the Better Translate Vite plugin. */
 export interface BetterTranslatePluginOptions {

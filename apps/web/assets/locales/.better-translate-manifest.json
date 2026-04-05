@@ -1,0 +1,222 @@
+{
+  "m_1rlgh6i": {
+    "defaultMessage": "Email is required",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "call",
+        "marker": "t",
+        "line": 36,
+        "column": 35,
+        "endLine": 36,
+        "endColumn": 57,
+        "start": 1097,
+        "end": 1119
+      }
+    ]
+  },
+  "m_asrnh0": {
+    "defaultMessage": "Password must be at least 8 characters long",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "call",
+        "marker": "t",
+        "line": 37,
+        "column": 46,
+        "endLine": 37,
+        "endColumn": 94,
+        "start": 1176,
+        "end": 1224
+      }
+    ]
+  },
+  "m_avzjqb": {
+    "defaultMessage": "Could not sign in",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "call",
+        "marker": "t",
+        "line": 53,
+        "column": 42,
+        "endLine": 53,
+        "endColumn": 64,
+        "start": 1810,
+        "end": 1832
+      }
+    ]
+  },
+  "m_wknjet": {
+    "defaultMessage": "Welcome {userName}, get stuck in!",
+    "meta": {
+      "context": "The main login page header"
+    },
+    "placeholders": [
+      "userName"
+    ],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 74,
+        "column": 15,
+        "endLine": 76,
+        "endColumn": 19,
+        "start": 2289,
+        "end": 2411
+      }
+    ]
+  },
+  "m_1byunvq": {
+    "defaultMessage": "Enter your email and password to continue.",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 79,
+        "column": 15,
+        "endLine": 79,
+        "endColumn": 64,
+        "start": 2481,
+        "end": 2530
+      }
+    ]
+  },
+  "m_inbfc7": {
+    "defaultMessage": "Email",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "call",
+        "marker": "t",
+        "line": 94,
+        "column": 51,
+        "endLine": 94,
+        "endColumn": 61,
+        "start": 2928,
+        "end": 2938
+      }
+    ]
+  },
+  "m_cf437c": {
+    "defaultMessage": "Password",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "call",
+        "marker": "t",
+        "line": 99,
+        "column": 41,
+        "endLine": 99,
+        "endColumn": 54,
+        "start": 3150,
+        "end": 3163
+      }
+    ]
+  },
+  "m_7dn7hr": {
+    "defaultMessage": "Signing in…",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 104,
+        "column": 50,
+        "endLine": 104,
+        "endColumn": 68,
+        "start": 3386,
+        "end": 3404
+      }
+    ]
+  },
+  "m_w9nig3": {
+    "defaultMessage": "Sign in",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 104,
+        "column": 71,
+        "endLine": 104,
+        "endColumn": 85,
+        "start": 3407,
+        "end": 3421
+      }
+    ]
+  },
+  "m_u0spf4": {
+    "defaultMessage": "Need a new account?",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 112,
+        "column": 11,
+        "endLine": 112,
+        "endColumn": 37,
+        "start": 3717,
+        "end": 3743
+      }
+    ]
+  },
+  "m_tjp6b5": {
+    "defaultMessage": "Sign up",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 114,
+        "column": 13,
+        "endLine": 114,
+        "endColumn": 27,
+        "start": 3852,
+        "end": 3866
+      }
+    ]
+  },
+  "m_1kgrdob": {
+    "defaultMessage": "Forgot your password?",
+    "meta": {},
+    "placeholders": [],
+    "sources": [
+      {
+        "file": "src/routes/_auth/sign-in.tsx",
+        "kind": "component",
+        "marker": "T",
+        "line": 119,
+        "column": 13,
+        "endLine": 119,
+        "endColumn": 41,
+        "start": 4105,
+        "end": 4133
+      }
+    ]
+  }
+}

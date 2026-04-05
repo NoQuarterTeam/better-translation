@@ -1,6 +1,6 @@
 # `@better-translate/vite`
 
-Vite plugin and runtime helpers for extracting UI copy, generating locale files, and rendering translations in React and server code.
+Vite plugin and runtime helpers for extracting UI copy, generating locale JSON files, and rendering translations in React and server code.
 
 It scans your source for translation markers, creates stable message ids, keeps locale JSON files in sync, and lets you plug in your own translation pipeline.
 
@@ -8,7 +8,7 @@ It scans your source for translation markers, creates stable message ids, keeps 
 
 - Extracts messages from function calls, React components, and tagged templates
 - Generates stable message ids from the source text and optional context
-- Writes locale files for every configured locale
+- Writes locale JSON files for every configured locale
 - Supports a custom async `translate()` function for auto-filling missing translations
 - Caches translated results to avoid re-translating unchanged messages
 - Includes React helpers for providers, hooks, and JSX interpolation
@@ -49,8 +49,8 @@ At build time and during dev, the plugin:
 1. Scans your source files for translation markers such as `t("...")`, `<T>...</T>`, and `msg("id")\`...\``.
 2. Extracts the default message, placeholders, source locations, and optional context.
 3. Generates a stable message id for each entry.
-4. Writes locale files for every configured locale.
-5. Calls your custom `translate(messages, locale)` function for missing non-default translations.
+4. Writes locale JSON files for every configured locale.
+5. In dev, it can call your custom `translate(messages, locale)` function for missing non-default translations.
 6. Stores translated results in a cache file so unchanged messages do not need to be translated again.
 
 ## Quick Start
@@ -161,13 +161,16 @@ scan: {
 
 #### `storage`
 
-Controls where locale files come from.
+Controls where locale runtime data comes from.
 
 ```ts
-storage: { type: "local", dir: "locales" }
+storage: {
+  type: "local",
+  dir: "locales",
+}
 ```
 
-`local` is the practical option today.
+`local` uses editable locale JSON files from the configured directory and expects your server build to include that directory for runtime loading.
 
 `hosted` exists in the API, but hosted sync and hosted runtime fetching are currently stubs, so local storage is the recommended setup right now.
 
@@ -254,8 +257,12 @@ import { T } from "@better-translate/vite/react"
 export function Header() {
   return (
     <>
-      <h1><T>Sign in</T></h1>
-      <p><T context="Sign-in page helper copy">Enter your email and password to continue.</T></p>
+      <h1>
+        <T>Sign in</T>
+      </h1>
+      <p>
+        <T context="Sign-in page helper copy">Enter your email and password to continue.</T>
+      </p>
     </>
   )
 }
@@ -319,7 +326,7 @@ const body = msg("welcome-email")`Welcome back, ${v("name", user.name)}`
 
 ## Loading Messages for a Locale
 
-Load messages with `getMessages(locale, options)`.
+How you load messages depends on your deployment setup.
 
 The first argument is a single locale code. You do not pass the whole `locales` array here.
 
@@ -333,17 +340,67 @@ betterTranslatePlugin({
 })
 ```
 
-At runtime, load one locale at a time:
+### Server Runtime
+
+If your server can read the generated locale files from disk, load one locale at a time with `getMessages(locale)`.
+
+The helper reads generated runtime metadata automatically, so you usually do not need to repeat the locale directory in application code:
 
 ```ts
 import { getMessages } from "@better-translate/vite/server"
 
+const messages = await getMessages("nl")
+```
+
+If needed, you can still override the storage settings explicitly:
+
+```ts
 const messages = await getMessages("nl", {
   storage: { type: "local", dir: "locales" },
 })
 ```
 
-For local storage, `getMessages()` reads from the provided `dir`. If you omit it, it falls back to the conventional `locales` directory.
+For local storage, `getMessages()` reads one locale JSON file from disk. In production, your server deployment still needs to include that locale directory.
+
+### Nitro Runtime
+
+For Nitro, the recommended setup is to emit locale files into `assets/locales`, which Nitro bundles by default:
+
+```ts
+import { nitro } from "nitro/vite"
+import { betterTranslatePlugin } from "@better-translate/vite"
+
+export default {
+  plugins: [
+    betterTranslatePlugin({
+      locales: ["en", "nl", "fr"],
+      defaultLocale: "en",
+      storage: { type: "local", dir: "assets/locales" },
+    }),
+    nitro(),
+  ],
+}
+```
+
+Then load messages with the Nitro helper:
+
+```ts
+import { getNitroMessages } from "@better-translate/vite/nitro"
+
+const messages = await getNitroMessages("nl")
+```
+
+If you prefer a custom directory, keep your locale files wherever you want, register that directory with Nitro `serverAssets`, and pass the custom mount name to `getNitroMessages()`:
+
+```ts
+nitro({
+  serverAssets: [{ baseName: "locales", dir: "./locales", pattern: "*.json" }],
+})
+```
+
+```ts
+const messages = await getNitroMessages("nl", { mount: "locales" })
+```
 
 Typical sources for that locale are:
 
@@ -357,17 +414,65 @@ Example:
 
 ```ts
 import { createServerFn } from "@tanstack/react-start"
-import { getMessages } from "@better-translate/vite/server"
+import { getNitroMessages } from "@better-translate/vite/nitro"
 
-export const getTranslateMessagesFn = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const locale = "nl"
+export const getTranslateMessagesFn = createServerFn({ method: "GET" }).handler(async () => {
+  const locale = "nl"
 
-    return getMessages(locale, {
-      storage: { type: "local", dir: "locales" },
-    })
-  })
+  return getNitroMessages(locale)
+})
 ```
+
+### Client-Side Fetch From `public/` Or A CDN
+
+If your app does not have a server runtime, or you want to load translations directly in the browser, fetch the locale JSON yourself and pass the result to `TranslateProvider`.
+
+You do not need a special browser loader from this package. `TranslateProvider` only needs a flat `Record<string, string>`.
+
+If you publish your locale files under `public/locales`, you can fetch them like this:
+
+```tsx
+import { useEffect, useState } from "react"
+
+import { TranslateProvider } from "@better-translate/vite/react"
+
+export function App({ locale }: { locale: string }) {
+  const [messages, setMessages] = useState<Record<string, string> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      const response = await fetch(`/locales/${locale}.json`)
+      const nextMessages = (await response.json()) as Record<string, string>
+      if (!cancelled) setMessages(nextMessages)
+    }
+
+    void load()
+
+    return () => {
+      cancelled = true
+    }
+  }, [locale])
+
+  if (!messages) return null
+
+  return (
+    <TranslateProvider messages={messages}>
+      <Routes />
+    </TranslateProvider>
+  )
+}
+```
+
+If your locale files are hosted on a CDN, use the same pattern with an absolute URL:
+
+```ts
+const response = await fetch(`https://cdn.example.com/locales/${locale}.json`)
+const messages = (await response.json()) as Record<string, string>
+```
+
+This browser-fetch approach also works in full-stack apps when you prefer serving locale files as static assets instead of loading them on the server.
 
 ## Using The React Components And Hooks
 
@@ -443,7 +548,7 @@ function InviteMessage({ count }: { count: number }) {
 
 ## Custom Translation Function
 
-The plugin calls your `translate(messages, locale)` callback only for missing translations in non-default locales.
+The plugin calls your `translate(messages, locale)` callback only in dev, and only for missing translations in non-default locales.
 
 Each message includes:
 
@@ -495,6 +600,8 @@ Guidelines for a good custom translator:
 - Return plain strings only.
 - Keep translations deterministic when possible so the cache stays useful.
 
+For `storage: { type: "local" }`, production builds never call `translate()`. They validate the committed locale JSON files and fail the build if any non-default locale entry is missing.
+
 ## Server-Side Helpers
 
 ### `getMessages()`
@@ -504,10 +611,22 @@ Loads the flattened message map for one locale:
 ```ts
 import { getMessages } from "@better-translate/vite/server"
 
-const messages = await getMessages("en", {
-  storage: { type: "local", dir: "locales" },
-})
+const messages = await getMessages("en")
 ```
+
+By default, `getMessages()` reads the runtime metadata emitted by the plugin and then loads the matching locale JSON file from disk.
+
+### `getNitroMessages()`
+
+Loads the flattened message map for one locale from Nitro server assets:
+
+```ts
+import { getNitroMessages } from "@better-translate/vite/nitro"
+
+const messages = await getNitroMessages("en")
+```
+
+Use `storage: { type: "local", dir: "assets/locales" }` in your plugin config for the default Nitro path.
 
 ### `createTranslator()`
 
@@ -578,15 +697,25 @@ It also keeps a private metadata manifest at `locales/.better-translate-manifest
 }
 ```
 
-At runtime, `getMessages()` returns the flat locale map directly. It also keeps backward compatibility with the older nested locale format.
+For local storage, the plugin also writes runtime metadata for server helpers:
+
+- `.better-translate/runtime.json`
+- `locales/.better-translate-runtime.json`
+
+At runtime, `getMessages()` returns the flat locale map by reading the requested locale JSON file from disk, and `getNitroMessages()` reads the same shape from Nitro server assets.
 
 ## Important Notes
 
 - `t()` only extracts static string literals.
 - `<T>` only extracts static text plus `<Var someName={value} />` placeholders or `<Var>{identifier}</Var>` shorthand.
-- `msg("id")\`...\`` only extracts templates that use `v("name", value)` placeholders.
-- Missing translations fall back to the source text.
-- In local mode, locale files are written to disk and also emitted into the Vite build output.
+- `msg("id")\`...\``only extracts templates that use`v("name", value)` placeholders.
+- Missing translations can fall back to the source text in dev while locale JSON files are being filled.
+- In local mode, locale JSON files are committed in the repo and loaded one locale at a time.
+- Client-only apps can fetch locale JSON from `public/` or a CDN and pass the result directly to `TranslateProvider`.
+- `getMessages()` reads generated runtime metadata so you usually do not need to repeat the locale directory in server code.
+- For Nitro, the simplest setup is `storage: { type: "local", dir: "assets/locales" }` plus `getNitroMessages()`.
+- Custom Nitro directories still work through `serverAssets` and `getNitroMessages(..., { mount })`.
+- In local mode, production builds fail if any non-default locale JSON entry is missing.
 - Hosted storage is not fully implemented yet, so local storage is the recommended path for now.
 
 ## Example Flow
@@ -594,7 +723,7 @@ At runtime, `getMessages()` returns the flat locale map directly. It also keeps 
 1. Add the plugin to `vite.config.ts`.
 2. Configure `locales`, `defaultLocale`, and local storage.
 3. Mark text with `t()`, `<T>`, or `msg()`.
-4. Load one locale with `getMessages(locale, ...)`.
+4. Load one locale with `getMessages(locale)` on the server, `getNitroMessages(locale)` on Nitro, or fetch the locale JSON in the browser.
 5. Wrap your UI in `TranslateProvider`.
 6. Use `useT()`, `T`, `Var`, `createTranslator()`, and `msg()` where appropriate.
-7. Let the plugin write locale files and call your custom translator for missing entries.
+7. Let the plugin write locale JSON files in dev and call your custom translator for missing entries.

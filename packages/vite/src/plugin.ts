@@ -1,9 +1,10 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, relative, resolve } from "node:path"
 import type { Plugin } from "vite"
 
 import type {
   BetterTranslatePluginOptions,
+  BetterTranslateRuntimeConfig,
   ExtractedMessage,
   ManifestEntry,
   MessageManifest,
@@ -17,6 +18,7 @@ import type {
 import { createEmptyCache, getCacheKey, loadCache, saveCache } from "./cache.js"
 import { analyzeSourceFile } from "./extractor.js"
 import { serializeMeta } from "./message-id.js"
+import { DEFAULT_LOCAL_OUTPUT_DIR, getLocalRuntimeConfigPath, getRootRuntimeConfigPath } from "./runtime-config.js"
 
 const PREFIX = "\x1b[36m[better-translation]\x1b[0m"
 const DIM = "\x1b[2m"
@@ -37,7 +39,7 @@ function formatLocales(locales: string[]) {
   return locales.map(formatLocale).join(", ")
 }
 
-/** Scans source files for translatable messages and keeps locale files in sync. */
+/** Scans source files for translatable messages and keeps locale JSON files in sync. */
 export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Plugin {
   const {
     locales,
@@ -45,12 +47,12 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
     cacheFile = ".cache/better-translate.json",
     logging = true,
     scan,
-    storage = { type: "hosted" },
+    storage = { type: "local", dir: "locales" },
     markers = {},
     translate,
   } = options
-  const shouldWriteLocalFiles = storage.type === "local"
-  const localesDir = storage.type === "local" ? (storage.dir ?? "locales") : "locales"
+  const usesLocalStorage = storage.type === "local"
+  const localesDir = storage.type === "local" ? (storage.dir ?? DEFAULT_LOCAL_OUTPUT_DIR) : DEFAULT_LOCAL_OUTPUT_DIR
   const hostedUrl = storage.type === "hosted" ? (storage.url ?? HOSTED_API_BASE_URL) : HOSTED_API_BASE_URL
 
   const callMarkers = markers.call ?? ["t", "useT"]
@@ -86,12 +88,15 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
     }
   }
 
-  const resolvedTranslate = translate ?? (shouldWriteLocalFiles ? undefined : hostedTranslate)
+  const resolvedTranslate = translate ?? (usesLocalStorage ? undefined : hostedTranslate)
 
   function buildRuntimeMessages(locale: string): RuntimeMessages {
     const messages: RuntimeMessages = {}
     for (const [id, entry] of Object.entries(manifest)) {
-      messages[id] = locale === defaultLocale ? entry.defaultMessage : (cache.entries[getCacheKey(id, locale)]?.translation ?? entry.defaultMessage)
+      messages[id] =
+        locale === defaultLocale
+          ? entry.defaultMessage
+          : (cache.entries[getCacheKey(id, locale)]?.translation ?? entry.defaultMessage)
     }
     return messages
   }
@@ -122,31 +127,86 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
     return resolve(root, localesDir, PRIVATE_MANIFEST_FILENAME)
   }
 
+  function getRuntimeConfig(): BetterTranslateRuntimeConfig {
+    return {
+      storage: usesLocalStorage ? { type: "local", dir: localesDir } : { type: "hosted", url: hostedUrl },
+      defaultLocale,
+      locales,
+    }
+  }
+
+  function writeRuntimeConfig() {
+    if (!usesLocalStorage) return
+
+    const runtimeConfig = JSON.stringify(getRuntimeConfig(), null, 2) + "\n"
+    const rootPath = getRootRuntimeConfigPath(root)
+    const localPath = getLocalRuntimeConfigPath(root, localesDir)
+    for (const path of [rootPath, localPath]) {
+      const dir = dirname(path)
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+      writeFileSync(path, runtimeConfig)
+    }
+  }
+
+  function getLocalePath(locale: string) {
+    return resolve(root, localesDir, `${locale}.json`)
+  }
+
+  function readLocaleMessages(locale: string): RuntimeMessages {
+    const path = getLocalePath(locale)
+    if (!existsSync(path)) return {}
+
+    try {
+      const input = JSON.parse(readFileSync(path, "utf-8")) as unknown
+      return normalizeLocaleMessages(input)
+    } catch {
+      return {}
+    }
+  }
+
   function writePrivateManifest() {
-    if (!shouldWriteLocalFiles) return
+    if (!usesLocalStorage) return
     const path = getPrivateManifestPath()
     const dir = dirname(path)
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     writeFileSync(path, JSON.stringify(buildMessageManifest(), null, 2) + "\n")
   }
 
-  function writeLocalesToDisk() {
-    if (!shouldWriteLocalFiles) return
+  function buildLocalLocaleMessages(locale: string): RuntimeMessages {
+    if (locale === defaultLocale) return buildRuntimeMessages(locale)
+
+    const existingMessages = readLocaleMessages(locale)
+    const messages: RuntimeMessages = {}
+    for (const id of Object.keys(manifest)) {
+      const existingMessage = existingMessages[id]
+      if (existingMessage) {
+        messages[id] = existingMessage
+        continue
+      }
+
+      const cachedMessage = cache.entries[getCacheKey(id, locale)]?.translation
+      if (cachedMessage) messages[id] = cachedMessage
+    }
+    return messages
+  }
+
+  function writeLocaleFilesToDisk() {
+    if (!usesLocalStorage) return
     const dir = resolve(root, localesDir)
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     for (const locale of locales) {
-      writeFileSync(resolve(dir, `${locale}.json`), JSON.stringify(buildRuntimeMessages(locale), null, 2) + "\n")
+      writeFileSync(resolve(dir, `${locale}.json`), JSON.stringify(buildLocalLocaleMessages(locale), null, 2) + "\n")
     }
   }
 
-  async function translateMissingMessages() {
-    if (!resolvedTranslate) return false
+  function getMissingMessagesByLocale() {
     const missingByLocale = new Map<string, TranslateMessage[]>()
 
     for (const locale of locales) {
       if (locale === defaultLocale) continue
+      const existingMessages = readLocaleMessages(locale)
       for (const [id, entry] of Object.entries(manifest)) {
-        if (!cache.entries[getCacheKey(id, locale)]) {
+        if (!existingMessages[id] && !cache.entries[getCacheKey(id, locale)]) {
           const misses = missingByLocale.get(locale) ?? []
           misses.push({
             id,
@@ -159,6 +219,45 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
         }
       }
     }
+
+    return missingByLocale
+  }
+
+  function assertLocalBuildTranslationsComplete() {
+    const missingByLocale = new Map<string, string[]>()
+    for (const locale of locales) {
+      if (locale === defaultLocale) continue
+      const localeMessages = readLocaleMessages(locale)
+      const missingIds = Object.keys(manifest).filter((id) => !localeMessages[id])
+      if (missingIds.length > 0) missingByLocale.set(locale, missingIds)
+    }
+    const totalMissingIds = [...missingByLocale.values()].reduce((count, misses) => count + misses.length, 0)
+    if (totalMissingIds === 0) return
+
+    const summary = [...missingByLocale]
+      .map(([locale, misses]) => {
+        const preview = misses
+          .slice(0, 5)
+          .map((id) => `"${manifest[id]?.defaultMessage ?? id}"`)
+          .join(", ")
+        const suffix = misses.length > 5 ? `, ... ${misses.length - 5} more` : ""
+        return `- ${locale}: ${misses.length} missing (${preview}${suffix})`
+      })
+      .join("\n")
+
+    throw new Error(
+      [
+        `${PREFIX} missing committed locale JSON entries for local production build`,
+        `local builds never call translate() during production builds`,
+        `fill the locale JSON files in ${localesDir} and rebuild`,
+        summary,
+      ].join("\n"),
+    )
+  }
+
+  async function translateMissingMessages() {
+    if (!resolvedTranslate) return false
+    const missingByLocale = getMissingMessagesByLocale()
 
     const totalMisses = [...missingByLocale.values()].reduce((count, misses) => count + misses.length, 0)
     if (totalMisses === 0) return false
@@ -193,7 +292,7 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
     translateTimer = setTimeout(async () => {
       const translated = await translateMissingMessages()
       if (translated) saveCache(resolve(root, cacheFile), cache)
-      writeLocalesToDisk()
+      writeLocaleFilesToDisk()
       writePrivateManifest()
     }, 1000)
   }
@@ -253,12 +352,13 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
       scanRoots = (scan?.roots ?? ["src"]).map((scanRoot) => resolve(root, scanRoot))
       scanExtensions = scan?.extensions ?? DEFAULT_SCAN_EXTENSIONS
       log(
-        `${PREFIX} ${BOLD}Better Translate${RESET} | Locales: ${CYAN}${formatLocales(locales)}${RESET} | Default: ${CYAN}${formatLocale(defaultLocale)}${RESET} | Storage: ${CYAN}${shouldWriteLocalFiles ? "Local" : "Hosted"}${RESET} | Out Dir: ${DIM}${shouldWriteLocalFiles ? localesDir : "n/a"}${RESET} | Scan: ${DIM}${(scan?.roots ?? ["src"]).join(", ")}${RESET}`,
+        `${PREFIX} Locales: ${CYAN}${formatLocales(locales)}${RESET} | Default: ${CYAN}${formatLocale(defaultLocale)}${RESET} | Storage: ${CYAN}${usesLocalStorage ? "Local" : "Hosted"}${RESET} | Out Dir: ${DIM}${usesLocalStorage ? localesDir : "n/a"}${RESET} | Scan: ${DIM}${(scan?.roots ?? ["src"]).join(", ")}${RESET}`,
       )
     },
 
     buildStart() {
       cache = loadCache(resolve(root, cacheFile))
+      writeRuntimeConfig()
     },
 
     transform(code, id) {
@@ -283,7 +383,7 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
       )
 
       if (manifestChanged && isDev) {
-        writeLocalesToDisk()
+        writeLocaleFilesToDisk()
         writePrivateManifest()
         scheduleDevTranslation()
       }
@@ -296,19 +396,14 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
     },
 
     async generateBundle() {
-      await translateMissingMessages()
-
-      writeLocalesToDisk()
-      writePrivateManifest()
-      if (shouldWriteLocalFiles) {
-        for (const locale of locales) {
-          this.emitFile({
-            type: "asset",
-            fileName: `${localesDir}/${locale}.json`,
-            source: JSON.stringify(buildRuntimeMessages(locale), null, 2) + "\n",
-          })
-        }
+      if (usesLocalStorage) {
+        writeRuntimeConfig()
+        assertLocalBuildTranslationsComplete()
       } else {
+        await translateMissingMessages()
+      }
+
+      if (!usesLocalStorage) {
         await syncHosted()
       }
     },
@@ -317,6 +412,30 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
       saveCache(resolve(root, cacheFile), cache)
     },
   }
+}
+
+function normalizeLocaleMessages(input: unknown): RuntimeMessages {
+  if (isRuntimeMessages(input)) return input
+  if (
+    typeof input === "object" &&
+    input !== null &&
+    "messages" in input &&
+    typeof input.messages === "object" &&
+    input.messages !== null
+  ) {
+    return Object.fromEntries(
+      Object.entries(input.messages).flatMap(([id, entry]) =>
+        typeof entry === "object" && entry !== null && "translation" in entry && typeof entry.translation === "string"
+          ? [[id, entry.translation]]
+          : [],
+      ),
+    ) as RuntimeMessages
+  }
+  return {}
+}
+
+function isRuntimeMessages(input: unknown): input is RuntimeMessages {
+  return typeof input === "object" && input !== null && Object.values(input).every((value) => typeof value === "string")
 }
 
 function applyEdits(code: string, edits: Array<{ start: number; end: number; replacement: string }>) {

@@ -1,9 +1,20 @@
 import { existsSync, readFileSync } from "node:fs"
-import { resolve } from "node:path"
 
-import type { BetterTranslateStorageOptions, LocaleFile, RuntimeMessages, TranslateOptions } from "./types.js"
+import type {
+  BetterTranslateRuntimeConfig,
+  BetterTranslateStorageOptions,
+  LocaleFile,
+  RuntimeMessages,
+  TranslateOptions,
+} from "./types.js"
 
 import { getCallMessageId } from "./message-id.js"
+import {
+  DEFAULT_LOCAL_OUTPUT_DIR,
+  getLocalConfigCandidatePaths,
+  getRootRuntimeConfigCandidatePaths,
+  readRuntimeConfigFromPaths,
+} from "./runtime-config.js"
 
 /** A server-side placeholder value used by `msg()` template interpolation. */
 export interface VarResult {
@@ -26,7 +37,7 @@ let warnedHostedStub = false
 
 /** Options for loading locale messages on the server. */
 export interface GetMessagesOptions {
-  /** Storage backend to read messages from. Local storage defaults to `locales` when no directory is provided. */
+  /** Optional storage override. When omitted, the helper reads generated runtime metadata. */
   storage?: BetterTranslateStorageOptions
 }
 
@@ -36,18 +47,23 @@ export async function getMessages(
   options?: GetMessagesOptions,
 ): Promise<Record<string, string>> {
   try {
-    const storage = options?.storage ?? { type: "hosted" as const }
+    const runtimeConfig = readRuntimeConfig()
+    const storage = resolveStorage(runtimeConfig, options?.storage)
 
     if (storage.type === "hosted") {
       const hostedMessages = await getHostedMessages(locale, storage.url ?? HOSTED_API_BASE_URL)
       if (hostedMessages) return hostedMessages
     }
 
-    const dir = storage.type === "local" ? (storage.dir ?? "locales") : null
-    if (!dir) return {}
-    const filePath = resolve(dir, `${locale}.json`)
-    if (!existsSync(filePath)) return {}
-    return normalizeMessages(JSON.parse(readFileSync(filePath, "utf-8")) as RuntimeMessages | LocaleFile)
+    if (storage.type !== "local") return {}
+
+    const dir = storage.dir ?? DEFAULT_LOCAL_OUTPUT_DIR
+    for (const filePath of getLocaleCandidatePaths(dir, locale)) {
+      if (!existsSync(filePath)) continue
+      return normalizeMessages(JSON.parse(readFileSync(filePath, "utf-8")) as RuntimeMessages | LocaleFile)
+    }
+
+    return {}
   } catch (error) {
     console.error(`${PREFIX} Error loading messages for locale ${locale}:`, error)
     return {}
@@ -63,6 +79,24 @@ async function getHostedMessages(locale: string, hostedUrl: string) {
   }
   void locale
   return null
+}
+
+function getLocaleCandidatePaths(dir: string, locale: string) {
+  return getLocalConfigCandidatePaths(dir, import.meta.url, `${locale}.json`)
+}
+
+function readRuntimeConfig() {
+  return readRuntimeConfigFromPaths(getRootRuntimeConfigCandidatePaths(import.meta.url))
+}
+
+function resolveStorage(runtimeConfig: BetterTranslateRuntimeConfig | null, override?: BetterTranslateStorageOptions) {
+  if (!override) return runtimeConfig?.storage ?? ({ type: "local", dir: DEFAULT_LOCAL_OUTPUT_DIR } as const)
+  if (override.type !== "local") return override
+  return { ...override, dir: override.dir ?? getLocalStorageDir(runtimeConfig) }
+}
+
+function getLocalStorageDir(runtimeConfig: BetterTranslateRuntimeConfig | null) {
+  return runtimeConfig?.storage.type === "local" ? runtimeConfig.storage.dir ?? DEFAULT_LOCAL_OUTPUT_DIR : DEFAULT_LOCAL_OUTPUT_DIR
 }
 
 function normalizeMessages(input: RuntimeMessages | LocaleFile): RuntimeMessages {
