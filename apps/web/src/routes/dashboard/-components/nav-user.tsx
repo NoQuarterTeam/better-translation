@@ -1,6 +1,8 @@
 import { useNavigate } from "@tanstack/react-router"
 import { LogOutIcon } from "lucide-react"
 
+import { useT } from "@better-translate/vite/react"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -23,8 +25,13 @@ function createInitials(user: Pick<User, "name">) {
   )
 }
 
-export function NavUser() {
+type NavUserProps = {
+  locale?: string
+}
+
+export function NavUser({ locale }: NavUserProps) {
   const navigate = useNavigate()
+  const t = useT()
   const { data: session, isPending } = authClient.useSession()
   const user = session?.user
 
@@ -65,14 +72,14 @@ export function NavUser() {
             void authClient.signOut({
               fetchOptions: {
                 onSuccess: () => {
-                  void navigate({ to: "/sign-in" })
+                  void navigate({ to: "/sign-in", search: { locale } })
                 },
               },
             })
           }}
         >
           <LogOutIcon />
-          Log out
+          {t("Log out")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

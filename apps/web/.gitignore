@@ -14,3 +14,4 @@ todos.json
 
 assets/locales/.bt-manifest.json
 assets/locales/.bt-runtime.json
+.vercel

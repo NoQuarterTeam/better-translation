@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, relative, resolve } from "node:path"
-import type { Plugin } from "vite"
+import type { Plugin, ViteDevServer } from "vite"
 
 import type {
   BetterTranslatePluginOptions,
@@ -30,6 +30,10 @@ const HOSTED_API_BASE_URL = "https://better-translate.com"
 const HOSTED_STUB = `${YELLOW}stub${RESET}`
 const DEFAULT_SCAN_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"]
 const PRIVATE_MANIFEST_FILENAME = ".bt-manifest.json"
+const VIRTUAL_MESSAGES_MODULE_ID = "virtual:better-translate/messages"
+const RESOLVED_VIRTUAL_MESSAGES_MODULE_ID = "\0virtual:better-translate/messages"
+const VIRTUAL_LOCALE_MESSAGES_MODULE_PREFIX = "virtual:better-translate/messages/"
+const RESOLVED_VIRTUAL_LOCALE_MESSAGES_MODULE_PREFIX = "\0virtual:better-translate/messages/"
 
 function formatLocale(locale: string) {
   return locale.toUpperCase()
@@ -68,6 +72,7 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
   let warnedHostedSyncStub = false
   let scanRoots: string[] = []
   let scanExtensions: string[] = []
+  let devServer: ViteDevServer | null = null
 
   function log(message: string) {
     if (logging) console.log(message)
@@ -143,6 +148,7 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
     const dir = dirname(path)
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     writeFileSync(path, runtimeConfig)
+    invalidateVirtualModules()
   }
 
   function getLocalePath(locale: string) {
@@ -194,6 +200,43 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
     for (const locale of locales) {
       writeFileSync(resolve(dir, `${locale}.json`), JSON.stringify(buildLocalLocaleMessages(locale), null, 2) + "\n")
     }
+    invalidateVirtualModules()
+  }
+
+  function invalidateVirtualModules() {
+    if (!devServer) return
+
+    for (const id of [RESOLVED_VIRTUAL_MESSAGES_MODULE_ID, ...locales.map(getResolvedVirtualLocaleModuleId)]) {
+      const module = devServer.moduleGraph.getModuleById(id)
+      if (module) devServer.moduleGraph.invalidateModule(module)
+    }
+  }
+
+  function buildVirtualMessagesEntryModule() {
+    return [
+      `export const runtimeConfig = ${JSON.stringify(getRuntimeConfig())}`,
+      "export async function loadLocaleMessages(locale) {",
+      "  switch (locale) {",
+      ...locales.map(
+        (locale) =>
+          `    case ${JSON.stringify(locale)}: return (await import(${JSON.stringify(getVirtualLocaleModuleId(locale))})).default`,
+      ),
+      "    default: return {}",
+      "  }",
+      "}",
+    ].join("\n")
+  }
+
+  function buildVirtualLocaleModule(locale: string) {
+    return `export default ${JSON.stringify(readLocaleMessages(locale))}`
+  }
+
+  function isLocalArtifactPath(file: string) {
+    if (!usesLocalStorage) return false
+
+    const normalizedFile = file.replaceAll("\\", "/")
+    const normalizedLocalesDir = `${resolve(root, localesDir).replaceAll("\\", "/")}/`
+    return normalizedFile.startsWith(normalizedLocalesDir) && normalizedFile.endsWith(".json")
   }
 
   function getMissingMessagesByLocale() {
@@ -353,9 +396,27 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
       )
     },
 
+    configureServer(server) {
+      devServer = server
+    },
+
     buildStart() {
       cache = loadCache(resolve(root, cacheFile))
       writeRuntimeConfig()
+    },
+
+    resolveId(id) {
+      if (id === VIRTUAL_MESSAGES_MODULE_ID) return RESOLVED_VIRTUAL_MESSAGES_MODULE_ID
+      if (id.startsWith(VIRTUAL_LOCALE_MESSAGES_MODULE_PREFIX)) {
+        return id.replace(VIRTUAL_LOCALE_MESSAGES_MODULE_PREFIX, RESOLVED_VIRTUAL_LOCALE_MESSAGES_MODULE_PREFIX)
+      }
+    },
+
+    load(id) {
+      if (id === RESOLVED_VIRTUAL_MESSAGES_MODULE_ID) return buildVirtualMessagesEntryModule()
+      if (id.startsWith(RESOLVED_VIRTUAL_LOCALE_MESSAGES_MODULE_PREFIX)) {
+        return buildVirtualLocaleModule(id.slice(RESOLVED_VIRTUAL_LOCALE_MESSAGES_MODULE_PREFIX.length))
+      }
     },
 
     transform(code, id) {
@@ -408,7 +469,19 @@ export function betterTranslatePlugin(options: BetterTranslatePluginOptions): Pl
     closeBundle() {
       saveCache(resolve(root, cacheFile), cache)
     },
+
+    handleHotUpdate({ file }) {
+      if (isLocalArtifactPath(file)) invalidateVirtualModules()
+    },
   }
+}
+
+function getVirtualLocaleModuleId(locale: string) {
+  return `${VIRTUAL_LOCALE_MESSAGES_MODULE_PREFIX}${locale}`
+}
+
+function getResolvedVirtualLocaleModuleId(locale: string) {
+  return `${RESOLVED_VIRTUAL_LOCALE_MESSAGES_MODULE_PREFIX}${locale}`
 }
 
 function normalizeLocaleMessages(input: unknown): RuntimeMessages {

@@ -1,6 +1,8 @@
 import { isMatch, Link, useMatches } from "@tanstack/react-router"
 import { Fragment } from "react"
 
+import { useT } from "@better-translate/vite/react"
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,7 +12,12 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 
-export function DashboardBreadcrumbs() {
+type DashboardBreadcrumbsProps = {
+  locale?: string
+}
+
+export function DashboardBreadcrumbs({ locale }: DashboardBreadcrumbsProps) {
+  const t = useT()
   const matchesWithCrumbs = useMatches({
     select: (matches) => matches.filter((match) => isMatch(match, "loaderData.crumb")),
   })
@@ -19,8 +26,8 @@ export function DashboardBreadcrumbs() {
     <Breadcrumb>
       <BreadcrumbList className="flex-nowrap sm:flex-wrap">
         <BreadcrumbItem className="hidden min-w-0 md:block">
-          <BreadcrumbLink className="max-w-[100px] truncate sm:max-w-none" render={<Link to="/dashboard" />}>
-            Dashboard
+          <BreadcrumbLink className="max-w-[100px] truncate sm:max-w-none" render={<Link to="/dashboard" search={{ locale }} />}>
+            {t("Dashboard")}
           </BreadcrumbLink>
         </BreadcrumbItem>
         {matchesWithCrumbs.length > 0 ? <BreadcrumbSeparator className="hidden md:block" /> : null}
@@ -28,13 +35,15 @@ export function DashboardBreadcrumbs() {
           <Fragment key={match.id}>
             <BreadcrumbItem className="min-w-0">
               {i === matchesWithCrumbs.length - 1 ? (
-                <BreadcrumbPage className="max-w-[100px] truncate sm:max-w-none">{match.loaderData?.crumb.label}</BreadcrumbPage>
+                <BreadcrumbPage className="max-w-[100px] truncate sm:max-w-none">
+                  {match.loaderData?.crumb.label ? t(match.loaderData.crumb.label) : null}
+                </BreadcrumbPage>
               ) : (
                 <BreadcrumbLink
                   className="max-w-[100px] truncate sm:max-w-none"
-                  render={<Link to={match.loaderData?.crumb.url} />}
+                  render={<Link to={match.loaderData?.crumb.url} search={{ locale }} />}
                 >
-                  {match.loaderData?.crumb.label}
+                  {match.loaderData?.crumb.label ? t(match.loaderData.crumb.label) : null}
                 </BreadcrumbLink>
               )}
             </BreadcrumbItem>

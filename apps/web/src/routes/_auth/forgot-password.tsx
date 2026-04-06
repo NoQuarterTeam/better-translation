@@ -3,6 +3,8 @@ import { CheckCircle2Icon } from "lucide-react"
 import { useState } from "react"
 import * as z from "zod"
 
+import { T, useT } from "@better-translate/vite/react"
+
 import { useAppForm } from "@/components/react-form"
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -11,10 +13,25 @@ import { authClient } from "@/lib/auth/client"
 
 export const Route = createFileRoute("/_auth/forgot-password")({
   component: ForgotPasswordPage,
-  head: () => ({ meta: [{ title: "Forgot password · Better Translate" }] }),
+  head: ({ match }) => ({
+    meta: [
+      {
+        title:
+          match.search.locale === "nl"
+            ? "Wachtwoord vergeten · Better Translate"
+            : match.search.locale === "fr"
+              ? "Mot de passe oublie · Better Translate"
+              : match.search.locale === "es"
+                ? "Olvide mi contrasena · Better Translate"
+                : "Forgot password · Better Translate",
+      },
+    ],
+  }),
 })
 
 function ForgotPasswordPage() {
+  const { locale } = Route.useSearch()
+  const t = useT()
   const [apiError, setApiError] = useState<string | null>(null)
   const [emailSent, setEmailSent] = useState(false)
 
@@ -31,7 +48,7 @@ function ForgotPasswordPage() {
         { email: value.email.trim(), redirectTo: "/reset-password" },
         {
           onError: ({ error }) => {
-            setApiError(error.message ?? "Could not send reset email")
+            setApiError(error.message ?? t("Could not send reset email"))
           },
           onSuccess: () => {
             setEmailSent(true)
@@ -44,20 +61,26 @@ function ForgotPasswordPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Forgot password</CardTitle>
-        <CardDescription>Enter your account email and we will send you a reset link.</CardDescription>
+        <CardTitle>
+          <T>Forgot password</T>
+        </CardTitle>
+        <CardDescription>
+          <T>Enter your account email and we will send you a reset link.</T>
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {emailSent ? (
           <Alert>
             <CheckCircle2Icon />
-            <AlertTitle>Email sent</AlertTitle>
+            <AlertTitle>
+              <T>Email sent</T>
+            </AlertTitle>
             <AlertDescription>
-              If an account exists for that email, you will receive a password reset link shortly.
+              <T>If an account exists for that email, you will receive a password reset link shortly.</T>
             </AlertDescription>
             <AlertAction>
               <Button size="xs" variant="outline" onClick={() => setEmailSent(false)}>
-                Send again
+                <T>Send again</T>
               </Button>
             </AlertAction>
           </Alert>
@@ -71,10 +94,10 @@ function ForgotPasswordPage() {
               }}
             >
               <form.AppField name="email">
-                {(field) => <field.TextField label="Email" type="email" autoComplete="email" placeholder="you@example.com" />}
+                {(field) => <field.TextField label={t("Email")} type="email" autoComplete="email" placeholder="you@example.com" />}
               </form.AppField>
 
-              <form.SubmitButton>{(isSubmitting) => (isSubmitting ? "Sending link…" : "Send reset link")}</form.SubmitButton>
+              <form.SubmitButton>{(isSubmitting) => (isSubmitting ? <T>Sending link…</T> : <T>Send reset link</T>)}</form.SubmitButton>
               <form.FormError>{apiError}</form.FormError>
             </form>
           </form.AppForm>
@@ -82,9 +105,9 @@ function ForgotPasswordPage() {
       </CardContent>
       <CardFooter className="border-t pt-4">
         <p className="text-sm text-muted-foreground">
-          Remembered it?{" "}
-          <Link to="/sign-in" className="text-primary underline-offset-4 hover:underline">
-            Back to sign in
+          <T>Remembered it?</T>{" "}
+          <Link to="/sign-in" search={{ locale }} className="text-primary underline-offset-4 hover:underline">
+            <T>Back to sign in</T>
           </Link>
         </p>
       </CardFooter>

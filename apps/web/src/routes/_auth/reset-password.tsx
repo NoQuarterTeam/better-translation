@@ -4,6 +4,8 @@ import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
+import { T, useT } from "@better-translate/vite/react"
+
 import { useAppForm } from "@/components/react-form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,13 +18,27 @@ export const Route = createFileRoute("/_auth/reset-password")({
     token: z.string().optional().catch(undefined),
     error: z.string().optional().catch(undefined),
   }),
-  head: () => ({ meta: [{ title: "Reset password · Better Translation" }] }),
+  head: ({ match }) => ({
+    meta: [
+      {
+        title:
+          match.search.locale === "nl"
+            ? "Wachtwoord resetten · Better Translate"
+            : match.search.locale === "fr"
+              ? "Reinitialiser le mot de passe · Better Translate"
+              : match.search.locale === "es"
+                ? "Restablecer contrasena · Better Translate"
+                : "Reset password · Better Translate",
+      },
+    ],
+  }),
   component: ResetPasswordPage,
 })
 
 function ResetPasswordPage() {
   const navigate = Route.useNavigate()
-  const { token, error } = Route.useSearch()
+  const { locale, token, error } = Route.useSearch()
+  const t = useT()
   const [apiError, setApiError] = useState<string | null>(null)
 
   const form = useAppForm({
@@ -38,7 +54,7 @@ function ResetPasswordPage() {
         })
         .superRefine((data, ctx) => {
           if (data.newPassword !== data.confirmPassword) {
-            ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: "Passwords do not match" })
+            ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: t("Passwords do not match") })
           }
         }),
     },
@@ -46,7 +62,7 @@ function ResetPasswordPage() {
       setApiError(null)
 
       if (!token) {
-        setApiError("Missing reset token. Request a new password reset link.")
+        setApiError(t("Missing reset token. Request a new password reset link."))
         return
       }
 
@@ -54,17 +70,17 @@ function ResetPasswordPage() {
         { token, newPassword: value.newPassword },
         {
           onError: ({ error }) => {
-            setApiError(error.message ?? "Could not reset password")
+            setApiError(error.message ?? t("Could not reset password"))
           },
           onSuccess: async () => {
             const session = await authClient.getSession()
             if (session.data?.session) {
-              void navigate({ to: "/dashboard" })
+              void navigate({ to: "/dashboard", search: { locale } })
               return
             }
 
-            toast.success("Password has been reset")
-            void navigate({ to: "/sign-in" })
+            toast.success(t("Password has been reset"))
+            void navigate({ to: "/sign-in", search: { locale } })
           },
         },
       )
@@ -74,8 +90,12 @@ function ResetPasswordPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Reset password</CardTitle>
-        <CardDescription>Set a new password for your account.</CardDescription>
+        <CardTitle>
+          <T>Reset password</T>
+        </CardTitle>
+        <CardDescription>
+          <T>Set a new password for your account.</T>
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form.AppForm>
@@ -89,30 +109,32 @@ function ResetPasswordPage() {
             <form.AppField name="newPassword">
               {(field) => (
                 <field.TextField
-                  label="New password"
+                  label={t("New password")}
                   type="password"
                   autoComplete="new-password"
                   placeholder="••••••••"
-                  description={`At least ${MIN_PASSWORD} characters`}
+                  description={t("At least 8 characters")}
                 />
               )}
             </form.AppField>
 
             <form.AppField name="confirmPassword">
-              {(field) => (
-                <field.TextField label="Confirm password" type="password" autoComplete="new-password" placeholder="••••••••" />
-              )}
+              {(field) => <field.TextField label={t("Confirm password")} type="password" autoComplete="new-password" placeholder="••••••••" />}
             </form.AppField>
 
             <form.SubmitButton disabled={!token}>
-              {(isSubmitting) => (isSubmitting ? "Resetting password…" : "Reset password")}
+              {(isSubmitting) => (isSubmitting ? <T>Resetting password…</T> : <T>Reset password</T>)}
             </form.SubmitButton>
 
             {error && (
               <Alert>
                 <AlertCircleIcon />
-                <AlertTitle>Invalid or expired link</AlertTitle>
-                <AlertDescription>Request a new reset link and try again.</AlertDescription>
+                <AlertTitle>
+                  <T>Invalid or expired link</T>
+                </AlertTitle>
+                <AlertDescription>
+                  <T>Request a new reset link and try again.</T>
+                </AlertDescription>
               </Alert>
             )}
 
@@ -122,9 +144,9 @@ function ResetPasswordPage() {
       </CardContent>
       <CardFooter className="flex flex-col gap-2 border-t pt-4">
         <p className="text-center text-sm text-muted-foreground">
-          Need a new link?{" "}
-          <Link to="/forgot-password" className="text-primary underline-offset-4 hover:underline">
-            Request password reset
+          <T>Need a new link?</T>{" "}
+          <Link to="/forgot-password" search={{ locale }} className="text-primary underline-offset-4 hover:underline">
+            <T>Request password reset</T>
           </Link>
         </p>
       </CardFooter>

@@ -3,7 +3,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
-import { T, useT, Var } from "@better-translate/vite/react"
+import { T, useT } from "@better-translate/vite/react"
 
 import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,12 +16,25 @@ const signInSearchSchema = z.object({
 export const Route = createFileRoute("/_auth/sign-in")({
   validateSearch: signInSearchSchema,
   component: SignInPage,
-  head: () => ({ meta: [{ title: "Sign in · Better Translate" }] }),
+  head: ({ match }) => ({
+    meta: [
+      {
+        title:
+          match.search.locale === "nl"
+            ? "Aanmelden · Better Translate"
+            : match.search.locale === "fr"
+              ? "Se connecter · Better Translate"
+              : match.search.locale === "es"
+                ? "Iniciar sesion · Better Translate"
+                : "Sign in · Better Translate",
+      },
+    ],
+  }),
 })
 
 function SignInPage() {
   const navigate = Route.useNavigate()
-  const { redirect } = Route.useSearch()
+  const { locale, redirect } = Route.useSearch()
   const t = useT()
 
   const [apiError, setApiError] = useState<string | null>(null)
@@ -45,8 +58,8 @@ function SignInPage() {
         {
           onError: ({ error }) => {
             if (error.status === 403) {
-              toast.error("Please verify your email address", {
-                description: "An email has been sent to your inbox again.",
+              toast.error(t("Please verify your email address"), {
+                description: t("An email has been sent to your inbox again."),
               })
               return
             }
@@ -57,23 +70,20 @@ function SignInPage() {
               window.location.assign(redirect)
               return
             }
-            void navigate({ to: "/dashboard" })
+            void navigate({ to: "/dashboard", search: { locale } })
           },
         },
       )
     },
   })
 
-  const name = "Jackyyyy"
   return (
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1.5">
             <CardTitle>
-              <T context="The main login page header">
-                Welcome <Var userName={name} />, get stuck in!
-              </T>
+              <T>Sign in</T>
             </CardTitle>
             <CardDescription>
               <T>Enter your email and password to continue.</T>
@@ -110,12 +120,12 @@ function SignInPage() {
       <CardFooter className="flex flex-col gap-3 border-t pt-4">
         <p className="text-center text-sm text-muted-foreground">
           <T>Need a new account?</T>{" "}
-          <Link to="/sign-up" className="text-primary underline-offset-4 hover:underline">
+          <Link to="/sign-up" search={{ locale }} className="text-primary underline-offset-4 hover:underline">
             <T>Sign up</T>
           </Link>
         </p>
         <div className="flex w-full items-center justify-center text-sm text-muted-foreground">
-          <Link to="/forgot-password" className="text-primary underline-offset-4 hover:underline">
+          <Link to="/forgot-password" search={{ locale }} className="text-primary underline-offset-4 hover:underline">
             <T>Forgot your password?</T>
           </Link>
         </div>

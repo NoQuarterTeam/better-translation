@@ -5,6 +5,8 @@ import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
+import { T, useT, Var } from "@better-translate/vite/react"
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,24 +15,38 @@ import { authClient } from "@/lib/auth/client"
 export const Route = createFileRoute("/_auth/verify-email")({
   validateSearch: z.object({ email: z.email().optional().catch(undefined) }),
   component: VerifyEmailPage,
-  head: () => ({ meta: [{ title: "Verify your email · Better Translate" }] }),
+  head: ({ match }) => ({
+    meta: [
+      {
+        title:
+          match.search.locale === "nl"
+            ? "Bevestig je e-mailadres · Better Translate"
+            : match.search.locale === "fr"
+              ? "Verifiez votre e-mail · Better Translate"
+              : match.search.locale === "es"
+                ? "Verifica tu correo electronico · Better Translate"
+                : "Verify your email · Better Translate",
+      },
+    ],
+  }),
 })
 
 function VerifyEmailPage() {
-  const { email } = Route.useSearch()
+  const { email, locale } = Route.useSearch()
+  const t = useT()
   const [apiError, setApiError] = useState<string | null>(null)
 
   const { mutate: sendVerificationEmail, isPending } = useMutation({
     mutationFn: (email: string) => authClient.sendVerificationEmail({ email, callbackURL: "/dashboard" }),
     onSuccess: (res) => {
       if (res.error) {
-        setApiError(res.error.message ?? "Could not send verification email")
+        setApiError(res.error.message ?? t("Could not send verification email"))
         return
       }
-      toast.success("Verification email sent")
+      toast.success(t("Verification email sent"))
     },
     onError: (error) => {
-      setApiError(error.message ?? "Could not send verification email")
+      setApiError(error.message ?? t("Could not send verification email"))
     },
   })
 
@@ -38,7 +54,7 @@ function VerifyEmailPage() {
 
   const handleResend = async () => {
     if (!email?.trim()) {
-      setApiError("Missing email. Please sign up again to request another verification email.")
+      setApiError(t("Missing email. Please sign up again to request another verification email."))
       return
     }
     sendVerificationEmail(email.trim())
@@ -47,15 +63,27 @@ function VerifyEmailPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Verify your email</CardTitle>
-        <CardDescription>Check your inbox and click the verification link to activate your account.</CardDescription>
+        <CardTitle>
+          <T>Verify your email</T>
+        </CardTitle>
+        <CardDescription>
+          <T>Check your inbox and click the verification link to activate your account.</T>
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <MailCheckIcon />
-          <AlertTitle>Verification email sent</AlertTitle>
+          <AlertTitle>
+            <T>Verification email sent</T>
+          </AlertTitle>
           <AlertDescription>
-            We sent a verification link{email ? ` to ${email}` : ""}. If you do not see it, check spam or resend below.
+            {email ? (
+              <T context="verify-email-with-address">
+                We sent a verification link to <Var email={email} />. If you do not see it, check spam or resend below.
+              </T>
+            ) : (
+              <T>We sent a verification link. If you do not see it, check spam or resend below.</T>
+            )}
           </AlertDescription>
         </Alert>
 
@@ -68,10 +96,10 @@ function VerifyEmailPage() {
       </CardContent>
       <CardFooter className="flex items-center justify-between gap-3 border-t pt-4">
         <Button type="button" variant="outline" onClick={() => void handleResend()} disabled={!canResend || isPending}>
-          {isPending ? "Resending…" : "Resend email"}
+          {isPending ? <T>Resending…</T> : <T>Resend email</T>}
         </Button>
-        <Link to="/sign-in" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-          Back to sign in
+        <Link to="/sign-in" search={{ locale }} className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+          <T>Back to sign in</T>
         </Link>
       </CardFooter>
     </Card>

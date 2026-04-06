@@ -1,32 +1,44 @@
 import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router"
-import * as z from "zod"
 
-import { TranslateProvider } from "@better-translate/vite/react"
+import { getRouteMessages } from "@better-translate/vite/runtime"
+import { TranslateProvider, useT } from "@better-translate/vite/react"
 
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 
-import { getAuthSessionFn, getTranslateMessagesFn } from "./-data"
+import { localeSearchSchema } from "../-locale"
+import { getAuthSessionFn } from "./-data"
 
 export const Route = createFileRoute("/_auth")({
-  validateSearch: z.object({ locale: z.enum(["en", "nl", "fr", "es"]).optional().catch(undefined) }),
+  validateSearch: localeSearchSchema,
   beforeLoad: async ({ search }) => {
     const session = await getAuthSessionFn()
-    if (session?.user) throw redirect({ to: "/dashboard" })
+    if (session?.user) throw redirect({ to: "/dashboard", search: { locale: search.locale } })
 
-    return { messages: await getTranslateMessagesFn({ data: { locale: search.locale ?? "en" } }) }
+    return { messages: await getRouteMessages(search.locale ?? "en") }
   },
   component: AuthLayout,
 })
 
 function AuthLayout() {
+  const { messages } = Route.useRouteContext()
+
+  return (
+    <TranslateProvider messages={messages}>
+      <AuthLayoutContent />
+    </TranslateProvider>
+  )
+}
+
+function AuthLayoutContent() {
   const navigate = useNavigate()
   const search = Route.useSearch()
-  const { messages } = Route.useRouteContext()
+  const t = useT()
+
   return (
     <main className="flex min-h-dvh items-center justify-center p-4">
       <div className="absolute top-4 right-4">
         <NativeSelect
-          aria-label="Select locale"
+          aria-label={t("Select locale")}
           size="sm"
           value={search.locale ?? "en"}
           onChange={(e) => {
@@ -43,9 +55,7 @@ function AuthLayout() {
         </NativeSelect>
       </div>
       <div className="w-full max-w-md">
-        <TranslateProvider messages={messages}>
-          <Outlet />
-        </TranslateProvider>
+        <Outlet />
       </div>
     </main>
   )

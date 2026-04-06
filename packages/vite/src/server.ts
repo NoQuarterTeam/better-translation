@@ -47,7 +47,8 @@ export async function getMessages(
   options?: GetMessagesOptions,
 ): Promise<Record<string, string>> {
   try {
-    const runtimeConfig = readRuntimeConfig(options?.storage)
+    const bundledRuntime = await loadBundledRuntime()
+    const runtimeConfig = bundledRuntime?.runtimeConfig ?? readRuntimeConfig(options?.storage)
     const storage = resolveStorage(runtimeConfig, options?.storage)
 
     if (storage.type === "hosted") {
@@ -56,6 +57,9 @@ export async function getMessages(
     }
 
     if (storage.type !== "local") return {}
+
+    const bundledMessages = await loadBundledMessages(locale, bundledRuntime, runtimeConfig, storage)
+    if (bundledMessages) return bundledMessages
 
     const dir = storage.dir ?? DEFAULT_LOCAL_OUTPUT_DIR
     for (const filePath of getLocaleCandidatePaths(dir, locale)) {
@@ -68,6 +72,40 @@ export async function getMessages(
     console.error(`${PREFIX} Error loading messages for locale ${locale}:`, error)
     return {}
   }
+}
+
+async function loadBundledRuntime() {
+  try {
+    const module = await import("virtual:better-translate/messages")
+    return module as {
+      runtimeConfig: BetterTranslateRuntimeConfig
+      loadLocaleMessages: (locale: string) => Promise<RuntimeMessages>
+    }
+  } catch {
+    return null
+  }
+}
+
+async function loadBundledMessages(
+  locale: string,
+  bundledRuntime: Awaited<ReturnType<typeof loadBundledRuntime>>,
+  runtimeConfig: BetterTranslateRuntimeConfig | null,
+  storage: Extract<BetterTranslateStorageOptions, { type: "local" }>,
+) {
+  if (!bundledRuntime) return null
+  if (!canUseBundledMessages(bundledRuntime.runtimeConfig, runtimeConfig, storage)) return null
+
+  return bundledRuntime.loadLocaleMessages(locale)
+}
+
+function canUseBundledMessages(
+  bundledRuntimeConfig: BetterTranslateRuntimeConfig,
+  runtimeConfig: BetterTranslateRuntimeConfig | null,
+  storage: Extract<BetterTranslateStorageOptions, { type: "local" }>,
+) {
+  if (bundledRuntimeConfig.storage.type !== "local") return false
+  if (runtimeConfig?.storage.type === "local" && runtimeConfig.storage.dir !== bundledRuntimeConfig.storage.dir) return false
+  return storage.dir === bundledRuntimeConfig.storage.dir
 }
 
 async function getHostedMessages(locale: string, hostedUrl: string) {

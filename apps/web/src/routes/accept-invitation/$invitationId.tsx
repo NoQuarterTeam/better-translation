@@ -3,22 +3,43 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { AlertCircleIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { getRouteMessages } from "@better-translate/vite/runtime"
+import { T, TranslateProvider, useT, Var } from "@better-translate/vite/react"
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { authClient } from "@/lib/auth/client"
 import { cn } from "@/lib/utils"
 
+import { localeSearchSchema } from "../-locale"
 import { getOrganizationInvitationFn } from "./-data"
 
 export const Route = createFileRoute("/accept-invitation/$invitationId")({
-  component: AcceptInvitationPage,
-  head: () => ({ meta: [{ title: "Accept invitation · Better Translate" }] }),
+  validateSearch: localeSearchSchema,
+  beforeLoad: async ({ search }) => ({ messages: await getRouteMessages(search.locale ?? "en") }),
+  component: AcceptInvitationRoute,
+  head: ({ match }) => ({
+    meta: [
+      {
+        title:
+          match.search.locale === "nl"
+            ? "Uitnodiging accepteren · Better Translate"
+            : match.search.locale === "fr"
+              ? "Accepter l'invitation · Better Translate"
+              : match.search.locale === "es"
+                ? "Aceptar invitacion · Better Translate"
+                : "Accept invitation · Better Translate",
+      },
+    ],
+  }),
 })
 
 function AcceptInvitationPage() {
   const { invitationId } = Route.useParams()
+  const { locale } = Route.useSearch()
   const navigate = useNavigate()
+  const t = useT()
   const { data: session, isPending: sessionPending } = authClient.useSession()
 
   const invitationQuery = useQuery({
@@ -31,21 +52,23 @@ function AcceptInvitationPage() {
     mutationFn: () => authClient.organization.acceptInvitation({ invitationId }),
     onSuccess: (result) => {
       if (result.error) {
-        toast.error("Could not accept invitation", { description: result.error.message ?? result.error.statusText })
+        toast.error(t("Could not accept invitation"), { description: result.error.message ?? result.error.statusText })
         return
       }
-      toast.success("You're in")
-      void navigate({ to: "/dashboard" })
+      toast.success(t("You’re in"))
+      void navigate({ to: "/dashboard", search: { locale } })
     },
     onError: (error: Error) => {
-      toast.error("Could not accept invitation", { description: error.message })
+      toast.error(t("Could not accept invitation"), { description: error.message })
     },
   })
 
   if (sessionPending) {
     return (
       <main className="flex min-h-dvh items-center justify-center p-4">
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">
+          <T>Loading…</T>
+        </p>
       </main>
     )
   }
@@ -55,21 +78,23 @@ function AcceptInvitationPage() {
       <main className="flex min-h-dvh items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Sign in to continue</CardTitle>
+            <CardTitle>
+              <T>Sign in to continue</T>
+            </CardTitle>
             <CardDescription>
-              You need an account to accept this invitation. Use the same email the invitation was sent to.
+              <T>You need an account to accept this invitation. Use the same email the invitation was sent to.</T>
             </CardDescription>
           </CardHeader>
           <CardFooter className="flex flex-col gap-2 border-t pt-4">
             <Link
               to="/sign-in"
-              search={{ redirect: `/accept-invitation/${invitationId}` }}
+              search={{ locale, redirect: `/accept-invitation/${invitationId}?locale=${locale ?? "en"}` }}
               className={cn(buttonVariants(), "w-full no-underline")}
             >
-              Sign in
+              <T>Sign in</T>
             </Link>
-            <Link to="/sign-up" className={cn(buttonVariants({ variant: "outline" }), "w-full no-underline")}>
-              Create an account
+            <Link to="/sign-up" search={{ locale }} className={cn(buttonVariants({ variant: "outline" }), "w-full no-underline")}>
+              <T>Create an account</T>
             </Link>
           </CardFooter>
         </Card>
@@ -83,20 +108,34 @@ function AcceptInvitationPage() {
     <main className="flex min-h-dvh items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Organization invitation</CardTitle>
+          <CardTitle>
+            <T>Organization invitation</T>
+          </CardTitle>
           <CardDescription>
             {invitationQuery.data?.organizationName
-              ? `Join ${invitationQuery.data.organizationName} on Better Translate.`
-              : "Review your invitation below."}
+              ? (
+                  <T context="accept-invitation-organization-name">
+                    Join <Var organizationName={invitationQuery.data.organizationName} /> on Better Translate.
+                  </T>
+                )
+              : (
+                  <T>Review your invitation below.</T>
+                )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {invitationQuery.isPending && <p className="text-sm text-muted-foreground">Loading invitation…</p>}
+          {invitationQuery.isPending && (
+            <p className="text-sm text-muted-foreground">
+              <T>Loading invitation…</T>
+            </p>
+          )}
           {invitationQuery.isError && (
             <Alert variant="destructive">
               <AlertCircleIcon />
-              <AlertTitle>Could not load invitation</AlertTitle>
-              <AlertDescription>{invErr ?? "Something went wrong."}</AlertDescription>
+              <AlertTitle>
+                <T>Could not load invitation</T>
+              </AlertTitle>
+              <AlertDescription>{invErr ?? t("Something went wrong.")}</AlertDescription>
             </Alert>
           )}
         </CardContent>
@@ -106,13 +145,23 @@ function AcceptInvitationPage() {
             disabled={invitationQuery.isPending || !invitationQuery.data || acceptMutation.isPending}
             onClick={() => acceptMutation.mutate()}
           >
-            {acceptMutation.isPending ? "Accepting…" : "Accept invitation"}
+            {acceptMutation.isPending ? <T>Accepting…</T> : <T>Accept invitation</T>}
           </Button>
-          <Link to="/dashboard" className="text-center text-sm text-muted-foreground underline-offset-4 hover:underline">
-            Back to dashboard
+          <Link to="/dashboard" search={{ locale }} className="text-center text-sm text-muted-foreground underline-offset-4 hover:underline">
+            <T>Back to dashboard</T>
           </Link>
         </CardFooter>
       </Card>
     </main>
+  )
+}
+
+function AcceptInvitationRoute() {
+  const { messages } = Route.useRouteContext()
+
+  return (
+    <TranslateProvider messages={messages}>
+      <AcceptInvitationPage />
+    </TranslateProvider>
   )
 }
