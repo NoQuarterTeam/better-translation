@@ -22,11 +22,11 @@ export const Route = createFileRoute("/_auth/reset-password")({
     meta: [
       {
         title:
-          match.search.locale === "nl"
+          match.context.locale === "nl"
             ? "Wachtwoord resetten · Better Translate"
-            : match.search.locale === "fr"
+            : match.context.locale === "fr"
               ? "Reinitialiser le mot de passe · Better Translate"
-              : match.search.locale === "es"
+              : match.context.locale === "es"
                 ? "Restablecer contrasena · Better Translate"
                 : "Reset password · Better Translate",
       },
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_auth/reset-password")({
 
 function ResetPasswordPage() {
   const navigate = Route.useNavigate()
-  const { locale, token, error } = Route.useSearch()
+  const { token, error } = Route.useSearch()
   const t = useT()
   const [apiError, setApiError] = useState<string | null>(null)
 
@@ -75,12 +75,12 @@ function ResetPasswordPage() {
           onSuccess: async () => {
             const session = await authClient.getSession()
             if (session.data?.session) {
-              void navigate({ to: "/dashboard", search: { locale } })
+              void navigate({ to: "/dashboard" })
               return
             }
 
             toast.success(t("Password has been reset"))
-            void navigate({ to: "/sign-in", search: { locale } })
+            void navigate({ to: "/sign-in" })
           },
         },
       )
@@ -119,7 +119,14 @@ function ResetPasswordPage() {
             </form.AppField>
 
             <form.AppField name="confirmPassword">
-              {(field) => <field.TextField label={t("Confirm password")} type="password" autoComplete="new-password" placeholder="••••••••" />}
+              {(field) => (
+                <field.TextField
+                  label={t("Confirm password")}
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                />
+              )}
             </form.AppField>
 
             <form.SubmitButton disabled={!token}>
@@ -145,7 +152,7 @@ function ResetPasswordPage() {
       <CardFooter className="flex flex-col gap-2 border-t pt-4">
         <p className="text-center text-sm text-muted-foreground">
           <T>Need a new link?</T>{" "}
-          <Link to="/forgot-password" search={{ locale }} className="text-primary underline-offset-4 hover:underline">
+          <Link to="/forgot-password" className="text-primary underline-offset-4 hover:underline">
             <T>Request password reset</T>
           </Link>
         </p>

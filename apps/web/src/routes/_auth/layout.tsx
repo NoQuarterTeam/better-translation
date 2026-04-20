@@ -1,37 +1,23 @@
-import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, Outlet, redirect, useRouter } from "@tanstack/react-router"
 
-import { getRouteMessages } from "@better-translate/vite/runtime"
-import { TranslateProvider, useT } from "@better-translate/vite/react"
+import { useT } from "@better-translate/vite/react"
 
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 
-import { localeSearchSchema } from "../-locale"
+import { type AppLocale, setLocale } from "../-locale"
 import { getAuthSessionFn } from "./-data"
 
 export const Route = createFileRoute("/_auth")({
-  validateSearch: localeSearchSchema,
-  beforeLoad: async ({ search }) => {
+  beforeLoad: async () => {
     const session = await getAuthSessionFn()
-    if (session?.user) throw redirect({ to: "/dashboard", search: { locale: search.locale } })
-
-    return { messages: await getRouteMessages(search.locale ?? "en") }
+    if (session?.user) throw redirect({ to: "/dashboard" })
   },
   component: AuthLayout,
 })
 
 function AuthLayout() {
-  const { messages } = Route.useRouteContext()
-
-  return (
-    <TranslateProvider messages={messages}>
-      <AuthLayoutContent />
-    </TranslateProvider>
-  )
-}
-
-function AuthLayoutContent() {
-  const navigate = useNavigate()
-  const search = Route.useSearch()
+  const { locale } = Route.useRouteContext()
+  const router = useRouter()
   const t = useT()
 
   return (
@@ -40,12 +26,10 @@ function AuthLayoutContent() {
         <NativeSelect
           aria-label={t("Select locale")}
           size="sm"
-          value={search.locale ?? "en"}
+          value={locale}
           onChange={(e) => {
-            void navigate({
-              to: ".",
-              search: (prev) => ({ ...prev, locale: e.target.value as "en" | "nl" | "fr" | "es" }),
-            })
+            setLocale(e.target.value as AppLocale)
+            void router.invalidate()
           }}
         >
           <NativeSelectOption value="en">English</NativeSelectOption>

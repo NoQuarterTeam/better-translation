@@ -7,11 +7,11 @@ export const Route = createFileRoute("/dashboard/")({
     meta: [
       {
         title:
-          match.search.locale === "nl"
+          match.context.locale === "nl"
             ? "Overzicht · Better Translate"
-            : match.search.locale === "fr"
+            : match.context.locale === "fr"
               ? "Apercu · Better Translate"
-              : match.search.locale === "es"
+              : match.context.locale === "es"
                 ? "Resumen · Better Translate"
                 : "Overview · Better Translate",
       },

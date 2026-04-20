@@ -9,12 +9,7 @@ type Props = {
   organizationName: string
 }
 
-export function OrganizationInviteEmail({
-  firstName = "there",
-  inviteUrl,
-  inviterName,
-  organizationName,
-}: Props) {
+export function OrganizationInviteEmail({ firstName = "there", inviteUrl, inviterName, organizationName }: Props) {
   return (
     <Layout preview={`Join ${organizationName} on Better Translate`}>
       <Container className="mx-auto max-w-xl rounded-lg border border-neutral-200 px-8 py-10">

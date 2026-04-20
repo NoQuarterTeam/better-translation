@@ -15,7 +15,7 @@ export default defineConfig({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
       scan: { roots: ["src"] },
-      storage: { type: "local", dir: "assets/locales" },
+      storage: { type: "local", dir: "src/lib/bt" },
       async translate(messages, locale) {
         const result: Record<string, string> = {}
 
@@ -48,9 +48,7 @@ export default defineConfig({
       },
     }),
     // devtools(),
-    nitro({
-      serverAssets: [{ baseName: "locales", dir: "./assets/locales", pattern: "*.json" }],
-    }),
+    nitro(),
     tailwindcss(),
     tanstackStart({
       importProtection: { client: { files: ["**/*.server.*", "**/server/**"] } },

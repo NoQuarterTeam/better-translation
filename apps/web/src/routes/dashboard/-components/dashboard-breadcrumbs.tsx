@@ -12,11 +12,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 
-type DashboardBreadcrumbsProps = {
-  locale?: string
-}
-
-export function DashboardBreadcrumbs({ locale }: DashboardBreadcrumbsProps) {
+export function DashboardBreadcrumbs() {
   const t = useT()
   const matchesWithCrumbs = useMatches({
     select: (matches) => matches.filter((match) => isMatch(match, "loaderData.crumb")),
@@ -26,7 +22,7 @@ export function DashboardBreadcrumbs({ locale }: DashboardBreadcrumbsProps) {
     <Breadcrumb>
       <BreadcrumbList className="flex-nowrap sm:flex-wrap">
         <BreadcrumbItem className="hidden min-w-0 md:block">
-          <BreadcrumbLink className="max-w-[100px] truncate sm:max-w-none" render={<Link to="/dashboard" search={{ locale }} />}>
+          <BreadcrumbLink className="max-w-[100px] truncate sm:max-w-none" render={<Link to="/dashboard" />}>
             {t("Dashboard")}
           </BreadcrumbLink>
         </BreadcrumbItem>
@@ -41,7 +37,7 @@ export function DashboardBreadcrumbs({ locale }: DashboardBreadcrumbsProps) {
               ) : (
                 <BreadcrumbLink
                   className="max-w-[100px] truncate sm:max-w-none"
-                  render={<Link to={match.loaderData?.crumb.url} search={{ locale }} />}
+                  render={<Link to={match.loaderData?.crumb.url} />}
                 >
                   {match.loaderData?.crumb.label ? t(match.loaderData.crumb.label) : null}
                 </BreadcrumbLink>

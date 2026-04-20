@@ -362,67 +362,6 @@ const messages = await getMessages("nl", {
 
 For local storage, `getMessages()` prefers the plugin's bundled virtual-module payload and falls back to the locale JSON files on disk when needed.
 
-### Nitro Runtime
-
-For Nitro, the recommended setup is to emit locale files into `assets/locales`, which Nitro bundles by default:
-
-```ts
-import { nitro } from "nitro/vite"
-import { betterTranslatePlugin } from "@better-translate/vite"
-
-export default {
-  plugins: [
-    betterTranslatePlugin({
-      locales: ["en", "nl", "fr"],
-      defaultLocale: "en",
-      storage: { type: "local", dir: "assets/locales" },
-    }),
-    nitro(),
-  ],
-}
-```
-
-Then load messages with the Nitro helper:
-
-```ts
-import { getNitroMessages } from "@better-translate/vite/nitro"
-
-const messages = await getNitroMessages("nl")
-```
-
-If you prefer a custom directory, keep your locale files wherever you want, register that directory with Nitro `serverAssets`, and pass the custom mount name to `getNitroMessages()`:
-
-```ts
-nitro({
-  serverAssets: [{ baseName: "locales", dir: "./locales", pattern: "*.json" }],
-})
-```
-
-```ts
-const messages = await getNitroMessages("nl", { mount: "locales" })
-```
-
-Typical sources for that locale are:
-
-- route params
-- search params
-- cookies
-- headers
-- session data
-
-Example:
-
-```ts
-import { createServerFn } from "@tanstack/react-start"
-import { getNitroMessages } from "@better-translate/vite/nitro"
-
-export const getTranslateMessagesFn = createServerFn({ method: "GET" }).handler(async () => {
-  const locale = "nl"
-
-  return getNitroMessages(locale)
-})
-```
-
 ### Client-Side Fetch From `public/` Or A CDN
 
 If your app does not have a server runtime, or you want to load translations directly in the browser, fetch the locale JSON yourself and pass the result to `TranslateProvider`.
@@ -616,18 +555,6 @@ const messages = await getMessages("en")
 
 By default, `getMessages()` reads the runtime metadata emitted by the plugin, then loads the matching locale through the plugin's internal virtual module when available, with a filesystem fallback for non-Vite runtime contexts.
 
-### `getNitroMessages()`
-
-Loads the flattened message map for one locale from Nitro server assets:
-
-```ts
-import { getNitroMessages } from "@better-translate/vite/nitro"
-
-const messages = await getNitroMessages("en")
-```
-
-Use `storage: { type: "local", dir: "assets/locales" }` in your plugin config for the default Nitro path.
-
 ### `createTranslator()`
 
 Creates lightweight server helpers:
@@ -699,7 +626,7 @@ It also keeps a private metadata manifest at `locales/.bt-manifest.json`:
 
 For local storage, the plugin also writes runtime metadata for server helpers at `locales/.bt-runtime.json`.
 
-At runtime, `getMessages()` returns the flat locale map through the plugin's bundled virtual module when available, with filesystem fallback support, and `getNitroMessages()` reads the same shape from Nitro server assets.
+At runtime, `getMessages()` returns the flat locale map through the plugin's bundled virtual module when available, with filesystem fallback support.
 
 ## Important Notes
 
@@ -710,8 +637,6 @@ At runtime, `getMessages()` returns the flat locale map through the plugin's bun
 - In local mode, locale JSON files are committed in the repo and loaded one locale at a time.
 - Client-only apps can fetch locale JSON from `public/` or a CDN and pass the result directly to `TranslateProvider`.
 - `getMessages()` reads generated runtime metadata so you usually do not need to repeat the locale directory in server code, and it bundles cleanly into Vite SSR builds without app-side glob imports.
-- For Nitro, the simplest setup is `storage: { type: "local", dir: "assets/locales" }` plus `getNitroMessages()`.
-- Custom Nitro directories still work through `serverAssets` and `getNitroMessages(..., { mount })`.
 - In local mode, production builds fail if any non-default locale JSON entry is missing.
 - Hosted storage is not fully implemented yet, so local storage is the recommended path for now.
 
@@ -720,7 +645,7 @@ At runtime, `getMessages()` returns the flat locale map through the plugin's bun
 1. Add the plugin to `vite.config.ts`.
 2. Configure `locales`, `defaultLocale`, and local storage.
 3. Mark text with `t()`, `<T>`, or `msg()`.
-4. Load one locale with `getMessages(locale)` on the server, `getNitroMessages(locale)` on Nitro, or fetch the locale JSON in the browser.
+4. Load one locale with `getMessages(locale)` on the server or fetch the locale JSON in the browser.
 5. Wrap your UI in `TranslateProvider`.
 6. Use `useT()`, `T`, `Var`, `createTranslator()`, and `msg()` where appropriate.
 7. Let the plugin write locale JSON files in dev and call your custom translator for missing entries.

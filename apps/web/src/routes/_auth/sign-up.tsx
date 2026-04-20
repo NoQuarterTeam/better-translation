@@ -15,11 +15,11 @@ export const Route = createFileRoute("/_auth/sign-up")({
     meta: [
       {
         title:
-          match.search.locale === "nl"
+          match.context.locale === "nl"
             ? "Registreren · Better Translate"
-            : match.search.locale === "fr"
+            : match.context.locale === "fr"
               ? "S'inscrire · Better Translate"
-              : match.search.locale === "es"
+              : match.context.locale === "es"
                 ? "Crear cuenta · Better Translate"
                 : "Sign up · Better Translate",
       },
@@ -31,7 +31,6 @@ const MIN_PASSWORD = 8
 
 function SignUpPage() {
   const navigate = Route.useNavigate()
-  const { locale } = Route.useSearch()
   const t = useT()
   const [apiError, setApiError] = useState<string | null>(null)
 
@@ -46,7 +45,10 @@ function SignUpPage() {
       onSubmit: z
         .object({
           email: z.email().trim().toLowerCase(),
-          name: z.string().trim().min(1, { error: t("Name is required") }),
+          name: z
+            .string()
+            .trim()
+            .min(1, { error: t("Name is required") }),
           password: z.string().min(MIN_PASSWORD),
           confirmPassword: z.string().min(1, { error: t("Confirm password is required") }),
         })
@@ -71,7 +73,7 @@ function SignUpPage() {
           },
           onSuccess: () => {
             toast.success(t("Account created"), { description: t("Please check your email for a verification link.") })
-            void navigate({ to: "/verify-email", search: { email: value.email.trim(), locale } })
+            void navigate({ to: "/verify-email", search: { email: value.email.trim() } })
           },
         },
       )
@@ -120,7 +122,14 @@ function SignUpPage() {
             </form.AppField>
 
             <form.AppField name="confirmPassword">
-              {(field) => <field.TextField label={t("Confirm password")} type="password" autoComplete="new-password" placeholder="••••••••" />}
+              {(field) => (
+                <field.TextField
+                  label={t("Confirm password")}
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                />
+              )}
             </form.AppField>
 
             <form.SubmitButton className="w-full">
@@ -133,7 +142,7 @@ function SignUpPage() {
       <CardFooter className="flex flex-col gap-2 border-t pt-4">
         <p className="text-center text-sm text-muted-foreground">
           <T>Already have an account?</T>{" "}
-          <Link to="/sign-in" search={{ locale }} className="text-primary underline-offset-4 hover:underline">
+          <Link to="/sign-in" className="text-primary underline-offset-4 hover:underline">
             <T>Sign in</T>
           </Link>
         </p>

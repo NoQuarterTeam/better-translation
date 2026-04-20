@@ -20,11 +20,11 @@ export const Route = createFileRoute("/_auth/sign-in")({
     meta: [
       {
         title:
-          match.search.locale === "nl"
+          match.context.locale === "nl"
             ? "Aanmelden · Better Translate"
-            : match.search.locale === "fr"
+            : match.context.locale === "fr"
               ? "Se connecter · Better Translate"
-              : match.search.locale === "es"
+              : match.context.locale === "es"
                 ? "Iniciar sesion · Better Translate"
                 : "Sign in · Better Translate",
       },
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_auth/sign-in")({
 
 function SignInPage() {
   const navigate = Route.useNavigate()
-  const { locale, redirect } = Route.useSearch()
+  const { redirect } = Route.useSearch()
   const t = useT()
 
   const [apiError, setApiError] = useState<string | null>(null)
@@ -70,7 +70,7 @@ function SignInPage() {
               window.location.assign(redirect)
               return
             }
-            void navigate({ to: "/dashboard", search: { locale } })
+            void navigate({ to: "/dashboard" })
           },
         },
       )
@@ -120,12 +120,12 @@ function SignInPage() {
       <CardFooter className="flex flex-col gap-3 border-t pt-4">
         <p className="text-center text-sm text-muted-foreground">
           <T>Need a new account?</T>{" "}
-          <Link to="/sign-up" search={{ locale }} className="text-primary underline-offset-4 hover:underline">
+          <Link to="/sign-up" className="text-primary underline-offset-4 hover:underline">
             <T>Sign up</T>
           </Link>
         </p>
         <div className="flex w-full items-center justify-center text-sm text-muted-foreground">
-          <Link to="/forgot-password" search={{ locale }} className="text-primary underline-offset-4 hover:underline">
+          <Link to="/forgot-password" className="text-primary underline-offset-4 hover:underline">
             <T>Forgot your password?</T>
           </Link>
         </div>

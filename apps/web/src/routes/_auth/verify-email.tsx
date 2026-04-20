@@ -19,11 +19,11 @@ export const Route = createFileRoute("/_auth/verify-email")({
     meta: [
       {
         title:
-          match.search.locale === "nl"
+          match.context.locale === "nl"
             ? "Bevestig je e-mailadres · Better Translate"
-            : match.search.locale === "fr"
+            : match.context.locale === "fr"
               ? "Verifiez votre e-mail · Better Translate"
-              : match.search.locale === "es"
+              : match.context.locale === "es"
                 ? "Verifica tu correo electronico · Better Translate"
                 : "Verify your email · Better Translate",
       },
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_auth/verify-email")({
 })
 
 function VerifyEmailPage() {
-  const { email, locale } = Route.useSearch()
+  const { email } = Route.useSearch()
   const t = useT()
   const [apiError, setApiError] = useState<string | null>(null)
 
@@ -98,7 +98,7 @@ function VerifyEmailPage() {
         <Button type="button" variant="outline" onClick={() => void handleResend()} disabled={!canResend || isPending}>
           {isPending ? <T>Resending…</T> : <T>Resend email</T>}
         </Button>
-        <Link to="/sign-in" search={{ locale }} className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+        <Link to="/sign-in" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
           <T>Back to sign in</T>
         </Link>
       </CardFooter>

@@ -17,11 +17,11 @@ export const Route = createFileRoute("/_auth/forgot-password")({
     meta: [
       {
         title:
-          match.search.locale === "nl"
+          match.context.locale === "nl"
             ? "Wachtwoord vergeten · Better Translate"
-            : match.search.locale === "fr"
+            : match.context.locale === "fr"
               ? "Mot de passe oublie · Better Translate"
-              : match.search.locale === "es"
+              : match.context.locale === "es"
                 ? "Olvide mi contrasena · Better Translate"
                 : "Forgot password · Better Translate",
       },
@@ -30,7 +30,6 @@ export const Route = createFileRoute("/_auth/forgot-password")({
 })
 
 function ForgotPasswordPage() {
-  const { locale } = Route.useSearch()
   const t = useT()
   const [apiError, setApiError] = useState<string | null>(null)
   const [emailSent, setEmailSent] = useState(false)
@@ -94,10 +93,14 @@ function ForgotPasswordPage() {
               }}
             >
               <form.AppField name="email">
-                {(field) => <field.TextField label={t("Email")} type="email" autoComplete="email" placeholder="you@example.com" />}
+                {(field) => (
+                  <field.TextField label={t("Email")} type="email" autoComplete="email" placeholder="you@example.com" />
+                )}
               </form.AppField>
 
-              <form.SubmitButton>{(isSubmitting) => (isSubmitting ? <T>Sending link…</T> : <T>Send reset link</T>)}</form.SubmitButton>
+              <form.SubmitButton>
+                {(isSubmitting) => (isSubmitting ? <T>Sending link…</T> : <T>Send reset link</T>)}
+              </form.SubmitButton>
               <form.FormError>{apiError}</form.FormError>
             </form>
           </form.AppForm>
@@ -106,7 +109,7 @@ function ForgotPasswordPage() {
       <CardFooter className="border-t pt-4">
         <p className="text-sm text-muted-foreground">
           <T>Remembered it?</T>{" "}
-          <Link to="/sign-in" search={{ locale }} className="text-primary underline-offset-4 hover:underline">
+          <Link to="/sign-in" className="text-primary underline-offset-4 hover:underline">
             <T>Back to sign in</T>
           </Link>
         </p>

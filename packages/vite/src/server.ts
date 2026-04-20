@@ -42,10 +42,7 @@ export interface GetMessagesOptions {
 }
 
 /** Loads the flattened message map for a locale from the configured storage backend. */
-export async function getMessages(
-  locale: string,
-  options?: GetMessagesOptions,
-): Promise<Record<string, string>> {
+export async function getMessages(locale: string, options?: GetMessagesOptions): Promise<Record<string, string>> {
   try {
     const bundledRuntime = await loadBundledRuntime()
     const runtimeConfig = bundledRuntime?.runtimeConfig ?? readRuntimeConfig(options?.storage)
@@ -135,7 +132,9 @@ function resolveStorage(runtimeConfig: BetterTranslateRuntimeConfig | null, over
 }
 
 function getLocalStorageDir(runtimeConfig: BetterTranslateRuntimeConfig | null) {
-  return runtimeConfig?.storage.type === "local" ? runtimeConfig.storage.dir ?? DEFAULT_LOCAL_OUTPUT_DIR : DEFAULT_LOCAL_OUTPUT_DIR
+  return runtimeConfig?.storage.type === "local"
+    ? (runtimeConfig.storage.dir ?? DEFAULT_LOCAL_OUTPUT_DIR)
+    : DEFAULT_LOCAL_OUTPUT_DIR
 }
 
 function normalizeMessages(input: RuntimeMessages | LocaleFile): RuntimeMessages {

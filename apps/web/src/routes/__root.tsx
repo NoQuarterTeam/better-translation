@@ -1,17 +1,26 @@
 import type { QueryClient } from "@tanstack/react-query"
 import { createRootRouteWithContext, HeadContent, Outlet, ScriptOnce, Scripts } from "@tanstack/react-router"
 
+import { TranslateProvider } from "@better-translate/vite/react"
+
 import { DefaultError } from "@/components/default-error"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
+import { loadMessages } from "@/lib/bt/load-messages"
 
 import appCss from "../styles.css?url"
+import { getLocale } from "./-locale"
 
 interface MyRouterContext {
   queryClient: QueryClient
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+  beforeLoad: async () => {
+    const locale = getLocale()
+    const messages = await loadMessages(locale)
+    return { locale, messages }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -30,14 +39,24 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       <DefaultError {...p} />
     </div>
   ),
-  component: Outlet,
+  component: RootComponent,
   shellComponent: RootDocument,
 })
 
+function RootComponent() {
+  const { messages } = Route.useRouteContext()
+  return (
+    <TranslateProvider messages={messages}>
+      <Outlet />
+    </TranslateProvider>
+  )
+}
+
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const { locale } = Route.useRouteContext()
   return (
     <ThemeProvider>
-      <html lang="en" suppressHydrationWarning>
+      <html lang={locale} suppressHydrationWarning>
         <head>
           <HeadContent />
         </head>

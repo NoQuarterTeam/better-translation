@@ -25,11 +25,7 @@ function createInitials(user: Pick<User, "name">) {
   )
 }
 
-type NavUserProps = {
-  locale?: string
-}
-
-export function NavUser({ locale }: NavUserProps) {
+export function NavUser() {
   const navigate = useNavigate()
   const t = useT()
   const { data: session, isPending } = authClient.useSession()
@@ -72,7 +68,7 @@ export function NavUser({ locale }: NavUserProps) {
             void authClient.signOut({
               fetchOptions: {
                 onSuccess: () => {
-                  void navigate({ to: "/sign-in", search: { locale } })
+                  void navigate({ to: "/sign-in" })
                 },
               },
             })

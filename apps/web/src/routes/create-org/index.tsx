@@ -1,34 +1,30 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
-
-import { getRouteMessages } from "@better-translate/vite/runtime"
-import { T, TranslateProvider, useT } from "@better-translate/vite/react"
 import * as z from "zod"
+
+import { T, useT } from "@better-translate/vite/react"
 
 import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { authClient } from "@/lib/auth/client"
 
-import { localeSearchSchema } from "../-locale"
 import { listUserOrganizationsFn } from "./-data"
 
 export const Route = createFileRoute("/create-org/")({
-  validateSearch: localeSearchSchema,
-  beforeLoad: async ({ search }) => {
+  beforeLoad: async () => {
     const organizations = await listUserOrganizationsFn()
-    if (organizations.length > 0) throw redirect({ to: "/dashboard", search: { locale: search.locale } })
-    return { messages: await getRouteMessages(search.locale ?? "en") }
+    if (organizations.length > 0) throw redirect({ to: "/dashboard" })
   },
-  component: CreateOrgRoute,
+  component: CreateOrgPage,
   head: ({ match }) => ({
     meta: [
       {
         title:
-          match.search.locale === "nl"
+          match.context.locale === "nl"
             ? "Organisatie maken · Better Translate"
-            : match.search.locale === "fr"
+            : match.context.locale === "fr"
               ? "Creer une organisation · Better Translate"
-              : match.search.locale === "es"
+              : match.context.locale === "es"
                 ? "Crear organizacion · Better Translate"
                 : "Create organization · Better Translate",
       },
@@ -55,7 +51,6 @@ const slugSchema = z
 
 function CreateOrgPage() {
   const navigate = useNavigate()
-  const { locale } = Route.useSearch()
   const t = useT()
   const [apiError, setApiError] = useState<string | null>(null)
 
@@ -63,7 +58,11 @@ function CreateOrgPage() {
     defaultValues: { name: "", slug: "" },
     validators: {
       onSubmit: z.object({
-        name: z.string().trim().min(1, { error: t("Organization name is required") }).max(120),
+        name: z
+          .string()
+          .trim()
+          .min(1, { error: t("Organization name is required") })
+          .max(120),
         slug: z.string(),
       }),
     },
@@ -82,7 +81,7 @@ function CreateOrgPage() {
             setApiError(error.message ?? t("Could not create organization"))
           },
           onSuccess: () => {
-            void navigate({ to: "/dashboard", search: { locale } })
+            void navigate({ to: "/dashboard" })
           },
         },
       )
@@ -110,7 +109,9 @@ function CreateOrgPage() {
               }}
             >
               <form.AppField name="name">
-                {(field) => <field.TextField label={t("Organization name")} placeholder="Acme Localization" autoComplete="organization" />}
+                {(field) => (
+                  <field.TextField label={t("Organization name")} placeholder="Acme Localization" autoComplete="organization" />
+                )}
               </form.AppField>
               <form.AppField name="slug">
                 {(field) => (
@@ -135,15 +136,5 @@ function CreateOrgPage() {
         </CardFooter>
       </Card>
     </main>
-  )
-}
-
-function CreateOrgRoute() {
-  const { messages } = Route.useRouteContext()
-
-  return (
-    <TranslateProvider messages={messages}>
-      <CreateOrgPage />
-    </TranslateProvider>
   )
 }

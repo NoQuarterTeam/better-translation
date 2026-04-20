@@ -60,7 +60,11 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
 
     JSXElement(node) {
       const opening = node.openingElement
-      if (opening.name.type === "JSXIdentifier" && opening.name.name === "Var" && (opening.attributes as Array<unknown>).length === 0) {
+      if (
+        opening.name.type === "JSXIdentifier" &&
+        opening.name.name === "Var" &&
+        (opening.attributes as Array<unknown>).length === 0
+      ) {
         const identifier = getVarChildIdentifier(node.children)
         if (identifier) {
           edits.push({
@@ -320,10 +324,7 @@ function extractJSXChildren(children: Array<JSXChild>): ExtractionResult {
   return { message, placeholders, valid: message.length > 0 }
 }
 
-function getVarPlaceholderName(node: {
-  openingElement: { attributes: Array<unknown> }
-  children: Array<JSXChild>
-}) {
+function getVarPlaceholderName(node: { openingElement: { attributes: Array<unknown> }; children: Array<JSXChild> }) {
   const explicitName = getJSXStringAttribute(node.openingElement.attributes as Array<unknown>, "name")
   if (explicitName) return explicitName
 

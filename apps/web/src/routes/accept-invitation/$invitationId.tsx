@@ -3,8 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { AlertCircleIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { getRouteMessages } from "@better-translate/vite/runtime"
-import { T, TranslateProvider, useT, Var } from "@better-translate/vite/react"
+import { T, useT, Var } from "@better-translate/vite/react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -12,22 +11,19 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { authClient } from "@/lib/auth/client"
 import { cn } from "@/lib/utils"
 
-import { localeSearchSchema } from "../-locale"
 import { getOrganizationInvitationFn } from "./-data"
 
 export const Route = createFileRoute("/accept-invitation/$invitationId")({
-  validateSearch: localeSearchSchema,
-  beforeLoad: async ({ search }) => ({ messages: await getRouteMessages(search.locale ?? "en") }),
-  component: AcceptInvitationRoute,
+  component: AcceptInvitationPage,
   head: ({ match }) => ({
     meta: [
       {
         title:
-          match.search.locale === "nl"
+          match.context.locale === "nl"
             ? "Uitnodiging accepteren · Better Translate"
-            : match.search.locale === "fr"
+            : match.context.locale === "fr"
               ? "Accepter l'invitation · Better Translate"
-              : match.search.locale === "es"
+              : match.context.locale === "es"
                 ? "Aceptar invitacion · Better Translate"
                 : "Accept invitation · Better Translate",
       },
@@ -37,7 +33,6 @@ export const Route = createFileRoute("/accept-invitation/$invitationId")({
 
 function AcceptInvitationPage() {
   const { invitationId } = Route.useParams()
-  const { locale } = Route.useSearch()
   const navigate = useNavigate()
   const t = useT()
   const { data: session, isPending: sessionPending } = authClient.useSession()
@@ -56,7 +51,7 @@ function AcceptInvitationPage() {
         return
       }
       toast.success(t("You’re in"))
-      void navigate({ to: "/dashboard", search: { locale } })
+      void navigate({ to: "/dashboard" })
     },
     onError: (error: Error) => {
       toast.error(t("Could not accept invitation"), { description: error.message })
@@ -88,12 +83,12 @@ function AcceptInvitationPage() {
           <CardFooter className="flex flex-col gap-2 border-t pt-4">
             <Link
               to="/sign-in"
-              search={{ locale, redirect: `/accept-invitation/${invitationId}?locale=${locale ?? "en"}` }}
+              search={{ redirect: `/accept-invitation/${invitationId}` }}
               className={cn(buttonVariants(), "w-full no-underline")}
             >
               <T>Sign in</T>
             </Link>
-            <Link to="/sign-up" search={{ locale }} className={cn(buttonVariants({ variant: "outline" }), "w-full no-underline")}>
+            <Link to="/sign-up" className={cn(buttonVariants({ variant: "outline" }), "w-full no-underline")}>
               <T>Create an account</T>
             </Link>
           </CardFooter>
@@ -112,15 +107,13 @@ function AcceptInvitationPage() {
             <T>Organization invitation</T>
           </CardTitle>
           <CardDescription>
-            {invitationQuery.data?.organizationName
-              ? (
-                  <T context="accept-invitation-organization-name">
-                    Join <Var organizationName={invitationQuery.data.organizationName} /> on Better Translate.
-                  </T>
-                )
-              : (
-                  <T>Review your invitation below.</T>
-                )}
+            {invitationQuery.data?.organizationName ? (
+              <T context="accept-invitation-organization-name">
+                Join <Var organizationName={invitationQuery.data.organizationName} /> on Better Translate.
+              </T>
+            ) : (
+              <T>Review your invitation below.</T>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -147,21 +140,11 @@ function AcceptInvitationPage() {
           >
             {acceptMutation.isPending ? <T>Accepting…</T> : <T>Accept invitation</T>}
           </Button>
-          <Link to="/dashboard" search={{ locale }} className="text-center text-sm text-muted-foreground underline-offset-4 hover:underline">
+          <Link to="/dashboard" className="text-center text-sm text-muted-foreground underline-offset-4 hover:underline">
             <T>Back to dashboard</T>
           </Link>
         </CardFooter>
       </Card>
     </main>
-  )
-}
-
-function AcceptInvitationRoute() {
-  const { messages } = Route.useRouteContext()
-
-  return (
-    <TranslateProvider messages={messages}>
-      <AcceptInvitationPage />
-    </TranslateProvider>
   )
 }
