@@ -342,25 +342,15 @@ betterTranslatePlugin({
 
 ### Server Runtime
 
-If your server needs one locale at a time, load it with `getMessages(locale)`.
-
-The helper reads generated runtime metadata automatically, and when the Vite plugin is active it also uses an internal virtual module so app code does not need any manual `import.meta.glob(...)` wiring:
+The plugin generates a typed `load-messages.ts` next to your locale JSON files. Import it directly from your server code:
 
 ```ts
-import { getMessages } from "@better-translate/vite/server"
+import { loadMessages } from "@/lib/bt/load-messages"
 
-const messages = await getMessages("nl")
+const messages = await loadMessages("nl")
 ```
 
-If needed, you can still override the storage settings explicitly:
-
-```ts
-const messages = await getMessages("nl", {
-  storage: { type: "local", dir: "locales" },
-})
-```
-
-For local storage, `getMessages()` prefers the plugin's bundled virtual-module payload and falls back to the locale JSON files on disk when needed.
+`loadMessages` statically imports each locale JSON file, so bundlers tree-shake unused locales and runtime lookups stay cheap.
 
 ### Client-Side Fetch From `public/` Or A CDN
 
@@ -543,17 +533,17 @@ For `storage: { type: "local" }`, production builds never call `translate()`. Th
 
 ## Server-Side Helpers
 
-### `getMessages()`
+### `loadMessages()`
 
-Loads the flattened message map for one locale:
+The plugin generates `load-messages.ts` next to your locale JSON files. Import it directly:
 
 ```ts
-import { getMessages } from "@better-translate/vite/server"
+import { loadMessages } from "@/lib/bt/load-messages"
 
-const messages = await getMessages("en")
+const messages = await loadMessages("en")
 ```
 
-By default, `getMessages()` reads the runtime metadata emitted by the plugin, then loads the matching locale through the plugin's internal virtual module when available, with a filesystem fallback for non-Vite runtime contexts.
+It statically imports each locale JSON file and returns the flattened message map.
 
 ### `createTranslator()`
 
@@ -597,7 +587,7 @@ With local storage, each runtime locale file is a flat message map:
 }
 ```
 
-It also keeps a private metadata manifest at `locales/.bt-manifest.json`:
+It also keeps a private metadata manifest at `locales/manifest.json`:
 
 ```json
 {
@@ -624,9 +614,7 @@ It also keeps a private metadata manifest at `locales/.bt-manifest.json`:
 }
 ```
 
-For local storage, the plugin also writes runtime metadata for server helpers at `locales/.bt-runtime.json`.
-
-At runtime, `getMessages()` returns the flat locale map through the plugin's bundled virtual module when available, with filesystem fallback support.
+For local storage, the plugin also writes runtime metadata at `locales/runtime.json` and a generated `load-messages.ts` for consuming locales on the server.
 
 ## Important Notes
 
@@ -636,7 +624,7 @@ At runtime, `getMessages()` returns the flat locale map through the plugin's bun
 - Missing translations can fall back to the source text in dev while locale JSON files are being filled.
 - In local mode, locale JSON files are committed in the repo and loaded one locale at a time.
 - Client-only apps can fetch locale JSON from `public/` or a CDN and pass the result directly to `TranslateProvider`.
-- `getMessages()` reads generated runtime metadata so you usually do not need to repeat the locale directory in server code, and it bundles cleanly into Vite SSR builds without app-side glob imports.
+- The generated `load-messages.ts` is typed with an `AppLocale` union and statically imports each locale JSON so bundlers tree-shake unused locales.
 - In local mode, production builds fail if any non-default locale JSON entry is missing.
 - Hosted storage is not fully implemented yet, so local storage is the recommended path for now.
 
@@ -645,7 +633,7 @@ At runtime, `getMessages()` returns the flat locale map through the plugin's bun
 1. Add the plugin to `vite.config.ts`.
 2. Configure `locales`, `defaultLocale`, and local storage.
 3. Mark text with `t()`, `<T>`, or `msg()`.
-4. Load one locale with `getMessages(locale)` on the server or fetch the locale JSON in the browser.
+4. Load one locale with `loadMessages(locale)` from the generated `load-messages.ts` or fetch the locale JSON in the browser.
 5. Wrap your UI in `TranslateProvider`.
 6. Use `useT()`, `T`, `Var`, `createTranslator()`, and `msg()` where appropriate.
 7. Let the plugin write locale JSON files in dev and call your custom translator for missing entries.

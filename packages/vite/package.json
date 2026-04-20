@@ -17,10 +17,6 @@
     "./server": {
       "import": "./dist/server.js",
       "types": "./dist/server.d.ts"
-    },
-    "./runtime": {
-      "import": "./dist/runtime.js",
-      "types": "./dist/runtime.d.ts"
     }
   },
   "scripts": {

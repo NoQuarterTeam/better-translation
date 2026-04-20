@@ -1,5 +1,4 @@
-export { betterTranslatePlugin } from "./plugin.js"
-export { getRouteMessages, getRouteRuntimeConfig } from "./runtime.js"
+export { betterTranslate } from "./plugin.js"
 export type {
   BetterTranslateHostedStorageOptions,
   BetterTranslateLocalStorageOptions,
