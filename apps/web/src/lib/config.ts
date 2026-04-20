@@ -10,5 +10,5 @@ export function getBaseUrl() {
   if (env.VERCEL_ENV === "preview") {
     return `https://${env.VERCEL_URL}`
   }
-  return `http://bt.localhost:1355`
+  return `http://bt.local:1355`
 }
