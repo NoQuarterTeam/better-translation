@@ -6,7 +6,7 @@ import dedent from "dedent"
 import { nitro } from "nitro/vite"
 import { defineConfig } from "vite-plus"
 
-import { betterTranslate } from "@better-translate/vite"
+import { betterTranslate } from "../../packages/vite/src"
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },

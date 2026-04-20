@@ -94,17 +94,6 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
 
   const resolvedTranslate = translate ?? (usesLocalStorage ? undefined : hostedTranslate)
 
-  function buildRuntimeMessages(locale: string): RuntimeMessages {
-    const messages: RuntimeMessages = {}
-    for (const [id, entry] of Object.entries(manifest)) {
-      messages[id] =
-        locale === defaultLocale
-          ? entry.defaultMessage
-          : (cache.entries[getCacheKey(id, locale)]?.translation ?? entry.defaultMessage)
-    }
-    return messages
-  }
-
   function buildMessageManifest(): MessageManifestFile {
     return Object.fromEntries(
       Object.entries(manifest).map(([id, entry]) => [
@@ -215,30 +204,39 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     writeFileSync(path, GITIGNORE_CONTENTS)
   }
 
-  function buildLocalLocaleMessages(locale: string): RuntimeMessages {
-    if (locale === defaultLocale) return buildRuntimeMessages(locale)
-
+  function buildLocalLocaleMessages(locale: string, options: { pruneOrphans: boolean }): RuntimeMessages {
     const existingMessages = readLocaleMessages(locale)
-    const messages: RuntimeMessages = {}
+    const messages: RuntimeMessages = options.pruneOrphans ? {} : { ...existingMessages }
+
+    if (locale === defaultLocale) {
+      for (const [id, entry] of Object.entries(manifest)) {
+        messages[id] = entry.defaultMessage
+      }
+      return messages
+    }
+
     for (const id of Object.keys(manifest)) {
+      if (messages[id]) continue
       const existingMessage = existingMessages[id]
       if (existingMessage) {
         messages[id] = existingMessage
         continue
       }
-
       const cachedMessage = cache.entries[getCacheKey(id, locale)]?.translation
       if (cachedMessage) messages[id] = cachedMessage
     }
     return messages
   }
 
-  function writeLocaleFilesToDisk() {
+  function writeLocaleFilesToDisk(options: { pruneOrphans: boolean } = { pruneOrphans: false }) {
     if (!usesLocalStorage) return
     const dir = getLocalesDirPath()
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     for (const locale of locales) {
-      writeFileSync(resolve(dir, `${locale}.json`), JSON.stringify(buildLocalLocaleMessages(locale), null, 2) + "\n")
+      writeFileSync(
+        resolve(dir, `${locale}.json`),
+        JSON.stringify(buildLocalLocaleMessages(locale, options), null, 2) + "\n",
+      )
     }
     writeLoadMessagesModule()
   }
@@ -357,6 +355,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
   }
 
   function syncFileMessages(file: string, messages: ExtractedMessage[]) {
+    const previousMessages = fileMessages.get(file) ?? []
     const nextEntries = groupMessagesById(messages)
     for (const [id, entry] of Object.entries(nextEntries)) {
       const existing = manifest[id]
@@ -379,7 +378,14 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     }
 
     if (messages.length > 0) fileMessages.set(file, messages)
-    return hadPreviousMessages || messages.length > 0
+    return {
+      manifestChanged:
+        previousMessages.length !== messages.length || previousMessages.some((message, index) => !isSameExtractedMessage(message, messages[index])),
+      localeMessagesChanged:
+        previousMessages.length !== messages.length ||
+        previousMessages.some((message, index) => !hasSameMessageShape(message, messages[index]!)),
+      hadPreviousMessages,
+    }
   }
 
   function toRootRelativePath(file: string) {
@@ -418,7 +424,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
         taggedTemplate: taggedTemplateMarkers,
         logging,
       })
-      const manifestChanged = syncFileMessages(
+      const syncResult = syncFileMessages(
         cleanId,
         analysis.messages.map((message) => ({
           ...message,
@@ -429,10 +435,14 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
         })),
       )
 
-      if (manifestChanged && isDev) {
-        writeLocaleFilesToDisk()
-        writePrivateManifest()
-        scheduleDevTranslation()
+      if (isDev) {
+        if (syncResult.localeMessagesChanged) {
+          writeLocaleFilesToDisk()
+          scheduleDevTranslation()
+        }
+        if (syncResult.manifestChanged) {
+          writePrivateManifest()
+        }
       }
 
       if (analysis.edits.length === 0) return
@@ -445,6 +455,8 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     async generateBundle() {
       if (usesLocalStorage) {
         writeRuntimeConfig()
+        writeLocaleFilesToDisk({ pruneOrphans: true })
+        writePrivateManifest()
         assertLocalBuildTranslationsComplete()
       } else {
         await translateMissingMessages()
@@ -536,6 +548,14 @@ function isSameSource(left: MessageSource, right: MessageSource) {
     left.marker === right.marker &&
     left.start === right.start &&
     left.end === right.end
+  )
+}
+
+function isSameExtractedMessage(left: ExtractedMessage, right?: ExtractedMessage) {
+  if (!right) return false
+  return (
+    hasSameMessageShape(left, right) &&
+    isSameSource(left.source, right.source)
   )
 }
 
