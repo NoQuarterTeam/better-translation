@@ -529,7 +529,7 @@ Guidelines for a good custom translator:
 - Return plain strings only.
 - Keep translations deterministic when possible so the cache stays useful.
 
-For `storage: { type: "local" }`, production builds are check-only. They never call `translate()` and never regenerate locale artifacts. Instead, they validate the committed locale JSON files and generated helper files, then fail the build if anything is missing or out of sync.
+For `storage: { type: "local" }`, production builds are check-only. They never call `translate()` and never regenerate locale artifacts. Instead, they validate the committed locale JSON files and committed generated helper files, then fail the build if anything is missing or out of sync.
 
 ## Server-Side Helpers
 
@@ -779,10 +779,12 @@ For `storage: { type: "local" }`, production builds do not call `translate()` an
 Instead, the plugin:
 
 1. rebuilds the manifest from source
-2. checks that committed generated files such as `manifest.json`, `runtime.json`, and `load-messages.ts` are present and up to date
+2. checks that committed generated files such as `runtime.json` and `load-messages.ts` are present and up to date
 3. checks that every committed locale file exists
 4. checks that every locale file has the expected ids
 5. checks that the default locale still matches the current source text
 6. fails the build if anything is missing, stale, or orphaned
+
+The private `manifest.json` is still generated for dev/debugging, but it is not required to be committed for production builds.
 
 That keeps production behavior predictable: either the committed locale artifacts are correct, or the build stops.

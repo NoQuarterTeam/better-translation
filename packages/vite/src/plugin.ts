@@ -229,7 +229,6 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     assertFileContents(getRuntimeConfigPath(root, localesDir), JSON.stringify(getRuntimeConfig(), null, 2) + "\n", "runtime config")
     assertFileContents(resolve(root, localesDir, LOAD_MESSAGES_FILENAME), buildLoadMessagesModule(), "load-messages module")
     assertFileContents(resolve(root, localesDir, GITIGNORE_FILENAME), GITIGNORE_CONTENTS, "generated .gitignore")
-    assertFileContents(getPrivateManifestPath(), JSON.stringify(buildMessageManifest(), null, 2) + "\n", "manifest")
   }
 
   function buildLocalLocaleMessages(locale: string, options: { pruneOrphans: boolean }): RuntimeMessages {
