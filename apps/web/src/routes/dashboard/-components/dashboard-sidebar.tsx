@@ -1,6 +1,18 @@
 import { Link } from "@tanstack/react-router"
+import { LayoutIcon, UsersIcon } from "lucide-react"
 
-import { Sidebar, SidebarContent, SidebarGroup, SidebarHeader, useSidebar } from "@/components/ui/sidebar"
+import { T } from "@better-translate/vite/react"
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar"
 
 export function DashboardSidebar() {
   const { isMobile, setOpenMobile } = useSidebar()
@@ -21,7 +33,43 @@ export function DashboardSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup></SidebarGroup>
+        <SidebarGroup>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={
+                  <Link
+                    to="/dashboard"
+                    onClick={handleNavigationLinkClick}
+                    className="opacity-50 data-[status=active]:bg-muted data-[status=active]:opacity-100"
+                    activeOptions={{ exact: true, includeSearch: false }}
+                  />
+                }
+              >
+                <LayoutIcon />
+                <span>
+                  <T>Dashboard</T>
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={
+                  <Link
+                    to="/dashboard/users"
+                    onClick={handleNavigationLinkClick}
+                    className="opacity-50 data-[status=active]:bg-muted data-[status=active]:opacity-100"
+                  />
+                }
+              >
+                <UsersIcon />
+                <span>
+                  <T>Users</T>
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   )

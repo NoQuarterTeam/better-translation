@@ -46,7 +46,7 @@ If you are using the React helpers, make sure `react` is installed in your app.
 
 At build time and during dev, the plugin:
 
-1. Scans your source files for translation markers such as `t("...")`, `<T>...</T>`, and `msg("id")\`...\``.
+1. Scans all matching files under your configured roots for translation markers such as `t("...")`, `<T>...</T>`, and `msg("id")\`...\``.
 2. Extracts the default message, placeholders, source locations, and optional context.
 3. Generates a stable message id for each entry.
 4. Writes locale JSON files for every configured locale.
@@ -58,11 +58,11 @@ At build time and during dev, the plugin:
 ```ts
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
-import { betterTranslatePlugin } from "@better-translate/vite"
+import { betterTranslate } from "@better-translate/vite"
 
 export default defineConfig({
   plugins: [
-    betterTranslatePlugin({
+    betterTranslate({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
       storage: { type: "local", dir: "locales" },
@@ -94,13 +94,13 @@ locales/en.json
 locales/nl.json
 locales/fr.json
 locales/es.json
-locales/.bt-manifest.json
+locales/manifest.json
 ```
 
 ## Basic Configuration
 
 ```ts
-betterTranslatePlugin({
+betterTranslate({
   locales: ["en", "nl"],
   defaultLocale: "en",
   cacheFile: ".cache/better-translate.json",
@@ -333,7 +333,7 @@ The first argument is a single locale code. You do not pass the whole `locales` 
 The full list of supported locales belongs in the plugin config:
 
 ```ts
-betterTranslatePlugin({
+betterTranslate({
   locales: ["en", "nl", "fr"],
   defaultLocale: "en",
   storage: { type: "local", dir: "locales" },
@@ -490,11 +490,11 @@ Each message includes:
 Example using your own API:
 
 ```ts
-import { betterTranslatePlugin } from "@better-translate/vite"
+import { betterTranslate } from "@better-translate/vite"
 
 export default {
   plugins: [
-    betterTranslatePlugin({
+    betterTranslate({
       locales: ["en", "nl"],
       defaultLocale: "en",
       storage: { type: "local", dir: "locales" },
@@ -637,3 +637,150 @@ For local storage, the plugin also writes runtime metadata at `locales/runtime.j
 5. Wrap your UI in `TranslateProvider`.
 6. Use `useT()`, `T`, `Var`, `createTranslator()`, and `msg()` where appropriate.
 7. Let the plugin write locale JSON files in dev and call your custom translator for missing entries.
+
+## Step-By-Step: How It Works
+
+This is the full local-storage flow from source code to translated UI.
+
+### 1. You configure the plugin
+
+You add `betterTranslate(...)` to your Vite config and tell it:
+
+- which locales exist
+- which locale is the default source language
+- which roots and file extensions should be scanned
+- where locale files should be written
+- whether missing translations should be auto-filled with `translate()`
+
+### 2. The plugin scans all matching files under your configured roots
+
+At startup, the plugin walks every matching file under the configured scan roots, not just files that Vite has already loaded into the module graph.
+
+That gives it a complete view of:
+
+- every extracted message id
+- every default message
+- every placeholder list
+- every source location
+
+This full scan is what lets the plugin build a stable manifest for the whole app instead of only the currently visited route.
+
+### 3. It extracts messages from translation markers
+
+The extractor looks for:
+
+- `t("...")` and similar configured call markers
+- `<T>...</T>` JSX blocks
+- `msg("id")\`...\`` tagged templates
+
+For each match it records:
+
+- the message id
+- the source-language text
+- optional context
+- placeholder names
+- source file and location metadata
+
+For static `<T>` elements, the plugin also injects an `id="..."` attribute into the source so runtime does not need to re-derive the id every time.
+
+### 4. It builds an in-memory manifest
+
+All extracted messages are grouped into a manifest keyed by message id.
+
+Each manifest entry stores the canonical shape of that message:
+
+- `defaultMessage`
+- `meta`
+- `placeholders`
+- `sources`
+
+If two different messages collide onto the same id but do not have the same shape, the plugin throws an error instead of silently picking one.
+
+### 5. It writes generated helper files
+
+In local mode, the plugin writes a few generated files alongside your locales:
+
+- `manifest.json`: private metadata manifest
+- `runtime.json`: runtime config for locale loading
+- `load-messages.ts`: typed loader that imports each locale JSON file
+- `.gitignore`: ignores the private manifest
+
+These files are only rewritten when their contents actually change.
+
+### 6. It writes locale JSON files
+
+For each configured locale, the plugin writes a flat `Record<string, string>` JSON file.
+
+- For the default locale, values always come from the current source text.
+- For non-default locales, existing committed translations are preserved.
+- If a translation is not present in the locale file, the plugin can fall back to the cache.
+
+In dev, existing locale entries are preserved so partial rescans or incremental changes do not wipe translations from disk.
+
+### 7. It optionally auto-translates missing entries in dev
+
+If you provide `translate(messages, locale)`, the plugin collects only the missing entries for non-default locales and sends them to your callback.
+
+The callback receives:
+
+- stable `id`
+- source `text`
+- optional `meta.context`
+- `placeholders`
+- `sources`
+
+The returned translations are stored in the cache and then written back into the locale JSON files.
+
+### 8. It caches translations between runs
+
+The cache file stores translations keyed by message id plus locale.
+
+That means unchanged messages do not need to be translated again across restarts, as long as:
+
+- the message id is unchanged
+- the locale is unchanged
+- the cache schema is still valid
+
+### 9. It keeps the manifest in sync during dev
+
+When a file is added, changed, or removed under the scan roots, the plugin rescans that file and updates the manifest.
+
+- If the actual message content changed, locale files are updated.
+- If only source locations changed, the private manifest is updated.
+- If a file is temporarily invalid and cannot be parsed, the plugin skips removing its previous messages instead of treating that as a deletion.
+
+This makes dev behavior much less destructive during normal editing.
+
+### 10. Your app loads one locale at runtime
+
+At runtime, your app loads a single locale's message map.
+
+The common local-mode path is:
+
+1. Call `loadMessages(locale)`.
+2. Receive a flat `Record<string, string>`.
+3. Pass that object into `TranslateProvider`.
+4. Read translations with `useT()`, `T`, or the server helpers.
+
+### 11. Runtime lookups are just id lookups
+
+Once messages are loaded, translation is a plain lookup:
+
+- `useT()` hashes the source text plus optional context into the deterministic message id and looks it up in the loaded map.
+- `<T>` uses its explicit injected id when present, or computes the same deterministic id from its static source content.
+- `createTranslator()` on the server looks up ids in the same flat message map.
+
+Because ids are deterministic, unchanged source text resolves to the same key across restarts.
+
+### 12. Production local builds validate completeness
+
+For `storage: { type: "local" }`, production builds do not call `translate()`.
+
+Instead, the plugin:
+
+1. rebuilds the manifest from source
+2. prunes orphaned locale entries
+3. checks that every non-default locale contains every required message id
+4. fails the build if anything is missing
+
+That forces locale JSON files to be committed and complete before shipping.

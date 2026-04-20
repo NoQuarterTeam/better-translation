@@ -19,6 +19,7 @@ export interface SourceEdit {
 }
 
 export interface SourceAnalysis {
+  parsed: boolean
   messages: ExtractedMessage[]
   edits: SourceEdit[]
 }
@@ -28,7 +29,7 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
   const messages: ExtractedMessage[] = []
   const edits: SourceEdit[] = []
   const result = parseSync(filename, code)
-  if (result.errors.length > 0) return { messages, edits }
+  if (result.errors.length > 0) return { parsed: false, messages, edits }
   const lineStarts = getLineStarts(code)
 
   const visitor = new Visitor({
@@ -152,7 +153,7 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
   })
 
   visitor.visit(result.program)
-  return { messages, edits }
+  return { parsed: true, messages, edits }
 }
 
 function isStringLiteral(node: Argument): node is StringLiteral {

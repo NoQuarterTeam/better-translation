@@ -25,7 +25,9 @@ export function loadCache(path: string): TranslationCache {
 export function saveCache(path: string, cache: TranslationCache) {
   const dir = dirname(path)
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-  writeFileSync(path, JSON.stringify(cache, null, 2))
+  const next = JSON.stringify(cache, null, 2)
+  if (existsSync(path) && readFileSync(path, "utf-8") === next) return
+  writeFileSync(path, next)
 }
 
 /** Builds the cache key used to distinguish translations by stable message id and locale. */
