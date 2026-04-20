@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun with-env portless bt vite dev --host",
-    "build": "bun --cwd ../.. --filter @better-translate/vite build && vite build",
+    "build": "vite build",
     "start": "node .output/server/index.mjs",
     "db:generate": "bun with-env drizzle-kit generate",
     "db:migrate": "bun with-env drizzle-kit migrate",

@@ -171,6 +171,22 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     writeFileIfChanged(path, JSON.stringify(buildMessageManifest(), null, 2) + "\n")
   }
 
+  function assertFileContents(path: string, expected: string, label: string) {
+    if (!existsSync(path)) {
+      throw new Error(`${PREFIX} missing committed ${label} at ${relative(root, path)}`)
+    }
+    const actual = readFileSync(path, "utf-8")
+    if (actual !== expected) {
+      throw new Error(
+        [
+          `${PREFIX} committed ${label} is out of date`,
+          `expected committed file at ${relative(root, path)} to match the generated output`,
+          `run the dev workflow to regenerate locale artifacts and commit the result`,
+        ].join("\n"),
+      )
+    }
+  }
+
   function buildLoadMessagesModule() {
     const localeUnion = locales.map((locale) => JSON.stringify(locale)).join(" | ")
     const importLines = locales.map((locale) => `import messages_${locale} from "./${LOCALES_SUBDIR}/${locale}.json"`)
@@ -206,6 +222,14 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     const dir = dirname(path)
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     writeFileIfChanged(path, GITIGNORE_CONTENTS)
+  }
+
+  function assertGeneratedFilesCommitted() {
+    if (!usesLocalStorage) return
+    assertFileContents(getRuntimeConfigPath(root, localesDir), JSON.stringify(getRuntimeConfig(), null, 2) + "\n", "runtime config")
+    assertFileContents(resolve(root, localesDir, LOAD_MESSAGES_FILENAME), buildLoadMessagesModule(), "load-messages module")
+    assertFileContents(resolve(root, localesDir, GITIGNORE_FILENAME), GITIGNORE_CONTENTS, "generated .gitignore")
+    assertFileContents(getPrivateManifestPath(), JSON.stringify(buildMessageManifest(), null, 2) + "\n", "manifest")
   }
 
   function buildLocalLocaleMessages(locale: string, options: { pruneOrphans: boolean }): RuntimeMessages {
@@ -270,33 +294,40 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
   }
 
   function assertLocalBuildTranslationsComplete() {
-    const missingByLocale = new Map<string, string[]>()
-    for (const locale of locales) {
-      if (locale === defaultLocale) continue
-      const localeMessages = readLocaleMessages(locale)
-      const missingIds = Object.keys(manifest).filter((id) => !Object.hasOwn(localeMessages, id))
-      if (missingIds.length > 0) missingByLocale.set(locale, missingIds)
-    }
-    const totalMissingIds = [...missingByLocale.values()].reduce((count, misses) => count + misses.length, 0)
-    if (totalMissingIds === 0) return
+    const expectedIds = new Set(Object.keys(manifest))
+    const issues: string[] = []
 
-    const summary = [...missingByLocale]
-      .map(([locale, misses]) => {
-        const preview = misses
-          .slice(0, 5)
-          .map((id) => `"${manifest[id]?.defaultMessage ?? id}"`)
-          .join(", ")
-        const suffix = misses.length > 5 ? `, ... ${misses.length - 5} more` : ""
-        return `- ${locale}: ${misses.length} missing (${preview}${suffix})`
-      })
-      .join("\n")
+    for (const locale of locales) {
+      const localePath = getLocalePath(locale)
+      if (!existsSync(localePath)) {
+        issues.push(`- ${locale}: missing file at ${relative(root, localePath)}`)
+        continue
+      }
+
+      const localeMessages = readLocaleMessages(locale)
+      const missingIds = [...expectedIds].filter((id) => !Object.hasOwn(localeMessages, id))
+      const orphanIds = Object.keys(localeMessages).filter((id) => !expectedIds.has(id))
+
+      if (locale === defaultLocale) {
+        const staleIds = [...expectedIds].filter((id) => localeMessages[id] !== manifest[id]!.defaultMessage)
+        if (missingIds.length > 0) issues.push(formatLocaleIssue(locale, "missing", missingIds))
+        if (orphanIds.length > 0) issues.push(formatLocaleIssue(locale, "orphaned", orphanIds))
+        if (staleIds.length > 0) issues.push(formatLocaleIssue(locale, "outdated default messages", staleIds))
+        continue
+      }
+
+      if (missingIds.length > 0) issues.push(formatLocaleIssue(locale, "missing", missingIds))
+      if (orphanIds.length > 0) issues.push(formatLocaleIssue(locale, "orphaned", orphanIds))
+    }
+
+    if (issues.length === 0) return
 
     throw new Error(
       [
-        `${PREFIX} missing committed locale JSON entries for local production build`,
-        `local builds never call translate() during production builds`,
-        `fill the locale JSON files in ${localesDir} and rebuild`,
-        summary,
+        `${PREFIX} committed locale artifacts are out of sync for local production build`,
+        `local production builds are check-only and never regenerate locale files`,
+        `run the dev workflow to regenerate locale artifacts and commit the result`,
+        ...issues,
       ].join("\n"),
     )
   }
@@ -464,6 +495,11 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     buildStart() {
       cache = loadCache(resolve(root, cacheFile))
       scanAllSourceFiles()
+      if (usesLocalStorage && !isDev) {
+        assertGeneratedFilesCommitted()
+        assertLocalBuildTranslationsComplete()
+        return
+      }
       writeRuntimeConfig()
       writeLoadMessagesModule()
       writeGitignore()
@@ -509,9 +545,9 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
 
     async generateBundle() {
       if (usesLocalStorage) {
-        writeRuntimeConfig()
-        writeLocaleFilesToDisk({ pruneOrphans: true })
-        writePrivateManifest()
+        if (!isDev) {
+          assertGeneratedFilesCommitted()
+        }
         assertLocalBuildTranslationsComplete()
       } else {
         await translateMissingMessages()
@@ -523,9 +559,19 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     },
 
     closeBundle() {
+      if (usesLocalStorage && !isDev) return
       saveCache(resolve(root, cacheFile), cache)
     },
   }
+}
+
+function formatLocaleIssue(locale: string, label: string, ids: string[]) {
+  const preview = ids
+    .slice(0, 5)
+    .map((id) => JSON.stringify(id))
+    .join(", ")
+  const suffix = ids.length > 5 ? `, ... ${ids.length - 5} more` : ""
+  return `- ${locale}: ${label} (${preview}${suffix})`
 }
 
 function normalizeLocaleMessages(input: unknown): RuntimeMessages {
