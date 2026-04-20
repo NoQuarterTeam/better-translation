@@ -4,5 +4,10 @@
     "dir": "src/lib/bt"
   },
   "defaultLocale": "en",
-  "locales": ["en", "nl", "fr", "es"]
+  "locales": [
+    "en",
+    "nl",
+    "fr",
+    "es"
+  ]
 }
