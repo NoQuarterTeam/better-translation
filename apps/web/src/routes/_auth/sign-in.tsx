@@ -33,7 +33,6 @@ export const Route = createFileRoute("/_auth/sign-in")({
 })
 
 function SignInPage() {
-  const navigate = Route.useNavigate()
   const { redirect } = Route.useSearch()
   const t = useT()
 
@@ -64,13 +63,6 @@ function SignInPage() {
               return
             }
             setApiError(error.message ?? t("Could not sign in"))
-          },
-          onSuccess: () => {
-            if (redirect) {
-              window.location.assign(redirect)
-              return
-            }
-            void navigate({ to: "/dashboard" })
           },
         },
       )

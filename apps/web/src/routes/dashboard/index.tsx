@@ -18,9 +18,6 @@ export const Route = createFileRoute("/dashboard/")({
     ],
   }),
   component: DashboardHomePage,
-  loader: async () => {
-    return { crumb: { label: "Dashboard", url: "/dashboard" } }
-  },
 })
 
 function DashboardHomePage() {

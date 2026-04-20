@@ -14,6 +14,7 @@ import { Route as AuthLayoutRouteImport } from './routes/_auth/layout'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as CreateOrgIndexRouteImport } from './routes/create-org/index'
+import { Route as DashboardUsersRouteImport } from './routes/dashboard/users'
 import { Route as AcceptInvitationInvitationIdRouteImport } from './routes/accept-invitation/$invitationId'
 import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
 import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
@@ -45,6 +46,11 @@ const CreateOrgIndexRoute = CreateOrgIndexRouteImport.update({
   id: '/create-org/',
   path: '/create-org/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardUsersRoute = DashboardUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => DashboardLayoutRoute,
 } as any)
 const AcceptInvitationInvitationIdRoute =
   AcceptInvitationInvitationIdRouteImport.update({
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof AuthSignUpRoute
   '/verify-email': typeof AuthVerifyEmailRoute
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
+  '/dashboard/users': typeof DashboardUsersRoute
   '/create-org/': typeof CreateOrgIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/sign-up': typeof AuthSignUpRoute
   '/verify-email': typeof AuthVerifyEmailRoute
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
+  '/dashboard/users': typeof DashboardUsersRoute
   '/create-org': typeof CreateOrgIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/_auth/sign-up': typeof AuthSignUpRoute
   '/_auth/verify-email': typeof AuthVerifyEmailRoute
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
+  '/dashboard/users': typeof DashboardUsersRoute
   '/create-org/': typeof CreateOrgIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/verify-email'
     | '/accept-invitation/$invitationId'
+    | '/dashboard/users'
     | '/create-org/'
     | '/dashboard/'
     | '/api/auth/$'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/verify-email'
     | '/accept-invitation/$invitationId'
+    | '/dashboard/users'
     | '/create-org'
     | '/dashboard'
     | '/api/auth/$'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/_auth/sign-up'
     | '/_auth/verify-email'
     | '/accept-invitation/$invitationId'
+    | '/dashboard/users'
     | '/create-org/'
     | '/dashboard/'
     | '/api/auth/$'
@@ -210,6 +222,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/create-org/'
       preLoaderRoute: typeof CreateOrgIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/users': {
+      id: '/dashboard/users'
+      path: '/users'
+      fullPath: '/dashboard/users'
+      preLoaderRoute: typeof DashboardUsersRouteImport
+      parentRoute: typeof DashboardLayoutRoute
     }
     '/accept-invitation/$invitationId': {
       id: '/accept-invitation/$invitationId'
@@ -284,10 +303,12 @@ const AuthLayoutRouteWithChildren = AuthLayoutRoute._addFileChildren(
 )
 
 interface DashboardLayoutRouteChildren {
+  DashboardUsersRoute: typeof DashboardUsersRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardLayoutRouteChildren: DashboardLayoutRouteChildren = {
+  DashboardUsersRoute: DashboardUsersRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 
