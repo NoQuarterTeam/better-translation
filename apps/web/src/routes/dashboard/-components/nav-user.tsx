@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { authClient } from "@/lib/auth/client"
-import type { User } from "@/server/db/schema"
 import { getLocale, type AppLocale, setLocale } from "@/routes/-locale"
+import type { User } from "@/server/db/schema"
 
 function createInitials(user: Pick<User, "name">) {
   return (

@@ -3,19 +3,8 @@ import { createFileRoute } from "@tanstack/react-router"
 import { T } from "@better-translate/vite/react"
 
 export const Route = createFileRoute("/dashboard/")({
-  head: ({ match }) => ({
-    meta: [
-      {
-        title:
-          match.context.locale === "nl"
-            ? "Overzicht · Better Translate"
-            : match.context.locale === "fr"
-              ? "Apercu · Better Translate"
-              : match.context.locale === "es"
-                ? "Resumen · Better Translate"
-                : "Overview · Better Translate",
-      },
-    ],
+  head: () => ({
+    meta: [{ title: "Overview · Better Translate" }],
   }),
   component: DashboardHomePage,
 })
@@ -31,7 +20,6 @@ function DashboardHomePage() {
           <T>Welcome back. Here is a quick snapshot of your workspace.</T>
         </p>
       </div>
-      <div className="grid gap-4 md:grid-cols-2"></div>
     </div>
   )
 }

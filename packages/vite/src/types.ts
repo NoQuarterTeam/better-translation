@@ -103,6 +103,8 @@ export interface TranslationCache {
 
 /** Extra metadata that can influence translation and message grouping. */
 export interface TranslateOptions {
+  /** Explicit stable message id for direct runtime lookups, whether provided manually or by a transform. */
+  id?: string
   /** Extra disambiguating context for translators and custom ids. */
   context?: string
 }

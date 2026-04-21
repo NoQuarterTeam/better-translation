@@ -5,7 +5,7 @@ export function normalizeMeta(meta?: TranslateOptions): TranslateOptions {
 
   return Object.fromEntries(
     Object.entries(meta)
-      .filter(([, value]) => value !== undefined)
+      .filter(([key, value]) => key !== "id" && value !== undefined)
       .sort(([a], [b]) => a.localeCompare(b)),
   ) as TranslateOptions
 }
@@ -35,7 +35,7 @@ export function getMessageId(message: string, meta?: TranslateOptions) {
   return `m_${(hash >>> 0).toString(36)}`
 }
 
-/** Generates the lookup id for function-style `t()` calls. */
+/** Resolves the lookup id for function-style `t()` calls, preferring an explicit `options.id`. */
 export function getCallMessageId(message: string, options?: TranslateOptions) {
-  return getMessageId(message, options)
+  return options?.id ?? getMessageId(message, options)
 }

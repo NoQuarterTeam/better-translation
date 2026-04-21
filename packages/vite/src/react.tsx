@@ -32,9 +32,9 @@ export function useMessages() {
 type TranslateFn = (id: string, options?: TranslateOptions) => string
 
 /** Returns a translator function for text used in props, labels, and other non-JSX positions. */
-export function useT(): (id: string, options?: TranslateOptions) => string {
+export function useT(): (message: string, options?: TranslateOptions) => string {
   const { messages } = useContext(TranslateContext)
-  return useMemo<TranslateFn>(() => (id, options) => messages[getCallMessageId(id, options)] ?? id, [messages])
+  return useMemo<TranslateFn>(() => (message, options) => messages[getCallMessageId(message, options)] ?? message, [messages])
 }
 
 /** Props for `Var`. */
@@ -50,7 +50,7 @@ export function Var(props: VarProps) {
 
 /** Props for `T`. */
 export interface TProps {
-  /** Explicit stable id to use instead of hashing the rendered source text. */
+  /** Explicit stable id to use instead of hashing the rendered source text, whether provided manually or by a transform. */
   id?: string
   /** Extra disambiguating context for translators and custom grouping. */
   context?: string

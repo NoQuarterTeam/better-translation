@@ -118,7 +118,9 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     if (cleanId.includes("node_modules")) return false
     const extension = scanExtensions.find((ext) => cleanId.endsWith(ext))
     if (!extension) return false
-    return scanRoots.some((scanRoot) => cleanId === scanRoot || cleanId.startsWith(`${scanRoot}/`) || cleanId.startsWith(`${scanRoot}\\`))
+    return scanRoots.some(
+      (scanRoot) => cleanId === scanRoot || cleanId.startsWith(`${scanRoot}/`) || cleanId.startsWith(`${scanRoot}\\`),
+    )
   }
 
   function getPrivateManifestPath() {
@@ -226,7 +228,11 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
 
   function assertGeneratedFilesCommitted() {
     if (!usesLocalStorage) return
-    assertFileContents(getRuntimeConfigPath(root, localesDir), JSON.stringify(getRuntimeConfig(), null, 2) + "\n", "runtime config")
+    assertFileContents(
+      getRuntimeConfigPath(root, localesDir),
+      JSON.stringify(getRuntimeConfig(), null, 2) + "\n",
+      "runtime config",
+    )
     assertFileContents(resolve(root, localesDir, LOAD_MESSAGES_FILENAME), buildLoadMessagesModule(), "load-messages module")
     assertFileContents(resolve(root, localesDir, GITIGNORE_FILENAME), GITIGNORE_CONTENTS, "generated .gitignore")
   }
@@ -414,7 +420,8 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     if (messages.length > 0) fileMessages.set(file, messages)
     return {
       manifestChanged:
-        previousMessages.length !== messages.length || previousMessages.some((message, index) => !isSameExtractedMessage(message, messages[index])),
+        previousMessages.length !== messages.length ||
+        previousMessages.some((message, index) => !isSameExtractedMessage(message, messages[index])),
       localeMessagesChanged:
         previousMessages.length !== messages.length ||
         previousMessages.some((message, index) => !hasSameMessageShape(message, messages[index]!)),
@@ -673,10 +680,7 @@ function isSameSource(left: MessageSource, right: MessageSource) {
 
 function isSameExtractedMessage(left: ExtractedMessage, right?: ExtractedMessage) {
   if (!right) return false
-  return (
-    hasSameMessageShape(left, right) &&
-    isSameSource(left.source, right.source)
-  )
+  return hasSameMessageShape(left, right) && isSameSource(left.source, right.source)
 }
 
 function formatCollisionError(

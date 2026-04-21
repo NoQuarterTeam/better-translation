@@ -42,8 +42,9 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
       ) {
         const value = (node.arguments[0] as StringLiteral).value
         const meta = getMetaArgument(node.arguments[1])
+        const id = getCallMessageId(value, meta)
         messages.push({
-          id: getCallMessageId(value, meta),
+          id,
           defaultMessage: value,
           meta: meta ?? {},
           placeholders: [],
@@ -56,6 +57,9 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
             end: node.end,
           }),
         })
+
+        const callOptionsEdit = createCallOptionsEdit(code, node.arguments, id)
+        if (callOptionsEdit) edits.push(callOptionsEdit)
       }
     },
 
@@ -183,6 +187,40 @@ function getMetaArgument(node?: Argument) {
   }
 }
 
+function createCallOptionsEdit(code: string, args: Argument[], id: string) {
+  const optionsArg = args[1]
+  if (!optionsArg) {
+    return {
+      start: args[0]!.end,
+      end: args[0]!.end,
+      replacement: `, { id: ${JSON.stringify(id)} }`,
+    }
+  }
+
+  if (isStringLiteral(optionsArg)) {
+    const contextValue = code.slice(optionsArg.start, optionsArg.end)
+    return {
+      start: optionsArg.start,
+      end: optionsArg.end,
+      replacement: `{ id: ${JSON.stringify(id)}, context: ${contextValue} }`,
+    }
+  }
+
+  if (optionsArg.type !== "ObjectExpression") return undefined
+  if (hasObjectProperty(optionsArg, "id")) return undefined
+
+  const objectSource = code.slice(optionsArg.start, optionsArg.end)
+  const innerSource = objectSource.slice(1, -1)
+  const replacement =
+    innerSource.trim().length > 0 ? `{ id: ${JSON.stringify(id)},${innerSource} }` : `{ id: ${JSON.stringify(id)} }`
+
+  return {
+    start: optionsArg.start,
+    end: optionsArg.end,
+    replacement,
+  }
+}
+
 function getJSXStringAttribute(attributes: Array<unknown>, name: string) {
   for (const attr of attributes as Array<{
     type: string
@@ -211,6 +249,23 @@ function hasJSXAttribute(attributes: Array<unknown>, name: string) {
       | undefined
 
     return attribute?.type === "JSXAttribute" && attribute.name?.type === "JSXIdentifier" && attribute.name.name === name
+  })
+}
+
+function hasObjectProperty(node: { properties: Array<unknown> }, name: string) {
+  return node.properties.some((entry) => {
+    const property = entry as
+      | {
+          type?: string
+          key?: { type?: string; name?: string; value?: unknown }
+        }
+      | undefined
+
+    if (property?.type !== "ObjectProperty") return false
+    return (
+      (property.key?.type === "Identifier" && property.key.name === name) ||
+      (property.key?.type === "Literal" && property.key.value === name)
+    )
   })
 }
 
