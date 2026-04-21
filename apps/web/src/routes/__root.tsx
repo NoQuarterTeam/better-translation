@@ -1,7 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query"
 import { createRootRouteWithContext, HeadContent, Outlet, ScriptOnce, Scripts } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
-import { setResponseHeaders } from "@tanstack/react-start/server"
 import { z } from "zod"
 
 import { TranslateProvider } from "@better-translate/vite/react"
@@ -22,18 +21,18 @@ interface MyRouterContext {
 const getMessagesFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ locale: z.string() }))
   .handler(async ({ data }) => {
-    setResponseHeaders(
-      new Headers({
+    return new Response(JSON.stringify(await loadMessages(data.locale as AppLocale)), {
+      headers: {
         "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600",
-      }),
-    )
-    return loadMessages(data.locale as AppLocale)
+      },
+    })
   })
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async () => {
     const locale = getLocale()
-    const messages = await getMessagesFn({ data: { locale } })
+    const messagesResponse = await getMessagesFn({ data: { locale } })
+    const messages = (await messagesResponse.json()) as Record<string, string>
     return { locale, messages }
   },
   head: () => ({

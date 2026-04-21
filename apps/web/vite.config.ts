@@ -47,7 +47,9 @@ export default defineConfig({
       },
     }),
     // devtools(),
-    nitro(),
+    nitro({
+      preset: "vercel",
+    }),
     tailwindcss(),
     tanstackStart({
       importProtection: { client: { files: ["**/*.server.*", "**/server/**"] } },
