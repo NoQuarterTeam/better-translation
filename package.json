@@ -61,6 +61,7 @@
     "format": "vp fmt",
     "fix": "vp lint --fix && vp fmt",
     "check": "vp check",
+    "check:publish": "vp check packages/better-translation",
     "version-packages": "changeset version && bun install",
     "release": "bun run build:packages && changeset publish"
   },
