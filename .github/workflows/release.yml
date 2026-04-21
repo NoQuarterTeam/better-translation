@@ -117,6 +117,7 @@ jobs:
           publish: bun run release
           commit: Version packages
           title: Version packages
+          createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
