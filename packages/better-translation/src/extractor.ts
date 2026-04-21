@@ -1,7 +1,7 @@
 import type { Argument, CallExpression, JSXChild, StringLiteral, TemplateLiteral } from "oxc-parser"
 import { parseSync, Visitor } from "oxc-parser"
 
-import type { ExtractedMessage, MessageSource } from "./types.js"
+import type { ExtractedMessage, MessageSource, TranslateOptions } from "./types.js"
 
 import { getCallMessageId, getMessageId } from "./message-id.js"
 
@@ -36,12 +36,38 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
     CallExpression(node) {
       if (
         node.callee.type === "Identifier" &&
+        node.callee.name === "msg" &&
+        node.arguments.length >= 1 &&
+        isStringLiteral(node.arguments[0]!)
+      ) {
+        const value = (node.arguments[0] as StringLiteral).value
+        const meta = getMsgMetaArgument(node.arguments)
+        const id = getCallMessageId(value, meta)
+        messages.push({
+          id,
+          defaultMessage: value,
+          meta: meta ?? {},
+          placeholders: extractPlaceholdersFromMessage(value),
+          source: createSource({
+            filename,
+            lineStarts,
+            marker: node.callee.name,
+            kind: "call",
+            start: node.start,
+            end: node.end,
+          }),
+        })
+        return
+      }
+
+      if (
+        node.callee.type === "Identifier" &&
         markers.call.includes(node.callee.name) &&
         node.arguments.length >= 1 &&
         isStringLiteral(node.arguments[0]!)
       ) {
         const value = (node.arguments[0] as StringLiteral).value
-        const meta = getMetaArgument(node.arguments[1])
+        const meta = getCallMetaArgument(node.arguments)
         const id = getCallMessageId(value, meta)
         messages.push({
           id,
@@ -170,6 +196,8 @@ function getMetaArgument(node?: Argument) {
 
   if (node.type !== "ObjectExpression") return undefined
 
+  const meta: TranslateOptions = {}
+
   for (const property of node.properties as Array<{
     type: string
     key?: { type: string; name?: string; value?: unknown }
@@ -177,22 +205,35 @@ function getMetaArgument(node?: Argument) {
   }>) {
     if (
       property.type === "ObjectProperty" &&
-      ((property.key?.type === "Identifier" && property.key.name === "context") ||
-        (property.key?.type === "Literal" && property.key.value === "context")) &&
+      ((property.key?.type === "Identifier" && (property.key.name === "context" || property.key.name === "id")) ||
+        (property.key?.type === "Literal" && (property.key.value === "context" || property.key.value === "id"))) &&
       property.value &&
       isStringLiteral(property.value)
     ) {
-      return { context: property.value.value }
+      const key = property.key?.type === "Identifier" ? property.key.name : property.key?.value
+      if (key === "context" || key === "id") meta[key] = property.value.value
     }
   }
+
+  return Object.keys(meta).length > 0 ? meta : undefined
+}
+
+function getMsgMetaArgument(args: Argument[]) {
+  return getMetaArgument(args[2] ?? args[1])
+}
+
+function getCallMetaArgument(args: Argument[]) {
+  return getMetaArgument(isTranslateOptionsArgument(args[1]) ? args[1] : args[2])
 }
 
 function createCallOptionsEdit(code: string, args: Argument[], id: string) {
-  const optionsArg = args[1]
+  const valuesArg = args[1]
+  const optionsArg = isTranslateOptionsArgument(valuesArg) ? valuesArg : args[2]
+
   if (!optionsArg) {
     return {
-      start: args[0]!.end,
-      end: args[0]!.end,
+      start: (valuesArg ?? args[0]!).end,
+      end: (valuesArg ?? args[0]!).end,
       replacement: `, { id: ${JSON.stringify(id)} }`,
     }
   }
@@ -219,6 +260,28 @@ function createCallOptionsEdit(code: string, args: Argument[], id: string) {
     end: optionsArg.end,
     replacement,
   }
+}
+
+function isTranslateOptionsArgument(node?: Argument) {
+  if (!node) return false
+  if (isStringLiteral(node)) return true
+  if (node.type !== "ObjectExpression") return false
+
+  return (node.properties as Array<unknown>).every((entry) => {
+    const property = entry as
+      | {
+          type?: string
+          key?: { type?: string; name?: string; value?: unknown }
+        }
+      | undefined
+
+    if (property?.type !== "ObjectProperty") return false
+
+    return (
+      (property.key?.type === "Identifier" && (property.key.name === "context" || property.key.name === "id")) ||
+      (property.key?.type === "Literal" && (property.key.value === "context" || property.key.value === "id"))
+    )
+  })
 }
 
 function getJSXStringAttribute(attributes: Array<unknown>, name: string) {
@@ -267,6 +330,14 @@ function hasObjectProperty(node: { properties: Array<unknown> }, name: string) {
       (property.key?.type === "Literal" && property.key.value === name)
     )
   })
+}
+
+function extractPlaceholdersFromMessage(message: string) {
+  const names = new Set<string>()
+  for (const match of message.matchAll(/\{(\w+)\}/g)) {
+    if (match[1]) names.add(match[1])
+  }
+  return [...names]
 }
 
 function createSource({

@@ -29,12 +29,22 @@ export function useMessages() {
   return useContext(TranslateContext).messages
 }
 
-type TranslateFn = (id: string, options?: TranslateOptions) => string
+type MessageValues = Record<string, unknown>
+type TranslateFn = (message: string, valuesOrOptions?: MessageValues | TranslateOptions, options?: TranslateOptions) => string
 
 /** Returns a translator function for text used in props, labels, and other non-JSX positions. */
-export function useT(): (message: string, options?: TranslateOptions) => string {
+export function useT(): TranslateFn {
   const { messages } = useContext(TranslateContext)
-  return useMemo<TranslateFn>(() => (message, options) => messages[getCallMessageId(message, options)] ?? message, [messages])
+  return useMemo<TranslateFn>(
+    () => (message, valuesOrOptions, options) => {
+      const values = isTranslateOptions(valuesOrOptions) ? undefined : normalizeValues(valuesOrOptions)
+      const resolvedOptions = isTranslateOptions(valuesOrOptions) ? valuesOrOptions : options
+      const template = messages[getCallMessageId(message, resolvedOptions)] ?? message
+      if (!values) return template
+      return template.replace(/\{(\w+)\}/g, (_, name: string) => values[name] ?? `{${name}}`)
+    },
+    [messages],
+  )
 }
 
 /** Props for `Var`. */
@@ -125,4 +135,15 @@ function getRuntimeVarEntry(props: VarProps) {
 
   const [name, value] = entries[0]!
   return { name, value }
+}
+
+function isTranslateOptions(value?: MessageValues | TranslateOptions): value is TranslateOptions {
+  if (!value || Array.isArray(value)) return false
+  return Object.keys(value).every((key) => key === "id" || key === "context")
+}
+
+function normalizeValues(values?: MessageValues) {
+  if (!values) return undefined
+  const entries = Object.entries(values).map(([name, value]) => [name, String(value)] as const)
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined
 }

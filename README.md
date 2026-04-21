@@ -46,7 +46,7 @@ If you are using the React helpers, make sure `react` is installed in your app.
 
 At build time and during dev, the plugin:
 
-1. Scans all matching files under your configured roots for translation markers such as `t("...")`, `<T>...</T>`, and `msg("id")\`...\``.
+1. Scans all matching files under your configured roots for translation markers such as `t("...")`, `<T>...</T>`, and `msg("...", values?, options?)`.
 2. Extracts the default message, placeholders, source locations, and optional context.
 3. Generates a stable message id for each entry.
 4. Writes locale JSON files for every configured locale.
@@ -225,6 +225,7 @@ function SignInForm() {
       <input aria-label={t("Email")} />
       <button>{t("Sign in")}</button>
       <p>{t("Could not sign in", { context: "Authentication error toast" })}</p>
+      <p>{t("Welcome back, {name}", { name: user.name })}</p>
     </>
   )
 }
@@ -259,19 +260,19 @@ You can also provide an explicit id yourself:
 <T id="auth.sign-in.title">Sign in</T>
 ```
 
-### 3. Tagged Templates on the Server
+### 3. Server Messages
 
-Use this for server-side template strings with placeholders.
+Use this for server-side messages with placeholders.
 
 ```ts
-import { createTranslator, v } from "better-translation/server"
+import { createTranslator } from "better-translation/server"
 
 const { msg } = createTranslator(messages)
 
-const subject = msg("invite-email-subject")`You were invited to ${v("organization", organization.name)}`
+const subject = msg("You were invited to {organization}", { organization: organization.name })
 ```
 
-The tagged template id is explicit, which is useful for emails and server-rendered content.
+The message text is the source of truth, just like `t()` and the React helpers.
 
 ## Passing Variables Into Translations
 
@@ -297,14 +298,14 @@ Welcome back, {userName}
 
 For plain identifiers, the shorthand `<Var>{userName}</Var>` also works and is normalized at build time.
 
-### On the Server with `v()`
+### On the Server with `msg()`
 
 ```ts
-import { createTranslator, v } from "better-translation/server"
+import { createTranslator } from "better-translation/server"
 
 const { msg } = createTranslator(messages)
 
-const body = msg("welcome-email")`Welcome back, ${v("name", user.name)}`
+const body = msg("Welcome back, {name}", { name: user.name })
 ```
 
 ## Loading Messages for a Locale
@@ -415,6 +416,16 @@ function SubmitButton() {
   const t = useT()
   return <button>{t("Save changes")}</button>
 }
+```
+
+You can also interpolate placeholders directly:
+
+```tsx
+const t = useT()
+
+t("Welcome back, {name}", { name: user.name })
+t("Archive", { context: "verb" })
+t("Moved {count} files", { count: total }, { context: "Bulk action toast" })
 ```
 
 ### `useMessages()`
@@ -544,20 +555,20 @@ Use `t()` for plain strings:
 const errorMessage = t("Could not sign in")
 ```
 
-Use `msg()` for template messages with placeholders:
+Use `msg()` for server-side messages with optional placeholders:
 
 ```ts
-const sentence = msg("account-invite")`You were invited to ${v("organization", organization.name)}`
+const sentence = msg("You were invited to {organization}", { organization: organization.name })
 ```
 
 ### `v()`
 
-Marks placeholder values for `msg()`:
+Legacy helper for building placeholder values passed to `msg()`:
 
 ```ts
 import { v } from "better-translation/server"
 
-v("name", user.name)
+msg("Welcome back, {name}", { name: v("name", user.name) })
 ```
 
 ## Locale File Shape
@@ -603,7 +614,7 @@ For bundle storage, the plugin also writes runtime metadata at `src/lib/bt/runti
 
 - `t()` only extracts static string literals.
 - `<T>` only extracts static text plus `<Var someName={value} />` placeholders or `<Var>{identifier}</Var>` shorthand.
-- `msg("id")\`...\``only extracts templates that use`v("name", value)` placeholders.
+- `msg()` only extracts static string literals as its first argument and derives placeholders from `{name}` segments in that message.
 - Missing translations can fall back to the source text in dev while locale JSON files are being filled.
 - In local mode, locale JSON files are committed in the repo and loaded one locale at a time.
 - Client-only apps can fetch locale JSON from `public/` or a CDN and pass the result directly to `TranslateProvider`.
@@ -654,7 +665,7 @@ The extractor looks for:
 
 - `t("...")` and similar configured call markers
 - `<T>...</T>` JSX blocks
-- `msg("id")\`...\`` tagged templates
+- `msg("...", values?, options?)` server calls
 
 For each match it records:
 
