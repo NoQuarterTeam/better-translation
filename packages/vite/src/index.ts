@@ -5,9 +5,11 @@ export type {
   BetterTranslateRemoteStorageOptions,
   BetterTranslateRuntimeConfig,
   BetterTranslateStorageOptions,
+} from "./types.js"
+export type {
   MessageManifestFile,
   RuntimeMessages,
   TranslateFn,
   TranslateMessage,
   TranslateOptions,
-} from "./types.js"
+} from "@better-translate/core"

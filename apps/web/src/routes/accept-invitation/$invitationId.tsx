@@ -1,8 +1,9 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { T, useT, Var } from "better-translate/react"
 import { AlertCircleIcon } from "lucide-react"
 import { toast } from "sonner"
+
+import { T, useT, Var } from "@better-translate/react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button, buttonVariants } from "@/components/ui/button"

@@ -1,4 +1,4 @@
-# `better-translate`
+# `@better-translate/vite`
 
 Vite plugin and runtime helpers for extracting UI copy, generating locale JSON files, and rendering translations in React and server code.
 
@@ -18,26 +18,26 @@ It scans your source for translation markers, creates stable message ids, keeps 
 
 - `node >= 24`
 - `vite >= 8`
-- `react >= 19` if you use the React helpers from `better-translate/react`
+- `react >= 19` if you use the React helpers from `@better-translate/react`
 
 ## Installation
 
-Install the package:
+Install the Vite plugin:
 
 ```bash
-bun add better-translate
+bun add -d @better-translate/vite
 ```
 
 ```bash
-pnpm add better-translate
+pnpm add -D @better-translate/vite
 ```
 
 ```bash
-npm install better-translate
+npm install -D @better-translate/vite
 ```
 
 ```bash
-yarn add better-translate
+yarn add -D @better-translate/vite
 ```
 
 If you are using the React helpers, make sure `react` is installed in your app.
@@ -58,7 +58,7 @@ At build time and during dev, the plugin:
 ```ts
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
-import { betterTranslate } from "better-translate/vite"
+import { betterTranslate } from "@better-translate/vite"
 
 export default defineConfig({
   plugins: [
@@ -215,7 +215,7 @@ The plugin extracts three kinds of translation markers.
 Use this for labels, validation messages, errors, button text passed as props, and other non-JSX values.
 
 ```tsx
-import { useT } from "better-translate/react"
+import { useT } from "@better-translate/react"
 
 function SignInForm() {
   const t = useT()
@@ -235,7 +235,7 @@ function SignInForm() {
 Use this when the translated text lives directly in JSX.
 
 ```tsx
-import { T } from "better-translate/react"
+import { T } from "@better-translate/react"
 
 export function Header() {
   return (
@@ -264,7 +264,7 @@ You can also provide an explicit id yourself:
 Use this for server-side template strings with placeholders.
 
 ```ts
-import { createTranslator, v } from "better-translate/server"
+import { createTranslator, v } from "@better-translate/server"
 
 const { msg } = createTranslator(messages)
 
@@ -278,7 +278,7 @@ The tagged template id is explicit, which is useful for emails and server-render
 ### In React with `<Var>`
 
 ```tsx
-import { T, Var } from "better-translate/react"
+import { T, Var } from "@better-translate/react"
 
 function WelcomeMessage({ userName }: { userName: string }) {
   return (
@@ -300,7 +300,7 @@ For plain identifiers, the shorthand `<Var>{userName}</Var>` also works and is n
 ### On the Server with `v()`
 
 ```ts
-import { createTranslator, v } from "better-translate/server"
+import { createTranslator, v } from "@better-translate/server"
 
 const { msg } = createTranslator(messages)
 
@@ -346,7 +346,7 @@ If you publish your locale files under `public/locales`, you can fetch them like
 ```tsx
 import { useEffect, useState } from "react"
 
-import { TranslateProvider } from "better-translate/react"
+import { TranslateProvider } from "@better-translate/react"
 
 export function App({ locale }: { locale: string }) {
   const [messages, setMessages] = useState<Record<string, string> | null>(null)
@@ -393,7 +393,7 @@ This browser-fetch approach also works in full-stack apps when you prefer servin
 Wrap the part of your app that needs translations.
 
 ```tsx
-import { TranslateProvider } from "better-translate/react"
+import { TranslateProvider } from "@better-translate/react"
 
 export function App({ messages }: { messages: Record<string, string> }) {
   return (
@@ -409,7 +409,7 @@ export function App({ messages }: { messages: Record<string, string> }) {
 Returns a translation function for non-JSX values.
 
 ```tsx
-import { useT } from "better-translate/react"
+import { useT } from "@better-translate/react"
 
 function SubmitButton() {
   const t = useT()
@@ -422,7 +422,7 @@ function SubmitButton() {
 Returns the raw flattened message map from the current provider.
 
 ```tsx
-import { useMessages } from "better-translate/react"
+import { useMessages } from "@better-translate/react"
 
 function DebugMessages() {
   const messages = useMessages()
@@ -435,7 +435,7 @@ function DebugMessages() {
 Renders translated JSX content.
 
 ```tsx
-import { T } from "better-translate/react"
+import { T } from "@better-translate/react"
 
 function EmptyState() {
   return <T>No projects yet</T>
@@ -447,7 +447,7 @@ function EmptyState() {
 Marks placeholder content inside `T`.
 
 ```tsx
-import { T, Var } from "better-translate/react"
+import { T, Var } from "@better-translate/react"
 
 function InviteMessage({ count }: { count: number }) {
   return (
@@ -473,7 +473,7 @@ Each message includes:
 Example using your own API:
 
 ```ts
-import { betterTranslate } from "better-translate/vite"
+import { betterTranslate } from "@better-translate/vite"
 
 export default {
   plugins: [
@@ -533,7 +533,7 @@ It statically imports each locale JSON file and returns the flattened message ma
 Creates lightweight server helpers:
 
 ```ts
-import { createTranslator } from "better-translate/server"
+import { createTranslator } from "@better-translate/server"
 
 const { t, msg } = createTranslator(messages)
 ```
@@ -555,7 +555,7 @@ const sentence = msg("account-invite")`You were invited to ${v("organization", o
 Marks placeholder values for `msg()`:
 
 ```ts
-import { v } from "better-translate/server"
+import { v } from "@better-translate/server"
 
 v("name", user.name)
 ```

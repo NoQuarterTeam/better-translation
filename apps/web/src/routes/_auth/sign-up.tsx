@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { T, useT } from "better-translate/react"
 import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
+
+import { T, useT } from "@better-translate/react"
 
 import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"

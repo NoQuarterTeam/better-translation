@@ -2,10 +2,11 @@ import tailwindcss from "@tailwindcss/vite"
 import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import viteReact from "@vitejs/plugin-react"
 import { generateText } from "ai"
-import { betterTranslate } from "better-translate/vite"
 import dedent from "dedent"
 import { nitro } from "nitro/vite"
 import { defineConfig } from "vite-plus"
+
+import { betterTranslate, type TranslateMessage } from "@better-translate/vite"
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
@@ -14,7 +15,7 @@ export default defineConfig({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
       storage: { type: "bundle", output: "src/lib/bt" },
-      async translate(messages, locale) {
+      async translate(messages: TranslateMessage[], locale: string) {
         const result: Record<string, string> = {}
 
         for (const message of messages) {

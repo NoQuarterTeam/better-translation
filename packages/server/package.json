@@ -1,0 +1,31 @@
+{
+  "name": "@better-translate/server",
+  "version": "0.1.0",
+  "description": "Server-side runtime helpers for Better Translate.",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "prepack": "bun run build"
+  },
+  "dependencies": {
+    "@better-translate/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@better-translate/tsconfig": "workspace:*",
+    "tsdown": "^0.21.9",
+    "typescript": "catalog:"
+  }
+}

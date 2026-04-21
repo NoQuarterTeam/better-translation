@@ -1,6 +1,4 @@
-import type { TranslateOptions } from "./types.js"
-
-import { getCallMessageId } from "./message-id.js"
+import { getCallMessageId, type TranslateOptions } from "@better-translate/core"
 
 /** A server-side placeholder value used by `msg()` template interpolation. */
 export interface VarResult {

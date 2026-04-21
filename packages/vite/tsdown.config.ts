@@ -4,12 +4,10 @@ export default defineConfig({
   clean: true,
   dts: true,
   entry: {
-    vite: "src/vite.ts",
-    react: "src/react.tsx",
-    server: "src/server.ts",
+    index: "src/index.ts",
   },
   deps: {
-    neverBundle: ["react", "vite"],
+    neverBundle: ["@better-translate/core", "vite"],
   },
   format: ["esm"],
   sourcemap: true,

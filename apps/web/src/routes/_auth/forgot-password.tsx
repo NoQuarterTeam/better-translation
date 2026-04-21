@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { T, useT } from "better-translate/react"
 import { CheckCircle2Icon } from "lucide-react"
 import { useState } from "react"
 import * as z from "zod"
+
+import { T, useT } from "@better-translate/react"
 
 import { useAppForm } from "@/components/react-form"
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert"
