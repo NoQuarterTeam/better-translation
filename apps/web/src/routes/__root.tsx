@@ -24,9 +24,7 @@ const getMessagesFn = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     setResponseHeaders(
       new Headers({
-        "Cache-Control": "public, max-age=300",
-        "Vercel-CDN-Cache-Control": "max-age=3600, stale-while-revalidate=600",
-        "CDN-Cache-Control": "max-age=3600, stale-while-revalidate=600",
+        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600",
       }),
     )
     return loadMessages(data.locale as AppLocale)
