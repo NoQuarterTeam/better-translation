@@ -84,7 +84,7 @@ Today the app is still operating in local mode.
 
 ### Plugin behavior
 
-The plugin is configured in `apps/web/vite.config.ts` with local storage:
+The plugin is configured in `apps/web/vite.config.ts` with bundle storage:
 
 - locales: `en`, `nl`, `fr`, `es`
 - default locale: `en`

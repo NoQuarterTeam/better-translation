@@ -26,8 +26,8 @@ const RESET = "\x1b[0m"
 const YELLOW = "\x1b[33m"
 const BOLD = "\x1b[1m"
 const CYAN = "\x1b[36m"
-const HOSTED_API_BASE_URL = "https://better-translate.com"
-const HOSTED_STUB = `${YELLOW}stub${RESET}`
+const REMOTE_API_BASE_URL = "https://better-translate.com"
+const REMOTE_STUB = `${YELLOW}stub${RESET}`
 const DEFAULT_ROOT_DIR = "src"
 const DEFAULT_SCAN_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"]
 const CALL_MARKERS = ["t", "useT"]
@@ -60,42 +60,42 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     rootDir = DEFAULT_ROOT_DIR,
     cacheFile = ".cache/better-translate.json",
     logging = true,
-    storage = { type: "local", output: DEFAULT_LOCAL_OUTPUT_DIR },
+    storage = { type: "bundle", output: DEFAULT_LOCAL_OUTPUT_DIR },
     translate,
   } = options
-  const usesLocalStorage = storage.type === "local"
-  const localesDir = storage.type === "local" ? (storage.output ?? DEFAULT_LOCAL_OUTPUT_DIR) : DEFAULT_LOCAL_OUTPUT_DIR
-  const hostedUrl = storage.type === "hosted" ? (storage.url ?? HOSTED_API_BASE_URL) : HOSTED_API_BASE_URL
+  const usesBundleStorage = storage.type === "bundle"
+  const localesDir = storage.type === "bundle" ? (storage.output ?? DEFAULT_LOCAL_OUTPUT_DIR) : DEFAULT_LOCAL_OUTPUT_DIR
+  const remoteUrl = storage.type === "remote" ? (storage.url ?? REMOTE_API_BASE_URL) : REMOTE_API_BASE_URL
   const manifest: MessageManifest = {}
   const fileMessages = new Map<string, ExtractedMessage[]>()
   let cache: TranslationCache = createEmptyCache()
   let root = ""
   let isDev = false
   let translateTimer: ReturnType<typeof setTimeout> | null = null
-  let warnedHostedTranslateStub = false
-  let warnedHostedSyncStub = false
+  let warnedRemoteTranslateStub = false
+  let warnedRemoteSyncStub = false
   let sourceRoots: string[] = []
 
   function log(message: string) {
     if (logging) console.log(message)
   }
 
-  async function hostedTranslate(messages: TranslateMessage[], _locale: string) {
-    if (!warnedHostedTranslateStub) {
-      warnedHostedTranslateStub = true
-      log(`${PREFIX} ${HOSTED_STUB} hosted translate via ${DIM}${hostedUrl}${RESET} not implemented yet`)
+  async function remoteTranslate(messages: TranslateMessage[], _locale: string) {
+    if (!warnedRemoteTranslateStub) {
+      warnedRemoteTranslateStub = true
+      log(`${PREFIX} ${REMOTE_STUB} remote translate via ${DIM}${remoteUrl}${RESET} not implemented yet`)
     }
     return Object.fromEntries(messages.map((message) => [message.id, message.text])) as Record<string, string>
   }
 
-  async function syncHosted() {
-    if (!warnedHostedSyncStub) {
-      warnedHostedSyncStub = true
-      log(`${PREFIX} ${HOSTED_STUB} hosted locale sync via ${DIM}${hostedUrl}${RESET} not implemented yet`)
+  async function syncRemote() {
+    if (!warnedRemoteSyncStub) {
+      warnedRemoteSyncStub = true
+      log(`${PREFIX} ${REMOTE_STUB} remote locale sync via ${DIM}${remoteUrl}${RESET} not implemented yet`)
     }
   }
 
-  const resolvedTranslate = translate ?? (usesLocalStorage ? undefined : hostedTranslate)
+  const resolvedTranslate = translate ?? (usesBundleStorage ? undefined : remoteTranslate)
 
   function buildMessageManifest(): MessageManifestFile {
     return Object.fromEntries(
@@ -127,14 +127,14 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
 
   function getRuntimeConfig(): BetterTranslateRuntimeConfig {
     return {
-      storage: usesLocalStorage ? { type: "local", output: localesDir } : { type: "hosted", url: hostedUrl },
+      storage: usesBundleStorage ? { type: "bundle", output: localesDir } : { type: "remote", url: remoteUrl },
       defaultLocale,
       locales,
     }
   }
 
   function writeRuntimeConfig() {
-    if (!usesLocalStorage) return
+    if (!usesBundleStorage) return
 
     const runtimeConfig = JSON.stringify(getRuntimeConfig(), null, 2) + "\n"
     const path = getRuntimeConfigPath(root, localesDir)
@@ -164,7 +164,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
   }
 
   function writePrivateManifest() {
-    if (!usesLocalStorage) return
+    if (!usesBundleStorage) return
     const path = getPrivateManifestPath()
     const dir = dirname(path)
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
@@ -207,7 +207,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
   }
 
   function writeLoadMessagesModule() {
-    if (!usesLocalStorage) return
+    if (!usesBundleStorage) return
     const path = resolve(root, localesDir, LOAD_MESSAGES_FILENAME)
     const dir = dirname(path)
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
@@ -217,7 +217,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
   }
 
   function writeGitignore() {
-    if (!usesLocalStorage) return
+    if (!usesBundleStorage) return
     const path = resolve(root, localesDir, GITIGNORE_FILENAME)
     const dir = dirname(path)
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
@@ -225,7 +225,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
   }
 
   function assertGeneratedFilesCommitted() {
-    if (!usesLocalStorage) return
+    if (!usesBundleStorage) return
     assertFileContents(
       getRuntimeConfigPath(root, localesDir),
       JSON.stringify(getRuntimeConfig(), null, 2) + "\n",
@@ -260,7 +260,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
   }
 
   function writeLocaleFilesToDisk(options: { pruneOrphans: boolean } = { pruneOrphans: false }) {
-    if (!usesLocalStorage) return
+    if (!usesBundleStorage) return
     const dir = getLocalesDirPath()
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     for (const locale of locales) {
@@ -491,14 +491,14 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
       isDev = config.command === "serve"
       sourceRoots = (Array.isArray(rootDir) ? rootDir : [rootDir]).map((dir) => resolve(root, dir))
       log(
-        `${PREFIX} Locales: ${CYAN}${formatLocales(locales)}${RESET} | Default: ${CYAN}${formatLocale(defaultLocale)}${RESET} | Storage: ${CYAN}${usesLocalStorage ? "Local" : "Hosted"}${RESET} | Out Dir: ${DIM}${usesLocalStorage ? localesDir : "n/a"}${RESET} | Roots: ${DIM}${(Array.isArray(rootDir) ? rootDir : [rootDir]).join(", ")}${RESET}`,
+        `${PREFIX} Locales: ${CYAN}${formatLocales(locales)}${RESET} | Default: ${CYAN}${formatLocale(defaultLocale)}${RESET} | Storage: ${CYAN}${usesBundleStorage ? "Bundle" : "Remote"}${RESET} | Out Dir: ${DIM}${usesBundleStorage ? localesDir : "n/a"}${RESET} | Roots: ${DIM}${(Array.isArray(rootDir) ? rootDir : [rootDir]).join(", ")}${RESET}`,
       )
     },
 
     buildStart() {
       cache = loadCache(resolve(root, cacheFile))
       scanAllSourceFiles()
-      if (usesLocalStorage && !isDev) {
+      if (usesBundleStorage && !isDev) {
         assertGeneratedFilesCommitted()
         assertLocalBuildTranslationsComplete()
         return
@@ -547,7 +547,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     },
 
     async generateBundle() {
-      if (usesLocalStorage) {
+      if (usesBundleStorage) {
         if (!isDev) {
           assertGeneratedFilesCommitted()
         }
@@ -556,13 +556,13 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
         await translateMissingMessages()
       }
 
-      if (!usesLocalStorage) {
-        await syncHosted()
+      if (!usesBundleStorage) {
+        await syncRemote()
       }
     },
 
     closeBundle() {
-      if (usesLocalStorage && !isDev) return
+      if (usesBundleStorage && !isDev) return
       saveCache(resolve(root, cacheFile), cache)
     },
   }

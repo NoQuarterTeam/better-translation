@@ -131,24 +131,24 @@ export type TranslateFn = (
   locale: string,
 ) => Promise<Record<string, string>>
 
-/** Stores messages in a hosted backend. */
-export interface BetterTranslateHostedStorageOptions {
-  /** Selects hosted storage. */
-  type: "hosted"
-  /** Optional hosted backend URL. */
+/** Stores messages in a remote backend. */
+export interface BetterTranslateRemoteStorageOptions {
+  /** Selects remote storage. */
+  type: "remote"
+  /** Optional remote backend URL. */
   url?: string
 }
 
-/** Stores locale JSON files in the local app or deployed artifact. */
-export interface BetterTranslateLocalStorageOptions {
-  /** Selects local JSON file output. */
-  type: "local"
+/** Bundles locale JSON files into the app source tree or deployed artifact. */
+export interface BetterTranslateBundleStorageOptions {
+  /** Selects bundled storage. */
+  type: "bundle"
   /** Output directory where locale JSON files are written. */
   output?: string
 }
 
 /** Controls where translated locale artifacts are written or synced. */
-export type BetterTranslateStorageOptions = BetterTranslateHostedStorageOptions | BetterTranslateLocalStorageOptions
+export type BetterTranslateStorageOptions = BetterTranslateRemoteStorageOptions | BetterTranslateBundleStorageOptions
 
 /** Runtime metadata emitted by the plugin for server-side loaders. */
 export interface BetterTranslateRuntimeConfig {

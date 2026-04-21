@@ -14,7 +14,7 @@ export default defineConfig({
     betterTranslate({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
-      storage: { type: "local", output: "src/lib/bt" },
+      storage: { type: "bundle", output: "src/lib/bt" },
       async translate(messages, locale) {
         const result: Record<string, string> = {}
 

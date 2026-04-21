@@ -1,11 +1,15 @@
 import type { QueryClient } from "@tanstack/react-query"
 import { createRootRouteWithContext, HeadContent, Outlet, ScriptOnce, Scripts } from "@tanstack/react-router"
+import { createServerFn } from "@tanstack/react-start"
+import { setResponseHeaders } from "@tanstack/react-start/server"
+import { z } from "zod"
 
 import { TranslateProvider } from "@better-translate/vite/react"
 
 import { DefaultError } from "@/components/default-error"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
+import type { AppLocale } from "@/lib/bt/load-messages"
 import { loadMessages } from "@/lib/bt/load-messages"
 
 import appCss from "../styles.css?url"
@@ -15,10 +19,23 @@ interface MyRouterContext {
   queryClient: QueryClient
 }
 
+const getMessagesFn = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ locale: z.string() }))
+  .handler(async ({ data }) => {
+    setResponseHeaders(
+      new Headers({
+        "Cache-Control": "public, max-age=300",
+        "Vercel-CDN-Cache-Control": "max-age=3600, stale-while-revalidate=600",
+        "CDN-Cache-Control": "max-age=3600, stale-while-revalidate=600",
+      }),
+    )
+    return loadMessages(data.locale as AppLocale)
+  })
+
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async () => {
     const locale = getLocale()
-    const messages = await loadMessages(locale)
+    const messages = await getMessagesFn({ data: { locale } })
     return { locale, messages }
   },
   head: () => ({
@@ -29,11 +46,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
-  headers: () => ({
-    "Cache-Control": "no-cache",
-    "CDN-Cache-Control": "no-cache",
-    "Vercel-CDN-Cache-Control": "no-cache",
-  }),
+  headers: () => ({ "Cache-Control": "no-cache", "CDN-Cache-Control": "no-cache", "Vercel-CDN-Cache-Control": "no-cache" }),
   errorComponent: (p) => (
     <div className="h-screen w-screen">
       <DefaultError {...p} />

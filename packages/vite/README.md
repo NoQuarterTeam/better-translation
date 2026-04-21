@@ -65,7 +65,7 @@ export default defineConfig({
     betterTranslate({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
-      storage: { type: "local", output: "src/lib/bt" },
+      storage: { type: "bundle", output: "src/lib/bt" },
       async translate(messages, locale) {
         const result: Record<string, string> = {}
 
@@ -86,7 +86,7 @@ export default defineConfig({
 })
 ```
 
-With local storage enabled, the plugin writes files such as:
+With bundle storage enabled, the plugin writes files such as:
 
 ```text
 src/lib/bt/locales/en.json
@@ -106,7 +106,7 @@ betterTranslate({
   cacheFile: ".cache/better-translate.json",
   logging: true,
   storage: {
-    type: "local",
+    type: "bundle",
     output: "src/lib/bt",
   },
 })
@@ -166,14 +166,14 @@ Controls where locale runtime data comes from.
 
 ```ts
 storage: {
-  type: "local",
+  type: "bundle",
   output: "src/lib/bt",
 }
 ```
 
-`local` uses editable locale JSON files from the configured directory and expects your server build to include that directory for runtime loading.
+`bundle` uses editable locale JSON files from the configured directory and expects your server build to include that directory for runtime loading.
 
-`hosted` exists in the API, but hosted sync and hosted runtime fetching are currently stubs, so local storage is the recommended setup right now.
+`remote` exists in the API, but remote sync and remote runtime fetching are currently stubs, so bundle storage is the recommended setup right now.
 
 #### `translate`
 
@@ -319,7 +319,7 @@ The full list of supported locales belongs in the plugin config:
 betterTranslate({
   locales: ["en", "nl", "fr"],
   defaultLocale: "en",
-  storage: { type: "local", output: "src/lib/bt" },
+  storage: { type: "bundle", output: "src/lib/bt" },
 })
 ```
 
@@ -480,7 +480,7 @@ export default {
     betterTranslate({
       locales: ["en", "nl"],
       defaultLocale: "en",
-      storage: { type: "local", output: "src/lib/bt" },
+      storage: { type: "bundle", output: "src/lib/bt" },
       async translate(messages, locale) {
         const response = await fetch("https://your-translator.example.com/translate", {
           method: "POST",
@@ -512,7 +512,7 @@ Guidelines for a good custom translator:
 - Return plain strings only.
 - Keep translations deterministic when possible so the cache stays useful.
 
-For `storage: { type: "local" }`, production builds are check-only. They never call `translate()` and never regenerate locale artifacts. Instead, they validate the committed locale JSON files and committed generated helper files, then fail the build if anything is missing or out of sync.
+For `storage: { type: "bundle" }`, production builds are check-only. They never call `translate()` and never regenerate locale artifacts. Instead, they validate the committed locale JSON files and committed generated helper files, then fail the build if anything is missing or out of sync.
 
 ## Server-Side Helpers
 
@@ -562,7 +562,7 @@ v("name", user.name)
 
 ## Locale File Shape
 
-With local storage, each runtime locale file is a flat message map:
+With bundle storage, each runtime locale file is a flat message map:
 
 ```json
 {
@@ -597,7 +597,7 @@ It also keeps a private metadata manifest at `locales/manifest.json`:
 }
 ```
 
-For local storage, the plugin also writes runtime metadata at `locales/runtime.json` and a generated `load-messages.ts` for consuming locales on the server.
+For bundle storage, the plugin also writes runtime metadata at `src/lib/bt/runtime.json` and a generated `load-messages.ts` for consuming locales on the server.
 
 ## Important Notes
 
@@ -609,12 +609,12 @@ For local storage, the plugin also writes runtime metadata at `locales/runtime.j
 - Client-only apps can fetch locale JSON from `public/` or a CDN and pass the result directly to `TranslateProvider`.
 - The generated `load-messages.ts` is typed with an `AppLocale` union and statically imports each locale JSON so bundlers tree-shake unused locales.
 - In local mode, production builds are check-only and fail if committed locale artifacts are missing or out of sync.
-- Hosted storage is not fully implemented yet, so local storage is the recommended path for now.
+- Remote storage is not fully implemented yet, so bundle storage is the recommended path for now.
 
 ## Example Flow
 
 1. Add the plugin to `vite.config.ts`.
-2. Configure `locales`, `defaultLocale`, and local storage.
+2. Configure `locales`, `defaultLocale`, and bundle storage.
 3. Mark text with `t()`, `<T>`, or `msg()`.
 4. Load one locale with `loadMessages(locale)` from the generated `load-messages.ts` or fetch the locale JSON in the browser.
 5. Wrap your UI in `TranslateProvider`.
@@ -757,7 +757,7 @@ Because ids are deterministic, unchanged source text resolves to the same key ac
 
 ### 12. Production local builds are check-only
 
-For `storage: { type: "local" }`, production builds do not call `translate()` and do not rewrite locale artifacts.
+For `storage: { type: "bundle" }`, production builds do not call `translate()` and do not rewrite locale artifacts.
 
 Instead, the plugin:
 

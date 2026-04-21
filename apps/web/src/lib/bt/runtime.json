@@ -1,6 +1,6 @@
 {
   "storage": {
-    "type": "local",
+    "type": "bundle",
     "output": "src/lib/bt"
   },
   "defaultLocale": "en",
