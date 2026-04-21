@@ -186,6 +186,29 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     }
   }
 
+  function assertJsonFileContents(path: string, expected: unknown, label: string) {
+    if (!existsSync(path)) {
+      throw new Error(`${PREFIX} missing committed ${label} at ${relative(root, path)}`)
+    }
+
+    let actual: unknown
+    try {
+      actual = JSON.parse(readFileSync(path, "utf-8")) as unknown
+    } catch {
+      throw new Error(`${PREFIX} committed ${label} is invalid JSON at ${relative(root, path)}`)
+    }
+
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+      throw new Error(
+        [
+          `${PREFIX} committed ${label} is out of date`,
+          `expected committed file at ${relative(root, path)} to match the generated output`,
+          `run the dev workflow to regenerate locale artifacts and commit the result`,
+        ].join("\n"),
+      )
+    }
+  }
+
   function buildLoadMessagesModule() {
     const localeValues = locales.map((locale) => JSON.stringify(locale)).join(", ")
     return [
@@ -222,11 +245,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
 
   function assertGeneratedFilesCommitted() {
     if (!usesBundleStorage) return
-    assertFileContents(
-      getRuntimeConfigPath(root, localesDir),
-      JSON.stringify(getRuntimeConfig(), null, 2) + "\n",
-      "runtime config",
-    )
+    assertJsonFileContents(getRuntimeConfigPath(root, localesDir), getRuntimeConfig(), "runtime config")
     const loadMessagesPath = resolve(root, localesDir, LOAD_MESSAGES_FILENAME)
     if (!existsSync(loadMessagesPath)) {
       throw new Error(`${PREFIX} missing committed load-messages module at ${relative(root, loadMessagesPath)}`)
