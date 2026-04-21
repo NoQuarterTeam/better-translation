@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { T, useT } from "better-translation/react"
 import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
-
-import { T, useT } from "@better-translate/react"
 
 import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,12 +15,12 @@ export const Route = createFileRoute("/_auth/sign-up")({
       {
         title:
           match.context.locale === "nl"
-            ? "Registreren · Better Translate"
+            ? "Registreren · Better Translation"
             : match.context.locale === "fr"
-              ? "S'inscrire · Better Translate"
+              ? "S'inscrire · Better Translation"
               : match.context.locale === "es"
-                ? "Crear cuenta · Better Translate"
-                : "Sign up · Better Translate",
+                ? "Crear cuenta · Better Translation"
+                : "Sign up · Better Translation",
       },
     ],
   }),
@@ -88,7 +87,7 @@ function SignUpPage() {
             <T>Create your account</T>
           </CardTitle>
           <CardDescription>
-            <T>Sign up with your email to use Better Translate.</T>
+            <T>Sign up with your email to use Better Translation.</T>
           </CardDescription>
         </div>
       </CardHeader>

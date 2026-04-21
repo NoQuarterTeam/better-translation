@@ -5,7 +5,7 @@ import { Resend } from "resend"
 import { env } from "@/env"
 
 const resend = new Resend(env.RESEND_API_KEY)
-const appEmailFrom = "Better Translate <better-translate@updates.noquarter.co>"
+const appEmailFrom = "Better Translation <better-translation@updates.noquarter.co>"
 
 export async function sendAppEmail({ to, subject, react }: { to: string; subject: string; react: ReactNode }) {
   try {

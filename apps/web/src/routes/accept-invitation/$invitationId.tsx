@@ -1,9 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { T, useT, Var } from "better-translation/react"
 import { AlertCircleIcon } from "lucide-react"
 import { toast } from "sonner"
-
-import { T, useT, Var } from "@better-translate/react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -20,12 +19,12 @@ export const Route = createFileRoute("/accept-invitation/$invitationId")({
       {
         title:
           match.context.locale === "nl"
-            ? "Uitnodiging accepteren · Better Translate"
+            ? "Uitnodiging accepteren · Better Translation"
             : match.context.locale === "fr"
-              ? "Accepter l'invitation · Better Translate"
+              ? "Accepter l'invitation · Better Translation"
               : match.context.locale === "es"
-                ? "Aceptar invitacion · Better Translate"
-                : "Accept invitation · Better Translate",
+                ? "Aceptar invitacion · Better Translation"
+                : "Accept invitation · Better Translation",
       },
     ],
   }),
@@ -109,7 +108,7 @@ function AcceptInvitationPage() {
           <CardDescription>
             {invitationQuery.data?.organizationName ? (
               <T context="accept-invitation-organization-name">
-                Join <Var organizationName={invitationQuery.data.organizationName} /> on Better Translate.
+                Join <Var organizationName={invitationQuery.data.organizationName} /> on Better Translation.
               </T>
             ) : (
               <T>Review your invitation below.</T>

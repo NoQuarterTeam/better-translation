@@ -1,5 +1,5 @@
 {
-  "name": "@better-translate/tsconfig",
+  "name": "@better-translation/tsconfig",
   "private": true,
   "files": [
     "*.json"

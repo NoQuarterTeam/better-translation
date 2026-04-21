@@ -1,6 +1,8 @@
 import { Children, createContext, isValidElement, useContext, useMemo, type ReactNode } from "react"
 
-import { getCallMessageId, getMessageId, type TranslateOptions } from "@better-translate/core"
+import type { TranslateOptions } from "./types.js"
+
+import { getCallMessageId, getMessageId } from "./message-id.js"
 
 interface TranslateContextValue {
   messages: Record<string, string>

@@ -1,8 +1,7 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
+import { T, useT } from "better-translation/react"
 import { useState } from "react"
 import * as z from "zod"
-
-import { T, useT } from "@better-translate/react"
 
 import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,12 +20,12 @@ export const Route = createFileRoute("/create-org/")({
       {
         title:
           match.context.locale === "nl"
-            ? "Organisatie maken · Better Translate"
+            ? "Organisatie maken · Better Translation"
             : match.context.locale === "fr"
-              ? "Creer une organisation · Better Translate"
+              ? "Creer une organisation · Better Translation"
               : match.context.locale === "es"
-                ? "Crear organizacion · Better Translate"
-                : "Create organization · Better Translate",
+                ? "Crear organizacion · Better Translation"
+                : "Create organization · Better Translation",
       },
     ],
   }),

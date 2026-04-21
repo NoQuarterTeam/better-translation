@@ -1,9 +1,9 @@
 import type { Argument, CallExpression, JSXChild, StringLiteral, TemplateLiteral } from "oxc-parser"
 import { parseSync, Visitor } from "oxc-parser"
 
-import { getCallMessageId, getMessageId } from "@better-translate/core"
-
 import type { ExtractedMessage, MessageSource } from "./types.js"
+
+import { getCallMessageId, getMessageId } from "./message-id.js"
 
 interface Markers {
   call: string[]

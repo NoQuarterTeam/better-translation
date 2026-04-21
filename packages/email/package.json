@@ -1,5 +1,5 @@
 {
-  "name": "@better-translate/email",
+  "name": "@better-translation/email",
   "private": true,
   "type": "module",
   "exports": {
@@ -16,7 +16,7 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@better-translate/tsconfig": "workspace:*",
+    "@better-translation/tsconfig": "workspace:*",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "react-email": "^5.2.10",

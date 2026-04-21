@@ -9,7 +9,7 @@ type Props = {
 
 export function ResetPasswordEmail({ firstName = "there", resetUrl }: Props) {
   return (
-    <Layout preview="Reset your Better Translate password">
+    <Layout preview="Reset your Better Translation password">
       <Container className="mx-auto max-w-xl rounded-lg border border-neutral-200 px-8 py-10">
         <Heading className="m-0 text-2xl font-semibold">Reset your password</Heading>
         <Text className="mt-4 text-base leading-7 text-neutral-700">

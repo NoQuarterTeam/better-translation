@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { T, useT } from "better-translation/react"
 import { CheckCircle2Icon } from "lucide-react"
 import { useState } from "react"
 import * as z from "zod"
-
-import { T, useT } from "@better-translate/react"
 
 import { useAppForm } from "@/components/react-form"
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -18,12 +17,12 @@ export const Route = createFileRoute("/_auth/forgot-password")({
       {
         title:
           match.context.locale === "nl"
-            ? "Wachtwoord vergeten · Better Translate"
+            ? "Wachtwoord vergeten · Better Translation"
             : match.context.locale === "fr"
-              ? "Mot de passe oublie · Better Translate"
+              ? "Mot de passe oublie · Better Translation"
               : match.context.locale === "es"
-                ? "Olvide mi contrasena · Better Translate"
-                : "Forgot password · Better Translate",
+                ? "Olvide mi contrasena · Better Translation"
+                : "Forgot password · Better Translation",
       },
     ],
   }),

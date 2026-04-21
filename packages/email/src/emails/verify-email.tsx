@@ -9,7 +9,7 @@ type Props = {
 
 export function VerifyEmail({ firstName = "there", verifyUrl }: Props) {
   return (
-    <Layout preview="Verify your Better Translate email">
+    <Layout preview="Verify your Better Translation email">
       <Container className="mx-auto max-w-xl rounded-lg border border-neutral-200 px-8 py-10">
         <Heading className="m-0 text-2xl font-semibold">Verify your email</Heading>
         <Text className="mt-4 text-base leading-7 text-neutral-700">

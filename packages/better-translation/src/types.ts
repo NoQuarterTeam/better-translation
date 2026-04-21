@@ -126,42 +126,49 @@ export interface TranslateMessage {
 /** User-provided translation function used to fill missing locale entries. */
 export type TranslateFn = (messages: TranslateMessage[], locale: string) => Promise<Record<string, string>>
 
-export function normalizeMeta(meta?: TranslateOptions): TranslateOptions {
-  if (!meta) return {}
-
-  return Object.fromEntries(
-    Object.entries(meta)
-      .filter(([key, value]) => key !== "id" && value !== undefined)
-      .sort(([a], [b]) => a.localeCompare(b)),
-  ) as TranslateOptions
+/** Stores messages in a remote backend. */
+export interface BetterTranslateRemoteStorageOptions {
+  /** Selects remote storage. */
+  type: "remote"
+  /** Optional remote backend URL. */
+  url?: string
 }
 
-export function serializeMeta(meta?: TranslateOptions) {
-  if (!meta) return ""
-
-  const normalized = normalizeMeta(meta)
-  return Object.keys(normalized).length > 0 ? JSON.stringify(normalized) : ""
+/** Bundles locale JSON files into the app source tree or deployed artifact. */
+export interface BetterTranslateBundleStorageOptions {
+  /** Selects bundled storage. */
+  type: "bundle"
+  /** Output directory where locale JSON files are written. */
+  output?: string
 }
 
-export function getMessageIdentity(message: string, meta?: TranslateOptions) {
-  const serializedMeta = serializeMeta(meta)
-  return serializedMeta ? `${message}\0${serializedMeta}` : message
+/** Controls where translated locale artifacts are written or synced. */
+export type BetterTranslateStorageOptions = BetterTranslateRemoteStorageOptions | BetterTranslateBundleStorageOptions
+
+/** Runtime metadata emitted by the plugin for server-side loaders. */
+export interface BetterTranslateRuntimeConfig {
+  /** Storage backend configured for emitted locale artifacts. */
+  storage: BetterTranslateStorageOptions
+  /** Locale code treated as the source language. */
+  defaultLocale: string
+  /** All locale codes emitted by the plugin. */
+  locales: string[]
 }
 
-/** Generates the stable hashed id used to store and look up a translated message. */
-export function getMessageId(message: string, meta?: TranslateOptions) {
-  const value = getMessageIdentity(message, meta)
-  let hash = 2166136261
-
-  for (let i = 0; i < value.length; i++) {
-    hash ^= value.charCodeAt(i)
-    hash = Math.imul(hash, 16777619)
-  }
-
-  return `m_${(hash >>> 0).toString(36)}`
-}
-
-/** Resolves the lookup id for function-style `t()` calls, preferring an explicit `options.id`. */
-export function getCallMessageId(message: string, options?: TranslateOptions) {
-  return options?.id ?? getMessageId(message, options)
+/** Public configuration for the Better Translation Vite plugin. */
+export interface BetterTranslatePluginOptions {
+  /** All locale codes that should be emitted. */
+  locales: string[]
+  /** Locale code treated as the source language. */
+  defaultLocale?: string
+  /** Source directory or directories, relative to the Vite root. Defaults to `"src"`. */
+  rootDir?: string | string[]
+  /** Cache file path, relative to the Vite root. */
+  cacheFile?: string
+  /** Enables or disables plugin logging. */
+  logging?: boolean
+  /** Storage backend configuration. */
+  storage?: BetterTranslateStorageOptions
+  /** Custom translation function used for messages missing from non-default locales. */
+  translate?: TranslateFn
 }

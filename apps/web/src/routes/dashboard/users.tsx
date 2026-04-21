@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-
-import { T } from "@better-translate/react"
+import { T } from "better-translation/react"
 
 export const Route = createFileRoute("/dashboard/users")({
   component: RouteComponent,

@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "better-translate",
+      "name": "@better-translation/web",
       "dependencies": {
         "@faker-js/faker": "^10.3.0",
         "@neondatabase/serverless": "^1.0.2",

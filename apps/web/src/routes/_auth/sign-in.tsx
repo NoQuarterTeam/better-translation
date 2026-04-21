@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { T, useT } from "better-translation/react"
 import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
-
-import { T, useT } from "@better-translate/react"
 
 import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,12 +20,12 @@ export const Route = createFileRoute("/_auth/sign-in")({
       {
         title:
           match.context.locale === "nl"
-            ? "Aanmelden · Better Translate"
+            ? "Aanmelden · Better Translation"
             : match.context.locale === "fr"
-              ? "Se connecter · Better Translate"
+              ? "Se connecter · Better Translation"
               : match.context.locale === "es"
-                ? "Iniciar sesion · Better Translate"
-                : "Sign in · Better Translate",
+                ? "Iniciar sesion · Better Translation"
+                : "Sign in · Better Translation",
       },
     ],
   }),

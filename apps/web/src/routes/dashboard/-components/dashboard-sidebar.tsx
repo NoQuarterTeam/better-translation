@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router"
+import { T } from "better-translation/react"
 import { LayoutIcon, UsersIcon } from "lucide-react"
-
-import { T } from "@better-translate/react"
 
 import {
   Sidebar,

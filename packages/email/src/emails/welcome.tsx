@@ -9,7 +9,7 @@ type Props = {
 
 export function WelcomeEmail({ firstName = "there", loginUrl }: Props) {
   return (
-    <Layout preview="Welcome to Better Translate">
+    <Layout preview="Welcome to Better Translation">
       <Container className="mx-auto max-w-xl rounded-lg border border-neutral-200 px-8 py-10">
         <Heading className="m-0 text-2xl font-semibold">Welcome, {firstName}</Heading>
         <Text className="mt-4 text-base leading-7 text-neutral-700">

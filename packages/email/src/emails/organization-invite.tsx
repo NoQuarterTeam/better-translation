@@ -11,11 +11,11 @@ type Props = {
 
 export function OrganizationInviteEmail({ firstName = "there", inviteUrl, inviterName, organizationName }: Props) {
   return (
-    <Layout preview={`Join ${organizationName} on Better Translate`}>
+    <Layout preview={`Join ${organizationName} on Better Translation`}>
       <Container className="mx-auto max-w-xl rounded-lg border border-neutral-200 px-8 py-10">
         <Heading className="m-0 text-2xl font-semibold">You're invited to an organization</Heading>
         <Text className="mt-4 text-base leading-7 text-neutral-700">
-          Hi {firstName}, {inviterName} invited you to join <strong>{organizationName}</strong> on Better Translate.
+          Hi {firstName}, {inviterName} invited you to join <strong>{organizationName}</strong> on Better Translation.
         </Text>
         <Text className="text-base leading-7 text-neutral-700">
           Sign in (or create an account with this email), then accept the invitation from the link below.

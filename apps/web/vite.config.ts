@@ -2,11 +2,10 @@ import tailwindcss from "@tailwindcss/vite"
 import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import viteReact from "@vitejs/plugin-react"
 import { generateText } from "ai"
+import { betterTranslate, type TranslateMessage } from "better-translation/vite"
 import dedent from "dedent"
 import { nitro } from "nitro/vite"
 import { defineConfig } from "vite-plus"
-
-import { betterTranslate, type TranslateMessage } from "@better-translate/vite"
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },

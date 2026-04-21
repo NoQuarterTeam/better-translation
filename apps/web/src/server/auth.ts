@@ -4,7 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { organization } from "better-auth/plugins"
 import { tanstackStartCookies } from "better-auth/tanstack-start"
 
-import { OrganizationInviteEmail, ResetPasswordEmail, VerifyEmail } from "@better-translate/email"
+import { OrganizationInviteEmail, ResetPasswordEmail, VerifyEmail } from "@better-translation/email"
 
 import { getBaseUrl } from "@/lib/config"
 import { db } from "@/server/db"
@@ -90,7 +90,7 @@ export const auth = betterAuth({
         waitUntil(
           sendAppEmail({
             to: data.email,
-            subject: `${inviterName} invited you to ${data.organization.name} on Better Translate`,
+            subject: `${inviterName} invited you to ${data.organization.name} on Better Translation`,
             react: OrganizationInviteEmail({
               firstName: "there",
               organizationName: data.organization.name,

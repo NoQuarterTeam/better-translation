@@ -1,10 +1,10 @@
 {
-  "name": "@better-translate/web",
+  "name": "@better-translation/web",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "bun with-env portless bt vite dev --host",
-    "build": "bun --cwd ../.. --filter @better-translate/core build && bun --cwd ../.. --filter @better-translate/react build && bun --cwd ../.. --filter @better-translate/server build && bun --cwd ../.. --filter @better-translate/vite build && vite build",
+    "build": "bun --cwd ../.. --filter better-translation build && vite build",
     "start": "node .output/server/index.mjs",
     "db:generate": "bun with-env drizzle-kit generate",
     "db:migrate": "bun with-env drizzle-kit migrate",
@@ -16,8 +16,7 @@
   "dependencies": {
     "@ai-sdk/vercel": "^2.0.40",
     "@base-ui/react": "^1.3.0",
-    "@better-translate/email": "workspace:*",
-    "@better-translate/react": "workspace:*",
+    "@better-translation/email": "workspace:*",
     "@faker-js/faker": "10.4.0",
     "@fontsource-variable/geist": "^5.2.8",
     "@neondatabase/serverless": "catalog:",
@@ -41,6 +40,7 @@
     "@vercel/functions": "3.4.3",
     "ai": "^6.0.146",
     "better-auth": "catalog:",
+    "better-translation": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -66,8 +66,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@better-translate/tsconfig": "workspace:*",
-    "@better-translate/vite": "workspace:*",
+    "@better-translation/tsconfig": "workspace:*",
     "@tailwindcss/typography": "0.5.19",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/devtools-event-client": "catalog:",

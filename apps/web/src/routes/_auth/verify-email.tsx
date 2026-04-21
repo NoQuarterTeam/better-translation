@@ -1,11 +1,10 @@
 import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { T, useT, Var } from "better-translation/react"
 import { AlertCircleIcon, MailCheckIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
-
-import { T, useT, Var } from "@better-translate/react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -20,12 +19,12 @@ export const Route = createFileRoute("/_auth/verify-email")({
       {
         title:
           match.context.locale === "nl"
-            ? "Bevestig je e-mailadres · Better Translate"
+            ? "Bevestig je e-mailadres · Better Translation"
             : match.context.locale === "fr"
-              ? "Verifiez votre e-mail · Better Translate"
+              ? "Verifiez votre e-mail · Better Translation"
               : match.context.locale === "es"
-                ? "Verifica tu correo electronico · Better Translate"
-                : "Verify your email · Better Translate",
+                ? "Verifica tu correo electronico · Better Translation"
+                : "Verify your email · Better Translation",
       },
     ],
   }),

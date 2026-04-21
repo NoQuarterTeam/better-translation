@@ -1,5 +1,5 @@
 {
-  "name": "@better-translate/root",
+  "name": "@better-translation/root",
   "private": true,
   "workspaces": {
     "packages": [
@@ -55,12 +55,17 @@
   },
   "type": "module",
   "scripts": {
+    "build:packages": "bun --filter better-translation build",
+    "changeset": "changeset",
     "lint": "vp lint",
     "format": "vp fmt",
     "fix": "vp lint --fix && vp fmt",
-    "check": "vp check"
+    "check": "vp check",
+    "version-packages": "changeset version && bun install",
+    "release": "bun run build:packages && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "oxlint": "1.58.0",
     "oxlint-tsgolint": "0.19.0",
     "typescript": "catalog:",

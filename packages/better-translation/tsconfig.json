@@ -1,5 +1,5 @@
 {
-  "extends": "@better-translate/tsconfig/base.json",
+  "extends": "@better-translation/tsconfig/base.json",
   "compilerOptions": {
     "noEmit": false,
     "declaration": true,
