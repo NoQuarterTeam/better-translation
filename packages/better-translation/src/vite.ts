@@ -1,4 +1,4 @@
-export { betterTranslate } from "./plugin.js"
+export { betterTranslation } from "./plugin.js"
 export type {
   BetterTranslateBundleStorageOptions,
   BetterTranslatePluginOptions,

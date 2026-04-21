@@ -58,11 +58,11 @@ At build time and during dev, the plugin:
 ```ts
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
-import { betterTranslate } from "better-translation/vite"
+import { betterTranslation } from "better-translation/vite"
 
 export default defineConfig({
   plugins: [
-    betterTranslate({
+    betterTranslation({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
       storage: { type: "bundle", output: "src/lib/bt" },
@@ -99,7 +99,7 @@ src/lib/bt/manifest.json
 ## Basic Configuration
 
 ```ts
-betterTranslate({
+betterTranslation({
   locales: ["en", "nl"],
   defaultLocale: "en",
   rootDir: "src",
@@ -317,7 +317,7 @@ The first argument is a single locale code. You do not pass the whole `locales` 
 The full list of supported locales belongs in the plugin config:
 
 ```ts
-betterTranslate({
+betterTranslation({
   locales: ["en", "nl", "fr"],
   defaultLocale: "en",
   storage: { type: "bundle", output: "src/lib/bt" },
@@ -484,11 +484,11 @@ Each message includes:
 Example using your own API:
 
 ```ts
-import { betterTranslate } from "better-translation/vite"
+import { betterTranslation } from "better-translation/vite"
 
 export default {
   plugins: [
-    betterTranslate({
+    betterTranslation({
       locales: ["en", "nl"],
       defaultLocale: "en",
       storage: { type: "bundle", output: "src/lib/bt" },
@@ -627,7 +627,7 @@ This is the full local-storage flow from source code to translated UI.
 
 ### 1. You configure the plugin
 
-You add `betterTranslate(...)` to your Vite config and tell it:
+You add `betterTranslation(...)` to your Vite config and tell it:
 
 - which locales exist
 - which locale is the default source language

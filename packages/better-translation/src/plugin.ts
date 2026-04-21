@@ -52,7 +52,7 @@ function formatLocales(locales: string[]) {
 }
 
 /** Scans source files for translatable messages and keeps locale JSON files in sync. */
-export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
+export function betterTranslation(options: BetterTranslatePluginOptions): Plugin {
   const {
     locales,
     defaultLocale = locales[0] ?? "en",
