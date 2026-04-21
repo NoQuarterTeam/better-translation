@@ -234,9 +234,9 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     assertFileContents(resolve(root, localesDir, GITIGNORE_FILENAME), GITIGNORE_CONTENTS, "generated .gitignore")
   }
 
-  function buildLocalLocaleMessages(locale: string, options: { pruneOrphans: boolean }): RuntimeMessages {
+  function buildLocalLocaleMessages(locale: string): RuntimeMessages {
     const existingMessages = readLocaleMessages(locale)
-    const messages: RuntimeMessages = options.pruneOrphans ? {} : { ...existingMessages }
+    const messages: RuntimeMessages = {}
 
     if (locale === defaultLocale) {
       for (const [id, entry] of Object.entries(manifest)) {
@@ -258,14 +258,14 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     return messages
   }
 
-  function writeLocaleFilesToDisk(options: { pruneOrphans: boolean } = { pruneOrphans: false }) {
+  function writeLocaleFilesToDisk() {
     if (!usesBundleStorage) return
     const dir = getLocalesDirPath()
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     for (const locale of locales) {
       writeFileIfChanged(
         resolve(dir, `${locale}.json`),
-        JSON.stringify(buildLocalLocaleMessages(locale, options), null, 2) + "\n",
+        JSON.stringify(buildLocalLocaleMessages(locale), null, 2) + "\n",
       )
     }
     writeLoadMessagesModule()

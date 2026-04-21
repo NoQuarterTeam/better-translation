@@ -180,7 +180,7 @@ Remote mode means:
 - The hosted app/service, plugin, and example consumer app should all live in this monorepo for v1.
 - Project creation is explicit; plugin sync should fail clearly rather than auto-provisioning.
 - Existing local locale values can seed remote translations, but only into blank hosted fields.
-- Removed message ids become orphaned instead of being hard-deleted.
+- Removed message ids can remain as orphaned history in canonical remote storage, but local bundled locale artifacts should be pruned to the current manifest.
 
 ## Still Open
 

@@ -605,7 +605,7 @@ For bundle storage, the plugin also writes runtime metadata at `src/lib/bt/runti
 - `t()` only extracts static string literals as its first argument and derives placeholders from `{name}` segments in that message.
 - `<T>` only extracts static text plus `<Var someName={value} />` placeholders or `<Var>{identifier}</Var>` shorthand.
 - Missing translations can fall back to the source text in dev while locale JSON files are being filled.
-- In local mode, locale JSON files are committed in the repo and loaded one locale at a time.
+- In local mode, locale JSON files are committed in the repo, loaded one locale at a time, and regenerated to match the current manifest exactly.
 - Client-only apps can fetch locale JSON from `public/` or a CDN and pass the result directly to `TranslateProvider`.
 - The generated `load-messages.ts` is typed with an `AppLocale` union and statically imports each locale JSON so bundlers tree-shake unused locales.
 - In local mode, production builds are check-only and fail if committed locale artifacts are missing or out of sync.
@@ -769,4 +769,4 @@ Instead, the plugin:
 
 The private `manifest.json` is still generated for dev/debugging, but it is not required to be committed for production builds.
 
-That keeps production behavior predictable: either the committed locale artifacts are correct, or the build stops.
+That keeps production behavior predictable: either the committed locale artifacts are correct, or the build stops. During dev regeneration, orphaned ids are pruned from bundle locale files automatically so stale keys do not accumulate between builds.
