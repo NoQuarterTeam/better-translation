@@ -11,7 +11,7 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
     betterTranslate({
-      locales: ["en", "nl", "fr", "es"],
+      locales: ["en", "nl"],
       defaultLocale: "en",
       storage: { type: "bundle", output: "src/lib/bt" },
       async translate(messages: TranslateMessage[], locale: string) {

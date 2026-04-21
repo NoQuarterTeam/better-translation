@@ -1,11 +1,9 @@
 import { createIsomorphicFn } from "@tanstack/react-start"
 import { getCookie } from "@tanstack/react-start/server"
 
-import type { AppLocale } from "@/lib/bt/load-messages"
+import { locales, type AppLocale } from "@/lib/bt/load-messages"
 
 export type { AppLocale }
-
-export const locales = ["en", "nl", "fr", "es"] as const satisfies readonly AppLocale[]
 
 export const LOCALE_COOKIE = "locale"
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365

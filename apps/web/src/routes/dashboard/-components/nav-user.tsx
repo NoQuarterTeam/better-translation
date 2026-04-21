@@ -73,8 +73,6 @@ export function NavUser() {
           >
             <NativeSelectOption value="en">English</NativeSelectOption>
             <NativeSelectOption value="nl">Nederlands</NativeSelectOption>
-            <NativeSelectOption value="fr">Francais</NativeSelectOption>
-            <NativeSelectOption value="es">Espanol</NativeSelectOption>
           </NativeSelect>
         </div>
         <DropdownMenuSeparator />

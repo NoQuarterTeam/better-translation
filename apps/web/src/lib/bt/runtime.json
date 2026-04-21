@@ -6,8 +6,6 @@
   "defaultLocale": "en",
   "locales": [
     "en",
-    "nl",
-    "fr",
-    "es"
+    "nl"
   ]
 }
