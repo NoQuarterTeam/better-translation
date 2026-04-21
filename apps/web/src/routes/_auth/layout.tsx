@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, redirect, useRouter } from "@tanstack/react-router"
-
-import { useT } from "@better-translate/vite/react"
+import { useT } from "better-translate/react"
 
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 

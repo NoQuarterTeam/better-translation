@@ -1,7 +1,6 @@
 import { useNavigate, useRouter } from "@tanstack/react-router"
+import { useT } from "better-translate/react"
 import { LogOutIcon } from "lucide-react"
-
-import { useT } from "@better-translate/vite/react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {

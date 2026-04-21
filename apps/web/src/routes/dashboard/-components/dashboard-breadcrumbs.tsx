@@ -1,7 +1,6 @@
 import { isMatch, Link, useMatches } from "@tanstack/react-router"
+import { useT } from "better-translate/react"
 import { Fragment } from "react"
-
-import { useT } from "@better-translate/vite/react"
 
 import {
   Breadcrumb,

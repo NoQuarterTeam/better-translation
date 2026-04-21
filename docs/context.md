@@ -6,7 +6,7 @@ This document defines the domain language we have established so far for `better
 
 This repo is evolving toward three distinct roles that live in the same monorepo for now:
 
-- `packages/vite`: the published Vite plugin.
+- `packages/vite`: the published `better-translate` package, including the Vite plugin and runtime helpers.
 - hosted app/service: receives manifest syncs, stores translations, provides the editor UI, and serves runtime locale bundles.
 - example consumer app: behaves like a downstream app using the plugin and hosted runtime bundles.
 

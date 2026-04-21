@@ -1,11 +1,10 @@
 import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { T, useT, Var } from "better-translate/react"
 import { AlertCircleIcon, MailCheckIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
-
-import { T, useT, Var } from "@better-translate/vite/react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
