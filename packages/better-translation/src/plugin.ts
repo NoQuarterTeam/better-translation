@@ -263,10 +263,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     const dir = getLocalesDirPath()
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     for (const locale of locales) {
-      writeFileIfChanged(
-        resolve(dir, `${locale}.json`),
-        JSON.stringify(buildLocalLocaleMessages(locale), null, 2) + "\n",
-      )
+      writeFileIfChanged(resolve(dir, `${locale}.json`), JSON.stringify(buildLocalLocaleMessages(locale), null, 2) + "\n")
     }
     writeLoadMessagesModule()
   }

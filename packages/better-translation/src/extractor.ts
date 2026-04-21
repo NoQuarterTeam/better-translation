@@ -417,4 +417,3 @@ function getVarChildIdentifier(children: Array<JSXChild>) {
   if (!child || child.type !== "JSXExpressionContainer" || child.expression.type !== "Identifier") return undefined
   return child.expression.name
 }
-
