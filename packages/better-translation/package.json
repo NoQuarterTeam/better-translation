@@ -2,6 +2,10 @@
   "name": "better-translation",
   "version": "0.1.1",
   "description": "Vite plugin and runtime helpers for Better Translation.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NoQuarterTeam/better-translation.git"
+  },
   "files": [
     "dist"
   ],
