@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.1.4
+
+### Patch Changes
+
+- [`7ad0663`](https://github.com/NoQuarterTeam/better-translation/commit/7ad06638f7dbf8e2a4781ea3a1b94061ce131475) Thanks [@JClackett](https://github.com/JClackett)! - rename plugin export
+
 ## 0.1.3
 
 ### Patch Changes
