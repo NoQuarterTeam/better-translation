@@ -32,7 +32,6 @@ const DEFAULT_ROOT_DIR = "src"
 const DEFAULT_SCAN_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"]
 const CALL_MARKERS = ["t", "useT"]
 const COMPONENT_MARKERS = ["T"]
-const TAGGED_TEMPLATE_MARKERS = ["msg"]
 const PRIVATE_MANIFEST_FILENAME = "manifest.json"
 const LOAD_MESSAGES_FILENAME = "load-messages.ts"
 const LOCALES_SUBDIR = "locales"
@@ -430,7 +429,6 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     const analysis = analyzeSourceFile(code, file, {
       call: CALL_MARKERS,
       component: COMPONENT_MARKERS,
-      taggedTemplate: TAGGED_TEMPLATE_MARKERS,
       logging,
     })
     if (!analysis.parsed) return null
@@ -537,7 +535,6 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
       const analysis = analyzeSourceFile(code, cleanId, {
         call: CALL_MARKERS,
         component: COMPONENT_MARKERS,
-        taggedTemplate: TAGGED_TEMPLATE_MARKERS,
         logging,
       })
 

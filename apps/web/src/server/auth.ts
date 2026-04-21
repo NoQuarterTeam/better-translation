@@ -103,6 +103,5 @@ export const auth = betterAuth({
     }),
   ],
   session: { cookieCache: { enabled: true } },
-  // TODO: Add the production origin
-  trustedOrigins: ["http://bt.local:1355"],
+  trustedOrigins: ["http://bt.local:1355", "https://better-translation.vercel.app"],
 })

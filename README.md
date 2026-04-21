@@ -6,7 +6,7 @@ It scans your source for translation markers, creates stable message ids, keeps 
 
 ## Features
 
-- Extracts messages from function calls, React components, and tagged templates
+- Extracts messages from function calls and React components
 - Generates stable message ids from the source text and optional context
 - Writes locale JSON files for every configured locale
 - Supports a custom async `translate()` function for auto-filling missing translations
@@ -46,7 +46,7 @@ If you are using the React helpers, make sure `react` is installed in your app.
 
 At build time and during dev, the plugin:
 
-1. Scans all matching files under your configured roots for translation markers such as `t("...")`, `<T>...</T>`, and `msg("...", values?, options?)`.
+1. Scans all matching files under your configured roots for translation markers such as `t("...", values?, options?)` and `<T>...</T>`.
 2. Extracts the default message, placeholders, source locations, and optional context.
 3. Generates a stable message id for each entry.
 4. Writes locale JSON files for every configured locale.
@@ -267,9 +267,9 @@ Use this for server-side messages with placeholders.
 ```ts
 import { createTranslator } from "better-translation/server"
 
-const { msg } = createTranslator(messages)
+const t = createTranslator(messages)
 
-const subject = msg("You were invited to {organization}", { organization: organization.name })
+const subject = t("You were invited to {organization}", { organization: organization.name })
 ```
 
 The message text is the source of truth, just like `t()` and the React helpers.
@@ -298,14 +298,14 @@ Welcome back, {userName}
 
 For plain identifiers, the shorthand `<Var>{userName}</Var>` also works and is normalized at build time.
 
-### On the Server with `msg()`
+### On the Server with `t()`
 
 ```ts
 import { createTranslator } from "better-translation/server"
 
-const { msg } = createTranslator(messages)
+const t = createTranslator(messages)
 
-const body = msg("Welcome back, {name}", { name: user.name })
+const body = t("Welcome back, {name}", { name: user.name })
 ```
 
 ## Loading Messages for a Locale
@@ -541,12 +541,12 @@ It statically imports each locale JSON file and returns the flattened message ma
 
 ### `createTranslator()`
 
-Creates lightweight server helpers:
+Creates a lightweight server translator:
 
 ```ts
 import { createTranslator } from "better-translation/server"
 
-const { t, msg } = createTranslator(messages)
+const t = createTranslator(messages)
 ```
 
 Use `t()` for plain strings:
@@ -555,20 +555,10 @@ Use `t()` for plain strings:
 const errorMessage = t("Could not sign in")
 ```
 
-Use `msg()` for server-side messages with optional placeholders:
+It also handles server-side messages with optional placeholders:
 
 ```ts
-const sentence = msg("You were invited to {organization}", { organization: organization.name })
-```
-
-### `v()`
-
-Legacy helper for building placeholder values passed to `msg()`:
-
-```ts
-import { v } from "better-translation/server"
-
-msg("Welcome back, {name}", { name: v("name", user.name) })
+const sentence = t("You were invited to {organization}", { organization: organization.name })
 ```
 
 ## Locale File Shape
@@ -612,9 +602,8 @@ For bundle storage, the plugin also writes runtime metadata at `src/lib/bt/runti
 
 ## Important Notes
 
-- `t()` only extracts static string literals.
+- `t()` only extracts static string literals as its first argument and derives placeholders from `{name}` segments in that message.
 - `<T>` only extracts static text plus `<Var someName={value} />` placeholders or `<Var>{identifier}</Var>` shorthand.
-- `msg()` only extracts static string literals as its first argument and derives placeholders from `{name}` segments in that message.
 - Missing translations can fall back to the source text in dev while locale JSON files are being filled.
 - In local mode, locale JSON files are committed in the repo and loaded one locale at a time.
 - Client-only apps can fetch locale JSON from `public/` or a CDN and pass the result directly to `TranslateProvider`.
@@ -626,10 +615,10 @@ For bundle storage, the plugin also writes runtime metadata at `src/lib/bt/runti
 
 1. Add the plugin to `vite.config.ts`.
 2. Configure `locales`, `defaultLocale`, and bundle storage.
-3. Mark text with `t()`, `<T>`, or `msg()`.
+3. Mark text with `t()` or `<T>`.
 4. Load one locale with `loadMessages(locale)` from the generated `load-messages.ts` or fetch the locale JSON in the browser.
 5. Wrap your UI in `TranslateProvider`.
-6. Use `useT()`, `T`, `Var`, `createTranslator()`, and `msg()` where appropriate.
+6. Use `useT()`, `T`, `Var`, and `createTranslator()` where appropriate.
 7. Let the plugin write locale JSON files in dev and call your custom translator for missing entries.
 
 ## Step-By-Step: How It Works
@@ -663,9 +652,8 @@ This full scan is what lets the plugin build a stable manifest for the whole app
 
 The extractor looks for:
 
-- `t("...")` and similar configured call markers
+- `t("...", values?, options?)` and similar configured call markers
 - `<T>...</T>` JSX blocks
-- `msg("...", values?, options?)` server calls
 
 For each match it records:
 

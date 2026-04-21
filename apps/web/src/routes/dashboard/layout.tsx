@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query"
 import { createFileRoute, Outlet } from "@tanstack/react-router"
+import { createTranslator } from "better-translation/server"
 
 import { DefaultError } from "@/components/default-error"
 import { Separator } from "@/components/ui/separator"
@@ -21,6 +22,10 @@ export const Route = createFileRoute("/dashboard")({
     </div>
   ),
   ssr: false,
+  head: ({ match }) => {
+    const t = createTranslator(match.context.messages)
+    return { meta: [{ title: `${t("Dashboard")} · Better Translation` }] }
+  },
   beforeLoad: async ({ context }) => {
     const user = await context.queryClient.ensureQueryData(currentUserQueryOptions())
     return { user }

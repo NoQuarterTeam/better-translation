@@ -17,7 +17,7 @@ export interface MessageSource {
   /** File path relative to the Vite root where the message came from. */
   file: string
   /** Extraction marker that produced the message. */
-  kind: "call" | "component" | "tagged-template"
+  kind: "call" | "component"
   /** Concrete marker name encountered in source, such as `t` or `T`. */
   marker: string
   /** 1-based starting line number of the extracted node. */

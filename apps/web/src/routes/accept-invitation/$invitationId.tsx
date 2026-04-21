@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { T, useT, Var } from "better-translation/react"
+import { createTranslator } from "better-translation/server"
 import { AlertCircleIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -14,20 +15,10 @@ import { getOrganizationInvitationFn } from "./-data"
 
 export const Route = createFileRoute("/accept-invitation/$invitationId")({
   component: AcceptInvitationPage,
-  head: ({ match }) => ({
-    meta: [
-      {
-        title:
-          match.context.locale === "nl"
-            ? "Uitnodiging accepteren · Better Translation"
-            : match.context.locale === "fr"
-              ? "Accepter l'invitation · Better Translation"
-              : match.context.locale === "es"
-                ? "Aceptar invitacion · Better Translation"
-                : "Accept invitation · Better Translation",
-      },
-    ],
-  }),
+  head: ({ match }) => {
+    const t = createTranslator(match.context.messages)
+    return { meta: [{ title: `${t("Accept invitation")} · Better Translation` }] }
+  },
 })
 
 function AcceptInvitationPage() {

@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { T, useT, Var } from "better-translation/react"
+import { createTranslator } from "better-translation/server"
 import { AlertCircleIcon, MailCheckIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -14,20 +15,10 @@ import { authClient } from "@/lib/auth/client"
 export const Route = createFileRoute("/_auth/verify-email")({
   validateSearch: z.object({ email: z.email().optional().catch(undefined) }),
   component: VerifyEmailPage,
-  head: ({ match }) => ({
-    meta: [
-      {
-        title:
-          match.context.locale === "nl"
-            ? "Bevestig je e-mailadres · Better Translation"
-            : match.context.locale === "fr"
-              ? "Verifiez votre e-mail · Better Translation"
-              : match.context.locale === "es"
-                ? "Verifica tu correo electronico · Better Translation"
-                : "Verify your email · Better Translation",
-      },
-    ],
-  }),
+  head: ({ match }) => {
+    const t = createTranslator(match.context.messages)
+    return { meta: [{ title: `${t("Verify your email")} · Better Translation` }] }
+  },
 })
 
 function VerifyEmailPage() {

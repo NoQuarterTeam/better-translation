@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { T, useT } from "better-translation/react"
+import { createTranslator } from "better-translation/server"
 import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -15,20 +16,10 @@ const signInSearchSchema = z.object({
 export const Route = createFileRoute("/_auth/sign-in")({
   validateSearch: signInSearchSchema,
   component: SignInPage,
-  head: ({ match }) => ({
-    meta: [
-      {
-        title:
-          match.context.locale === "nl"
-            ? "Aanmelden · Better Translation"
-            : match.context.locale === "fr"
-              ? "Se connecter · Better Translation"
-              : match.context.locale === "es"
-                ? "Iniciar sesion · Better Translation"
-                : "Sign in · Better Translation",
-      },
-    ],
-  }),
+  head: ({ match }) => {
+    const t = createTranslator(match.context.messages)
+    return { meta: [{ title: `${t("Sign in")} · Better Translation` }] }
+  },
 })
 
 function SignInPage() {

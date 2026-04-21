@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { T, useT } from "better-translation/react"
+import { createTranslator } from "better-translation/server"
 import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -10,20 +11,10 @@ import { authClient } from "@/lib/auth/client"
 
 export const Route = createFileRoute("/_auth/sign-up")({
   component: SignUpPage,
-  head: ({ match }) => ({
-    meta: [
-      {
-        title:
-          match.context.locale === "nl"
-            ? "Registreren · Better Translation"
-            : match.context.locale === "fr"
-              ? "S'inscrire · Better Translation"
-              : match.context.locale === "es"
-                ? "Crear cuenta · Better Translation"
-                : "Sign up · Better Translation",
-      },
-    ],
-  }),
+  head: ({ match }) => {
+    const t = createTranslator(match.context.messages)
+    return { meta: [{ title: `${t("Create your account")} · Better Translation` }] }
+  },
 })
 
 const MIN_PASSWORD = 8

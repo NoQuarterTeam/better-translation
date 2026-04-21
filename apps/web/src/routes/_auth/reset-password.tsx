@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { T, useT } from "better-translation/react"
+import { createTranslator } from "better-translation/server"
 import { AlertCircleIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -17,20 +18,10 @@ export const Route = createFileRoute("/_auth/reset-password")({
     token: z.string().optional().catch(undefined),
     error: z.string().optional().catch(undefined),
   }),
-  head: ({ match }) => ({
-    meta: [
-      {
-        title:
-          match.context.locale === "nl"
-            ? "Wachtwoord resetten · Better Translation"
-            : match.context.locale === "fr"
-              ? "Reinitialiser le mot de passe · Better Translation"
-              : match.context.locale === "es"
-                ? "Restablecer contrasena · Better Translation"
-                : "Reset password · Better Translation",
-      },
-    ],
-  }),
+  head: ({ match }) => {
+    const t = createTranslator(match.context.messages)
+    return { meta: [{ title: `${t("Reset password")} · Better Translation` }] }
+  },
   component: ResetPasswordPage,
 })
 

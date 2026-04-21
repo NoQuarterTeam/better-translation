@@ -1,4 +1,4 @@
-import type { Argument, CallExpression, JSXChild, StringLiteral, TemplateLiteral } from "oxc-parser"
+import type { Argument, JSXChild, StringLiteral } from "oxc-parser"
 import { parseSync, Visitor } from "oxc-parser"
 
 import type { ExtractedMessage, MessageSource, TranslateOptions } from "./types.js"
@@ -8,7 +8,6 @@ import { getCallMessageId, getMessageId } from "./message-id.js"
 interface Markers {
   call: string[]
   component: string[]
-  taggedTemplate: string[]
   logging: boolean
 }
 
@@ -36,32 +35,6 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
     CallExpression(node) {
       if (
         node.callee.type === "Identifier" &&
-        node.callee.name === "msg" &&
-        node.arguments.length >= 1 &&
-        isStringLiteral(node.arguments[0]!)
-      ) {
-        const value = (node.arguments[0] as StringLiteral).value
-        const meta = getMsgMetaArgument(node.arguments)
-        const id = getCallMessageId(value, meta)
-        messages.push({
-          id,
-          defaultMessage: value,
-          meta: meta ?? {},
-          placeholders: extractPlaceholdersFromMessage(value),
-          source: createSource({
-            filename,
-            lineStarts,
-            marker: node.callee.name,
-            kind: "call",
-            start: node.start,
-            end: node.end,
-          }),
-        })
-        return
-      }
-
-      if (
-        node.callee.type === "Identifier" &&
         markers.call.includes(node.callee.name) &&
         node.arguments.length >= 1 &&
         isStringLiteral(node.arguments[0]!)
@@ -73,7 +46,7 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
           id,
           defaultMessage: value,
           meta: meta ?? {},
-          placeholders: [],
+          placeholders: extractPlaceholdersFromMessage(value),
           source: createSource({
             filename,
             lineStarts,
@@ -143,43 +116,6 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
         })
       }
     },
-
-    TaggedTemplateExpression(node) {
-      const tag = node.tag
-      if (
-        tag.type !== "CallExpression" ||
-        tag.callee.type !== "Identifier" ||
-        !markers.taggedTemplate.includes(tag.callee.name) ||
-        tag.arguments.length < 1 ||
-        !isStringLiteral(tag.arguments[0]!)
-      ) {
-        return
-      }
-
-      const id = (tag.arguments[0] as StringLiteral).value
-      const extraction = extractTaggedTemplate(node.quasi)
-      if (!extraction.valid) {
-        if (markers.logging) {
-          console.warn(`[better-translation] Non-static tagged template in ${filename}, skipping`)
-        }
-        return
-      }
-
-      messages.push({
-        id,
-        defaultMessage: extraction.message,
-        meta: {},
-        placeholders: extraction.placeholders,
-        source: createSource({
-          filename,
-          lineStarts,
-          marker: tag.callee.name,
-          kind: "tagged-template",
-          start: node.start,
-          end: node.end,
-        }),
-      })
-    },
   })
 
   visitor.visit(result.program)
@@ -204,7 +140,7 @@ function getMetaArgument(node?: Argument) {
     value?: Argument
   }>) {
     if (
-      property.type === "ObjectProperty" &&
+      (property.type === "ObjectProperty" || property.type === "Property") &&
       ((property.key?.type === "Identifier" && (property.key.name === "context" || property.key.name === "id")) ||
         (property.key?.type === "Literal" && (property.key.value === "context" || property.key.value === "id"))) &&
       property.value &&
@@ -216,10 +152,6 @@ function getMetaArgument(node?: Argument) {
   }
 
   return Object.keys(meta).length > 0 ? meta : undefined
-}
-
-function getMsgMetaArgument(args: Argument[]) {
-  return getMetaArgument(args[2] ?? args[1])
 }
 
 function getCallMetaArgument(args: Argument[]) {
@@ -275,7 +207,7 @@ function isTranslateOptionsArgument(node?: Argument) {
         }
       | undefined
 
-    if (property?.type !== "ObjectProperty") return false
+    if (property?.type !== "ObjectProperty" && property?.type !== "Property") return false
 
     return (
       (property.key?.type === "Identifier" && (property.key.name === "context" || property.key.name === "id")) ||
@@ -324,7 +256,7 @@ function hasObjectProperty(node: { properties: Array<unknown> }, name: string) {
         }
       | undefined
 
-    if (property?.type !== "ObjectProperty") return false
+    if (property?.type !== "ObjectProperty" && property?.type !== "Property") return false
     return (
       (property.key?.type === "Identifier" && property.key.name === name) ||
       (property.key?.type === "Literal" && property.key.value === name)
@@ -486,34 +418,3 @@ function getVarChildIdentifier(children: Array<JSXChild>) {
   return child.expression.name
 }
 
-function extractTaggedTemplate(quasi: TemplateLiteral): ExtractionResult {
-  const parts: string[] = []
-  const placeholders: string[] = []
-
-  for (let i = 0; i < quasi.quasis.length; i++) {
-    const element = quasi.quasis[i]!
-    parts.push(element.value.cooked ?? element.value.raw)
-
-    if (i < quasi.expressions.length) {
-      const expr = quasi.expressions[i]!
-      if (expr.type !== "CallExpression") return { message: "", placeholders: [], valid: false }
-
-      const call = expr as CallExpression
-      if (
-        call.callee.type !== "Identifier" ||
-        call.callee.name !== "v" ||
-        call.arguments.length < 2 ||
-        !isStringLiteral(call.arguments[0]!)
-      ) {
-        return { message: "", placeholders: [], valid: false }
-      }
-
-      const varName = (call.arguments[0] as StringLiteral).value
-      placeholders.push(varName)
-      parts.push(`{${varName}}`)
-    }
-  }
-
-  const message = parts.join("").trim()
-  return { message, placeholders, valid: message.length > 0 }
-}

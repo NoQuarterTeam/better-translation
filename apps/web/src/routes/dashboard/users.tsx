@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { T } from "better-translation/react"
+import { createTranslator } from "better-translation/server"
 
 export const Route = createFileRoute("/dashboard/users")({
+  head: ({ match }) => {
+    const t = createTranslator(match.context.messages)
+    return { meta: [{ title: `${t("Users")} · Better Translation` }] }
+  },
   component: RouteComponent,
   loader: async () => {
     return { crumb: { label: "Users", url: "/dashboard/users" } }

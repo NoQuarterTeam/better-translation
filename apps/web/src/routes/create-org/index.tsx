@@ -1,5 +1,6 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { T, useT } from "better-translation/react"
+import { createTranslator } from "better-translation/server"
 import { useState } from "react"
 import * as z from "zod"
 
@@ -15,20 +16,10 @@ export const Route = createFileRoute("/create-org/")({
     if (organizations.length > 0) throw redirect({ to: "/dashboard" })
   },
   component: CreateOrgPage,
-  head: ({ match }) => ({
-    meta: [
-      {
-        title:
-          match.context.locale === "nl"
-            ? "Organisatie maken · Better Translation"
-            : match.context.locale === "fr"
-              ? "Creer une organisation · Better Translation"
-              : match.context.locale === "es"
-                ? "Crear organizacion · Better Translation"
-                : "Create organization · Better Translation",
-      },
-    ],
-  }),
+  head: ({ match }) => {
+    const t = createTranslator(match.context.messages)
+    return { meta: [{ title: `${t("Create your organization")} · Better Translation` }] }
+  },
 })
 
 function slugify(name: string) {
