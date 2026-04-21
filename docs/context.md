@@ -18,7 +18,7 @@ The important boundary is that the hosted app/service should not also be treated
 
 An application that uses the Vite plugin and consumes translated locale bundles at runtime.
 
-### Hosted service
+### Remote service
 
 The remote backend that stores translation data, exposes the translation UI, and serves published locale bundles.
 
@@ -107,7 +107,7 @@ Today the app does not fetch translations from a server at runtime.
 
 This means the current runtime model is bundle-local, not remote.
 
-## Target Hosted Setup
+## Target Remote Setup
 
 The direction we have agreed on is remote-canonical hosted translation.
 
@@ -125,7 +125,7 @@ The plugin should:
 - upload existing local locale values as seed translations on first adoption
 - only fill blanks from local seed data and never overwrite hosted edits automatically
 
-### Hosted editing model
+### Remote editing model
 
 The hosted service should:
 
@@ -152,7 +152,7 @@ Fallback snapshots should:
 
 Our current default assumption is that these fallback artifacts are not committed to git unless deployment constraints later require that.
 
-## Local vs Hosted
+## Local vs Remote
 
 ### Local mode
 
@@ -160,9 +160,9 @@ Local mode means the plugin writes locale artifacts into the app itself and runt
 
 This is how the repo works today.
 
-### Hosted mode
+### Remote mode
 
-Hosted mode means:
+Remote mode means:
 
 - the plugin syncs manifests and optional seed locale values to the hosted service
 - translators edit data remotely
