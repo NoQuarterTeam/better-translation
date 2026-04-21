@@ -28,7 +28,11 @@ const BOLD = "\x1b[1m"
 const CYAN = "\x1b[36m"
 const HOSTED_API_BASE_URL = "https://better-translate.com"
 const HOSTED_STUB = `${YELLOW}stub${RESET}`
+const DEFAULT_ROOT_DIR = "src"
 const DEFAULT_SCAN_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"]
+const CALL_MARKERS = ["t", "useT"]
+const COMPONENT_MARKERS = ["T"]
+const TAGGED_TEMPLATE_MARKERS = ["msg"]
 const PRIVATE_MANIFEST_FILENAME = "manifest.json"
 const LOAD_MESSAGES_FILENAME = "load-messages.ts"
 const LOCALES_SUBDIR = "locales"
@@ -53,20 +57,15 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
   const {
     locales,
     defaultLocale = locales[0] ?? "en",
+    rootDir = DEFAULT_ROOT_DIR,
     cacheFile = ".cache/better-translate.json",
     logging = true,
-    scan,
-    storage = { type: "local", dir: "locales" },
-    markers = {},
+    storage = { type: "local", output: DEFAULT_LOCAL_OUTPUT_DIR },
     translate,
   } = options
   const usesLocalStorage = storage.type === "local"
-  const localesDir = storage.type === "local" ? (storage.dir ?? DEFAULT_LOCAL_OUTPUT_DIR) : DEFAULT_LOCAL_OUTPUT_DIR
+  const localesDir = storage.type === "local" ? (storage.output ?? DEFAULT_LOCAL_OUTPUT_DIR) : DEFAULT_LOCAL_OUTPUT_DIR
   const hostedUrl = storage.type === "hosted" ? (storage.url ?? HOSTED_API_BASE_URL) : HOSTED_API_BASE_URL
-
-  const callMarkers = markers.call ?? ["t", "useT"]
-  const componentMarkers = markers.component ?? ["T"]
-  const taggedTemplateMarkers = markers.taggedTemplate ?? ["msg"]
   const manifest: MessageManifest = {}
   const fileMessages = new Map<string, ExtractedMessage[]>()
   let cache: TranslationCache = createEmptyCache()
@@ -75,8 +74,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
   let translateTimer: ReturnType<typeof setTimeout> | null = null
   let warnedHostedTranslateStub = false
   let warnedHostedSyncStub = false
-  let scanRoots: string[] = []
-  let scanExtensions: string[] = []
+  let sourceRoots: string[] = []
 
   function log(message: string) {
     if (logging) console.log(message)
@@ -116,10 +114,10 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
   function shouldScanFile(id: string) {
     const cleanId = id.split("?", 1)[0] ?? id
     if (cleanId.includes("node_modules")) return false
-    const extension = scanExtensions.find((ext) => cleanId.endsWith(ext))
+    const extension = DEFAULT_SCAN_EXTENSIONS.find((ext) => cleanId.endsWith(ext))
     if (!extension) return false
-    return scanRoots.some(
-      (scanRoot) => cleanId === scanRoot || cleanId.startsWith(`${scanRoot}/`) || cleanId.startsWith(`${scanRoot}\\`),
+    return sourceRoots.some(
+      (sourceRoot) => cleanId === sourceRoot || cleanId.startsWith(`${sourceRoot}/`) || cleanId.startsWith(`${sourceRoot}\\`),
     )
   }
 
@@ -129,7 +127,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
 
   function getRuntimeConfig(): BetterTranslateRuntimeConfig {
     return {
-      storage: usesLocalStorage ? { type: "local", dir: localesDir } : { type: "hosted", url: hostedUrl },
+      storage: usesLocalStorage ? { type: "local", output: localesDir } : { type: "hosted", url: hostedUrl },
       defaultLocale,
       locales,
     }
@@ -430,9 +428,9 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
 
   function syncSourceCode(file: string, code: string) {
     const analysis = analyzeSourceFile(code, file, {
-      call: callMarkers,
-      component: componentMarkers,
-      taggedTemplate: taggedTemplateMarkers,
+      call: CALL_MARKERS,
+      component: COMPONENT_MARKERS,
+      taggedTemplate: TAGGED_TEMPLATE_MARKERS,
       logging,
     })
     if (!analysis.parsed) return null
@@ -471,9 +469,9 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     for (const id of Object.keys(manifest)) delete manifest[id]
     fileMessages.clear()
 
-    for (const scanRoot of scanRoots) {
-      if (!existsSync(scanRoot)) continue
-      for (const file of collectScanFiles(scanRoot).sort()) {
+    for (const sourceRoot of sourceRoots) {
+      if (!existsSync(sourceRoot)) continue
+      for (const file of collectScanFiles(sourceRoot).sort()) {
         const code = readFileSync(file, "utf-8")
         syncSourceCode(file, code)
       }
@@ -491,10 +489,9 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     configResolved(config) {
       root = config.root
       isDev = config.command === "serve"
-      scanRoots = (scan?.roots ?? ["src"]).map((scanRoot) => resolve(root, scanRoot))
-      scanExtensions = scan?.extensions ?? DEFAULT_SCAN_EXTENSIONS
+      sourceRoots = (Array.isArray(rootDir) ? rootDir : [rootDir]).map((dir) => resolve(root, dir))
       log(
-        `${PREFIX} Locales: ${CYAN}${formatLocales(locales)}${RESET} | Default: ${CYAN}${formatLocale(defaultLocale)}${RESET} | Storage: ${CYAN}${usesLocalStorage ? "Local" : "Hosted"}${RESET} | Out Dir: ${DIM}${usesLocalStorage ? localesDir : "n/a"}${RESET} | Scan: ${DIM}${(scan?.roots ?? ["src"]).join(", ")}${RESET}`,
+        `${PREFIX} Locales: ${CYAN}${formatLocales(locales)}${RESET} | Default: ${CYAN}${formatLocale(defaultLocale)}${RESET} | Storage: ${CYAN}${usesLocalStorage ? "Local" : "Hosted"}${RESET} | Out Dir: ${DIM}${usesLocalStorage ? localesDir : "n/a"}${RESET} | Roots: ${DIM}${(Array.isArray(rootDir) ? rootDir : [rootDir]).join(", ")}${RESET}`,
       )
     },
 
@@ -514,7 +511,7 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
     },
 
     configureServer(server) {
-      server.watcher.add(scanRoots)
+      server.watcher.add(sourceRoots)
 
       const syncFileFromDisk = (file: string) => {
         if (!shouldScanFile(file) || !existsSync(file)) return
@@ -536,9 +533,9 @@ export function betterTranslate(options: BetterTranslatePluginOptions): Plugin {
       if (!shouldScanFile(cleanId)) return
 
       const analysis = analyzeSourceFile(code, cleanId, {
-        call: callMarkers,
-        component: componentMarkers,
-        taggedTemplate: taggedTemplateMarkers,
+        call: CALL_MARKERS,
+        component: COMPONENT_MARKERS,
+        taggedTemplate: TAGGED_TEMPLATE_MARKERS,
         logging,
       })
 

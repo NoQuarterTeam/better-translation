@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url"
 
 import type { BetterTranslateRuntimeConfig } from "./types.js"
 
-export const DEFAULT_LOCAL_OUTPUT_DIR = "locales"
+export const DEFAULT_LOCAL_OUTPUT_DIR = "src/lib/bt"
 export const RUNTIME_CONFIG_FILENAME = "runtime.json"
 export const COMMON_RUNTIME_CONFIG_DIRS = [DEFAULT_LOCAL_OUTPUT_DIR, `assets/${DEFAULT_LOCAL_OUTPUT_DIR}`]
 

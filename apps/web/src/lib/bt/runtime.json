@@ -1,8 +1,13 @@
 {
   "storage": {
     "type": "local",
-    "dir": "src/lib/bt"
+    "output": "src/lib/bt"
   },
   "defaultLocale": "en",
-  "locales": ["en", "nl", "fr", "es"]
+  "locales": [
+    "en",
+    "nl",
+    "fr",
+    "es"
+  ]
 }

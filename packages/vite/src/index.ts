@@ -4,7 +4,6 @@ export type {
   BetterTranslateLocalStorageOptions,
   BetterTranslatePluginOptions,
   BetterTranslateRuntimeConfig,
-  BetterTranslateScanOptions,
   BetterTranslateStorageOptions,
   MessageManifestFile,
   RuntimeMessages,

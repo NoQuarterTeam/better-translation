@@ -65,8 +65,7 @@ export default defineConfig({
     betterTranslate({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
-      storage: { type: "local", dir: "locales" },
-      scan: { roots: ["src"] },
+      storage: { type: "local", output: "src/lib/bt" },
       async translate(messages, locale) {
         const result: Record<string, string> = {}
 
@@ -90,11 +89,11 @@ export default defineConfig({
 With local storage enabled, the plugin writes files such as:
 
 ```text
-locales/en.json
-locales/nl.json
-locales/fr.json
-locales/es.json
-locales/manifest.json
+src/lib/bt/locales/en.json
+src/lib/bt/locales/nl.json
+src/lib/bt/locales/fr.json
+src/lib/bt/locales/es.json
+src/lib/bt/manifest.json
 ```
 
 ## Basic Configuration
@@ -103,15 +102,12 @@ locales/manifest.json
 betterTranslate({
   locales: ["en", "nl"],
   defaultLocale: "en",
+  rootDir: "src",
   cacheFile: ".cache/better-translate.json",
   logging: true,
-  scan: {
-    roots: ["src"],
-    extensions: [".ts", ".tsx", ".js", ".jsx"],
-  },
   storage: {
     type: "local",
-    dir: "locales",
+    output: "src/lib/bt",
   },
 })
 ```
@@ -148,15 +144,20 @@ Default:
 
 Enables plugin logging.
 
-#### `scan`
+#### `rootDir`
 
-Controls where the plugin looks for messages.
+Controls which source directory or directories the plugin looks in for messages.
 
 ```ts
-scan: {
-  roots: ["src"],
-  extensions: [".ts", ".tsx", ".js", ".jsx"],
-}
+rootDir: "src"
+```
+
+Default: `"src"`
+
+You can also pass multiple directories:
+
+```ts
+rootDir: ["src", "app"]
 ```
 
 #### `storage`
@@ -166,31 +167,13 @@ Controls where locale runtime data comes from.
 ```ts
 storage: {
   type: "local",
-  dir: "locales",
+  output: "src/lib/bt",
 }
 ```
 
 `local` uses editable locale JSON files from the configured directory and expects your server build to include that directory for runtime loading.
 
 `hosted` exists in the API, but hosted sync and hosted runtime fetching are currently stubs, so local storage is the recommended setup right now.
-
-#### `markers`
-
-Lets you rename the extraction markers if your app uses different names.
-
-```ts
-markers: {
-  call: ["t"],
-  component: ["T"],
-  taggedTemplate: ["msg"],
-}
-```
-
-Defaults:
-
-- `call`: `["t", "useT"]`
-- `component`: `["T"]`
-- `taggedTemplate`: `["msg"]`
 
 #### `translate`
 
@@ -336,7 +319,7 @@ The full list of supported locales belongs in the plugin config:
 betterTranslate({
   locales: ["en", "nl", "fr"],
   defaultLocale: "en",
-  storage: { type: "local", dir: "locales" },
+  storage: { type: "local", output: "src/lib/bt" },
 })
 ```
 
@@ -497,7 +480,7 @@ export default {
     betterTranslate({
       locales: ["en", "nl"],
       defaultLocale: "en",
-      storage: { type: "local", dir: "locales" },
+      storage: { type: "local", output: "src/lib/bt" },
       async translate(messages, locale) {
         const response = await fetch("https://your-translator.example.com/translate", {
           method: "POST",

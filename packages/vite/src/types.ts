@@ -131,14 +131,6 @@ export type TranslateFn = (
   locale: string,
 ) => Promise<Record<string, string>>
 
-/** Controls which files the plugin should scan for messages. */
-export interface BetterTranslateScanOptions {
-  /** Root directories, relative to the Vite root, that should be scanned. */
-  roots?: string[]
-  /** File extensions that should be parsed for translation markers. */
-  extensions?: string[]
-}
-
 /** Stores messages in a hosted backend. */
 export interface BetterTranslateHostedStorageOptions {
   /** Selects hosted storage. */
@@ -151,8 +143,8 @@ export interface BetterTranslateHostedStorageOptions {
 export interface BetterTranslateLocalStorageOptions {
   /** Selects local JSON file output. */
   type: "local"
-  /** Directory where locale JSON files are written. */
-  dir?: string
+  /** Output directory where locale JSON files are written. */
+  output?: string
 }
 
 /** Controls where translated locale artifacts are written or synced. */
@@ -174,23 +166,14 @@ export interface BetterTranslatePluginOptions {
   locales: string[]
   /** Locale code treated as the source language. */
   defaultLocale?: string
+  /** Source directory or directories, relative to the Vite root. Defaults to `"src"`. */
+  rootDir?: string | string[]
   /** Cache file path, relative to the Vite root. */
   cacheFile?: string
   /** Enables or disables plugin logging. */
   logging?: boolean
-  /** File scanning configuration. */
-  scan?: BetterTranslateScanOptions
   /** Storage backend configuration. */
   storage?: BetterTranslateStorageOptions
-  /** Custom marker names to extract from source code. */
-  markers?: {
-    /** Function names that should be treated like `t("...")`. */
-    call?: string[]
-    /** JSX component names that should be treated like `<T>...</T>`. */
-    component?: string[]
-    /** Tagged template helpers that should be treated like `msg("id")\`...\``. */
-    taggedTemplate?: string[]
-  }
   /** Custom translation function used for messages missing from non-default locales. */
   translate?: TranslateFn
 }
