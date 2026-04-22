@@ -33,7 +33,7 @@
     "prepack": "bun run build"
   },
   "dependencies": {
-    "oxc-parser": "0.123.0"
+    "oxc-parser": "0.127.0"
   },
   "devDependencies": {
     "@better-translation/tsconfig": "workspace:*",
