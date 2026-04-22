@@ -87,12 +87,12 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return (
-    <main className="relative overflow-hidden bg-[linear-gradient(180deg,oklch(0.99_0.01_185)_0%,oklch(1_0_0)_24%,oklch(0.97_0.008_180)_100%)] text-foreground">
+    <main className="relative overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute top-[-8rem] left-1/2 h-[24rem] w-[24rem] -translate-x-1/2 rounded-full bg-brand-primary/20 blur-3xl" />
         <div className="absolute top-[12rem] right-[-8rem] h-[22rem] w-[22rem] rounded-full bg-brand-secondary/20 blur-3xl" />
-        <div className="absolute inset-x-0 top-0 h-[34rem] bg-[linear-gradient(to_bottom,rgba(12,24,24,0.06),transparent)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(12,24,24,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(12,24,24,0.04)_1px,transparent_1px)] [mask-image:linear-gradient(to_bottom,black,transparent_85%)] bg-[size:72px_72px]" />
+        <div className="absolute inset-x-0 top-0 h-[34rem] bg-[linear-gradient(to_bottom,rgba(12,24,24,0.03),transparent)] dark:bg-[linear-gradient(to_bottom,rgba(148,230,204,0.06),transparent)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(12,24,24,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(12,24,24,0.03)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:linear-gradient(to_bottom,black,transparent_85%)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)]" />
       </div>
 
       <section className="relative mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-6 pt-6 pb-20 sm:px-10 lg:px-12">
@@ -102,7 +102,7 @@ function HomePage() {
               <Languages className="size-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold tracking-[0.22em] text-muted-foreground uppercase">Better Translation</p>
+              <p className="text-sm font-semibold text-muted-foreground uppercase">Better Translation</p>
               <p className="text-sm text-foreground/70">
                 <T>Developer-first localization infrastructure</T>
               </p>
@@ -119,14 +119,9 @@ function HomePage() {
           </div>
         </header>
 
-        <div className="grid flex-1 items-center gap-14 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
+        <div className="grid flex-1 items-start gap-14 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-background/75 px-3 py-1 text-sm shadow-sm backdrop-blur">
-              <span className="size-2 rounded-full bg-brand-primary" />
-              <T>Wrap strings. Run your translator. Ship local locales.</T>
-            </div>
-
-            <h1 className="mt-6 max-w-4xl text-5xl leading-none font-semibold tracking-[-0.05em] text-balance sm:text-6xl lg:text-7xl">
+            <h1 className="max-w-4xl text-5xl leading-none font-semibold text-balance sm:text-6xl lg:text-7xl">
               <T>Localization infrastructure that fits the way developers already build.</T>
             </h1>
 
@@ -149,19 +144,19 @@ function HomePage() {
 
             <div className="mt-10 grid gap-4 text-sm text-foreground/70 sm:grid-cols-3">
               <div className="rounded-3xl border border-foreground/10 bg-background/70 p-4 shadow-sm backdrop-blur">
-                <div className="text-2xl font-semibold tracking-[-0.03em]">`T`</div>
+                <div className="text-2xl font-semibold">`T`</div>
                 <p className="mt-1">
                   <T>Mark UI text where it is authored.</T>
                 </p>
               </div>
               <div className="rounded-3xl border border-foreground/10 bg-background/70 p-4 shadow-sm backdrop-blur">
-                <div className="text-2xl font-semibold tracking-[-0.03em]">BYO</div>
+                <div className="text-2xl font-semibold">BYO</div>
                 <p className="mt-1">
                   <T>Use your own translation functions and providers.</T>
                 </p>
               </div>
               <div className="rounded-3xl border border-foreground/10 bg-background/70 p-4 shadow-sm backdrop-blur">
-                <div className="text-2xl font-semibold tracking-[-0.03em]">Git + Cloud</div>
+                <div className="text-2xl font-semibold">Git + Cloud</div>
                 <p className="mt-1">
                   <T>Keep locales local now and editable in the cloud next.</T>
                 </p>
@@ -169,14 +164,14 @@ function HomePage() {
             </div>
           </div>
 
-          <Card className="relative overflow-hidden border border-foreground/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,248,247,0.94))] py-0 shadow-2xl ring-1 shadow-brand-primary/10 ring-white/60">
+          <Card className="relative overflow-hidden border border-foreground/10 bg-background/88 py-0 shadow-2xl ring-1 ring-foreground/5 shadow-brand-primary/10 backdrop-blur-sm dark:bg-card/92 dark:ring-white/10">
             <div className="border-b border-foreground/10 px-6 py-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium tracking-[0.22em] text-muted-foreground uppercase">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">
                     <T>How it feels in code</T>
                   </p>
-                  <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em]">
+                  <h2 className="mt-2 text-xl font-semibold">
                     <T>Translation stays in the product workflow</T>
                   </h2>
                 </div>
@@ -211,9 +206,9 @@ export default defineConfig({
                 </pre>
               </div>
 
-              <div className="space-y-4 px-6 py-6">
+              <div className="flex flex-col gap-4 px-6 py-6">
                 <div className="rounded-3xl border border-foreground/10 bg-background/80 p-4">
-                  <p className="text-xs font-medium tracking-[0.22em] text-muted-foreground uppercase">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">
                     <T>Extraction</T>
                   </p>
                   <p className="mt-2 text-base leading-7 text-foreground/80">
@@ -223,7 +218,7 @@ export default defineConfig({
                   </p>
                 </div>
                 <div className="rounded-3xl border border-foreground/10 bg-background/80 p-4">
-                  <p className="text-xs font-medium tracking-[0.22em] text-muted-foreground uppercase">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">
                     <T>Translation</T>
                   </p>
                   <p className="mt-2 text-base leading-7 text-foreground/80">
@@ -234,7 +229,7 @@ export default defineConfig({
                   </p>
                 </div>
                 <div className="rounded-3xl border border-foreground/10 bg-background/80 p-4">
-                  <p className="text-xs font-medium tracking-[0.22em] text-muted-foreground uppercase">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">
                     <T>Runtime</T>
                   </p>
                   <p className="mt-2 text-base leading-7 text-foreground/80">
@@ -258,7 +253,7 @@ export default defineConfig({
                 <div className="flex size-12 items-center justify-center rounded-2xl bg-foreground text-background shadow-sm">
                   <Icon className="size-5" />
                 </div>
-                <CardTitle className="mt-4 text-2xl tracking-[-0.03em]">{title}</CardTitle>
+                <CardTitle className="mt-4 text-2xl">{title}</CardTitle>
                 <CardDescription className="text-base leading-7 text-foreground/75">{description}</CardDescription>
               </CardHeader>
             </Card>
@@ -268,10 +263,10 @@ export default defineConfig({
 
       <section className="mx-auto w-full max-w-7xl px-6 py-20 sm:px-10 lg:px-12">
         <div className="max-w-3xl">
-          <p className="text-sm font-medium tracking-[0.22em] text-muted-foreground uppercase">
+          <p className="text-sm font-medium text-muted-foreground uppercase">
             <T>Why this exists</T>
           </p>
-          <h2 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-balance sm:text-5xl">
+          <h2 className="mt-4 text-4xl font-semibold text-balance sm:text-5xl">
             <T>Localization should be part of the build system, not a separate product your team has to orbit.</T>
           </h2>
           <p className="mt-5 text-lg leading-8 text-foreground/75">
@@ -291,7 +286,7 @@ export default defineConfig({
                   <div className="flex size-11 items-center justify-center rounded-2xl bg-brand-primary/12 text-foreground">
                     <Icon className="size-5" />
                   </div>
-                  <CardTitle className="text-xl tracking-[-0.03em]">{title}</CardTitle>
+                  <CardTitle className="text-xl">{title}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="pt-0 text-base leading-7 text-foreground/75">{description}</CardContent>
@@ -304,10 +299,10 @@ export default defineConfig({
         <Card className="overflow-hidden border border-foreground/10 bg-[linear-gradient(135deg,rgba(9,17,17,0.96),rgba(17,46,41,0.94))] py-0 text-white shadow-2xl shadow-brand-primary/10">
           <div className="grid gap-10 px-6 py-8 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:py-10">
             <div>
-              <p className="text-sm font-medium tracking-[0.22em] text-white/55 uppercase">
+              <p className="text-sm font-medium text-white/55 uppercase">
                 <T>Editor roadmap</T>
               </p>
-              <h2 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-balance">
+              <h2 className="mt-4 text-4xl font-semibold text-balance">
                 <T>An open-source locale editor for contributors, reviewers, and operations teams.</T>
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/72">
@@ -326,7 +321,7 @@ export default defineConfig({
                     <div className="flex size-10 items-center justify-center rounded-2xl bg-white/12">
                       <Icon className="size-5" />
                     </div>
-                    <h3 className="text-xl font-medium tracking-[-0.03em]">{title}</h3>
+                    <h3 className="text-xl font-medium">{title}</h3>
                   </div>
                   <p className="mt-3 text-base leading-7 text-white/72">{description}</p>
                 </div>
