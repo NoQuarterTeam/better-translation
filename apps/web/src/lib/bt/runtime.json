@@ -4,5 +4,8 @@
     "output": "src/lib/bt"
   },
   "defaultLocale": "en",
-  "locales": ["en", "nl"]
+  "locales": [
+    "en",
+    "nl"
+  ]
 }

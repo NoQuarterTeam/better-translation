@@ -13,6 +13,7 @@ const ignorePatterns = [
   "migrations/",
   ".vercel",
   "node_modules/",
+  "bt/",
   "routeTree.gen.ts",
 ]
 export default defineConfig({
@@ -57,7 +58,7 @@ export default defineConfig({
       attributes: ["class", "className"],
       functions: ["clsx", "cn", "cva", "tw"],
     },
-    ignorePatterns: ignorePatterns,
+    ignorePatterns,
   },
 
   // Vite Task configuration.
