@@ -92,7 +92,7 @@ function HomePage() {
         <div className="absolute top-[-8rem] left-1/2 h-[24rem] w-[24rem] -translate-x-1/2 rounded-full bg-brand-primary/20 blur-3xl" />
         <div className="absolute top-[12rem] right-[-8rem] h-[22rem] w-[22rem] rounded-full bg-brand-secondary/20 blur-3xl" />
         <div className="absolute inset-x-0 top-0 h-[34rem] bg-[linear-gradient(to_bottom,rgba(12,24,24,0.03),transparent)] dark:bg-[linear-gradient(to_bottom,rgba(148,230,204,0.06),transparent)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(12,24,24,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(12,24,24,0.03)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:linear-gradient(to_bottom,black,transparent_85%)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(12,24,24,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(12,24,24,0.03)_1px,transparent_1px)] [mask-image:linear-gradient(to_bottom,black,transparent_85%)] bg-[size:72px_72px] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)]" />
       </div>
 
       <section className="relative mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-6 pt-6 pb-20 sm:px-10 lg:px-12">
@@ -164,7 +164,7 @@ function HomePage() {
             </div>
           </div>
 
-          <Card className="relative overflow-hidden border border-foreground/10 bg-background/88 py-0 shadow-2xl ring-1 ring-foreground/5 shadow-brand-primary/10 backdrop-blur-sm dark:bg-card/92 dark:ring-white/10">
+          <Card className="relative overflow-hidden border border-foreground/10 bg-background/88 py-0 shadow-2xl ring-1 shadow-brand-primary/10 ring-foreground/5 backdrop-blur-sm dark:bg-card/92 dark:ring-white/10">
             <div className="border-b border-foreground/10 px-6 py-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
