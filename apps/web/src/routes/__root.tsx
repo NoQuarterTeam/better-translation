@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query"
 import { createRootRouteWithContext, HeadContent, Outlet, ScriptOnce, Scripts } from "@tanstack/react-router"
+
 import { TranslateProvider } from "better-translation/react"
 
 import { DefaultError } from "@/components/default-error"

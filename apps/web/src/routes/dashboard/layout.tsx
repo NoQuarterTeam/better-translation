@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query"
 import { createFileRoute, Outlet } from "@tanstack/react-router"
+
 import { createTranslator } from "better-translation/server"
 
 import { DefaultError } from "@/components/default-error"

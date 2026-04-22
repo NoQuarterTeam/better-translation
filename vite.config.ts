@@ -40,7 +40,7 @@ export default defineConfig({
     trailingComma: "all",
     sortImports: {
       customGroups: [
-        { groupName: "better-translation", elementNamePattern: ["@better-translation/**"] },
+        { groupName: "better-translation", elementNamePattern: ["better-translation/**"] },
         { groupName: "local-alias", elementNamePattern: ["@/**"] },
       ],
       groups: [

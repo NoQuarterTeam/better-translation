@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
+
 import { T } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
