@@ -19,7 +19,7 @@
     "@better-translation/tsconfig": "workspace:*",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "react-email": "^5.2.10",
+    "react-email": "^6.0.0",
     "typescript": "catalog:"
   }
 }
