@@ -38,7 +38,7 @@
     "@tanstack/router-plugin": "catalog:",
     "@tanstack/store": "catalog:",
     "@vercel/functions": "3.4.6",
-    "ai": "6.0.172",
+    "ai": "6.0.174",
     "better-auth": "catalog:",
     "better-translation": "workspace:*",
     "class-variance-authority": "0.7.1",
