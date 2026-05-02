@@ -21,7 +21,7 @@
     "@fontsource-variable/geist": "5.2.8",
     "@neondatabase/serverless": "catalog:",
     "@posthog/react": "1.9.0",
-    "@sentry/tanstackstart-react": "10.50.0",
+    "@sentry/tanstackstart-react": "10.51.0",
     "@t3-oss/env-core": "0.13.11",
     "@tanstack/match-sorter-utils": "catalog:",
     "@tanstack/query-db-collection": "catalog:",
