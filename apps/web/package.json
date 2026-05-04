@@ -14,7 +14,7 @@
     "with-env": "dotenv -e ../../.env.local --"
   },
   "dependencies": {
-    "@ai-sdk/vercel": "2.0.47",
+    "@ai-sdk/vercel": "2.0.48",
     "@base-ui/react": "1.4.1",
     "@better-translation/email": "workspace:*",
     "@faker-js/faker": "10.4.0",
