@@ -18,7 +18,7 @@
     "@base-ui/react": "1.4.1",
     "@better-translation/email": "workspace:*",
     "@faker-js/faker": "10.4.0",
-    "@fontsource-variable/geist": "5.2.8",
+    "@fontsource-variable/geist": "5.2.9",
     "@neondatabase/serverless": "catalog:",
     "@posthog/react": "1.9.0",
     "@sentry/tanstackstart-react": "10.53.1",
