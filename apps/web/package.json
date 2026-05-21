@@ -80,7 +80,7 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "dotenv-cli": "catalog:",
-    "drizzle-kit": "1.0.0-rc.3-fe92e22",
+    "drizzle-kit": "1.0.0-rc.4-5d5b77c",
     "jsdom": "29.1.1",
     "typescript": "catalog:",
     "vite": "catalog:"
