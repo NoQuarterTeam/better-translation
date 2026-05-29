@@ -39,7 +39,7 @@
   "dependencies": {
     "ai": "6.0.193",
     "oxc-parser": "0.133.0",
-    "zod": "4.3.6"
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@better-translation/tsconfig": "workspace:*",
