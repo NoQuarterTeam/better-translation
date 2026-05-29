@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.2.1
+
+### Patch Changes
+
+- [`f5748af`](https://github.com/NoQuarterTeam/better-translation/commit/f5748afe2bae477076eed50a1b769a036b839523) Thanks [@JClackett](https://github.com/JClackett)! - use react use instead of useContext
+
 ## 0.2.0
 
 ### Minor Changes
