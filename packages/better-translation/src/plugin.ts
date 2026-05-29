@@ -491,6 +491,14 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     name: "better-translation-extract",
     enforce: "pre",
 
+    config() {
+      return {
+        ssr: {
+          noExternal: ["better-translation"],
+        },
+      }
+    },
+
     configResolved(config) {
       root = config.root
       isDev = config.command === "serve"
