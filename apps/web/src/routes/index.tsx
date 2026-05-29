@@ -25,8 +25,8 @@ const featureCards = [
     icon: FileCode2,
   },
   {
-    title: "Open-source editor on the way",
-    description: "A hosted locale editor will let contributors update copy in the cloud without touching app code.",
+    title: "Hosted branch workflow on the way",
+    description: "A hosted platform will let contributors edit branch-local translations without touching app code.",
     icon: PencilLine,
   },
 ] as const
@@ -44,9 +44,9 @@ const steps = [
     icon: Blocks,
   },
   {
-    title: "Ship or sync locales",
+    title: "Ship local or hosted bundles",
     description:
-      "Generated locales stay local for fast app usage today, and can later sync with the hosted or self-hosted editor.",
+      "Generated locales stay local today, while hosted projects will serve branch-aware runtime bundles from the platform.",
     icon: Globe2,
   },
 ] as const
@@ -55,7 +55,7 @@ const deploymentCards = [
   {
     title: "Cloud",
     description:
-      "Use the hosted Better Translation editor so teams can manage locale updates without cloning the app or opening a PR.",
+      "Use the hosted Better Translation platform so teams can edit branch-local translations without cloning the app.",
     icon: Cloud,
   },
   {
@@ -77,7 +77,7 @@ export const Route = createFileRoute("/")({
         {
           name: "description",
           content: t(
-            "Wrap text in T, run your own translator functions, generate local locale files, and manage future edits in the cloud or on your own infrastructure.",
+            "Wrap text in T, generate local locale files today, and manage branch-local translations in the hosted platform next.",
           ),
         },
       ],
@@ -128,7 +128,8 @@ function HomePage() {
             <p className="mt-6 max-w-2xl text-lg leading-8 text-foreground/75 sm:text-xl">
               <T>
                 Better Translation lets developers wrap copy in T, plug in their own translator functions, and generate locale
-                files that live alongside the app. Teams keep control of the workflow instead of outsourcing the architecture.
+                files that live alongside the app. The hosted platform will add branch-local translation management without
+                changing the runtime contract.
               </T>
             </p>
 
@@ -158,7 +159,7 @@ function HomePage() {
               <div className="rounded-3xl border border-foreground/10 bg-background/70 p-4 shadow-sm backdrop-blur">
                 <div className="text-2xl font-semibold">Git + Cloud</div>
                 <p className="mt-1">
-                  <T>Keep locales local now and editable in the cloud next.</T>
+                  <T>Keep locales local now and branch-aware in the platform next.</T>
                 </p>
               </div>
             </div>
@@ -273,7 +274,7 @@ export default defineConfig({
             <T>
               Better Translation treats localization as code-aware infrastructure. Developers choose the translation logic, the
               generated locales stay inside the repository, and future non-developer editing can happen through an open-source
-              locale editor that works as either a hosted service or a self-hosted deployment.
+              hosted platform that understands translation branches and runtime bundles.
             </T>
           </p>
         </div>
@@ -300,16 +301,15 @@ export default defineConfig({
           <div className="grid gap-10 px-6 py-8 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:py-10">
             <div>
               <p className="text-sm font-medium text-white/55 uppercase">
-                <T>Editor roadmap</T>
+                <T>Platform roadmap</T>
               </p>
               <h2 className="mt-4 text-4xl font-semibold text-balance">
-                <T>An open-source locale editor for contributors, reviewers, and operations teams.</T>
+                <T>A branch-aware translation platform for contributors, reviewers, and operations teams.</T>
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/72">
                 <T>
-                  The next piece is a hosted locale editor where non-developers can update cloud locales without changing app
-                  code. It will be available as our cloud product and as a self-hosted deployment for teams that need to keep
-                  everything in their own stack.
+                  The next piece is a hosted platform where non-developers can edit branch-local translations without changing app
+                  code. It will serve flat runtime bundles for deployed branches while keeping local development fast.
                 </T>
               </p>
             </div>

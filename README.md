@@ -163,9 +163,37 @@ runtime: {
 
 `remote` exists in the API, but remote sync and remote runtime fetching are currently stubs, so local runtime is the recommended setup right now.
 
+The intended hosted workflow is branch-based. In remote mode, the hosted platform owns Locale values, the plugin syncs the Manifest during remote builds, and deployed apps read flat Runtime bundles for a Project, Translation Branch, and Locale.
+
+The planned remote config keeps the default simple:
+
+```ts
+runtime: {
+  type: "remote",
+  projectId: "acme",
+  dev: {
+    offline: false,
+  },
+}
+```
+
+With `offline: false`, local dev reads hosted branch Runtime bundles and uses the Platform translator to fill blank hosted values. Use `dev: { offline: true }` when local dev should avoid platform reads and writes.
+
 #### `translate`
 
 Async callback for filling missing translations.
+
+Today this option is top-level. In the planned hosted API, package-local translation moves under local runtime config:
+
+```ts
+runtime: {
+  type: "local",
+  target: "module",
+  translate: createAiTranslate(),
+}
+```
+
+Remote mode does not use package-local `translate`; hosted translation runs through the Platform translator so Project-level model, tone, glossary, and billing settings are shared.
 
 ```ts
 type TranslateFn = (
@@ -576,6 +604,29 @@ Options:
 Each AI request returns plain translated text for one source message. Better Translation maps that response to the current message id itself, so the model does not need to echo ids or return a JSON object. If the model returns an empty translation, Better Translation falls back to the source text.
 
 For `runtime: { type: "local" }`, production builds are check-only. They never call `translate()` and never regenerate locale artifacts. Instead, they validate the committed locale JSON files and generated metadata, then fail the build if anything is missing or out of sync.
+
+## Hosted Platform Direction
+
+The local runtime is the working package flow today. The hosted platform direction is different:
+
+- A Project is created explicitly in the hosted service.
+- Remote builds sync the current Manifest to a Translation Branch, usually resolved from the deploy branch.
+- Translation Branches are automatic and can represent `main`, `develop`, or PR branches.
+- The hosted platform owns Locale values in remote mode.
+- The dashboard edits branch-local Locale values.
+- The public Runtime bundle is a flat `Record<string, string>` for one Project, Translation Branch, and Locale.
+- Missing non-default values fall back to the Default locale text in the Runtime bundle.
+- Local dev reads hosted Runtime bundles by default in remote mode.
+- Local dev can opt out of platform reads and writes with `dev.offline: true`.
+- Platform translator requests fill blank branch values using Project-level AI settings and must never overwrite manual edits.
+
+Remote runtime URLs are expected to be branch-addressed:
+
+```text
+/projects/:projectId/branches/:branch/locales/:locale.json
+```
+
+In remote mode, package-local `translate(messages, locale)` is not the canonical source for hosted Locale values. It remains the local-mode translation hook; hosted AI translation should run through the platform so Project-level model, tone, glossary, and billing settings are shared.
 
 ## Server-Side Helpers
 
