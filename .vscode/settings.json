@@ -15,7 +15,25 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.preferences.autoImportFileExcludePatterns": ["@base-ui/*", "cmdk"],
   "editor.defaultFormatter": "oxc.oxc-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "oxc.fmt.configPath": "./vite.config.ts",
+  "oxc.configPath": "./vite.config.ts",
+  "oxc.path.oxfmt": "node_modules/vite-plus/bin/oxfmt",
+  "oxc.path.oxlint": "node_modules/vite-plus/bin/oxlint",
   "oxc.typeAware": true,
+  "oxc.requireConfig": false,
+  "oxc.enable.oxfmt": true,
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
   "editor.codeActionsOnSave": {
