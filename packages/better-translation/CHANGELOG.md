@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.2.0
+
+### Minor Changes
+
+- [`778f2bc`](https://github.com/NoQuarterTeam/better-translation/commit/778f2bcd1fb89b5f2965b4cf1eb962ffdf7e7351) Thanks [@JClackett](https://github.com/JClackett)! - Add local runtime targets and a virtual messages loader.
+
 ## 0.1.7
 
 ### Patch Changes
