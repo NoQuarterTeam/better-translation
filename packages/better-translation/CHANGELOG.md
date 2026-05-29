@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.2.2
+
+### Patch Changes
+
+- [`c5d51bb`](https://github.com/NoQuarterTeam/better-translation/commit/c5d51bbfa6a95c94f736c11690a25d34e9af6a84) Thanks [@JClackett](https://github.com/JClackett)! - Prevent SSR builds from externalizing the virtual messages module.
+
 ## 0.2.1
 
 ### Patch Changes
