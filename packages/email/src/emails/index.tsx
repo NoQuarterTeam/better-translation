@@ -1,4 +1,4 @@
-import { Body, Button as EButton, Head, Html, Preview, Tailwind } from "@react-email/components"
+import { Body, Button as EButton, Head, Html, Preview, Tailwind } from "react-email"
 
 export function Layout({ children, preview }: { children: React.ReactNode; preview: string }) {
   return (
