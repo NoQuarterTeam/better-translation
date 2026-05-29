@@ -6,10 +6,9 @@ import { TranslateProvider } from "better-translation/react"
 import { DefaultError } from "@/components/default-error"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
-import { loadMessages } from "@/lib/bt/load-messages"
 
 import appCss from "../styles.css?url"
-import { getLocale } from "./-locale"
+import { type AppLocale, getLocale } from "./-locale"
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -22,6 +21,11 @@ interface MyRouterContext {
 //       headers: env.NODE_ENV === "production" ? { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600" } : {},
 //     })
 //   })
+
+async function loadMessages(locale: AppLocale): Promise<Record<string, string>> {
+  const messages = await import(`../lib/bt/locales/${locale}.json`)
+  return messages.default
+}
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async () => {

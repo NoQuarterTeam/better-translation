@@ -7,7 +7,7 @@ type Props = {
   resetUrl: string
 }
 
-export function ResetPasswordEmail({ firstName = "there", resetUrl }: Props) {
+export function ResetPasswordEmail({ firstName, resetUrl }: Props) {
   return (
     <Layout preview="Reset your Better Translation password">
       <Container className="mx-auto max-w-xl rounded-lg border border-neutral-200 px-8 py-10">

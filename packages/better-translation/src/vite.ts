@@ -1,6 +1,6 @@
 export { betterTranslation } from "./plugin.js"
 export type {
-  BetterTranslateBundleStorageOptions,
+  BetterTranslateLocalStorageOptions,
   BetterTranslatePluginOptions,
   BetterTranslateRemoteStorageOptions,
   BetterTranslateRuntimeConfig,

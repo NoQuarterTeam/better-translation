@@ -134,16 +134,16 @@ export interface BetterTranslateRemoteStorageOptions {
   url?: string
 }
 
-/** Bundles locale JSON files into the app source tree or deployed artifact. */
-export interface BetterTranslateBundleStorageOptions {
-  /** Selects bundled storage. */
-  type: "bundle"
+/** Writes locale JSON files into the app repository or deployed artifact. */
+export interface BetterTranslateLocalStorageOptions {
+  /** Selects local file storage. */
+  type: "local"
   /** Output directory where locale JSON files are written. */
   output?: string
 }
 
 /** Controls where translated locale artifacts are written or synced. */
-export type BetterTranslateStorageOptions = BetterTranslateRemoteStorageOptions | BetterTranslateBundleStorageOptions
+export type BetterTranslateStorageOptions = BetterTranslateRemoteStorageOptions | BetterTranslateLocalStorageOptions
 
 /** Runtime metadata emitted by the plugin for server-side loaders. */
 export interface BetterTranslateRuntimeConfig {

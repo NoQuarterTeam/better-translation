@@ -84,7 +84,7 @@ Today the app is still operating in local mode.
 
 ### Plugin behavior
 
-The plugin is configured in `apps/web/vite.config.ts` with bundle storage:
+The plugin is configured in `apps/web/vite.config.ts` with local storage:
 
 - locales: `en`, `nl`, `fr`, `es`
 - default locale: `en`
@@ -94,18 +94,16 @@ In local mode, the plugin scans source files and generates artifacts under `apps
 
 - `manifest.json` for extracted source messages
 - `locales/*.json` for locale values
-- `load-messages.ts` for runtime loading
 - `runtime.json` for generated runtime metadata
 
 ### Runtime loading today
 
 Today the app does not fetch translations from a server at runtime.
 
-- `apps/web/src/lib/bt/load-messages.ts` statically imports local JSON files.
-- `apps/web/src/routes/__root.tsx` loads messages in `beforeLoad`.
+- `apps/web/src/routes/__root.tsx` imports local JSON files and loads messages in `beforeLoad`.
 - `apps/web/src/routes/-locale.ts` resolves the active locale from the `locale` cookie.
 
-This means the current runtime model is bundle-local, not remote.
+This means the current runtime model is local-file based, not remote.
 
 ## Target Remote Setup
 
@@ -180,7 +178,7 @@ Remote mode means:
 - The hosted app/service, plugin, and example consumer app should all live in this monorepo for v1.
 - Project creation is explicit; plugin sync should fail clearly rather than auto-provisioning.
 - Existing local locale values can seed remote translations, but only into blank hosted fields.
-- Removed message ids can remain as orphaned history in canonical remote storage, but local bundled locale artifacts should be pruned to the current manifest.
+- Removed message ids can remain as orphaned history in canonical remote storage, but local locale artifacts should be pruned to the current manifest.
 
 ## Still Open
 

@@ -7,7 +7,7 @@ type Props = {
   loginUrl: string
 }
 
-export function WelcomeEmail({ firstName = "there", loginUrl }: Props) {
+export function WelcomeEmail({ firstName, loginUrl }: Props) {
   return (
     <Layout preview="Welcome to Better Translation">
       <Container className="mx-auto max-w-xl rounded-lg border border-neutral-200 px-8 py-10">

@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.1.7
+
+### Patch Changes
+
+- Rename bundle storage to local storage and stop generating the load-messages helper.
+
 ## 0.1.6
 
 ### Patch Changes

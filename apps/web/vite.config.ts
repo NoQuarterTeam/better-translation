@@ -13,16 +13,14 @@ export default defineConfig({
     betterTranslation({
       locales: ["en", "nl"],
       defaultLocale: "en",
-      storage: { type: "bundle", output: "src/lib/bt" },
+      storage: { type: "local", output: "src/lib/bt" },
       translate: createAiTranslate({
         prompt:
           "This text is for a web application UI. Prefer natural, concise wording that feels correct in buttons, labels, validation messages, dialogs, menus, and other interface copy.",
       }),
     }),
     // devtools(),
-    nitro({
-      preset: "vercel",
-    }),
+    nitro({ preset: "vercel" }),
     tailwindcss(),
     tanstackStart({
       importProtection: { client: { files: ["**/*.server.*", "**/server/**"] } },

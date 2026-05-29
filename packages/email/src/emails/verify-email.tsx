@@ -7,7 +7,7 @@ type Props = {
   verifyUrl: string
 }
 
-export function VerifyEmail({ firstName = "there", verifyUrl }: Props) {
+export function VerifyEmail({ firstName, verifyUrl }: Props) {
   return (
     <Layout preview="Verify your Better Translation email">
       <Container className="mx-auto max-w-xl rounded-lg border border-neutral-200 px-8 py-10">

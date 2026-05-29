@@ -66,7 +66,7 @@ export default defineConfig({
     betterTranslation({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
-      storage: { type: "bundle", output: "src/lib/bt" },
+      storage: { type: "local", output: "src/lib/bt" },
       translate: createAiTranslate(),
     }),
     react(),
@@ -74,7 +74,7 @@ export default defineConfig({
 })
 ```
 
-With bundle storage enabled, the plugin writes files such as:
+With local storage enabled, the plugin writes files such as:
 
 ```text
 src/lib/bt/locales/en.json
@@ -94,7 +94,7 @@ betterTranslation({
   cacheFile: ".cache/better-translation.json",
   logging: true,
   storage: {
-    type: "bundle",
+    type: "local",
     output: "src/lib/bt",
   },
 })
@@ -154,14 +154,14 @@ Controls where locale runtime data comes from.
 
 ```ts
 storage: {
-  type: "bundle",
+  type: "local",
   output: "src/lib/bt",
 }
 ```
 
-`bundle` uses editable locale JSON files from the configured directory and expects your server build to include that directory for runtime loading.
+`local` writes editable locale JSON files to the configured directory. Put them under source if you want to import them, or under `public/` if you want the browser to fetch them as static assets.
 
-`remote` exists in the API, but remote sync and remote runtime fetching are currently stubs, so bundle storage is the recommended setup right now.
+`remote` exists in the API, but remote sync and remote runtime fetching are currently stubs, so local storage is the recommended setup right now.
 
 #### `translate`
 
@@ -202,7 +202,7 @@ import { createAiTranslate } from "better-translation/ai"
 betterTranslation({
   locales: ["en", "nl"],
   defaultLocale: "en",
-  storage: { type: "bundle", output: "src/lib/bt" },
+  storage: { type: "local", output: "src/lib/bt" },
   translate: createAiTranslate({
     prompt: "Use friendly, concise product UI copy.",
   }),
@@ -325,21 +325,22 @@ The full list of supported locales belongs in the plugin config:
 betterTranslation({
   locales: ["en", "nl", "fr"],
   defaultLocale: "en",
-  storage: { type: "bundle", output: "src/lib/bt" },
+  storage: { type: "local", output: "src/lib/bt" },
 })
 ```
 
 ### Server Runtime
 
-The plugin generates a typed `load-messages.ts` next to your locale JSON files. Import it directly from your server code:
+If you write local files into your source tree, load the JSON with your app's normal module loading pattern:
 
 ```ts
-import { loadMessages } from "@/lib/bt/load-messages"
-
-const messages = await loadMessages("nl")
+async function loadMessages(locale: "en" | "nl" | "fr") {
+  const messages = await import(`@/lib/bt/locales/${locale}.json`)
+  return messages.default
+}
 ```
 
-`loadMessages` statically imports each locale JSON file, so bundlers tree-shake unused locales and runtime lookups stay cheap.
+The plugin only writes the locale JSON. Your app owns the loader because SSR, SPA, edge, and native Vite apps all have different runtime constraints.
 
 ### Client-Side Fetch From `public/` Or A CDN
 
@@ -496,7 +497,7 @@ export default {
     betterTranslation({
       locales: ["en", "nl"],
       defaultLocale: "en",
-      storage: { type: "bundle", output: "src/lib/bt" },
+      storage: { type: "local", output: "src/lib/bt" },
       async translate(messages, locale) {
         const response = await fetch("https://your-translator.example.com/translate", {
           method: "POST",
@@ -541,7 +542,7 @@ export default {
     betterTranslation({
       locales: ["en", "nl"],
       defaultLocale: "en",
-      storage: { type: "bundle", output: "src/lib/bt" },
+      storage: { type: "local", output: "src/lib/bt" },
       translate: createAiTranslate({
         model: "openai/gpt-5.5",
         prompt: "Use short, friendly SaaS product copy.",
@@ -570,21 +571,9 @@ Options:
 
 Each AI request returns plain translated text for one source message. Better Translation maps that response to the current message id itself, so the model does not need to echo ids or return a JSON object. If the model returns an empty translation, Better Translation falls back to the source text.
 
-For `storage: { type: "bundle" }`, production builds are check-only. They never call `translate()` and never regenerate locale artifacts. Instead, they validate the committed locale JSON files and committed generated helper files, then fail the build if anything is missing or out of sync.
+For `storage: { type: "local" }`, production builds are check-only. They never call `translate()` and never regenerate locale artifacts. Instead, they validate the committed locale JSON files and generated metadata, then fail the build if anything is missing or out of sync.
 
 ## Server-Side Helpers
-
-### `loadMessages()`
-
-The plugin generates `load-messages.ts` next to your locale JSON files. Import it directly:
-
-```ts
-import { loadMessages } from "@/lib/bt/load-messages"
-
-const messages = await loadMessages("en")
-```
-
-It statically imports each locale JSON file and returns the flattened message map.
 
 ### `createTranslator()`
 
@@ -610,7 +599,7 @@ const sentence = t("You were invited to {organization}", { organization: organiz
 
 ## Locale File Shape
 
-With bundle storage, each runtime locale file is a flat message map:
+With local storage, each runtime locale file is a flat message map:
 
 ```json
 {
@@ -645,7 +634,7 @@ It also keeps a private metadata manifest at `locales/manifest.json`:
 }
 ```
 
-For bundle storage, the plugin also writes runtime metadata at `src/lib/bt/runtime.json` and a generated `load-messages.ts` for consuming locales on the server.
+For local storage, the plugin also writes runtime metadata at `src/lib/bt/runtime.json`.
 
 ## Important Notes
 
@@ -654,16 +643,15 @@ For bundle storage, the plugin also writes runtime metadata at `src/lib/bt/runti
 - Missing translations can fall back to the source text in dev while locale JSON files are being filled.
 - In local mode, locale JSON files are committed in the repo, loaded one locale at a time, and regenerated to match the current manifest exactly.
 - Client-only apps can fetch locale JSON from `public/` or a CDN and pass the result directly to `TranslateProvider`.
-- The generated `load-messages.ts` is typed with an `AppLocale` union and statically imports each locale JSON so bundlers tree-shake unused locales.
 - In local mode, production builds are check-only and fail if committed locale artifacts are missing or out of sync.
-- Remote storage is not fully implemented yet, so bundle storage is the recommended path for now.
+- Remote storage is not fully implemented yet, so local storage is the recommended path for now.
 
 ## Example Flow
 
 1. Add the plugin to `vite.config.ts`.
-2. Configure `locales`, `defaultLocale`, and bundle storage.
+2. Configure `locales`, `defaultLocale`, and local storage.
 3. Mark text with `t()` or `<T>`.
-4. Load one locale with `loadMessages(locale)` from the generated `load-messages.ts` or fetch the locale JSON in the browser.
+4. Load one locale by importing or fetching the generated locale JSON.
 5. Wrap your UI in `TranslateProvider`.
 6. Use `useT()`, `T`, `Var`, and `createTranslator()` where appropriate.
 7. Let the plugin write locale JSON files in dev and call your custom translator for missing entries.
@@ -725,13 +713,12 @@ Each manifest entry stores the canonical shape of that message:
 
 If two different messages collide onto the same id but do not have the same shape, the plugin throws an error instead of silently picking one.
 
-### 5. It writes generated helper files
+### 5. It writes generated metadata files
 
-In local mode, the plugin writes a few generated files alongside your locales:
+In local mode, the plugin writes a few generated metadata files alongside your locales:
 
 - `manifest.json`: private metadata manifest
 - `runtime.json`: runtime config for locale loading
-- `load-messages.ts`: typed loader that imports each locale JSON file
 - `.gitignore`: ignores the private manifest
 
 These files are only rewritten when their contents actually change.
@@ -786,7 +773,7 @@ At runtime, your app loads a single locale's message map.
 
 The common local-mode path is:
 
-1. Call `loadMessages(locale)`.
+1. Import or fetch the generated locale JSON for the active locale.
 2. Receive a flat `Record<string, string>`.
 3. Pass that object into `TranslateProvider`.
 4. Read translations with `useT()`, `T`, or the server helpers.
@@ -803,12 +790,12 @@ Because ids are deterministic, unchanged source text resolves to the same key ac
 
 ### 12. Production local builds are check-only
 
-For `storage: { type: "bundle" }`, production builds do not call `translate()` and do not rewrite locale artifacts.
+For `storage: { type: "local" }`, production builds do not call `translate()` and do not rewrite locale artifacts.
 
 Instead, the plugin:
 
 1. rebuilds the manifest from source
-2. checks that committed generated files such as `runtime.json` and `load-messages.ts` are present and up to date
+2. checks that committed generated metadata such as `runtime.json` is present and up to date
 3. checks that every committed locale file exists
 4. checks that every locale file has the expected ids
 5. checks that the default locale still matches the current source text
@@ -816,4 +803,4 @@ Instead, the plugin:
 
 The private `manifest.json` is still generated for dev/debugging, but it is not required to be committed for production builds.
 
-That keeps production behavior predictable: either the committed locale artifacts are correct, or the build stops. During dev regeneration, orphaned ids are pruned from bundle locale files automatically so stale keys do not accumulate between builds.
+That keeps production behavior predictable: either the committed locale artifacts are correct, or the build stops. During dev regeneration, orphaned ids are pruned from local locale files automatically so stale keys do not accumulate between builds.
