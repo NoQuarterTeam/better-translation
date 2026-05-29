@@ -66,8 +66,11 @@ export default defineConfig({
     betterTranslation({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
-      runtime: { type: "local", target: "module" },
-      translate: createAiTranslate(),
+      runtime: {
+        type: "local",
+        target: "module",
+        translate: createAiTranslate(),
+      },
     }),
     react(),
   ],
@@ -91,7 +94,7 @@ betterTranslation({
   locales: ["en", "nl"],
   defaultLocale: "en",
   rootDir: "src",
-  cacheFile: ".cache/better-translation.json",
+  cacheFile: ".cache/better-translation/cache.json",
   logging: true,
   runtime: {
     type: "local",
@@ -125,8 +128,10 @@ Where translated results are cached between runs.
 Default:
 
 ```ts
-".cache/better-translation.json"
+".cache/better-translation/cache.json"
 ```
+
+Remote offline development also writes temporary fallback Runtime bundles under `.cache/better-translation/runtime/`. The committed local runtime output remains separate.
 
 #### `logging`
 
@@ -181,9 +186,7 @@ With `offline: false`, local dev reads hosted branch Runtime bundles and uses th
 
 #### `translate`
 
-Async callback for filling missing translations.
-
-Today this option is top-level. In the planned hosted API, package-local translation moves under local runtime config:
+Async callback for filling missing local-mode translations. This belongs under local runtime config:
 
 ```ts
 runtime: {
@@ -230,10 +233,13 @@ import { createAiTranslate } from "better-translation/ai"
 betterTranslation({
   locales: ["en", "nl"],
   defaultLocale: "en",
-  runtime: { type: "local", target: "module" },
-  translate: createAiTranslate({
-    prompt: "Use friendly, concise product UI copy.",
-  }),
+  runtime: {
+    type: "local",
+    target: "module",
+    translate: createAiTranslate({
+      prompt: "Use friendly, concise product UI copy.",
+    }),
+  },
 })
 ```
 
@@ -529,24 +535,27 @@ export default {
     betterTranslation({
       locales: ["en", "nl"],
       defaultLocale: "en",
-      runtime: { type: "local", target: "module" },
-      async translate(messages, locale) {
-        const response = await fetch("https://your-translator.example.com/translate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            locale,
-            messages: messages.map((message) => ({
-              id: message.id,
-              text: message.text,
-              context: message.meta.context,
-              placeholders: message.placeholders,
-            })),
-          }),
-        })
+      runtime: {
+        type: "local",
+        target: "module",
+        async translate(messages, locale) {
+          const response = await fetch("https://your-translator.example.com/translate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              locale,
+              messages: messages.map((message) => ({
+                id: message.id,
+                text: message.text,
+                context: message.meta.context,
+                placeholders: message.placeholders,
+              })),
+            }),
+          })
 
-        const data = (await response.json()) as { translations: Record<string, string> }
-        return data.translations
+          const data = (await response.json()) as { translations: Record<string, string> }
+          return data.translations
+        },
       },
     }),
   ],
@@ -574,11 +583,14 @@ export default {
     betterTranslation({
       locales: ["en", "nl"],
       defaultLocale: "en",
-      runtime: { type: "local", target: "module" },
-      translate: createAiTranslate({
-        model: "openai/gpt-5.5",
-        prompt: "Use short, friendly SaaS product copy.",
-      }),
+      runtime: {
+        type: "local",
+        target: "module",
+        translate: createAiTranslate({
+          model: "openai/gpt-5.5",
+          prompt: "Use short, friendly SaaS product copy.",
+        }),
+      },
     }),
   ],
 }

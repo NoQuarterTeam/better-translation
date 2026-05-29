@@ -104,8 +104,6 @@ For public local runtime, the default output is Vite `publicDir` plus `bt`, and 
 
 `translate?: TranslateFn` belongs to local runtime config. It fills missing non-default Locale values during dev and writes those values into local artifacts/cache. Production local builds do not call `translate`.
 
-The current top-level `translate?: TranslateFn` option should become deprecated compatibility. In the new config shape, local translation lives under `runtime.translate` so local-mode ownership is explicit.
-
 ## Remote Mode
 
 Remote mode means the plugin syncs source metadata to the hosted service and the Consumer app reads branch-local Locale values at runtime.
@@ -148,9 +146,9 @@ Remote defaults should be:
 
 `dev.offline: false` means local dev uses the hosted platform. The dev runtime reads hosted Runtime bundles for the resolved Translation Branch, and the Platform translator fills missing branch Locale values when needed.
 
-`dev.offline: true` means local dev opts out of platform reads and writes. The dev runtime uses local extraction/cache and Default locale fallback for new Messages. Remote builds still sync to the hosted platform.
+`dev.offline: true` means local dev opts out of platform reads and writes. The dev runtime uses ignored local cache artifacts and Default locale fallback for new Messages, not the Consumer app's committed local runtime output. Remote builds still sync to the hosted platform.
 
-Remote mode should not accept a package-local `translate` callback. If the deprecated top-level `translate?: TranslateFn` option is provided with `runtime.type: "remote"`, the plugin should warn and ignore it. Canonical hosted translation in remote mode goes through the Platform translator.
+Remote mode does not accept a package-local `translate` callback. Canonical hosted translation in remote mode goes through the Platform translator.
 
 ## Translation Branches
 
@@ -240,7 +238,9 @@ By default, local `vite dev` should:
 
 This makes `runtime.type: "remote"` mean "use the platform" during local dev as well as deployed builds.
 
-For isolated or offline work, `dev.offline: true` switches local dev to local extraction/cache and Default locale fallback. In offline dev, local source changes do not reach the platform and dashboard edits do not appear locally.
+For isolated or offline work, `dev.offline: true` switches local dev to ignored local cache artifacts and Default locale fallback. In offline dev, local source changes do not reach the platform, dashboard edits do not appear locally, and generated fallback values should not be mixed into the Consumer app's local-mode Locale values.
+
+Plugin-owned caches live under `.cache/better-translation/` by default. The translation cache is `.cache/better-translation/cache.json`, and remote offline Runtime bundles are written under `.cache/better-translation/runtime/`.
 
 ## Translation Ownership
 

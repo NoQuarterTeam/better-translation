@@ -126,25 +126,6 @@ export interface TranslateMessage {
 /** User-provided translation function used to fill missing locale entries. */
 export type TranslateFn = (messages: TranslateMessage[], locale: string) => Promise<Record<string, string>>
 
-/** Stores messages in a remote backend. Deprecated: use `runtime.type = "remote"` instead. */
-export interface BetterTranslateRemoteStorageOptions {
-  /** Selects remote storage. */
-  type: "remote"
-  /** Optional remote backend URL. */
-  url?: string
-}
-
-/** Writes locale JSON files into the app repository or deployed artifact. Deprecated: use `runtime.type = "local"` instead. */
-export interface BetterTranslateLocalStorageOptions {
-  /** Selects local file storage. */
-  type: "local"
-  /** Output directory where locale JSON files are written. */
-  output?: string
-}
-
-/** Controls where translated locale artifacts are written or synced. */
-export type BetterTranslateStorageOptions = BetterTranslateRemoteStorageOptions | BetterTranslateLocalStorageOptions
-
 /** Writes locale files into the app and loads them through Vite. */
 export interface BetterTranslateLocalRuntimeOptions {
   /** Selects local runtime artifacts. */
@@ -155,6 +136,8 @@ export interface BetterTranslateLocalRuntimeOptions {
   output?: string
   /** Public URL prefix used by the generated loader for `target: "public"`. */
   basePath?: string
+  /** Custom translation function used for messages missing from non-default locales. */
+  translate?: TranslateFn
 }
 
 /** Loads locale files from an external translation service. */
@@ -164,7 +147,14 @@ export interface BetterTranslateRemoteRuntimeOptions {
   /** Remote translation service URL. */
   endpoint?: string
   /** Remote project identifier. */
-  projectId?: string
+  projectId: string
+  /** Translation Branch to read from, or `"auto"` to infer it from the environment. */
+  branch?: "auto" | (string & {})
+  /** Local development behavior for remote runtime mode. */
+  dev?: {
+    /** Avoid platform reads and writes during local development. */
+    offline?: boolean
+  }
 }
 
 /** Controls where locale artifacts live and how the virtual runtime loader reads them. */
@@ -194,8 +184,4 @@ export interface BetterTranslatePluginOptions {
   logging?: boolean
   /** Runtime backend configuration. */
   runtime?: BetterTranslateRuntimeOptions
-  /** Storage backend configuration. Deprecated: use `runtime` instead. */
-  storage?: BetterTranslateStorageOptions
-  /** Custom translation function used for messages missing from non-default locales. */
-  translate?: TranslateFn
 }
