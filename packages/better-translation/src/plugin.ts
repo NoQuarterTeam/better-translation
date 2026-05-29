@@ -1,9 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
 import { dirname, relative, resolve } from "node:path"
-import type { Plugin } from "vite"
+import { normalizePath, type Plugin, type ResolvedConfig } from "vite"
 
 import type {
   BetterTranslatePluginOptions,
+  BetterTranslateRuntimeOptions,
+  BetterTranslateStorageOptions,
   BetterTranslateRuntimeConfig,
   ExtractedMessage,
   ManifestEntry,
@@ -18,7 +20,12 @@ import type {
 import { createEmptyCache, getCacheKey, loadCache, saveCache } from "./cache.js"
 import { analyzeSourceFile } from "./extractor.js"
 import { serializeMeta } from "./message-id.js"
-import { DEFAULT_LOCAL_OUTPUT_DIR, getRuntimeConfigPath } from "./runtime-config.js"
+import {
+  DEFAULT_LOCAL_OUTPUT_DIR,
+  DEFAULT_PUBLIC_BASE_PATH,
+  DEFAULT_PUBLIC_OUTPUT_SUBDIR,
+  getRuntimeConfigPath,
+} from "./runtime-config.js"
 
 const PREFIX = "\x1b[36m[better-translation]\x1b[0m"
 const DIM = "\x1b[2m"
@@ -30,6 +37,8 @@ const REMOTE_API_BASE_URL = "https://better-translation.com"
 const REMOTE_STUB = `${YELLOW}stub${RESET}`
 const DEFAULT_ROOT_DIR = "src"
 const DEFAULT_SCAN_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"]
+const VIRTUAL_MESSAGES_MODULE_ID = "better-translation/messages"
+const RESOLVED_VIRTUAL_MESSAGES_MODULE_ID = `\0${VIRTUAL_MESSAGES_MODULE_ID}`
 const CALL_MARKERS = ["t", "useT"]
 const COMPONENT_MARKERS = ["T"]
 const PRIVATE_MANIFEST_FILENAME = "manifest.json"
@@ -58,15 +67,23 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     rootDir = DEFAULT_ROOT_DIR,
     cacheFile = ".cache/better-translation.json",
     logging = true,
-    storage = { type: "local", output: DEFAULT_LOCAL_OUTPUT_DIR },
+    runtime,
+    storage,
     translate,
   } = options
-  const usesLocalStorage = storage.type === "local"
-  const localesDir = storage.type === "local" ? (storage.output ?? DEFAULT_LOCAL_OUTPUT_DIR) : DEFAULT_LOCAL_OUTPUT_DIR
-  const remoteUrl = storage.type === "remote" ? (storage.url ?? REMOTE_API_BASE_URL) : REMOTE_API_BASE_URL
+  const configuredRuntime = normalizeRuntimeOptions(runtime, storage)
   const manifest: MessageManifest = {}
   const fileMessages = new Map<string, ExtractedMessage[]>()
   let cache: TranslationCache = createEmptyCache()
+  let resolvedRuntime = configuredRuntime
+  let usesLocalStorage = configuredRuntime.type === "local"
+  let localesDir =
+    configuredRuntime.type === "local" ? (configuredRuntime.output ?? DEFAULT_LOCAL_OUTPUT_DIR) : DEFAULT_LOCAL_OUTPUT_DIR
+  let publicBasePath =
+    configuredRuntime.type === "local" && configuredRuntime.target === "public"
+      ? (configuredRuntime.basePath ?? DEFAULT_PUBLIC_BASE_PATH)
+      : DEFAULT_PUBLIC_BASE_PATH
+  let remoteUrl = configuredRuntime.type === "remote" ? (configuredRuntime.endpoint ?? REMOTE_API_BASE_URL) : REMOTE_API_BASE_URL
   let root = ""
   let isDev = false
   let translateTimer: ReturnType<typeof setTimeout> | null = null
@@ -125,7 +142,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
 
   function getRuntimeConfig(): BetterTranslateRuntimeConfig {
     return {
-      storage: usesLocalStorage ? { type: "local", output: localesDir } : { type: "remote", url: remoteUrl },
+      runtime: resolvedRuntime,
       defaultLocale,
       locales,
     }
@@ -464,6 +481,12 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     return relative(root, file).replaceAll("\\", "/")
   }
 
+  function createVirtualMessagesModule() {
+    if (resolvedRuntime.type === "remote") return createRemoteMessagesModule(resolvedRuntime, locales, remoteUrl)
+    if (resolvedRuntime.target === "public") return createPublicMessagesModule(locales, publicBasePath)
+    return createModuleMessagesModule(locales, (locale) => `/${normalizePath(toRootRelativePath(getLocalePath(locale)))}`)
+  }
+
   return {
     name: "better-translation-extract",
     enforce: "pre",
@@ -471,10 +494,26 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     configResolved(config) {
       root = config.root
       isDev = config.command === "serve"
+      resolvedRuntime = resolveRuntimeOptions(configuredRuntime, config)
+      usesLocalStorage = resolvedRuntime.type === "local"
+      localesDir = resolvedRuntime.type === "local" ? resolvedRuntime.output! : DEFAULT_LOCAL_OUTPUT_DIR
+      publicBasePath =
+        resolvedRuntime.type === "local" && resolvedRuntime.target === "public"
+          ? (resolvedRuntime.basePath ?? DEFAULT_PUBLIC_BASE_PATH)
+          : DEFAULT_PUBLIC_BASE_PATH
+      remoteUrl = resolvedRuntime.type === "remote" ? (resolvedRuntime.endpoint ?? REMOTE_API_BASE_URL) : REMOTE_API_BASE_URL
       sourceRoots = (Array.isArray(rootDir) ? rootDir : [rootDir]).map((dir) => resolve(root, dir))
       log(
-        `${PREFIX} Locales: ${CYAN}${formatLocales(locales)}${RESET} | Default: ${CYAN}${formatLocale(defaultLocale)}${RESET} | Storage: ${CYAN}${usesLocalStorage ? "Local" : "Remote"}${RESET} | Out Dir: ${DIM}${usesLocalStorage ? localesDir : "n/a"}${RESET} | Roots: ${DIM}${(Array.isArray(rootDir) ? rootDir : [rootDir]).join(", ")}${RESET}`,
+        `${PREFIX} Locales: ${CYAN}${formatLocales(locales)}${RESET} | Default: ${CYAN}${formatLocale(defaultLocale)}${RESET} | Runtime: ${CYAN}${formatRuntime(resolvedRuntime)}${RESET} | Out Dir: ${DIM}${usesLocalStorage ? localesDir : "n/a"}${RESET} | Roots: ${DIM}${(Array.isArray(rootDir) ? rootDir : [rootDir]).join(", ")}${RESET}`,
       )
+    },
+
+    resolveId(id) {
+      if (id === VIRTUAL_MESSAGES_MODULE_ID) return RESOLVED_VIRTUAL_MESSAGES_MODULE_ID
+    },
+
+    load(id) {
+      if (id === RESOLVED_VIRTUAL_MESSAGES_MODULE_ID) return createVirtualMessagesModule()
     },
 
     buildStart() {
@@ -557,6 +596,126 @@ function formatLocaleIssue(locale: string, label: string, ids: string[]) {
     .join(", ")
   const suffix = ids.length > 5 ? `, ... ${ids.length - 5} more` : ""
   return `- ${locale}: ${label} (${preview}${suffix})`
+}
+
+function normalizeRuntimeOptions(
+  runtime: BetterTranslateRuntimeOptions | undefined,
+  storage: BetterTranslateStorageOptions | undefined,
+): BetterTranslateRuntimeOptions {
+  if (runtime) return runtime.type === "local" ? { ...runtime, target: runtime.target ?? "module" } : runtime
+  if (!storage) return { type: "local", target: "module" }
+  if (storage.type === "remote") return { type: "remote", endpoint: storage.url }
+  return { type: "local", target: "module", output: storage.output }
+}
+
+function resolveRuntimeOptions(runtime: BetterTranslateRuntimeOptions, config: ResolvedConfig): BetterTranslateRuntimeOptions {
+  if (runtime.type === "remote") return { ...runtime, endpoint: runtime.endpoint ?? REMOTE_API_BASE_URL }
+
+  const target = runtime.target ?? "module"
+  if (target === "module") {
+    return {
+      ...runtime,
+      target,
+      output: runtime.output ?? DEFAULT_LOCAL_OUTPUT_DIR,
+    }
+  }
+
+  if (!config.publicDir) {
+    throw new Error(`${PREFIX} runtime target "public" requires Vite publicDir to be enabled`)
+  }
+
+  const output = runtime.output ?? normalizePath(relative(config.root, resolve(config.publicDir, DEFAULT_PUBLIC_OUTPUT_SUBDIR)))
+  const outputPath = resolve(config.root, output)
+  const publicBasePath = runtime.basePath ?? inferPublicBasePath(outputPath, config.publicDir)
+
+  return {
+    ...runtime,
+    target,
+    output,
+    basePath: publicBasePath,
+  }
+}
+
+function inferPublicBasePath(outputPath: string, publicDir: string) {
+  const relativeToPublic = normalizePath(relative(publicDir, outputPath))
+  if (relativeToPublic.startsWith("..")) {
+    throw new Error(`${PREFIX} runtime target "public" output must be inside Vite publicDir unless basePath is provided`)
+  }
+  return `/${relativeToPublic}`.replace(/\/$/, "")
+}
+
+function formatRuntime(runtime: BetterTranslateRuntimeOptions) {
+  return runtime.type === "local" ? `Local/${runtime.target ?? "module"}` : "Remote"
+}
+
+function createModuleMessagesModule(locales: string[], getImportPath: (locale: string) => string) {
+  const cases = locales
+    .map(
+      (locale) => `    case ${JSON.stringify(locale)}:
+      return (await import(${JSON.stringify(getImportPath(locale))})).default`,
+    )
+    .join("\n")
+
+  return [
+    `export const locales = ${JSON.stringify(locales)}`,
+    "",
+    "export async function loadMessages(locale) {",
+    "  switch (locale) {",
+    cases,
+    "    default:",
+    "      throw new Error(`Unknown locale: ${locale}`)",
+    "  }",
+    "}",
+    "",
+  ].join("\n")
+}
+
+function createPublicMessagesModule(locales: string[], basePath: string) {
+  const normalizedBasePath = basePath.replace(/\/$/, "")
+  return [
+    `export const locales = ${JSON.stringify(locales)}`,
+    "",
+    "export async function loadMessages(locale) {",
+    "  assertKnownLocale(locale)",
+    `  const response = await fetch(\`${normalizedBasePath}/locales/\${encodeURIComponent(locale)}.json\`)`,
+    "  if (!response.ok) throw new Error(`Failed to load locale: ${locale}`)",
+    "  return response.json()",
+    "}",
+    "",
+    createKnownLocaleAssertion(locales),
+  ].join("\n")
+}
+
+function createRemoteMessagesModule(
+  runtime: Extract<BetterTranslateRuntimeOptions, { type: "remote" }>,
+  locales: string[],
+  endpoint: string,
+) {
+  const normalizedEndpoint = endpoint.replace(/\/$/, "")
+  const projectPath = runtime.projectId ? `/projects/${encodeURIComponent(runtime.projectId)}` : ""
+  return [
+    `export const locales = ${JSON.stringify(locales)}`,
+    "",
+    "export async function loadMessages(locale) {",
+    "  assertKnownLocale(locale)",
+    `  const response = await fetch(\`${normalizedEndpoint}${projectPath}/locales/\${encodeURIComponent(locale)}.json\`)`,
+    "  if (!response.ok) throw new Error(`Failed to load locale: ${locale}`)",
+    "  return response.json()",
+    "}",
+    "",
+    createKnownLocaleAssertion(locales),
+  ].join("\n")
+}
+
+function createKnownLocaleAssertion(locales: string[]) {
+  return [
+    `const knownLocales = new Set(${JSON.stringify(locales)})`,
+    "",
+    "function assertKnownLocale(locale) {",
+    "  if (!knownLocales.has(locale)) throw new Error(`Unknown locale: ${locale}`)",
+    "}",
+    "",
+  ].join("\n")
 }
 
 function normalizeLocaleMessages(input: unknown): RuntimeMessages {

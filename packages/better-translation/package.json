@@ -27,6 +27,10 @@
     "./ai": {
       "import": "./dist/ai.mjs",
       "types": "./dist/ai.d.mts"
+    },
+    "./messages": {
+      "import": "./dist/messages.mjs",
+      "types": "./dist/messages.d.mts"
     }
   },
   "publishConfig": {

@@ -1,6 +1,7 @@
 {
-  "storage": {
+  "runtime": {
     "type": "local",
+    "target": "module",
     "output": "src/lib/bt"
   },
   "defaultLocale": "en",

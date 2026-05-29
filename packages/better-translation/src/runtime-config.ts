@@ -5,8 +5,14 @@ import { fileURLToPath } from "node:url"
 import type { BetterTranslateRuntimeConfig } from "./types.js"
 
 export const DEFAULT_LOCAL_OUTPUT_DIR = "src/lib/bt"
+export const DEFAULT_PUBLIC_OUTPUT_SUBDIR = "bt"
+export const DEFAULT_PUBLIC_BASE_PATH = "/bt"
 export const RUNTIME_CONFIG_FILENAME = "runtime.json"
-export const COMMON_RUNTIME_CONFIG_DIRS = [DEFAULT_LOCAL_OUTPUT_DIR, `assets/${DEFAULT_LOCAL_OUTPUT_DIR}`]
+export const COMMON_RUNTIME_CONFIG_DIRS = [
+  DEFAULT_LOCAL_OUTPUT_DIR,
+  `public/${DEFAULT_PUBLIC_OUTPUT_SUBDIR}`,
+  `assets/${DEFAULT_LOCAL_OUTPUT_DIR}`,
+]
 
 export function getRuntimeConfigPath(root: string, dir: string) {
   return resolve(root, dir, RUNTIME_CONFIG_FILENAME)

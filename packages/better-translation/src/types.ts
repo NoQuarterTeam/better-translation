@@ -126,7 +126,7 @@ export interface TranslateMessage {
 /** User-provided translation function used to fill missing locale entries. */
 export type TranslateFn = (messages: TranslateMessage[], locale: string) => Promise<Record<string, string>>
 
-/** Stores messages in a remote backend. */
+/** Stores messages in a remote backend. Deprecated: use `runtime.type = "remote"` instead. */
 export interface BetterTranslateRemoteStorageOptions {
   /** Selects remote storage. */
   type: "remote"
@@ -134,7 +134,7 @@ export interface BetterTranslateRemoteStorageOptions {
   url?: string
 }
 
-/** Writes locale JSON files into the app repository or deployed artifact. */
+/** Writes locale JSON files into the app repository or deployed artifact. Deprecated: use `runtime.type = "local"` instead. */
 export interface BetterTranslateLocalStorageOptions {
   /** Selects local file storage. */
   type: "local"
@@ -145,10 +145,35 @@ export interface BetterTranslateLocalStorageOptions {
 /** Controls where translated locale artifacts are written or synced. */
 export type BetterTranslateStorageOptions = BetterTranslateRemoteStorageOptions | BetterTranslateLocalStorageOptions
 
+/** Writes locale files into the app and loads them through Vite. */
+export interface BetterTranslateLocalRuntimeOptions {
+  /** Selects local runtime artifacts. */
+  type: "local"
+  /** Chooses whether locale files are imported as modules or fetched from Vite public assets. */
+  target?: "module" | "public"
+  /** Output directory where locale artifacts are written. */
+  output?: string
+  /** Public URL prefix used by the generated loader for `target: "public"`. */
+  basePath?: string
+}
+
+/** Loads locale files from an external translation service. */
+export interface BetterTranslateRemoteRuntimeOptions {
+  /** Selects remote runtime loading. */
+  type: "remote"
+  /** Remote translation service URL. */
+  endpoint?: string
+  /** Remote project identifier. */
+  projectId?: string
+}
+
+/** Controls where locale artifacts live and how the virtual runtime loader reads them. */
+export type BetterTranslateRuntimeOptions = BetterTranslateLocalRuntimeOptions | BetterTranslateRemoteRuntimeOptions
+
 /** Runtime metadata emitted by the plugin for server-side loaders. */
 export interface BetterTranslateRuntimeConfig {
-  /** Storage backend configured for emitted locale artifacts. */
-  storage: BetterTranslateStorageOptions
+  /** Runtime backend configured for locale artifacts. */
+  runtime: BetterTranslateRuntimeOptions
   /** Locale code treated as the source language. */
   defaultLocale: string
   /** All locale codes emitted by the plugin. */
@@ -167,7 +192,9 @@ export interface BetterTranslatePluginOptions {
   cacheFile?: string
   /** Enables or disables plugin logging. */
   logging?: boolean
-  /** Storage backend configuration. */
+  /** Runtime backend configuration. */
+  runtime?: BetterTranslateRuntimeOptions
+  /** Storage backend configuration. Deprecated: use `runtime` instead. */
   storage?: BetterTranslateStorageOptions
   /** Custom translation function used for messages missing from non-default locales. */
   translate?: TranslateFn

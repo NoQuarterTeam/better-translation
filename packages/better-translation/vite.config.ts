@@ -9,6 +9,7 @@ export default defineConfig({
       react: "src/react.tsx",
       server: "src/server.ts",
       ai: "src/ai.ts",
+      messages: "src/messages.ts",
     },
     deps: {
       neverBundle: ["ai", "react", "vite"],

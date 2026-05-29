@@ -66,7 +66,7 @@ export default defineConfig({
     betterTranslation({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
-      storage: { type: "local", output: "src/lib/bt" },
+      runtime: { type: "local", target: "module" },
       translate: createAiTranslate(),
     }),
     react(),
@@ -74,7 +74,7 @@ export default defineConfig({
 })
 ```
 
-With local storage enabled, the plugin writes files such as:
+With local module runtime enabled, the plugin writes files such as:
 
 ```text
 src/lib/bt/locales/en.json
@@ -93,9 +93,9 @@ betterTranslation({
   rootDir: "src",
   cacheFile: ".cache/better-translation.json",
   logging: true,
-  storage: {
+  runtime: {
     type: "local",
-    output: "src/lib/bt",
+    target: "module",
   },
 })
 ```
@@ -148,20 +148,20 @@ You can also pass multiple directories:
 rootDir: ["src", "app"]
 ```
 
-#### `storage`
+#### `runtime`
 
-Controls where locale runtime data comes from.
+Controls where locale runtime data lives and how the virtual loader reads it.
 
 ```ts
-storage: {
+runtime: {
   type: "local",
-  output: "src/lib/bt",
+  target: "module",
 }
 ```
 
-`local` writes editable locale JSON files to the configured directory. Put them under source if you want to import them, or under `public/` if you want the browser to fetch them as static assets.
+`local` writes editable locale JSON files into the app. Use `target: "module"` to write under `src/lib/bt` and load with Vite module imports. Use `target: "public"` to write under Vite's `publicDir` and load with fetch.
 
-`remote` exists in the API, but remote sync and remote runtime fetching are currently stubs, so local storage is the recommended setup right now.
+`remote` exists in the API, but remote sync and remote runtime fetching are currently stubs, so local runtime is the recommended setup right now.
 
 #### `translate`
 
@@ -202,7 +202,7 @@ import { createAiTranslate } from "better-translation/ai"
 betterTranslation({
   locales: ["en", "nl"],
   defaultLocale: "en",
-  storage: { type: "local", output: "src/lib/bt" },
+  runtime: { type: "local", target: "module" },
   translate: createAiTranslate({
     prompt: "Use friendly, concise product UI copy.",
   }),
@@ -325,34 +325,39 @@ The full list of supported locales belongs in the plugin config:
 betterTranslation({
   locales: ["en", "nl", "fr"],
   defaultLocale: "en",
-  storage: { type: "local", output: "src/lib/bt" },
+  runtime: { type: "local", target: "module" },
 })
 ```
 
-### Server Runtime
+### Virtual Runtime Loader
 
-If you write local files into your source tree, load the JSON with your app's normal module loading pattern:
+The Vite plugin provides a virtual module with the configured locales and the right loader for your runtime target:
 
 ```ts
-async function loadMessages(locale: "en" | "nl" | "fr") {
-  const messages = await import(`@/lib/bt/locales/${locale}.json`)
-  return messages.default
-}
+import { loadMessages, locales } from "better-translation/messages"
+
+const messages = await loadMessages(locale)
 ```
 
-The plugin only writes the locale JSON. Your app owns the loader because SSR, SPA, edge, and native Vite apps all have different runtime constraints.
+For `runtime: { type: "local", target: "module" }`, the virtual loader uses Vite module imports. For `target: "public"`, it fetches JSON from Vite public assets.
 
-### Client-Side Fetch From `public/` Or A CDN
+### Client-Side Fetch From Public Files
 
-If your app does not have a server runtime, or you want to load translations directly in the browser, fetch the locale JSON yourself and pass the result to `TranslateProvider`.
+If your app does not have a server runtime, or you want to load translations directly in the browser, use public runtime:
 
-You do not need a special browser loader from this package. `TranslateProvider` only needs a flat `Record<string, string>`.
+```ts
+betterTranslation({
+  locales: ["en", "nl", "fr"],
+  runtime: { type: "local", target: "public" },
+})
+```
 
-If you publish your locale files under `public/locales`, you can fetch them like this:
+The same virtual import fetches `/bt/locales/{locale}.json` by default:
 
 ```tsx
 import { useEffect, useState } from "react"
 
+import { loadMessages } from "better-translation/messages"
 import { TranslateProvider } from "better-translation/react"
 
 export function App({ locale }: { locale: string }) {
@@ -362,8 +367,7 @@ export function App({ locale }: { locale: string }) {
     let cancelled = false
 
     async function load() {
-      const response = await fetch(`/locales/${locale}.json`)
-      const nextMessages = (await response.json()) as Record<string, string>
+      const nextMessages = await loadMessages(locale)
       if (!cancelled) setMessages(nextMessages)
     }
 
@@ -497,7 +501,7 @@ export default {
     betterTranslation({
       locales: ["en", "nl"],
       defaultLocale: "en",
-      storage: { type: "local", output: "src/lib/bt" },
+      runtime: { type: "local", target: "module" },
       async translate(messages, locale) {
         const response = await fetch("https://your-translator.example.com/translate", {
           method: "POST",
@@ -542,7 +546,7 @@ export default {
     betterTranslation({
       locales: ["en", "nl"],
       defaultLocale: "en",
-      storage: { type: "local", output: "src/lib/bt" },
+      runtime: { type: "local", target: "module" },
       translate: createAiTranslate({
         model: "openai/gpt-5.5",
         prompt: "Use short, friendly SaaS product copy.",
@@ -571,7 +575,7 @@ Options:
 
 Each AI request returns plain translated text for one source message. Better Translation maps that response to the current message id itself, so the model does not need to echo ids or return a JSON object. If the model returns an empty translation, Better Translation falls back to the source text.
 
-For `storage: { type: "local" }`, production builds are check-only. They never call `translate()` and never regenerate locale artifacts. Instead, they validate the committed locale JSON files and generated metadata, then fail the build if anything is missing or out of sync.
+For `runtime: { type: "local" }`, production builds are check-only. They never call `translate()` and never regenerate locale artifacts. Instead, they validate the committed locale JSON files and generated metadata, then fail the build if anything is missing or out of sync.
 
 ## Server-Side Helpers
 
@@ -599,7 +603,7 @@ const sentence = t("You were invited to {organization}", { organization: organiz
 
 ## Locale File Shape
 
-With local storage, each runtime locale file is a flat message map:
+With local runtime, each runtime locale file is a flat message map:
 
 ```json
 {
@@ -634,7 +638,7 @@ It also keeps a private metadata manifest at `locales/manifest.json`:
 }
 ```
 
-For local storage, the plugin also writes runtime metadata at `src/lib/bt/runtime.json`.
+For local runtime, the plugin also writes runtime metadata at `src/lib/bt/runtime.json`.
 
 ## Important Notes
 
@@ -644,12 +648,12 @@ For local storage, the plugin also writes runtime metadata at `src/lib/bt/runtim
 - In local mode, locale JSON files are committed in the repo, loaded one locale at a time, and regenerated to match the current manifest exactly.
 - Client-only apps can fetch locale JSON from `public/` or a CDN and pass the result directly to `TranslateProvider`.
 - In local mode, production builds are check-only and fail if committed locale artifacts are missing or out of sync.
-- Remote storage is not fully implemented yet, so local storage is the recommended path for now.
+- Remote runtime is not fully implemented yet, so local runtime is the recommended path for now.
 
 ## Example Flow
 
 1. Add the plugin to `vite.config.ts`.
-2. Configure `locales`, `defaultLocale`, and local storage.
+2. Configure `locales`, `defaultLocale`, and local runtime.
 3. Mark text with `t()` or `<T>`.
 4. Load one locale by importing or fetching the generated locale JSON.
 5. Wrap your UI in `TranslateProvider`.
@@ -790,7 +794,7 @@ Because ids are deterministic, unchanged source text resolves to the same key ac
 
 ### 12. Production local builds are check-only
 
-For `storage: { type: "local" }`, production builds do not call `translate()` and do not rewrite locale artifacts.
+For `runtime: { type: "local" }`, production builds do not call `translate()` and do not rewrite locale artifacts.
 
 Instead, the plugin:
 
