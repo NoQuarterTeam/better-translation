@@ -90,11 +90,10 @@
     },
     "packages/better-translation": {
       "name": "better-translation",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "ai": "6.0.193",
         "oxc-parser": "0.133.0",
-        "zod": "4.3.6",
       },
       "devDependencies": {
         "@better-translation/tsconfig": "workspace:*",

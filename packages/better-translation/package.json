@@ -1,6 +1,6 @@
 {
   "name": "better-translation",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Vite plugin and runtime helpers for Better Translation.",
   "repository": {
     "type": "git",
@@ -38,8 +38,7 @@
   },
   "dependencies": {
     "ai": "6.0.193",
-    "oxc-parser": "0.133.0",
-    "zod": "4.3.6"
+    "oxc-parser": "0.133.0"
   },
   "devDependencies": {
     "@better-translation/tsconfig": "workspace:*",

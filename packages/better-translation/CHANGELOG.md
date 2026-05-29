@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.1.6
+
+### Patch Changes
+
+- Change the AI translation helper to translate one message per request and use plain text responses.
+
 ## 0.1.5
 
 ### Patch Changes

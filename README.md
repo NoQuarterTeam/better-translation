@@ -209,7 +209,7 @@ betterTranslation({
 })
 ```
 
-`createAiTranslate()` batches missing messages, asks the model to return translations keyed by message id, and validates the JSON output with Zod. The optional `prompt` is the primary translation brief for product, tone, glossary, or domain guidance. Better Translation still adds a small required output contract so the structured response stays stable.
+`createAiTranslate()` translates each missing message with its own model request and assigns the returned text directly to that message id. The optional `prompt` is the primary translation brief for product, tone, glossary, or domain guidance. Better Translation still adds a small output contract so the model returns only the translated text.
 
 ## How To Translate Text
 
@@ -566,10 +566,9 @@ Options:
 
 - `model`: Any AI SDK `model` value. Defaults to the Vercel AI Gateway model string `"openai/gpt-5.5"`.
 - `prompt`: Primary translation brief for product, tone, glossary, or domain instructions.
-- `batchSize`: Number of messages per model request. Defaults to `25`.
 - `temperature`: Optional model temperature.
 
-The AI response is validated with Zod before translations are used. If the model omits a message id or returns an empty translation for that message, Better Translation falls back to the source text.
+Each AI request returns plain translated text for one source message. Better Translation maps that response to the current message id itself, so the model does not need to echo ids or return a JSON object. If the model returns an empty translation, Better Translation falls back to the source text.
 
 For `storage: { type: "bundle" }`, production builds are check-only. They never call `translate()` and never regenerate locale artifacts. Instead, they validate the committed locale JSON files and committed generated helper files, then fail the build if anything is missing or out of sync.
 

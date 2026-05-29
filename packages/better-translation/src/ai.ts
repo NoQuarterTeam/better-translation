@@ -1,22 +1,15 @@
 import type { generateText } from "ai"
-import { z } from "zod"
 
 import type { TranslateFn, TranslateMessage } from "./types.js"
 
 const DEFAULT_GATEWAY_MODEL = "openai/gpt-5.5"
-const DEFAULT_BATCH_SIZE = 25
 type AiModel = Parameters<typeof generateText>[0]["model"]
-const translationPayloadSchema = z.object({
-  translations: z.record(z.string(), z.string()),
-})
 
 export interface CreateAiTranslateOptions {
   /** AI SDK model value. Defaults to a Vercel AI Gateway model string. */
   model?: AiModel
   /** Primary translation brief for product, tone, glossary, or domain instructions. */
   prompt?: string
-  /** Maximum number of messages sent in a single translation request. */
-  batchSize?: number
   /** Optional temperature forwarded to the selected model provider. */
   temperature?: number
 }
@@ -24,39 +17,31 @@ export interface CreateAiTranslateOptions {
 export function createAiTranslate(options: CreateAiTranslateOptions = {}): TranslateFn {
   return async (messages, locale) => {
     const result: Record<string, string> = {}
-    const batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE
 
-    for (let index = 0; index < messages.length; index += batchSize) {
-      const batch = messages.slice(index, index + batchSize)
-      Object.assign(result, await translateBatch(batch, locale, options))
+    for (const message of messages) {
+      result[message.id] = await translateMessage(message, locale, options)
     }
 
     return result
   }
 }
 
-async function translateBatch(messages: TranslateMessage[], locale: string, options: CreateAiTranslateOptions) {
-  const { translations } = await translateWithAi(messages, locale, options)
+async function translateMessage(message: TranslateMessage, locale: string, options: CreateAiTranslateOptions) {
+  const translated = (await translateWithAi(message, locale, options)).trim()
 
-  return Object.fromEntries(
-    messages.map((message) => {
-      const translated = translations[message.id]?.trim()
-      return [message.id, translated || message.text]
-    }),
-  )
+  return translated || message.text
 }
 
-async function translateWithAi(messages: TranslateMessage[], locale: string, options: CreateAiTranslateOptions) {
-  const { generateText, Output } = await import("ai")
-  const { output } = await generateText({
+async function translateWithAi(message: TranslateMessage, locale: string, options: CreateAiTranslateOptions) {
+  const { generateText } = await import("ai")
+  const { text } = await generateText({
     model: options.model ?? DEFAULT_GATEWAY_MODEL,
-    output: Output.object({ schema: translationPayloadSchema }),
     system: createSystemPrompt(locale, options.prompt),
-    prompt: createUserPrompt(messages, locale),
+    prompt: createUserPrompt(message, locale),
     ...(options.temperature === undefined ? {} : { temperature: options.temperature }),
   })
 
-  return output
+  return text
 }
 
 function createSystemPrompt(locale: string, prompt?: string) {
@@ -69,20 +54,20 @@ ${translationBrief}
 ## Target Locale
 ${locale}
 
-## Required Output Contract
-Return translations keyed by message id in the requested structured output.
-Use each message context when provided.
-Do not add labels, explanations, markdown, or code fences.`,
+## Output Contract
+Return only the translated text for the provided source message.
+Do not include the message id, labels, explanations, markdown, code fences, or surrounding quotes.
+Use the message context when provided.`,
   ].join("\n\n")
 }
 
-function createUserPrompt(messages: TranslateMessage[], locale: string) {
+function createUserPrompt(message: TranslateMessage, locale: string) {
   return JSON.stringify({
     targetLocale: locale,
-    messages: messages.map((message) => ({
+    message: {
       id: message.id,
       text: message.text,
       context: message.meta.context,
-    })),
+    },
   })
 }
