@@ -1,4 +1,4 @@
-import { Children, createContext, isValidElement, useContext, useMemo, type ReactNode } from "react"
+import { Children, createContext, isValidElement, use, useMemo, type ReactNode } from "react"
 
 import type { TranslateOptions } from "./types.js"
 
@@ -26,7 +26,7 @@ export function TranslateProvider({ messages, children }: TranslateProviderProps
 
 /** Returns the raw locale message map from the current provider. */
 export function useMessages() {
-  return useContext(TranslateContext).messages
+  return use(TranslateContext).messages
 }
 
 type MessageValues = Record<string, unknown>
@@ -34,7 +34,7 @@ type TranslateFn = (message: string, valuesOrOptions?: MessageValues | Translate
 
 /** Returns a translator function for text used in props, labels, and other non-JSX positions. */
 export function useT(): TranslateFn {
-  const { messages } = useContext(TranslateContext)
+  const { messages } = use(TranslateContext)
   return useMemo<TranslateFn>(
     () => (message, valuesOrOptions, options) => {
       const values = isTranslateOptions(valuesOrOptions) ? undefined : normalizeValues(valuesOrOptions)
@@ -70,7 +70,7 @@ export interface TProps {
 
 /** Renders translated JSX content and supports placeholders through `<Var>`. */
 export function T({ id, context, children }: TProps) {
-  const { messages } = useContext(TranslateContext)
+  const { messages } = use(TranslateContext)
   const resolvedMeta = context ? { context } : undefined
   const runtimeContent = useMemo(() => extractRuntimeContent(children), [children])
   const template = messages[id ?? (runtimeContent.message ? getMessageId(runtimeContent.message, resolvedMeta) : "")]
