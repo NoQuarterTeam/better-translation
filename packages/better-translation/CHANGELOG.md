@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.1.5
+
+### Patch Changes
+
+- Add the built-in AI translation helper.
+
 ## 0.1.4
 
 ### Patch Changes
