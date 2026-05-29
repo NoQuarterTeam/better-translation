@@ -23,6 +23,10 @@
     "./server": {
       "import": "./dist/server.mjs",
       "types": "./dist/server.d.mts"
+    },
+    "./ai": {
+      "import": "./dist/ai.mjs",
+      "types": "./dist/ai.d.mts"
     }
   },
   "publishConfig": {
@@ -33,7 +37,9 @@
     "prepack": "bun run build"
   },
   "dependencies": {
-    "oxc-parser": "0.133.0"
+    "ai": "6.0.193",
+    "oxc-parser": "0.133.0",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@better-translation/tsconfig": "workspace:*",

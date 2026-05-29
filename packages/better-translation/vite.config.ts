@@ -8,9 +8,10 @@ export default defineConfig({
       vite: "src/vite.ts",
       react: "src/react.tsx",
       server: "src/server.ts",
+      ai: "src/ai.ts",
     },
     deps: {
-      neverBundle: ["react", "vite"],
+      neverBundle: ["ai", "react", "vite"],
     },
     format: ["esm"],
     sourcemap: true,

@@ -58,6 +58,7 @@ At build time and during dev, the plugin:
 ```ts
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
+import { createAiTranslate } from "better-translation/ai"
 import { betterTranslation } from "better-translation/vite"
 
 export default defineConfig({
@@ -66,20 +67,7 @@ export default defineConfig({
       locales: ["en", "nl", "fr", "es"],
       defaultLocale: "en",
       storage: { type: "bundle", output: "src/lib/bt" },
-      async translate(messages, locale) {
-        const result: Record<string, string> = {}
-
-        for (const message of messages) {
-          result[message.id] = await translateWithYourService({
-            text: message.text,
-            locale,
-            context: message.meta.context,
-            placeholders: message.placeholders,
-          })
-        }
-
-        return result
-      },
+      translate: createAiTranslate(),
     }),
     react(),
   ],
@@ -205,6 +193,23 @@ type TranslateFn = (
 Return a map keyed by `message.id`.
 
 If a message id is missing from the returned object, the plugin falls back to the source text for that entry.
+
+You can use the built-in AI translator to call any AI SDK model value. With no options, it defaults to a Vercel AI Gateway model string:
+
+```ts
+import { createAiTranslate } from "better-translation/ai"
+
+betterTranslation({
+  locales: ["en", "nl"],
+  defaultLocale: "en",
+  storage: { type: "bundle", output: "src/lib/bt" },
+  translate: createAiTranslate({
+    prompt: "Use friendly, concise product UI copy.",
+  }),
+})
+```
+
+`createAiTranslate()` batches missing messages, asks the model to return translations keyed by message id, and validates the JSON output with Zod. The optional `prompt` is the primary translation brief for product, tone, glossary, or domain guidance. Better Translation still adds a small required output contract so the structured response stays stable.
 
 ## How To Translate Text
 
@@ -522,6 +527,49 @@ Guidelines for a good custom translator:
 - Return translations keyed by `message.id`.
 - Return plain strings only.
 - Keep translations deterministic when possible so the cache stays useful.
+
+### Built-in AI Translator
+
+Use `createAiTranslate()` from `better-translation/ai` if you want Better Translation to fill missing locale entries through an LLM:
+
+```ts
+import { createAiTranslate } from "better-translation/ai"
+import { betterTranslation } from "better-translation/vite"
+
+export default {
+  plugins: [
+    betterTranslation({
+      locales: ["en", "nl"],
+      defaultLocale: "en",
+      storage: { type: "bundle", output: "src/lib/bt" },
+      translate: createAiTranslate({
+        model: "openai/gpt-5.5",
+        prompt: "Use short, friendly SaaS product copy.",
+      }),
+    }),
+  ],
+}
+```
+
+By default it uses Vercel AI Gateway with `model: "openai/gpt-5.5"`. Configure whatever auth that model/provider needs in your environment. The `model` option is passed straight through to the AI SDK, so you can also provide a provider model object yourself:
+
+```ts
+import { openai } from "@ai-sdk/openai"
+import { createAiTranslate } from "better-translation/ai"
+
+createAiTranslate({
+  model: openai("gpt-4.1-mini"),
+})
+```
+
+Options:
+
+- `model`: Any AI SDK `model` value. Defaults to the Vercel AI Gateway model string `"openai/gpt-5.5"`.
+- `prompt`: Primary translation brief for product, tone, glossary, or domain instructions.
+- `batchSize`: Number of messages per model request. Defaults to `25`.
+- `temperature`: Optional model temperature.
+
+The AI response is validated with Zod before translations are used. If the model omits a message id or returns an empty translation for that message, Better Translation falls back to the source text.
 
 For `storage: { type: "bundle" }`, production builds are check-only. They never call `translate()` and never regenerate locale artifacts. Instead, they validate the committed locale JSON files and committed generated helper files, then fail the build if anything is missing or out of sync.
 
