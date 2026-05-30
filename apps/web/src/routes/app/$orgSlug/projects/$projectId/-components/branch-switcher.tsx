@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 
-import { setSelectedBranchFn, type getProjectDetailFn } from "../projects/$projectId/-data"
+import { setSelectedBranchFn, type getProjectDetailFn } from "../-data"
 
 type ProjectDetail = Awaited<ReturnType<typeof getProjectDetailFn>>
 
@@ -43,7 +43,7 @@ export function BranchSwitcher({
   return (
     <DropdownMenu>
       <SidebarMenuItem>
-        <DropdownMenuTrigger render={<SidebarMenuButton />}>
+        <DropdownMenuTrigger render={<SidebarMenuButton variant="outline" />}>
           <GitBranchIcon className="text-muted-foreground" />
           <span>{branchName}</span>
           <ChevronsUpDownIcon className="ml-auto text-muted-foreground" />

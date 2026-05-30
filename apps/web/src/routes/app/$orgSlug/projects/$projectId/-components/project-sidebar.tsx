@@ -15,7 +15,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-import { type getProjectDetailFn } from "../projects/$projectId/-data"
+import { type getProjectDetailFn } from "../-data"
 import { BranchSwitcher } from "./branch-switcher"
 
 type ProjectDetail = Awaited<ReturnType<typeof getProjectDetailFn>>

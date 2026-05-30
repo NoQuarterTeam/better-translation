@@ -3,7 +3,7 @@ import { createFileRoute, Outlet, useParams } from "@tanstack/react-router"
 
 import { SidebarInset } from "@/components/ui/sidebar"
 
-import { ProjectSidebar } from "../../-components/project-sidebar"
+import { ProjectSidebar } from "./-components/project-sidebar"
 import { projectDetailQueryOptions } from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug/projects/$projectId")({
