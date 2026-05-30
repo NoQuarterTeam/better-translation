@@ -106,6 +106,7 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "http://bt.local:1355",
     "http://bt.localhost:1355",
+    "https://bt.noquarter.co",
     "https://better-translation.vercel.app",
   ],
 })
