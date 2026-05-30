@@ -13,7 +13,7 @@ The repo currently supports a local bundle-first workflow.
 - Missing non-default Locale values can be filled with a custom async `translate()` function, including the built-in AI helper.
 - Runtime code loads local JSON through the virtual `better-translation/messages` module.
 
-Remote runtime options exist in the package API, but remote sync and remote translation are still stubs. Do not treat remote storage, hosted editing, publishing, or remote runtime serving as implemented unless the code shows it.
+Remote runtime options exist in the package API. Remote sync posts the Manifest to the hosted service when a Project API key is configured, and the hosted service fills missing Locale values with the Platform translator when Project auto-translation is enabled. Do not treat publishing as implemented unless the code shows it.
 
 ## Product Direction
 
@@ -126,12 +126,15 @@ type BetterTranslateRemoteRuntimeOptions = {
   type: "remote"
   projectId: string
   endpoint?: string
+  apiKey?: string // falls back to process.env.BETTER_TRANSLATION_API_KEY for Manifest sync
   branch?: "auto" | string
   dev?: {
     offline?: boolean
   }
 }
 ```
+
+The Project API key is a plugin-only write credential. It may live on the remote options for Vite config ergonomics, but generated runtime artifacts must strip it and runtime bundles must never include it.
 
 Remote defaults should be:
 
@@ -218,7 +221,7 @@ The dashboard can offer an explicit "apply to main" action for a Branch override
 
 Remote sync must support deploys that run without a local dev server.
 
-- `vite dev` does not sync the full Manifest to the hosted service by default.
+- `vite dev` in remote mode syncs the current Manifest on startup and after source changes unless `dev.offline: true` is set.
 - `vite build` in remote mode pushes Manifest changes to the resolved Translation Branch.
 - Build sync should be deterministic and idempotent: same Manifest, same branch, same result.
 - Build sync must fail clearly if the configured Project does not exist or credentials are invalid.
@@ -234,13 +237,15 @@ By default, local `vite dev` should:
 - read hosted Runtime bundles for the resolved Translation Branch
 - use the Platform translator to fill blank branch Locale values
 - store generated Locale values on the hosted Translation Branch
-- avoid syncing the full Manifest until build
+- sync the current Manifest so the platform knows the latest Message ids
 
 This makes `runtime.type: "remote"` mean "use the platform" during local dev as well as deployed builds.
 
 For isolated or offline work, `dev.offline: true` switches local dev to ignored local cache artifacts and Default locale fallback. In offline dev, local source changes do not reach the platform, dashboard edits do not appear locally, and generated fallback values should not be mixed into the Consumer app's local-mode Locale values.
 
 Plugin-owned caches live under `.cache/better-translation/` by default. The translation cache is `.cache/better-translation/cache.json`, and remote offline Runtime bundles are written under `.cache/better-translation/runtime/`.
+
+The hosted app can dogfood remote mode by pointing its plugin endpoint at a running platform instance. In local self-dogfood, that endpoint can be the same Vite dev server URL, but initial Manifest sync must wait until the dev server is listening. A separate deployed or preview platform endpoint avoids the startup dependency and is the better path for stable dogfooding.
 
 ## Translation Ownership
 
@@ -289,9 +294,11 @@ After migration, remote mode should not keep reading or writing editable local L
 
 ## AI Translation
 
-Hosted-mode sync should not call package-local AI translation during `vite dev` or `vite build`.
+Hosted-mode sync should not call package-local AI translation during `vite dev` or `vite build`. In remote mode, the Vite plugin only extracts and syncs the Manifest, then runtime code fetches hosted Runtime bundles.
 
-Build sync uploads the Manifest. The hosted service can then fill missing Locale values using the Platform translator when Project or Translation Branch settings allow it.
+Remote sync uploads the Manifest. The hosted service then fills missing Locale values using the Platform translator when Project or Translation Branch settings allow it.
+
+Manifest sync should not wait for Platform translator calls. The hosted service stores the Manifest synchronously, returns the sync response, and runs fill-blank translation as background work.
 
 AI-generated values are stored as branch-local Locale values with source metadata such as `ai`. They follow the same Branch override and reconciliation rules as other Locale values, and must not overwrite newer manual edits automatically.
 

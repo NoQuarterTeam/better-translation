@@ -56,7 +56,7 @@ function SignUpPage() {
           email: value.email.trim(),
           name: value.name.trim(),
           password: value.password,
-          callbackURL: "/dashboard",
+          callbackURL: "/app",
         },
         {
           onError: ({ error }) => {

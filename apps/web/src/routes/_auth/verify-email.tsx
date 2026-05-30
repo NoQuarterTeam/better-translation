@@ -28,7 +28,7 @@ function VerifyEmailPage() {
   const [apiError, setApiError] = useState<string | null>(null)
 
   const { mutate: sendVerificationEmail, isPending } = useMutation({
-    mutationFn: (email: string) => authClient.sendVerificationEmail({ email, callbackURL: "/dashboard" }),
+    mutationFn: (email: string) => authClient.sendVerificationEmail({ email, callbackURL: "/app" }),
     onSuccess: (res) => {
       if (res.error) {
         setApiError(res.error.message ?? t("Could not send verification email"))

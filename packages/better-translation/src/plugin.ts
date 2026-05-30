@@ -31,11 +31,10 @@ import {
 const PREFIX = "\x1b[36m[better-translation]\x1b[0m"
 const DIM = "\x1b[2m"
 const RESET = "\x1b[0m"
-const YELLOW = "\x1b[33m"
 const BOLD = "\x1b[1m"
 const CYAN = "\x1b[36m"
 const REMOTE_API_BASE_URL = "https://better-translation.dev"
-const REMOTE_STUB = `${YELLOW}stub${RESET}`
+const DEFAULT_REMOTE_API_KEY_ENV = "BETTER_TRANSLATION_API_KEY"
 const DEFAULT_REMOTE_BRANCH = "main"
 const DEFAULT_CACHE_DIR = ".cache/better-translation"
 const DEFAULT_TRANSLATION_CACHE_FILE = `${DEFAULT_CACHE_DIR}/cache.json`
@@ -91,31 +90,71 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
   let root = ""
   let isDev = false
   let translateTimer: ReturnType<typeof setTimeout> | null = null
-  let warnedRemoteTranslateStub = false
-  let warnedRemoteSyncStub = false
+  let remoteSyncTimer: ReturnType<typeof setTimeout> | null = null
+  let lastSyncedRemoteManifestSignature: string | null = null
   let sourceRoots: string[] = []
 
   function log(message: string) {
     if (logging) console.log(message)
   }
 
-  async function remoteTranslate(messages: TranslateMessage[], _locale: string) {
-    if (!warnedRemoteTranslateStub) {
-      warnedRemoteTranslateStub = true
-      const runtime = resolvedRuntime.type === "remote" ? resolvedRuntime : null
-      const target = runtime ? formatRemoteTarget(runtime, remoteUrl) : remoteUrl
-      log(`${PREFIX} ${REMOTE_STUB} Platform translator via ${DIM}${target}${RESET} not implemented yet`)
+  async function syncRemote() {
+    if (resolvedRuntime.type !== "remote") return
+
+    const payload = {
+      defaultLocale,
+      locales,
+      messages: buildMessageManifest(),
     }
-    return Object.fromEntries(messages.map((message) => [message.id, message.text])) as Record<string, string>
+    const signature = JSON.stringify(payload)
+    if (lastSyncedRemoteManifestSignature === signature) return
+
+    const apiKey = resolveRemoteSyncApiKey()
+    const target = formatRemoteManifestTarget(resolvedRuntime, remoteUrl)
+    if (!apiKey) {
+      throw new Error(
+        [
+          `${PREFIX} remote Manifest sync requires a Project API key`,
+          `set ${DEFAULT_REMOTE_API_KEY_ENV} or pass runtime.apiKey in the Vite plugin config`,
+          `target: ${target}`,
+        ].join("\n"),
+      )
+    }
+
+    let response: Response
+    try {
+      response = await fetch(target, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${apiKey}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+    } catch (error) {
+      throw new Error(formatRemoteSyncNetworkError(target, error))
+    }
+
+    const body = await response.text()
+
+    if (!response.ok) {
+      throw new Error(formatRemoteSyncError(response, target, body))
+    }
+
+    const result = parseRemoteSyncResult(body)
+    const messageCount = result?.messageCount ?? Object.keys(payload.messages).length
+    log(
+      `${PREFIX} ${BOLD}Synced${RESET} ${CYAN}${messageCount}${RESET} ${messageCount === 1 ? "Message" : "Messages"} -> ${CYAN}${formatRuntime(resolvedRuntime)}${RESET}`,
+    )
+    lastSyncedRemoteManifestSignature = signature
   }
 
-  async function syncRemote() {
-    if (!warnedRemoteSyncStub) {
-      warnedRemoteSyncStub = true
-      const runtime = resolvedRuntime.type === "remote" ? resolvedRuntime : null
-      const target = runtime ? formatRemoteTarget(runtime, remoteUrl) : remoteUrl
-      log(`${PREFIX} ${REMOTE_STUB} remote Manifest sync via ${DIM}${target}${RESET} not implemented yet`)
-    }
+  function resolveRemoteSyncApiKey() {
+    const explicitApiKey = resolvedRuntime.type === "remote" ? resolvedRuntime.apiKey?.trim() : null
+    if (explicitApiKey) return explicitApiKey
+
+    const envApiKey = process.env[DEFAULT_REMOTE_API_KEY_ENV]?.trim()
+    return envApiKey || null
   }
 
   function buildMessageManifest(): MessageManifestFile {
@@ -148,7 +187,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
 
   function getRuntimeConfig(): BetterTranslateRuntimeConfig {
     return {
-      runtime: resolvedRuntime,
+      runtime: getRuntimeConfigRuntime(resolvedRuntime),
       defaultLocale,
       locales,
     }
@@ -384,6 +423,14 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     }, 1000)
   }
 
+  function scheduleDevRemoteSync() {
+    if (usesLocalStorage || !isDev) return
+    if (remoteSyncTimer) clearTimeout(remoteSyncTimer)
+    remoteSyncTimer = setTimeout(() => {
+      void syncRemote().catch((error) => console.error(error instanceof Error ? error.message : error))
+    }, 1000)
+  }
+
   function removeFileMessages(file: string) {
     const previous = fileMessages.get(file)
     if (!previous) return false
@@ -514,12 +561,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       isDev = config.command === "serve"
       resolvedRuntime = resolveRuntimeOptions(configuredRuntime, config)
       usesLocalStorage = shouldUseLocalStorage(resolvedRuntime, isDev)
-      resolvedTranslate =
-        resolvedRuntime.type === "local"
-          ? resolvedRuntime.translate
-          : isRemoteOfflineDev(resolvedRuntime, isDev)
-            ? undefined
-            : remoteTranslate
+      resolvedTranslate = resolvedRuntime.type === "local" ? resolvedRuntime.translate : undefined
       localesDir = getRuntimeOutputDir(resolvedRuntime, isDev)
       publicBasePath =
         resolvedRuntime.type === "local" && resolvedRuntime.target === "public"
@@ -540,7 +582,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       if (id === RESOLVED_VIRTUAL_MESSAGES_MODULE_ID) return createVirtualMessagesModule()
     },
 
-    buildStart() {
+    async buildStart() {
       cache = loadCache(resolve(root, cacheFile))
       scanAllSourceFiles()
       if (usesLocalStorage && !isDev) {
@@ -558,15 +600,18 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
 
     configureServer(server) {
       server.watcher.add(sourceRoots)
+      server.httpServer?.once("listening", () => scheduleDevRemoteSync())
 
       const syncFileFromDisk = (file: string) => {
         if (!shouldScanFile(file) || !existsSync(file)) return
         applySyncResult(syncSourceCode(file, readFileSync(file, "utf-8")), { scheduleTranslation: true })
+        scheduleDevRemoteSync()
       }
 
       const removeFileFromManifest = (file: string) => {
         if (!shouldScanFile(file)) return
         applySyncResult(removeTrackedFile(file), { scheduleTranslation: true })
+        scheduleDevRemoteSync()
       }
 
       server.watcher.on("add", syncFileFromDisk)
@@ -628,6 +673,18 @@ function shouldUseLocalStorage(runtime: BetterTranslateRuntimeOptions, isDev: bo
 
 function isRemoteOfflineDev(runtime: BetterTranslateRuntimeOptions, isDev: boolean) {
   return runtime.type === "remote" && isDev && runtime.dev?.offline === true
+}
+
+function getRuntimeConfigRuntime(runtime: BetterTranslateRuntimeOptions): BetterTranslateRuntimeConfig["runtime"] {
+  if (runtime.type === "local") return runtime
+
+  return {
+    type: "remote",
+    projectId: runtime.projectId,
+    ...(runtime.endpoint === undefined ? {} : { endpoint: runtime.endpoint }),
+    ...(runtime.branch === undefined ? {} : { branch: runtime.branch }),
+    ...(runtime.dev === undefined ? {} : { dev: runtime.dev }),
+  }
 }
 
 function getRuntimeOutputDir(runtime: BetterTranslateRuntimeOptions, isDev: boolean) {
@@ -724,8 +781,43 @@ function readCurrentGitBranch(root: string) {
   }
 }
 
-function formatRemoteTarget(runtime: Extract<BetterTranslateRuntimeOptions, { type: "remote" }>, endpoint: string) {
-  return `${endpoint.replace(/\/$/, "")}/projects/${encodeURIComponent(runtime.projectId)}/branches/${encodeURIComponent(runtime.branch ?? DEFAULT_REMOTE_BRANCH)}`
+function formatRemoteManifestTarget(runtime: Extract<BetterTranslateRuntimeOptions, { type: "remote" }>, endpoint: string) {
+  return `${endpoint.replace(/\/$/, "")}/api/projects/${encodeURIComponent(runtime.projectId)}/branches/${encodeURIComponent(runtime.branch ?? DEFAULT_REMOTE_BRANCH)}/manifest`
+}
+
+function parseRemoteSyncResult(body: string) {
+  try {
+    const parsed = JSON.parse(body) as unknown
+    if (typeof parsed !== "object" || parsed === null) return null
+    const messageCount = "messageCount" in parsed && typeof parsed.messageCount === "number" ? parsed.messageCount : undefined
+    return { messageCount }
+  } catch {
+    return null
+  }
+}
+
+function formatRemoteSyncError(response: Response, target: string, body: string) {
+  const details = formatRemoteSyncResponseDetails(body)
+  return [
+    `${PREFIX} remote Manifest sync failed with ${response.status} ${response.statusText || "HTTP error"}`,
+    `target: ${target}`,
+    details ? `response: ${details}` : null,
+  ]
+    .filter((line) => line !== null)
+    .join("\n")
+}
+
+function formatRemoteSyncNetworkError(target: string, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error)
+  return [`${PREFIX} remote Manifest sync could not reach the hosted service`, `target: ${target}`, `error: ${message}`].join(
+    "\n",
+  )
+}
+
+function formatRemoteSyncResponseDetails(body: string) {
+  const details = body.trim().replace(/\s+/g, " ")
+  if (!details) return ""
+  return details.length > 500 ? `${details.slice(0, 500)}...` : details
 }
 
 function createModuleMessagesModule(locales: string[], getImportPath: (locale: string) => string) {

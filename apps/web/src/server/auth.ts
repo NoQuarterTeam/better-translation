@@ -102,5 +102,10 @@ export const auth = betterAuth({
     }),
   ],
   session: { cookieCache: { enabled: true } },
-  trustedOrigins: ["http://bt.local:1355", "https://better-translation.vercel.app"],
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://bt.local:1355",
+    "http://bt.localhost:1355",
+    "https://better-translation.vercel.app",
+  ],
 })

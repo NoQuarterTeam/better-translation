@@ -148,6 +148,8 @@ export interface BetterTranslateRemoteRuntimeOptions {
   endpoint?: string
   /** Remote project identifier. */
   projectId: string
+  /** Project API key used by the Vite plugin to sync Manifests. Falls back to `BETTER_TRANSLATION_API_KEY`. */
+  apiKey?: string
   /** Translation Branch to read from, or `"auto"` to infer it from the environment. */
   branch?: "auto" | (string & {})
   /** Local development behavior for remote runtime mode. */
@@ -163,7 +165,7 @@ export type BetterTranslateRuntimeOptions = BetterTranslateLocalRuntimeOptions |
 /** Runtime metadata emitted by the plugin for server-side loaders. */
 export interface BetterTranslateRuntimeConfig {
   /** Runtime backend configured for locale artifacts. */
-  runtime: BetterTranslateRuntimeOptions
+  runtime: BetterTranslateLocalRuntimeOptions | Omit<BetterTranslateRemoteRuntimeOptions, "apiKey">
   /** Locale code treated as the source language. */
   defaultLocale: string
   /** All locale codes emitted by the plugin. */

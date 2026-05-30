@@ -42,7 +42,7 @@ function SignInPage() {
     },
     onSubmit: async ({ value }) => {
       setApiError(null)
-      const callbackURL = redirect ?? "/dashboard"
+      const callbackURL = redirect ?? "/app"
       await authClient.signIn.email(
         { email: value.email.trim(), password: value.password, rememberMe: true, callbackURL },
         {
@@ -111,6 +111,8 @@ function SignInPage() {
           <Link to="/forgot-password" className="text-primary underline-offset-4 hover:underline">
             <T>Forgot your password?</T>
           </Link>
+          <T>Oh yeah!</T>
+          <T>Cool beans!</T>
         </div>
       </CardFooter>
     </Card>

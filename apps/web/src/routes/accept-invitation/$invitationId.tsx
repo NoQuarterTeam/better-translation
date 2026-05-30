@@ -42,7 +42,7 @@ function AcceptInvitationPage() {
         return
       }
       toast.success(t("You’re in"))
-      void navigate({ to: "/dashboard" })
+      void navigate({ to: "/app" })
     },
     onError: (error: Error) => {
       toast.error(t("Could not accept invitation"), { description: error.message })
@@ -131,8 +131,8 @@ function AcceptInvitationPage() {
           >
             {acceptMutation.isPending ? <T>Accepting…</T> : <T>Accept invitation</T>}
           </Button>
-          <Link to="/dashboard" className="text-center text-sm text-muted-foreground underline-offset-4 hover:underline">
-            <T>Back to dashboard</T>
+          <Link to="/app" className="text-center text-sm text-muted-foreground underline-offset-4 hover:underline">
+            <T>Back to app</T>
           </Link>
         </CardFooter>
       </Card>

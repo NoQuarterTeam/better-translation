@@ -26,7 +26,7 @@ interface MyRouterContext {
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async () => {
     const locale = getLocale()
-    const messages = await loadMessages(locale)
+    const messages = await loadMessages(locale).catch(() => ({}))
 
     return { locale, messages }
   },

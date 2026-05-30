@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun with-env vite dev --host",
-    "build": "bun --cwd ../.. --filter better-translation build && vite build",
+    "build": "bun --cwd ../.. --filter better-translation build && bun with-env vite build",
     "start": "node .output/server/index.mjs",
     "db:generate": "bun with-env drizzle-kit generate",
     "db:migrate": "bun with-env drizzle-kit migrate",
@@ -50,7 +50,7 @@
     "lucide-react": "1.17.0",
     "nanoid": "5.1.11",
     "next-themes": "0.4.6",
-    "nitro": "3.0.260311-beta",
+    "nitro": "3.0.260522-beta",
     "pg": "8.21.0",
     "posthog-js": "1.376.4",
     "posthog-node": "5.35.6",

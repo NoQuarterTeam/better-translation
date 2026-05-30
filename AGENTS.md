@@ -48,3 +48,43 @@ bun --filter better-translation build
 ## Before Making Changes
 
 Read `CONTEXT.md` for product terminology and `docs/platform.md` for product direction. If docs and code disagree, treat the code as current implementation reality and update docs only when the product decision is settled.
+
+## Agent Code verification
+
+- Make sure to install packages with Bun, especially if making changes to the workspace packages
+- We use vite-plus as the workspace tooling
+- Always run the format and lint scripts in the root package.json to verify the changes made are correct
+
+## Code Style
+
+- Refer to relevant rules in the cursor rules folder.
+- Prefer functional components in React
+- IMPORTANT: Don't create uncessary functions or variables, only if they are shared.
+- Always infer types from functions rather than typing the return
+- Always use the database schema to infer the type of the data.
+- Use snake_case for database columns
+- When using database schemas prefer using the root schema and adding omit/pick to choose or omit fields, rather than creating custom schema variables that extend.
+- Lucide icons rarely need size or margin props if used in a button or icon button as that button provides this.
+
+## Architecture
+
+- TanStack server funcitons live in -data.ts files next to the page that uses them.
+- Keep behaviour as close to the owning source as possible. Component-specific hooks, mutations, permissions, invalidation, and toasts should live inside the component or module that owns that behaviour instead of being lifted into parent pages by default.
+
+## Development
+
+- Don't generate drizzle migrations, this will happen later
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues for this repo. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+This repo uses the default canonical triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repo is currently single-context; read `CONTEXT.md` first, then relevant ADRs if they exist. See `docs/agents/domain.md`.

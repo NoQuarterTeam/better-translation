@@ -66,7 +66,7 @@ function ResetPasswordPage() {
           onSuccess: async () => {
             const session = await authClient.getSession()
             if (session.data?.session) {
-              void navigate({ to: "/dashboard" })
+              void navigate({ to: "/app" })
               return
             }
 

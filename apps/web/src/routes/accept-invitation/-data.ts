@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start"
 import { getRequestHeaders } from "@tanstack/react-start/server"
 import * as z from "zod"
 
-import { parseZod } from "@/lib/functions/middleware"
+import { parseZod } from "@/lib/functions/zod"
 import { auth } from "@/server/auth"
 
 export const getOrganizationInvitationFn = createServerFn({ method: "GET" })

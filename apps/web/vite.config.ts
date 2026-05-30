@@ -12,21 +12,22 @@ export default defineConfig({
     betterTranslation({
       locales: ["en", "nl"],
       defaultLocale: "en",
-      runtime: {
-        type: "remote",
-        projectId: "better-translation",
-      },
       // runtime: {
-      //   type: "local",
-      //   target: "module",
-      //   translate: createAiTranslate({
-      //     prompt:
-      //       "This text is for a web application UI. Prefer natural, concise wording that feels correct in buttons, labels, validation messages, dialogs, menus, and other interface copy.",
-      //   }),
+      //   type: "remote",
+      //   projectId: "prj_tgaF4DuvXM4r",
+      //   endpoint: betterTranslationEndpoint,
       // },
+      runtime: {
+        type: "local",
+        target: "module",
+        // translate: createAiTranslate({
+        //   prompt:
+        //     "This text is for a web application UI. Prefer natural, concise wording that feels correct in buttons, labels, validation messages, dialogs, menus, and other interface copy.",
+        // }),
+      },
     }),
     // devtools(),
-    nitro({ preset: "vercel" }),
+    nitro(),
     tailwindcss(),
     tanstackStart({
       importProtection: { client: { files: ["**/*.server.*", "**/server/**"] } },

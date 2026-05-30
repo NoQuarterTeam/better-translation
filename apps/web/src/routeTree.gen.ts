@@ -9,25 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DashboardLayoutRouteImport } from './routes/dashboard/layout'
 import { Route as AuthLayoutRouteImport } from './routes/_auth/layout'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
-import { Route as CreateOrgIndexRouteImport } from './routes/create-org/index'
-import { Route as DashboardUsersRouteImport } from './routes/dashboard/users'
+import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AcceptInvitationInvitationIdRouteImport } from './routes/accept-invitation/$invitationId'
 import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
 import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password'
+import { Route as AppOrgSlugLayoutRouteImport } from './routes/app/$orgSlug/layout'
+import { Route as AppCreateOrgIndexRouteImport } from './routes/app/create-org/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
+import { Route as AppOrgSlugOrgLayoutRouteImport } from './routes/app/$orgSlug/_org/layout'
+import { Route as AppOrgSlugOrgIndexRouteImport } from './routes/app/$orgSlug/_org/index'
+import { Route as AppOrgSlugOrgUsersRouteImport } from './routes/app/$orgSlug/_org/users'
+import { Route as AppOrgSlugProjectsProjectIdLayoutRouteImport } from './routes/app/$orgSlug/projects/$projectId/layout'
+import { Route as AppOrgSlugProjectsProjectIdIndexRouteImport } from './routes/app/$orgSlug/projects/$projectId/index'
+import { Route as AppOrgSlugOrgSettingsIndexRouteImport } from './routes/app/$orgSlug/_org/settings/index'
+import { Route as AppOrgSlugOrgProjectsIndexRouteImport } from './routes/app/$orgSlug/_org/projects/index'
+import { Route as AppOrgSlugOrgProjectsNewRouteImport } from './routes/app/$orgSlug/_org/projects/new'
+import { Route as AppOrgSlugProjectsProjectIdSettingsIndexRouteImport } from './routes/app/$orgSlug/projects/$projectId/settings/index'
+import { Route as AppOrgSlugProjectsProjectIdApiKeysIndexRouteImport } from './routes/app/$orgSlug/projects/$projectId/api-keys/index'
+import { Route as ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRouteImport } from './routes/projects/$projectId/branches/$branchName/locales/{$locale}[.]json'
+import { Route as ApiProjectsProjectIdBranchesBranchNameManifestRouteImport } from './routes/api/projects/$projectId/branches/$branchName/manifest'
+import { Route as AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRouteImport } from './routes/app/$orgSlug/projects/$projectId/branches/$branchName/index'
 
-const DashboardLayoutRoute = DashboardLayoutRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthLayoutRoute = AuthLayoutRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
@@ -37,20 +44,10 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DashboardLayoutRoute,
-} as any)
-const CreateOrgIndexRoute = CreateOrgIndexRouteImport.update({
-  id: '/create-org/',
-  path: '/create-org/',
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/app/',
+  path: '/app/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardUsersRoute = DashboardUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => DashboardLayoutRoute,
 } as any)
 const AcceptInvitationInvitationIdRoute =
   AcceptInvitationInvitationIdRouteImport.update({
@@ -83,118 +80,266 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => AuthLayoutRoute,
 } as any)
+const AppOrgSlugLayoutRoute = AppOrgSlugLayoutRouteImport.update({
+  id: '/app/$orgSlug',
+  path: '/app/$orgSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppCreateOrgIndexRoute = AppCreateOrgIndexRouteImport.update({
+  id: '/app/create-org/',
+  path: '/app/create-org/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppOrgSlugOrgLayoutRoute = AppOrgSlugOrgLayoutRouteImport.update({
+  id: '/_org',
+  getParentRoute: () => AppOrgSlugLayoutRoute,
+} as any)
+const AppOrgSlugOrgIndexRoute = AppOrgSlugOrgIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppOrgSlugOrgLayoutRoute,
+} as any)
+const AppOrgSlugOrgUsersRoute = AppOrgSlugOrgUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AppOrgSlugOrgLayoutRoute,
+} as any)
+const AppOrgSlugProjectsProjectIdLayoutRoute =
+  AppOrgSlugProjectsProjectIdLayoutRouteImport.update({
+    id: '/projects/$projectId',
+    path: '/projects/$projectId',
+    getParentRoute: () => AppOrgSlugLayoutRoute,
+  } as any)
+const AppOrgSlugProjectsProjectIdIndexRoute =
+  AppOrgSlugProjectsProjectIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppOrgSlugProjectsProjectIdLayoutRoute,
+  } as any)
+const AppOrgSlugOrgSettingsIndexRoute =
+  AppOrgSlugOrgSettingsIndexRouteImport.update({
+    id: '/settings/',
+    path: '/settings/',
+    getParentRoute: () => AppOrgSlugOrgLayoutRoute,
+  } as any)
+const AppOrgSlugOrgProjectsIndexRoute =
+  AppOrgSlugOrgProjectsIndexRouteImport.update({
+    id: '/projects/',
+    path: '/projects/',
+    getParentRoute: () => AppOrgSlugOrgLayoutRoute,
+  } as any)
+const AppOrgSlugOrgProjectsNewRoute =
+  AppOrgSlugOrgProjectsNewRouteImport.update({
+    id: '/projects/new',
+    path: '/projects/new',
+    getParentRoute: () => AppOrgSlugOrgLayoutRoute,
+  } as any)
+const AppOrgSlugProjectsProjectIdSettingsIndexRoute =
+  AppOrgSlugProjectsProjectIdSettingsIndexRouteImport.update({
+    id: '/settings/',
+    path: '/settings/',
+    getParentRoute: () => AppOrgSlugProjectsProjectIdLayoutRoute,
+  } as any)
+const AppOrgSlugProjectsProjectIdApiKeysIndexRoute =
+  AppOrgSlugProjectsProjectIdApiKeysIndexRouteImport.update({
+    id: '/api-keys/',
+    path: '/api-keys/',
+    getParentRoute: () => AppOrgSlugProjectsProjectIdLayoutRoute,
+  } as any)
+const ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute =
+  ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRouteImport.update(
+    {
+      id: '/projects/$projectId/branches/$branchName/locales/{$locale}.json',
+      path: '/projects/$projectId/branches/$branchName/locales/{$locale}.json',
+      getParentRoute: () => rootRouteImport,
+    } as any,
+  )
+const ApiProjectsProjectIdBranchesBranchNameManifestRoute =
+  ApiProjectsProjectIdBranchesBranchNameManifestRouteImport.update({
+    id: '/api/projects/$projectId/branches/$branchName/manifest',
+    path: '/api/projects/$projectId/branches/$branchName/manifest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute =
+  AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRouteImport.update({
+    id: '/branches/$branchName/',
+    path: '/branches/$branchName/',
+    getParentRoute: () => AppOrgSlugProjectsProjectIdLayoutRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardLayoutRouteWithChildren
+  '/app/$orgSlug': typeof AppOrgSlugLayoutRouteWithChildren
   '/forgot-password': typeof AuthForgotPasswordRoute
   '/reset-password': typeof AuthResetPasswordRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
   '/verify-email': typeof AuthVerifyEmailRoute
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
-  '/dashboard/users': typeof DashboardUsersRoute
-  '/create-org/': typeof CreateOrgIndexRoute
-  '/dashboard/': typeof DashboardIndexRoute
+  '/app/': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/app/create-org/': typeof AppCreateOrgIndexRoute
+  '/app/$orgSlug/projects/$projectId': typeof AppOrgSlugProjectsProjectIdLayoutRouteWithChildren
+  '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersRoute
+  '/app/$orgSlug/': typeof AppOrgSlugOrgIndexRoute
+  '/app/$orgSlug/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
+  '/app/$orgSlug/projects/': typeof AppOrgSlugOrgProjectsIndexRoute
+  '/app/$orgSlug/settings/': typeof AppOrgSlugOrgSettingsIndexRoute
+  '/app/$orgSlug/projects/$projectId/': typeof AppOrgSlugProjectsProjectIdIndexRoute
+  '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
+  '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
+  '/app/$orgSlug/projects/$projectId/api-keys/': typeof AppOrgSlugProjectsProjectIdApiKeysIndexRoute
+  '/app/$orgSlug/projects/$projectId/settings/': typeof AppOrgSlugProjectsProjectIdSettingsIndexRoute
+  '/app/$orgSlug/projects/$projectId/branches/$branchName/': typeof AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/$orgSlug': typeof AppOrgSlugOrgIndexRoute
   '/forgot-password': typeof AuthForgotPasswordRoute
   '/reset-password': typeof AuthResetPasswordRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
   '/verify-email': typeof AuthVerifyEmailRoute
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
-  '/dashboard/users': typeof DashboardUsersRoute
-  '/create-org': typeof CreateOrgIndexRoute
-  '/dashboard': typeof DashboardIndexRoute
+  '/app': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/app/create-org': typeof AppCreateOrgIndexRoute
+  '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersRoute
+  '/app/$orgSlug/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
+  '/app/$orgSlug/projects': typeof AppOrgSlugOrgProjectsIndexRoute
+  '/app/$orgSlug/settings': typeof AppOrgSlugOrgSettingsIndexRoute
+  '/app/$orgSlug/projects/$projectId': typeof AppOrgSlugProjectsProjectIdIndexRoute
+  '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
+  '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
+  '/app/$orgSlug/projects/$projectId/api-keys': typeof AppOrgSlugProjectsProjectIdApiKeysIndexRoute
+  '/app/$orgSlug/projects/$projectId/settings': typeof AppOrgSlugProjectsProjectIdSettingsIndexRoute
+  '/app/$orgSlug/projects/$projectId/branches/$branchName': typeof AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthLayoutRouteWithChildren
-  '/dashboard': typeof DashboardLayoutRouteWithChildren
+  '/app/$orgSlug': typeof AppOrgSlugLayoutRouteWithChildren
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute
   '/_auth/reset-password': typeof AuthResetPasswordRoute
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
   '/_auth/verify-email': typeof AuthVerifyEmailRoute
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
-  '/dashboard/users': typeof DashboardUsersRoute
-  '/create-org/': typeof CreateOrgIndexRoute
-  '/dashboard/': typeof DashboardIndexRoute
+  '/app/': typeof AppIndexRoute
+  '/app/$orgSlug/_org': typeof AppOrgSlugOrgLayoutRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/app/create-org/': typeof AppCreateOrgIndexRoute
+  '/app/$orgSlug/projects/$projectId': typeof AppOrgSlugProjectsProjectIdLayoutRouteWithChildren
+  '/app/$orgSlug/_org/users': typeof AppOrgSlugOrgUsersRoute
+  '/app/$orgSlug/_org/': typeof AppOrgSlugOrgIndexRoute
+  '/app/$orgSlug/_org/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
+  '/app/$orgSlug/_org/projects/': typeof AppOrgSlugOrgProjectsIndexRoute
+  '/app/$orgSlug/_org/settings/': typeof AppOrgSlugOrgSettingsIndexRoute
+  '/app/$orgSlug/projects/$projectId/': typeof AppOrgSlugProjectsProjectIdIndexRoute
+  '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
+  '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
+  '/app/$orgSlug/projects/$projectId/api-keys/': typeof AppOrgSlugProjectsProjectIdApiKeysIndexRoute
+  '/app/$orgSlug/projects/$projectId/settings/': typeof AppOrgSlugProjectsProjectIdSettingsIndexRoute
+  '/app/$orgSlug/projects/$projectId/branches/$branchName/': typeof AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/dashboard'
+    | '/app/$orgSlug'
     | '/forgot-password'
     | '/reset-password'
     | '/sign-in'
     | '/sign-up'
     | '/verify-email'
     | '/accept-invitation/$invitationId'
-    | '/dashboard/users'
-    | '/create-org/'
-    | '/dashboard/'
+    | '/app/'
     | '/api/auth/$'
+    | '/app/create-org/'
+    | '/app/$orgSlug/projects/$projectId'
+    | '/app/$orgSlug/users'
+    | '/app/$orgSlug/'
+    | '/app/$orgSlug/projects/new'
+    | '/app/$orgSlug/projects/'
+    | '/app/$orgSlug/settings/'
+    | '/app/$orgSlug/projects/$projectId/'
+    | '/api/projects/$projectId/branches/$branchName/manifest'
+    | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
+    | '/app/$orgSlug/projects/$projectId/api-keys/'
+    | '/app/$orgSlug/projects/$projectId/settings/'
+    | '/app/$orgSlug/projects/$projectId/branches/$branchName/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/app/$orgSlug'
     | '/forgot-password'
     | '/reset-password'
     | '/sign-in'
     | '/sign-up'
     | '/verify-email'
     | '/accept-invitation/$invitationId'
-    | '/dashboard/users'
-    | '/create-org'
-    | '/dashboard'
+    | '/app'
     | '/api/auth/$'
+    | '/app/create-org'
+    | '/app/$orgSlug/users'
+    | '/app/$orgSlug/projects/new'
+    | '/app/$orgSlug/projects'
+    | '/app/$orgSlug/settings'
+    | '/app/$orgSlug/projects/$projectId'
+    | '/api/projects/$projectId/branches/$branchName/manifest'
+    | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
+    | '/app/$orgSlug/projects/$projectId/api-keys'
+    | '/app/$orgSlug/projects/$projectId/settings'
+    | '/app/$orgSlug/projects/$projectId/branches/$branchName'
   id:
     | '__root__'
     | '/'
     | '/_auth'
-    | '/dashboard'
+    | '/app/$orgSlug'
     | '/_auth/forgot-password'
     | '/_auth/reset-password'
     | '/_auth/sign-in'
     | '/_auth/sign-up'
     | '/_auth/verify-email'
     | '/accept-invitation/$invitationId'
-    | '/dashboard/users'
-    | '/create-org/'
-    | '/dashboard/'
+    | '/app/'
+    | '/app/$orgSlug/_org'
     | '/api/auth/$'
+    | '/app/create-org/'
+    | '/app/$orgSlug/projects/$projectId'
+    | '/app/$orgSlug/_org/users'
+    | '/app/$orgSlug/_org/'
+    | '/app/$orgSlug/_org/projects/new'
+    | '/app/$orgSlug/_org/projects/'
+    | '/app/$orgSlug/_org/settings/'
+    | '/app/$orgSlug/projects/$projectId/'
+    | '/api/projects/$projectId/branches/$branchName/manifest'
+    | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
+    | '/app/$orgSlug/projects/$projectId/api-keys/'
+    | '/app/$orgSlug/projects/$projectId/settings/'
+    | '/app/$orgSlug/projects/$projectId/branches/$branchName/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthLayoutRoute: typeof AuthLayoutRouteWithChildren
-  DashboardLayoutRoute: typeof DashboardLayoutRouteWithChildren
+  AppOrgSlugLayoutRoute: typeof AppOrgSlugLayoutRouteWithChildren
   AcceptInvitationInvitationIdRoute: typeof AcceptInvitationInvitationIdRoute
-  CreateOrgIndexRoute: typeof CreateOrgIndexRoute
+  AppIndexRoute: typeof AppIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  AppCreateOrgIndexRoute: typeof AppCreateOrgIndexRoute
+  ApiProjectsProjectIdBranchesBranchNameManifestRoute: typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
+  ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute: typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardLayoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -209,26 +354,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/': {
-      id: '/dashboard/'
-      path: '/'
-      fullPath: '/dashboard/'
-      preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof DashboardLayoutRoute
-    }
-    '/create-org/': {
-      id: '/create-org/'
-      path: '/create-org'
-      fullPath: '/create-org/'
-      preLoaderRoute: typeof CreateOrgIndexRouteImport
+    '/app/': {
+      id: '/app/'
+      path: '/app'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/users': {
-      id: '/dashboard/users'
-      path: '/users'
-      fullPath: '/dashboard/users'
-      preLoaderRoute: typeof DashboardUsersRouteImport
-      parentRoute: typeof DashboardLayoutRoute
     }
     '/accept-invitation/$invitationId': {
       id: '/accept-invitation/$invitationId'
@@ -272,12 +403,117 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof AuthLayoutRoute
     }
+    '/app/$orgSlug': {
+      id: '/app/$orgSlug'
+      path: '/app/$orgSlug'
+      fullPath: '/app/$orgSlug'
+      preLoaderRoute: typeof AppOrgSlugLayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/create-org/': {
+      id: '/app/create-org/'
+      path: '/app/create-org'
+      fullPath: '/app/create-org/'
+      preLoaderRoute: typeof AppCreateOrgIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/$orgSlug/_org': {
+      id: '/app/$orgSlug/_org'
+      path: ''
+      fullPath: '/app/$orgSlug'
+      preLoaderRoute: typeof AppOrgSlugOrgLayoutRouteImport
+      parentRoute: typeof AppOrgSlugLayoutRoute
+    }
+    '/app/$orgSlug/_org/': {
+      id: '/app/$orgSlug/_org/'
+      path: '/'
+      fullPath: '/app/$orgSlug/'
+      preLoaderRoute: typeof AppOrgSlugOrgIndexRouteImport
+      parentRoute: typeof AppOrgSlugOrgLayoutRoute
+    }
+    '/app/$orgSlug/_org/users': {
+      id: '/app/$orgSlug/_org/users'
+      path: '/users'
+      fullPath: '/app/$orgSlug/users'
+      preLoaderRoute: typeof AppOrgSlugOrgUsersRouteImport
+      parentRoute: typeof AppOrgSlugOrgLayoutRoute
+    }
+    '/app/$orgSlug/projects/$projectId': {
+      id: '/app/$orgSlug/projects/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/app/$orgSlug/projects/$projectId'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectIdLayoutRouteImport
+      parentRoute: typeof AppOrgSlugLayoutRoute
+    }
+    '/app/$orgSlug/projects/$projectId/': {
+      id: '/app/$orgSlug/projects/$projectId/'
+      path: '/'
+      fullPath: '/app/$orgSlug/projects/$projectId/'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectIdIndexRouteImport
+      parentRoute: typeof AppOrgSlugProjectsProjectIdLayoutRoute
+    }
+    '/app/$orgSlug/_org/settings/': {
+      id: '/app/$orgSlug/_org/settings/'
+      path: '/settings'
+      fullPath: '/app/$orgSlug/settings/'
+      preLoaderRoute: typeof AppOrgSlugOrgSettingsIndexRouteImport
+      parentRoute: typeof AppOrgSlugOrgLayoutRoute
+    }
+    '/app/$orgSlug/_org/projects/': {
+      id: '/app/$orgSlug/_org/projects/'
+      path: '/projects'
+      fullPath: '/app/$orgSlug/projects/'
+      preLoaderRoute: typeof AppOrgSlugOrgProjectsIndexRouteImport
+      parentRoute: typeof AppOrgSlugOrgLayoutRoute
+    }
+    '/app/$orgSlug/_org/projects/new': {
+      id: '/app/$orgSlug/_org/projects/new'
+      path: '/projects/new'
+      fullPath: '/app/$orgSlug/projects/new'
+      preLoaderRoute: typeof AppOrgSlugOrgProjectsNewRouteImport
+      parentRoute: typeof AppOrgSlugOrgLayoutRoute
+    }
+    '/app/$orgSlug/projects/$projectId/settings/': {
+      id: '/app/$orgSlug/projects/$projectId/settings/'
+      path: '/settings'
+      fullPath: '/app/$orgSlug/projects/$projectId/settings/'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectIdSettingsIndexRouteImport
+      parentRoute: typeof AppOrgSlugProjectsProjectIdLayoutRoute
+    }
+    '/app/$orgSlug/projects/$projectId/api-keys/': {
+      id: '/app/$orgSlug/projects/$projectId/api-keys/'
+      path: '/api-keys'
+      fullPath: '/app/$orgSlug/projects/$projectId/api-keys/'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectIdApiKeysIndexRouteImport
+      parentRoute: typeof AppOrgSlugProjectsProjectIdLayoutRoute
+    }
+    '/projects/$projectId/branches/$branchName/locales/{$locale}.json': {
+      id: '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
+      path: '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
+      fullPath: '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
+      preLoaderRoute: typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/projects/$projectId/branches/$branchName/manifest': {
+      id: '/api/projects/$projectId/branches/$branchName/manifest'
+      path: '/api/projects/$projectId/branches/$branchName/manifest'
+      fullPath: '/api/projects/$projectId/branches/$branchName/manifest'
+      preLoaderRoute: typeof ApiProjectsProjectIdBranchesBranchNameManifestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/$orgSlug/projects/$projectId/branches/$branchName/': {
+      id: '/app/$orgSlug/projects/$projectId/branches/$branchName/'
+      path: '/branches/$branchName'
+      fullPath: '/app/$orgSlug/projects/$projectId/branches/$branchName/'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRouteImport
+      parentRoute: typeof AppOrgSlugProjectsProjectIdLayoutRoute
     }
   }
 }
@@ -302,27 +538,75 @@ const AuthLayoutRouteWithChildren = AuthLayoutRoute._addFileChildren(
   AuthLayoutRouteChildren,
 )
 
-interface DashboardLayoutRouteChildren {
-  DashboardUsersRoute: typeof DashboardUsersRoute
-  DashboardIndexRoute: typeof DashboardIndexRoute
+interface AppOrgSlugOrgLayoutRouteChildren {
+  AppOrgSlugOrgUsersRoute: typeof AppOrgSlugOrgUsersRoute
+  AppOrgSlugOrgIndexRoute: typeof AppOrgSlugOrgIndexRoute
+  AppOrgSlugOrgProjectsNewRoute: typeof AppOrgSlugOrgProjectsNewRoute
+  AppOrgSlugOrgProjectsIndexRoute: typeof AppOrgSlugOrgProjectsIndexRoute
+  AppOrgSlugOrgSettingsIndexRoute: typeof AppOrgSlugOrgSettingsIndexRoute
 }
 
-const DashboardLayoutRouteChildren: DashboardLayoutRouteChildren = {
-  DashboardUsersRoute: DashboardUsersRoute,
-  DashboardIndexRoute: DashboardIndexRoute,
+const AppOrgSlugOrgLayoutRouteChildren: AppOrgSlugOrgLayoutRouteChildren = {
+  AppOrgSlugOrgUsersRoute: AppOrgSlugOrgUsersRoute,
+  AppOrgSlugOrgIndexRoute: AppOrgSlugOrgIndexRoute,
+  AppOrgSlugOrgProjectsNewRoute: AppOrgSlugOrgProjectsNewRoute,
+  AppOrgSlugOrgProjectsIndexRoute: AppOrgSlugOrgProjectsIndexRoute,
+  AppOrgSlugOrgSettingsIndexRoute: AppOrgSlugOrgSettingsIndexRoute,
 }
 
-const DashboardLayoutRouteWithChildren = DashboardLayoutRoute._addFileChildren(
-  DashboardLayoutRouteChildren,
-)
+const AppOrgSlugOrgLayoutRouteWithChildren =
+  AppOrgSlugOrgLayoutRoute._addFileChildren(AppOrgSlugOrgLayoutRouteChildren)
+
+interface AppOrgSlugProjectsProjectIdLayoutRouteChildren {
+  AppOrgSlugProjectsProjectIdIndexRoute: typeof AppOrgSlugProjectsProjectIdIndexRoute
+  AppOrgSlugProjectsProjectIdApiKeysIndexRoute: typeof AppOrgSlugProjectsProjectIdApiKeysIndexRoute
+  AppOrgSlugProjectsProjectIdSettingsIndexRoute: typeof AppOrgSlugProjectsProjectIdSettingsIndexRoute
+  AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute: typeof AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute
+}
+
+const AppOrgSlugProjectsProjectIdLayoutRouteChildren: AppOrgSlugProjectsProjectIdLayoutRouteChildren =
+  {
+    AppOrgSlugProjectsProjectIdIndexRoute:
+      AppOrgSlugProjectsProjectIdIndexRoute,
+    AppOrgSlugProjectsProjectIdApiKeysIndexRoute:
+      AppOrgSlugProjectsProjectIdApiKeysIndexRoute,
+    AppOrgSlugProjectsProjectIdSettingsIndexRoute:
+      AppOrgSlugProjectsProjectIdSettingsIndexRoute,
+    AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute:
+      AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute,
+  }
+
+const AppOrgSlugProjectsProjectIdLayoutRouteWithChildren =
+  AppOrgSlugProjectsProjectIdLayoutRoute._addFileChildren(
+    AppOrgSlugProjectsProjectIdLayoutRouteChildren,
+  )
+
+interface AppOrgSlugLayoutRouteChildren {
+  AppOrgSlugOrgLayoutRoute: typeof AppOrgSlugOrgLayoutRouteWithChildren
+  AppOrgSlugProjectsProjectIdLayoutRoute: typeof AppOrgSlugProjectsProjectIdLayoutRouteWithChildren
+}
+
+const AppOrgSlugLayoutRouteChildren: AppOrgSlugLayoutRouteChildren = {
+  AppOrgSlugOrgLayoutRoute: AppOrgSlugOrgLayoutRouteWithChildren,
+  AppOrgSlugProjectsProjectIdLayoutRoute:
+    AppOrgSlugProjectsProjectIdLayoutRouteWithChildren,
+}
+
+const AppOrgSlugLayoutRouteWithChildren =
+  AppOrgSlugLayoutRoute._addFileChildren(AppOrgSlugLayoutRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthLayoutRoute: AuthLayoutRouteWithChildren,
-  DashboardLayoutRoute: DashboardLayoutRouteWithChildren,
+  AppOrgSlugLayoutRoute: AppOrgSlugLayoutRouteWithChildren,
   AcceptInvitationInvitationIdRoute: AcceptInvitationInvitationIdRoute,
-  CreateOrgIndexRoute: CreateOrgIndexRoute,
+  AppIndexRoute: AppIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  AppCreateOrgIndexRoute: AppCreateOrgIndexRoute,
+  ApiProjectsProjectIdBranchesBranchNameManifestRoute:
+    ApiProjectsProjectIdBranchesBranchNameManifestRoute,
+  ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute:
+    ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
