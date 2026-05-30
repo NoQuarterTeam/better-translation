@@ -41,7 +41,7 @@ export function ProjectSidebar({
             <T>Branch</T>
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               <BranchSwitcher branches={branches} currentBranchName={currentBranchName} onNavigate={closeMobile} />
               <SidebarMenuItem>
                 <SidebarMenuButton

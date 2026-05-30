@@ -32,7 +32,7 @@ export function ProjectSwitcher({ project }: { project: { id: number; name: stri
           render={<Link to="/app/$orgSlug/projects/$projectId" params={{ orgSlug, projectId: project.publicId }} />}
         >
           <ResourceMark label={project.name} className="size-6 rounded-md" />
-          <span className="truncate">{project.name}</span>
+          <span className="hidden truncate sm:inline">{project.name}</span>
         </Button>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className="h-9" />}>
           <ChevronsUpDownIcon data-icon="inline-end" className="text-muted-foreground" />

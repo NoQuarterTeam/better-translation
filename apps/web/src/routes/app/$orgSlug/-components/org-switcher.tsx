@@ -32,7 +32,7 @@ export function OrgSwitcher() {
           render={<Link to="/app/$orgSlug" params={{ orgSlug: organization.slug }} />}
         >
           <ResourceMark label={organization.name} imageUrl={organization.logo} className="size-6 rounded-md" />
-          <span className="truncate">{organization.name}</span>
+          <span className="hidden truncate sm:inline">{organization.name}</span>
         </Button>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className="h-9" />}>
           <ChevronsUpDownIcon data-icon="inline-end" className="text-muted-foreground" />
