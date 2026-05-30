@@ -14,7 +14,8 @@ import { useAppForm } from "@/components/react-form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 import { createProjectApiKeyFn, projectDetailQueryOptions, revokeProjectApiKeyFn, type getProjectDetailFn } from "../-data"
 
@@ -36,6 +37,7 @@ function ProjectApiKeysPage() {
   const projectQuery = useQuery(projectDetailQueryOptions(orgSlug, projectId))
   const [newSecret, setNewSecret] = useState<string | null>(null)
   const [apiKeyError, setApiKeyError] = useState<string | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
 
   const createApiKeyMutation = useMutation({
     mutationFn: (data: { name: string; orgSlug: string; projectId: string }) => createProjectApiKeyFn({ data }),
@@ -44,6 +46,7 @@ function ProjectApiKeysPage() {
       toast.success(t("API key created"))
       void queryClient.invalidateQueries({ queryKey: ["project-detail", orgSlug, projectId] })
       form.reset()
+      setCreateOpen(false)
     },
     onError: (error: Error) => setApiKeyError(error.message),
   })
@@ -121,13 +124,50 @@ function ProjectApiKeysPage() {
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          <T>Project API keys</T>
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          <T>Write credentials are used by plugin sync and never exposed to runtime bundle readers.</T>
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            <T>Project API keys</T>
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            <T>Write credentials are used by plugin sync and never exposed to runtime bundle readers.</T>
+          </p>
+        </div>
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger render={<Button className="w-fit" />}>
+            <KeyRoundIcon />
+            <T>Create API key</T>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                <T>Create API key</T>
+              </DialogTitle>
+              <DialogDescription>
+                <T>Save the generated key immediately. It will not be shown again.</T>
+              </DialogDescription>
+            </DialogHeader>
+            <form.AppForm>
+              <form
+                className="flex flex-col gap-4"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void form.handleSubmit()
+                }}
+              >
+                <form.AppField name="name">
+                  {(field) => <field.TextField label={t("Key name")} placeholder="Production deploy sync" />}
+                </form.AppField>
+                <form.SubmitButton className="w-fit">
+                  {(isSubmitting) =>
+                    isSubmitting || createApiKeyMutation.isPending ? <T>Creating...</T> : <T>Create API key</T>
+                  }
+                </form.SubmitButton>
+                <form.FormError>{apiKeyError}</form.FormError>
+              </form>
+            </form.AppForm>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {newSecret && (
@@ -154,47 +194,7 @@ function ProjectApiKeysPage() {
         </Alert>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <T>Create API key</T>
-          </CardTitle>
-          <CardDescription>
-            <T>Save the generated key immediately. It will not be shown again.</T>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form.AppForm>
-            <form
-              className="flex flex-col gap-4"
-              onSubmit={(event) => {
-                event.preventDefault()
-                void form.handleSubmit()
-              }}
-            >
-              <form.AppField name="name">
-                {(field) => <field.TextField label={t("Key name")} placeholder="Production deploy sync" />}
-              </form.AppField>
-              <form.SubmitButton className="w-fit">
-                {(isSubmitting) => (isSubmitting || createApiKeyMutation.isPending ? <T>Creating...</T> : <T>Create API key</T>)}
-              </form.SubmitButton>
-              <form.FormError>{apiKeyError}</form.FormError>
-            </form>
-          </form.AppForm>
-        </CardContent>
-      </Card>
-
       <Card className="overflow-hidden">
-        <CardHeader>
-          <div>
-            <CardTitle>
-              <T>API keys</T>
-            </CardTitle>
-            <CardDescription>
-              <T>Revoke keys that are no longer used by a Consumer app integration.</T>
-            </CardDescription>
-          </div>
-        </CardHeader>
         <CardContent className="px-0">
           <DataTable columns={apiKeyColumns} data={projectQuery.data?.apiKeys} isLoading={projectQuery.isPending} />
         </CardContent>

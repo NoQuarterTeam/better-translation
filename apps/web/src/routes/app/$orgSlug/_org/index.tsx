@@ -74,7 +74,7 @@ function OrganizationPage() {
             <T>Recent Projects</T>
           </CardTitle>
           <CardDescription>
-            <T>Jump back into a Project to edit Translation Branches, Locale values, and API keys.</T>
+            <T>Jump back into a Project to edit Branches, Locale values, and API keys.</T>
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">

@@ -15,7 +15,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-export function ProjectSidebar({ defaultBranchName }: { defaultBranchName: string }) {
+import { type getProjectDetailFn } from "../projects/$projectId/-data"
+import { BranchSwitcher } from "./branch-switcher"
+
+type ProjectDetail = Awaited<ReturnType<typeof getProjectDetailFn>>
+
+export function ProjectSidebar({
+  branches,
+  currentBranchName,
+}: {
+  branches: ProjectDetail["branches"]
+  currentBranchName: string
+}) {
   const { orgSlug, projectId } = useParams({ from: "/app/$orgSlug/projects/$projectId" })
   const { isMobile, setOpenMobile } = useSidebar()
   const closeMobile = () => {
@@ -27,16 +38,17 @@ export function ProjectSidebar({ defaultBranchName }: { defaultBranchName: strin
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>
-            <T>Project</T>
+            <T>Branch</T>
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <BranchSwitcher branches={branches} currentBranchName={currentBranchName} onNavigate={closeMobile} />
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={
                     <Link
                       to="/app/$orgSlug/projects/$projectId/branches/$branchName"
-                      params={{ orgSlug, projectId, branchName: defaultBranchName }}
+                      params={{ orgSlug, projectId, branchName: currentBranchName }}
                       onClick={closeMobile}
                       className="opacity-50 data-[status=active]:bg-muted data-[status=active]:opacity-100"
                     />
@@ -48,6 +60,15 @@ export function ProjectSidebar({ defaultBranchName }: { defaultBranchName: strin
                   </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>
+            <T>Project</T>
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={

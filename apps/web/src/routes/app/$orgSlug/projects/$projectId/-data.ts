@@ -9,7 +9,6 @@ import { db } from "@/server/db"
 import {
   apiKeyInsertSchema,
   apiKeysTable,
-  branchInsertSchema,
   branchesTable,
   localeValuesTable,
   messagesTable,
@@ -23,17 +22,6 @@ const projectInputSchema = z.object({
   orgSlug: z.string().trim().min(1),
   projectId: z.string().trim().min(1),
 })
-
-const createBranchInputSchema = branchInsertSchema
-  .pick({
-    name: true,
-    parentBranchId: true,
-  })
-  .extend({
-    orgSlug: projectInputSchema.shape.orgSlug,
-    projectId: projectInputSchema.shape.projectId,
-    parentBranchId: branchInsertSchema.shape.parentBranchId.optional().nullable(),
-  })
 
 const createApiKeyInputSchema = apiKeyInsertSchema.pick({ name: true }).extend({
   orgSlug: projectInputSchema.shape.orgSlug,
@@ -104,6 +92,7 @@ export const getProjectDetailFn = createServerFn({ method: "GET" })
       branches: branchRows,
       apiKeys,
       messageCount: Number(messageCount?.count ?? 0),
+      selectedBranchName: getSelectedBranchName(project.publicId, branchRows),
     }
   })
 
@@ -117,50 +106,7 @@ export const getProjectLandingBranchFn = createServerFn({ method: "GET" })
       .from(branchesTable)
       .where(eq(branchesTable.projectId, project.id))
 
-    const selectedBranchName = getCookie(getSelectedBranchCookieName(project.publicId))
-    const selectedBranch = branches.find((branch) => branch.name === selectedBranchName)
-    if (selectedBranch) return selectedBranch.name
-
-    return branches.find((branch) => branch.isDefault)?.name ?? DEFAULT_TRANSLATION_BRANCH
-  })
-
-export const createTranslationBranchFn = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .inputValidator(parseZod(createBranchInputSchema))
-  .handler(async ({ context, data }) => {
-    const { project } = await getAuthorizedProject(data, context.user.id)
-    const [existingBranch] = await db
-      .select({ id: branchesTable.id })
-      .from(branchesTable)
-      .where(and(eq(branchesTable.projectId, project.id), eq(branchesTable.name, data.name)))
-      .limit(1)
-
-    if (existingBranch) throw new Error("A Translation Branch with that name already exists.")
-
-    const parentBranchId =
-      data.parentBranchId ??
-      (
-        await db
-          .select({ id: branchesTable.id })
-          .from(branchesTable)
-          .where(and(eq(branchesTable.projectId, project.id), eq(branchesTable.name, DEFAULT_TRANSLATION_BRANCH)))
-          .limit(1)
-      )[0]?.id ??
-      null
-
-    const [branch] = await db
-      .insert(branchesTable)
-      .values({
-        projectId: project.id,
-        name: data.name,
-        parentBranchId,
-        isDefault: false,
-      })
-      .returning()
-
-    if (!branch) throw new Error("Could not create Translation Branch.")
-
-    return branch
+    return getSelectedBranchName(project.publicId, branches)
   })
 
 export const setSelectedBranchFn = createServerFn({ method: "POST" })
@@ -174,7 +120,7 @@ export const setSelectedBranchFn = createServerFn({ method: "POST" })
       .where(and(eq(branchesTable.projectId, project.id), eq(branchesTable.name, data.branchName)))
       .limit(1)
 
-    if (!branch) throw new Error("Translation Branch not found.")
+    if (!branch) throw new Error("Branch not found.")
 
     setCookie(getSelectedBranchCookieName(project.publicId), branch.name, {
       httpOnly: true,
@@ -322,4 +268,12 @@ export const projectDetailQueryOptions = (orgSlug: string, projectId: string) =>
 
 function getSelectedBranchCookieName(projectPublicId: string) {
   return `bt_selected_branch_${projectPublicId}`
+}
+
+function getSelectedBranchName(projectPublicId: string, branches: { isDefault: boolean; name: string }[]) {
+  const selectedBranchName = getCookie(getSelectedBranchCookieName(projectPublicId))
+  const selectedBranch = branches.find((branch) => branch.name === selectedBranchName)
+  if (selectedBranch) return selectedBranch.name
+
+  return branches.find((branch) => branch.isDefault)?.name ?? DEFAULT_TRANSLATION_BRANCH
 }

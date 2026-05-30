@@ -150,7 +150,7 @@ export interface BetterTranslateRemoteRuntimeOptions {
   projectId: string
   /** Project API key used by the Vite plugin to sync Manifests. Falls back to `BETTER_TRANSLATION_API_KEY`. */
   apiKey?: string
-  /** Translation Branch to read from, or `"auto"` to infer it from the environment. */
+  /** Branch to read from, or `"auto"` to infer it from the environment. */
   branch?: "auto" | (string & {})
   /** Local development behavior for remote runtime mode. */
   dev?: {

@@ -25,7 +25,7 @@ export const Route = createFileRoute("/projects/$projectId/branches/$branchName/
           .where(and(eq(branchesTable.projectId, project.id), eq(branchesTable.name, params.branchName)))
           .limit(1)
 
-        if (!branch) return json({ error: "Translation Branch not found" }, 404)
+        if (!branch) return json({ error: "Branch not found" }, 404)
 
         const messages = await db
           .select()

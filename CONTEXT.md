@@ -45,15 +45,15 @@ The flat public payload of translated strings that a Consumer app loads at runti
 _Avoid_: manifest, locale metadata
 
 **Project**:
-The hosted-service container for one Consumer app's Messages, Locale values, and Translation Branches.
+The hosted-service container for one Consumer app's Messages, Locale values, and Branches.
 _Avoid_: app, workspace
 
-**Translation Branch**:
+**Branch**:
 A hosted working line for Manifest and Locale value changes, usually named after a Git branch.
-_Avoid_: channel, environment
+_Avoid_: translation branch, channel, environment
 
 **Branch override**:
-A Locale value stored on a Translation Branch because it intentionally differs from the value inherited from that branch's parent.
+A Locale value stored on a Branch because it intentionally differs from the value inherited from that branch's parent.
 _Avoid_: branch copy, forked translation
 
 **Platform translator**:

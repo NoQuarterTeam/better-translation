@@ -105,7 +105,7 @@ function ProjectsPage() {
             <T>Projects</T>
           </h1>
           <p className="text-sm text-muted-foreground">
-            <T>Manage hosted Projects, Translation Branches, Runtime bundles, and plugin credentials.</T>
+            <T>Manage hosted Projects, Branches, Runtime bundles, and plugin credentials.</T>
           </p>
         </div>
         <Link to="/app/$orgSlug/projects/new" params={{ orgSlug }} className={cn(buttonVariants(), "w-fit")}>

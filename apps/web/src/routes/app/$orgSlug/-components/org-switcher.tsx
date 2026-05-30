@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { useNavigate, useRouter } from "@tanstack/react-router"
+import { Link, useNavigate, useRouter } from "@tanstack/react-router"
 import { CheckIcon, ChevronsUpDownIcon, PlusIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -25,12 +25,20 @@ export function OrgSwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="ghost" className="h-9 max-w-64 min-w-0 justify-start px-2 font-medium" />}>
-        <ResourceMark label={organization.name} imageUrl={organization.logo} className="size-6 rounded-md" />
-        <span className="truncate">{organization.name}</span>
-        <ChevronsUpDownIcon data-icon="inline-end" className="text-muted-foreground" />
-        <span className="sr-only">Switch organization</span>
-      </DropdownMenuTrigger>
+      <div className="flex h-9 max-w-64 min-w-0 items-center">
+        <Button
+          variant="ghost"
+          className="h-9 min-w-0 justify-start gap-3 px-2 font-medium"
+          render={<Link to="/app/$orgSlug" params={{ orgSlug: organization.slug }} />}
+        >
+          <ResourceMark label={organization.name} imageUrl={organization.logo} className="size-6 rounded-md" />
+          <span className="truncate">{organization.name}</span>
+        </Button>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className="h-9" />}>
+          <ChevronsUpDownIcon data-icon="inline-end" className="text-muted-foreground" />
+          <span className="sr-only">Switch organization</span>
+        </DropdownMenuTrigger>
+      </div>
       <DropdownMenuContent className="min-w-72" align="start" sideOffset={8}>
         <DropdownMenuGroup>
           <DropdownMenuLabel>Organizations</DropdownMenuLabel>
@@ -52,6 +60,7 @@ export function OrgSwitcher() {
                   setSelectedOrganization.mutate({ data: { organizationId: item.id } })
                   void navigate({ to: "/app/$orgSlug", params: { orgSlug: item.slug } })
                 }}
+                className="gap-3"
               >
                 <ResourceMark label={item.name} imageUrl={item.logo} className="size-7 rounded-md" />
                 <div className="min-w-0 flex-1">

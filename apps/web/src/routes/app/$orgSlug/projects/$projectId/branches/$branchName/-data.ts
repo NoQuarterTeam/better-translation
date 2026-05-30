@@ -36,7 +36,7 @@ const translateLocaleValueInputSchema = z.object({
   locale: saveLocaleValueInputSchema.shape.locale,
 })
 
-export const getTranslationBranchWorkspaceFn = createServerFn({ method: "GET" })
+export const getBranchWorkspaceFn = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .inputValidator(parseZod(branchInputSchema))
   .handler(async ({ context, data }) => {
@@ -206,7 +206,7 @@ async function getAuthorizedBranch(params: { orgSlug: string; projectId: string;
     .where(and(eq(branchesTable.projectId, project.id), eq(branchesTable.name, params.branchName)))
     .limit(1)
 
-  if (!branch) throw new Error("Translation Branch not found.")
+  if (!branch) throw new Error("Branch not found.")
 
   return { project, branch }
 }

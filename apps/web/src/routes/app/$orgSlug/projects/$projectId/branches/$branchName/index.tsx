@@ -22,10 +22,10 @@ import { NativeSelect } from "@/components/ui/native-select"
 import { Separator } from "@/components/ui/separator"
 
 import { setSelectedBranchFn } from "../../-data"
-import { getTranslationBranchWorkspaceFn, saveLocaleValueFn, translateLocaleValueFn } from "./-data"
+import { getBranchWorkspaceFn, saveLocaleValueFn, translateLocaleValueFn } from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug/projects/$projectId/branches/$branchName/")({
-  component: TranslationBranchPage,
+  component: BranchPage,
   loader: async ({ context, params }) => {
     const data = await context.queryClient.ensureQueryData(
       branchWorkspaceQueryOptions(params.orgSlug, params.projectId, params.branchName),
@@ -45,8 +45,8 @@ export const Route = createFileRoute("/app/$orgSlug/projects/$projectId/branches
 })
 
 const branchWorkspaceQueryOptions = (orgSlug: string, projectId: string, branchName: string) => ({
-  queryKey: ["translation-branch", orgSlug, projectId, branchName],
-  queryFn: () => getTranslationBranchWorkspaceFn({ data: { orgSlug, projectId, branchName } }),
+  queryKey: ["branch-workspace", orgSlug, projectId, branchName],
+  queryFn: () => getBranchWorkspaceFn({ data: { orgSlug, projectId, branchName } }),
 })
 
 const translationEditorStore = new Store(
@@ -60,10 +60,10 @@ const translationEditorStore = new Store(
   }),
 )
 
-type BranchWorkspace = Awaited<ReturnType<typeof getTranslationBranchWorkspaceFn>>
+type BranchWorkspace = Awaited<ReturnType<typeof getBranchWorkspaceFn>>
 type MessageRow = BranchWorkspace["messages"][number]
 
-function TranslationBranchPage() {
+function BranchPage() {
   const { orgSlug, projectId, branchName } = Route.useParams()
   const t = useT()
   const branchQuery = useQuery(branchWorkspaceQueryOptions(orgSlug, projectId, branchName))
@@ -163,7 +163,7 @@ function TranslationBranchPage() {
           <div>
             <CardTitle>{branchQuery.data?.branch.name ?? branchName}</CardTitle>
             <CardDescription>
-              <T>Runtime bundles resolve each Message to the selected Locale value for this Translation Branch.</T>
+              <T>Runtime bundles resolve each Message to the selected Locale value for this Branch.</T>
             </CardDescription>
           </div>
           <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem]">
@@ -279,7 +279,7 @@ function TranslationValueEditor({
       }),
     onSuccess: () => {
       toast.success(t("Locale value saved"))
-      void queryClient.invalidateQueries({ queryKey: ["translation-branch", orgSlug, projectId, branchName] })
+      void queryClient.invalidateQueries({ queryKey: ["branch-workspace", orgSlug, projectId, branchName] })
       void queryClient.invalidateQueries({ queryKey: ["project-detail", orgSlug, projectId] })
       onSaved()
     },
@@ -290,7 +290,7 @@ function TranslationValueEditor({
     mutationFn: () => translateLocaleValueFn({ data: { branchName, locale, messageId: message.messageId, orgSlug, projectId } }),
     onSuccess: () => {
       toast.success(t("Platform translator saved a Locale value"))
-      void queryClient.invalidateQueries({ queryKey: ["translation-branch", orgSlug, projectId, branchName] })
+      void queryClient.invalidateQueries({ queryKey: ["branch-workspace", orgSlug, projectId, branchName] })
       void queryClient.invalidateQueries({ queryKey: ["project-detail", orgSlug, projectId] })
     },
     onError: (error: Error) => toast.error(t("Could not translate Message"), { description: error.message }),

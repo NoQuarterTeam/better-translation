@@ -21,9 +21,9 @@ The hosted v1 should make the hosted service canonical after adoption.
 
 - Project creation is explicit in the hosted service.
 - Plugin sync uploads Manifests to an existing Project.
-- Translation Branches isolate mainline and feature-branch translation work.
+- Branches isolate mainline and feature-branch translation work.
 - The hosted UI edits branch-local Locale values.
-- Consumer apps fetch flat Runtime bundles by Project, Translation Branch, and Locale.
+- Consumer apps fetch flat Runtime bundles by Project, Branch, and Locale.
 - Local Snapshot fallbacks are generated from hosted Runtime bundles.
 
 Generated local snapshots are fallbacks, not a second source of truth.
@@ -49,7 +49,7 @@ The hosted service owns:
 - Projects.
 - Synced Manifests.
 - Branch-local Locale values.
-- Translation Branches.
+- Branches.
 - Public Runtime bundle endpoints.
 
 The hosted service should not be treated as the only realistic Consumer app. Keep a separate Consumer app surface or example path that reflects how an adopter would use the package.
@@ -72,7 +72,7 @@ Remote runtime URLs are branch-addressed:
 /projects/:projectId/branches/:branch/locales/:locale.json
 ```
 
-The Consumer app should keep calling `loadMessages(locale)`. The Vite plugin bakes the remote endpoint, Project id, and resolved Translation Branch into the generated `better-translation/messages` virtual module.
+The Consumer app should keep calling `loadMessages(locale)`. The Vite plugin bakes the remote endpoint, Project id, and resolved Branch into the generated `better-translation/messages` virtual module.
 
 Sync credentials are used by plugin sync only. Runtime bundle reads should not expose write credentials to the Consumer app runtime.
 
@@ -112,8 +112,8 @@ The target remote flow is:
 
 1. A Project is created explicitly in the hosted service.
 2. The Consumer app configures the Vite plugin with a Project id and write credential.
-3. The plugin resolves the current Translation Branch.
-4. The plugin uploads Manifest changes to that Translation Branch.
+3. The plugin resolves the current Branch.
+4. The plugin uploads Manifest changes to that Branch.
 5. Translators edit branch-local Locale values in the hosted UI.
 6. Consumer apps load flat Runtime bundles from the public runtime endpoint.
 
@@ -147,17 +147,17 @@ Remote defaults should be:
 }
 ```
 
-`dev.offline: false` means local dev uses the hosted platform. The dev runtime reads hosted Runtime bundles for the resolved Translation Branch, and the Platform translator fills missing branch Locale values when needed.
+`dev.offline: false` means local dev uses the hosted platform. The dev runtime reads hosted Runtime bundles for the resolved Branch, and the Platform translator fills missing branch Locale values when needed.
 
 `dev.offline: true` means local dev opts out of platform reads and writes. The dev runtime uses ignored local cache artifacts and Default locale fallback for new Messages, not the Consumer app's committed local runtime output. Remote builds still sync to the hosted platform.
 
 Remote mode does not accept a package-local `translate` callback. Canonical hosted translation in remote mode goes through the Platform translator.
 
-## Translation Branches
+## Branches
 
-Projects are explicit. Translation Branches are automatic.
+Projects are explicit. Branches are automatic.
 
-The plugin should resolve a Translation Branch in this order:
+The plugin should resolve a Branch in this order:
 
 1. explicit runtime or sync config
 2. `BETTER_TRANSLATION_BRANCH`
@@ -165,15 +165,15 @@ The plugin should resolve a Translation Branch in this order:
 4. current Git branch
 5. the Project default branch, usually `main`
 
-If the resolved Translation Branch does not exist, plugin sync can create it. That is intentionally different from Project creation, which remains explicit.
+If the resolved Branch does not exist, plugin sync can create it. That is intentionally different from Project creation, which remains explicit.
 
-The dashboard should let users view and edit each Translation Branch. `main` is the default working branch for most users. Feature branches are optional and exist for PR-specific copy work.
+The dashboard should let users view and edit each Branch. `main` is the default working branch for most users. Feature branches are optional and exist for PR-specific copy work.
 
-Locale value edits are live for the Translation Branch they belong to. Editing `main` affects Consumer apps reading `main`; editing a feature branch affects only Consumer apps reading that feature branch.
+Locale value edits are live for the Branch they belong to. Editing `main` affects Consumer apps reading `main`; editing a feature branch affects only Consumer apps reading that feature branch.
 
 ## Branch Inheritance
 
-Translation Branches inherit Locale values from their parent branch, usually `main`, unless they have a Branch override.
+Branches inherit Locale values from their parent branch, usually `main`, unless they have a Branch override.
 
 Runtime resolution for a feature branch should work like this:
 
@@ -190,7 +190,7 @@ A Branch override stores the branch-specific Locale value plus the parent value 
 At minimum, branch-specific Locale value storage should preserve:
 
 - the Project
-- the Translation Branch
+- the Branch
 - the Message id
 - the Locale
 - the translated value
@@ -205,7 +205,7 @@ The Message id identifies the same source Message across branches. The value has
 
 Feature branch values must not overwrite `main` automatically.
 
-When a feature branch is merged in Git, the next sync on `main` uploads the new Manifest to `main`. Locale values from the feature Translation Branch remain branch-local unless a user explicitly applies them to `main`.
+When a feature branch is merged in Git, the next sync on `main` uploads the new Manifest to `main`. Locale values from the feature Branch remain branch-local unless a user explicitly applies them to `main`.
 
 Future reconciliation can use the parent value hash on each Branch override to determine whether applying it to `main` is safe:
 
@@ -222,7 +222,7 @@ The dashboard can offer an explicit "apply to main" action for a Branch override
 Remote sync must support deploys that run without a local dev server.
 
 - `vite dev` in remote mode syncs the current Manifest on startup and after source changes unless `dev.offline: true` is set.
-- `vite build` in remote mode pushes Manifest changes to the resolved Translation Branch.
+- `vite build` in remote mode pushes Manifest changes to the resolved Branch.
 - Build sync should be deterministic and idempotent: same Manifest, same branch, same result.
 - Build sync must fail clearly if the configured Project does not exist or credentials are invalid.
 
@@ -234,9 +234,9 @@ Remote mode still needs a fast local development experience.
 
 By default, local `vite dev` should:
 
-- read hosted Runtime bundles for the resolved Translation Branch
+- read hosted Runtime bundles for the resolved Branch
 - use the Platform translator to fill blank branch Locale values
-- store generated Locale values on the hosted Translation Branch
+- store generated Locale values on the hosted Branch
 - sync the current Manifest so the platform knows the latest Message ids
 
 This makes `runtime.type: "remote"` mean "use the platform" during local dev as well as deployed builds.
@@ -264,7 +264,7 @@ The Platform translator uses Project-level settings such as model, tone, glossar
 When local dev calls the Platform translator, the request should include enough information to identify and translate the value:
 
 - Project id
-- resolved Translation Branch
+- resolved Branch
 - Message id
 - Default locale text
 - target Locale
@@ -275,7 +275,7 @@ Platform translator requests are canonical fill-blank writes. The hosted service
 1. return an existing branch Locale value when one exists
 2. otherwise return an inherited parent branch value when one exists
 3. otherwise generate a new value using Project settings
-4. store the generated value on the resolved Translation Branch with `source: "ai"`
+4. store the generated value on the resolved Branch with `source: "ai"`
 5. return the same stored value to local dev
 
 Later build sync for the same Message id should reuse the stored value and should not retranslate it.
@@ -296,7 +296,7 @@ After migration, remote mode should not keep reading or writing editable local L
 
 Hosted-mode sync should not call package-local AI translation during `vite dev` or `vite build`. In remote mode, the Vite plugin only extracts and syncs the Manifest, then runtime code fetches hosted Runtime bundles.
 
-Remote sync uploads the Manifest. The hosted service then fills missing Locale values using the Platform translator when Project or Translation Branch settings allow it.
+Remote sync uploads the Manifest. The hosted service then fills missing Locale values using the Platform translator when Project or Branch settings allow it.
 
 Manifest sync should not wait for Platform translator calls. The hosted service stores the Manifest synchronously, returns the sync response, and runs fill-blank translation as background work.
 

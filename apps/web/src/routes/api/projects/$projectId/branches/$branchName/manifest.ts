@@ -100,11 +100,11 @@ export const Route = createFileRoute("/api/projects/$projectId/branches/$branchN
               .limit(1)
           )[0]?.id
 
-        if (!branchId) return json({ error: "Could not create Translation Branch" }, 500)
+        if (!branchId) return json({ error: "Could not create Branch" }, 500)
 
         const [syncedBranch] = await db.select().from(branchesTable).where(eq(branchesTable.id, branchId)).limit(1)
 
-        if (!syncedBranch) return json({ error: "Could not load Translation Branch" }, 500)
+        if (!syncedBranch) return json({ error: "Could not load Branch" }, 500)
 
         await db
           .update(projectsTable)

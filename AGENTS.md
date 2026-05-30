@@ -6,7 +6,7 @@ Better Translation is a developer tool for adding AI-assisted translations to Vi
 
 Developers install the package, add the Vite plugin, mark UI copy in their code, and let the plugin extract messages into locale files. The package also includes runtime helpers for loading and rendering those translated messages in React and server code.
 
-The long-term goal is a hosted service where Projects sync extracted Messages to Translation Branches, edit branch-local Locale values in a UI, and serve Runtime bundles. For now, the repo still supports a local bundle-first workflow.
+The long-term goal is a hosted service where Projects sync extracted Messages to Branches, edit branch-local Locale values in a UI, and serve Runtime bundles. For now, the repo still supports a local bundle-first workflow.
 
 ## Repo Shape
 

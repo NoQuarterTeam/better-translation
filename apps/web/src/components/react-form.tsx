@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect, type NativeSelectProps } from "@/components/ui/native-select"
+import { NativeSelect } from "@/components/ui/native-select"
 import type { Select as BaseSelect } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { SerializedZodIssues } from "@/lib/functions/zod"
@@ -149,7 +149,7 @@ function NativeSelectField({
   description?: React.ReactNode
   children: React.ReactNode
   fieldProps?: React.ComponentProps<typeof Field>
-} & NativeSelectProps) {
+} & React.ComponentProps<typeof NativeSelect>) {
   const field = useFieldContext<string>()
   const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
   return (

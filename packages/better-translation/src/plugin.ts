@@ -708,7 +708,7 @@ function resolveRuntimeOptions(runtime: BetterTranslateRuntimeOptions, config: R
       ...runtime,
       projectId,
       endpoint: runtime.endpoint ?? REMOTE_API_BASE_URL,
-      branch: resolveTranslationBranch(runtime, config.root),
+      branch: resolveBranch(runtime, config.root),
       dev: {
         offline: runtime.dev?.offline ?? false,
       },
@@ -752,10 +752,7 @@ function formatRuntime(runtime: BetterTranslateRuntimeOptions) {
   return runtime.type === "local" ? `Local/${runtime.target ?? "module"}` : `Remote/${runtime.branch ?? "auto"}`
 }
 
-export function resolveTranslationBranch(
-  runtime: Pick<Extract<BetterTranslateRuntimeOptions, { type: "remote" }>, "branch">,
-  root: string,
-) {
+function resolveBranch(runtime: Pick<Extract<BetterTranslateRuntimeOptions, { type: "remote" }>, "branch">, root: string) {
   if (runtime.branch && runtime.branch !== "auto") return runtime.branch
 
   const envBranch = process.env.BETTER_TRANSLATION_BRANCH?.trim()

@@ -39,4 +39,4 @@ const customFields = {
 export const branchSchema = createSelectSchema(branchesTable).extend(customFields)
 export const branchInsertSchema = createInsertSchema(branchesTable).extend(customFields)
 
-export type TranslationBranch = typeof branchesTable.$inferSelect
+export type Branch = typeof branchesTable.$inferSelect

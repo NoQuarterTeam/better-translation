@@ -168,7 +168,7 @@ runtime: {
 
 `remote` exists in the API, but remote sync and remote runtime fetching are currently stubs, so local runtime is the recommended setup right now.
 
-The intended hosted workflow is branch-based. In remote mode, the hosted platform owns Locale values, the plugin syncs the Manifest during remote builds, and deployed apps read flat Runtime bundles for a Project, Translation Branch, and Locale.
+The intended hosted workflow is branch-based. In remote mode, the hosted platform owns Locale values, the plugin syncs the Manifest during remote builds, and deployed apps read flat Runtime bundles for a Project, Branch, and Locale.
 
 The planned remote config keeps the default simple:
 
@@ -622,11 +622,11 @@ For `runtime: { type: "local" }`, production builds are check-only. They never c
 The local runtime is the working package flow today. The hosted platform direction is different:
 
 - A Project is created explicitly in the hosted service.
-- Remote builds sync the current Manifest to a Translation Branch, usually resolved from the deploy branch.
-- Translation Branches are automatic and can represent `main`, `develop`, or PR branches.
+- Remote builds sync the current Manifest to a Branch, usually resolved from the deploy branch.
+- Branches are automatic and can represent `main`, `develop`, or PR branches.
 - The hosted platform owns Locale values in remote mode.
 - The dashboard edits branch-local Locale values.
-- The public Runtime bundle is a flat `Record<string, string>` for one Project, Translation Branch, and Locale.
+- The public Runtime bundle is a flat `Record<string, string>` for one Project, Branch, and Locale.
 - Missing non-default values fall back to the Default locale text in the Runtime bundle.
 - Local dev reads hosted Runtime bundles by default in remote mode.
 - Local dev can opt out of platform reads and writes with `dev.offline: true`.

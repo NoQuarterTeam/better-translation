@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Outlet } from "@tanstack/react-router"
 
-import { AppShell } from "../-components/app-shell"
+import { SidebarInset } from "@/components/ui/sidebar"
+
 import { OrgSidebar } from "../-components/org-sidebar"
 
 export const Route = createFileRoute("/app/$orgSlug/_org")({
@@ -8,5 +9,14 @@ export const Route = createFileRoute("/app/$orgSlug/_org")({
 })
 
 function OrgLayout() {
-  return <AppShell sidebar={<OrgSidebar />} />
+  return (
+    <>
+      <OrgSidebar />
+      <SidebarInset className="flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-auto overscroll-contain">
+          <Outlet />
+        </div>
+      </SidebarInset>
+    </>
+  )
 }
