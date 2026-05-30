@@ -226,13 +226,13 @@ function TranslationValueDialog({
         <PencilIcon />
         <T>Edit</T>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            <T>Edit Locale value</T>
+            <T>Customize translation</T>
           </DialogTitle>
           <DialogDescription>
-            <T>Saving writes a Branch override for this Message and Locale.</T>
+            <T>Review the original copy and current translation, then save a custom version for this Branch.</T>
           </DialogDescription>
         </DialogHeader>
         <TranslationValueEditor
@@ -271,6 +271,16 @@ function TranslationValueEditor({
   const queryClient = useQueryClient()
   const localeValue = message.localeValues[locale]
   const isDefaultLocale = locale === defaultLocale
+  const currentValue = localeValue?.value ?? message.defaultMessage
+  const sourceLabel =
+    localeValue?.source === "manual"
+      ? t("Custom")
+      : localeValue?.source === "ai"
+        ? t("AI translated")
+        : localeValue?.source === "inherited"
+          ? t("Inherited")
+          : t("Using original")
+  const sourceVariant = localeValue?.source === "manual" ? "default" : localeValue?.source === "default" ? "outline" : "secondary"
 
   const saveMutation = useMutation({
     mutationFn: (data: { value: string }) =>
@@ -311,17 +321,23 @@ function TranslationValueEditor({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <div className="font-mono text-xs text-muted-foreground">{message.messageId}</div>
-        <p className="mt-2 text-sm leading-6">{message.defaultMessage}</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border bg-muted/20 p-3">
+          <div className="text-xs font-medium text-muted-foreground">
+            <T>Original</T> · {defaultLocale}
+          </div>
+          <p className="mt-2 text-base leading-7">{message.defaultMessage}</p>
+        </div>
+        <div className="rounded-lg border p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-medium text-muted-foreground">
+              <T>Current translation</T> · {locale}
+            </div>
+            <Badge variant={sourceVariant}>{sourceLabel}</Badge>
+          </div>
+          <p className="mt-2 text-base leading-7">{currentValue}</p>
+        </div>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {localeValue?.source === "manual" && <Badge>{t("Manual override")}</Badge>}
-        {localeValue?.source === "ai" && <Badge variant="secondary">{t("AI override")}</Badge>}
-        {localeValue?.source === "inherited" && <Badge variant="secondary">{t("Inherited value")}</Badge>}
-        {localeValue?.source === "default" && <Badge variant="outline">{t("Default locale fallback")}</Badge>}
-      </div>
-      <Separator />
       <form.AppForm>
         <form
           className="flex flex-col gap-4"
@@ -333,22 +349,27 @@ function TranslationValueEditor({
           <form.AppField name="value">
             {(field) => (
               <field.TextareaField
-                label={t("Translation")}
-                placeholder={t("Translated Locale value")}
-                rows={8}
+                label={t("Custom version")}
+                description={
+                  isDefaultLocale
+                    ? t("The Default locale is the original copy and cannot be customized here.")
+                    : t("Saved custom versions apply to this Branch.")
+                }
+                placeholder={t("Write the translation people should see")}
+                rows={5}
                 disabled={isDefaultLocale}
               />
             )}
           </form.AppField>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <form.SubmitButton className="flex-1" disabled={saveMutation.isPending || isDefaultLocale}>
+            <form.SubmitButton size="lg" className="w-full sm:flex-1" disabled={saveMutation.isPending || isDefaultLocale}>
               {(isSubmitting) =>
                 isSubmitting || saveMutation.isPending ? (
                   <T>Saving...</T>
                 ) : (
                   <>
                     <CheckIcon />
-                    <T>Save override</T>
+                    <T>Save custom translation</T>
                   </>
                 )
               }
@@ -356,27 +377,37 @@ function TranslationValueEditor({
             <Button
               type="button"
               variant="outline"
-              className="flex-1"
+              size="lg"
+              className="w-full sm:flex-1"
               disabled={translateMutation.isPending || isDefaultLocale}
               onClick={() => translateMutation.mutate()}
             >
               <BotIcon />
-              {translateMutation.isPending ? <T>Translating...</T> : <T>Translate</T>}
+              {translateMutation.isPending ? <T>Translating...</T> : <T>Use AI translation</T>}
             </Button>
           </div>
         </form>
       </form.AppForm>
-      {message.sources[0] && (
-        <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+      <Separator />
+      <div className="grid gap-2 rounded-md bg-muted/30 p-3 text-xs text-muted-foreground sm:grid-cols-2">
+        <div>
           <div className="font-medium text-foreground">
-            <T>Source</T>
+            <T>Reference</T>
           </div>
-          <div className="mt-1 font-mono">
-            {message.sources[0].file}
-            {message.sources[0].line ? `:${message.sources[0].line}` : ""}
-          </div>
+          <div className="mt-1 font-mono">{message.messageId}</div>
         </div>
-      )}
+        {message.sources[0] && (
+          <div>
+            <div className="font-medium text-foreground">
+              <T>Source</T>
+            </div>
+            <div className="mt-1 font-mono">
+              {message.sources[0].file}
+              {message.sources[0].line ? `:${message.sources[0].line}` : ""}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
