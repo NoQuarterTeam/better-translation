@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.2.3
+
+### Patch Changes
+
+- [`40ca51d`](https://github.com/NoQuarterTeam/better-translation/commit/40ca51d9205d3aa603785700ab97c44fb650add7) Thanks [@JClackett](https://github.com/JClackett)! - fixes local ai translation
+
 ## 0.2.2
 
 ### Patch Changes
