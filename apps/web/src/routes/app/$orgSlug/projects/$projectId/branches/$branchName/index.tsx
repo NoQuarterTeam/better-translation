@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Store, useSelector } from "@tanstack/react-store"
 import type { ColumnDef } from "@tanstack/react-table"
-import { BotIcon, CheckIcon, GitBranchIcon, PencilIcon, SearchIcon } from "lucide-react"
+import { BotIcon, CheckIcon, PencilIcon, SearchIcon } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -14,11 +14,11 @@ import { DataTable } from "@/components/data-table"
 import { useAppForm } from "@/components/react-form"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Field, FieldContent, FieldLabel } from "@/components/ui/field"
+import { Field, FieldLabel } from "@/components/ui/field"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
-import { NativeSelect } from "@/components/ui/native-select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 
 import { setSelectedBranchFn } from "../../-data"
@@ -81,7 +81,7 @@ function BranchPage() {
     const query = search.trim().toLowerCase()
     if (!query) return messages
     return messages.filter((message) =>
-      [message.messageId, message.defaultMessage, message.localeValues[resolvedLocale]?.value ?? ""].some((value) =>
+      [message.defaultMessage, message.localeValues[resolvedLocale]?.value ?? ""].some((value) =>
         value.toLowerCase().includes(query),
       ),
     )
@@ -90,35 +90,18 @@ function BranchPage() {
   const columns = useMemo<ColumnDef<MessageRow>[]>(
     () => [
       {
-        accessorKey: "messageId",
-        header: t("Message"),
-        cell: ({ row }) => (
-          <div className="flex max-w-[30rem] items-center gap-2">
-            <div className="min-w-0 flex-1 truncate font-mono text-xs" title={row.original.messageId}>
-              {row.original.messageId}
-            </div>
-            <TranslationValueDialog
-              branchName={branchName}
-              defaultLocale={branchQuery.data?.project.defaultLocale ?? ""}
-              locale={resolvedLocale}
-              message={row.original}
-              orgSlug={orgSlug}
-              projectId={projectId}
-            />
-          </div>
-        ),
-      },
-      {
-        accessorKey: "defaultMessage",
-        header: t("Default locale"),
-        cell: ({ row }) => <div className="max-w-[24rem] truncate">{row.original.defaultMessage}</div>,
-      },
-      {
-        id: "localeValue",
+        id: "translation",
         header: resolvedLocale || t("Locale"),
         cell: ({ row }) => {
           const localeValue = row.original.localeValues[resolvedLocale]
-          return <div className="max-w-[24rem] truncate">{localeValue?.value ?? row.original.defaultMessage}</div>
+          return (
+            <div className="max-w-[48rem]">
+              <div className="truncate">{localeValue?.value ?? row.original.defaultMessage}</div>
+              <div className="mt-1 truncate text-xs text-muted-foreground">
+                <T>Original</T>: {row.original.defaultMessage}
+              </div>
+            </div>
+          )
         },
       },
       {
@@ -132,6 +115,20 @@ function BranchPage() {
           return <Badge variant="outline">{t("Default")}</Badge>
         },
       },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <TranslationValueDialog
+            branchName={branchName}
+            defaultLocale={branchQuery.data?.project.defaultLocale ?? ""}
+            locale={resolvedLocale}
+            message={row.original}
+            orgSlug={orgSlug}
+            projectId={projectId}
+          />
+        ),
+      },
     ],
     [branchName, branchQuery.data?.project.defaultLocale, orgSlug, projectId, resolvedLocale, t],
   )
@@ -140,11 +137,7 @@ function BranchPage() {
     <div className="flex flex-col gap-6 p-4 md:p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <GitBranchIcon />
-            <span>{branchQuery.data?.project.name}</span>
-          </div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight">
             <T>Messages</T>
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -158,40 +151,38 @@ function BranchPage() {
         )}
       </div>
 
-      <Card className="overflow-hidden">
-        <CardHeader className="gap-4">
-          <div>
-            <CardTitle>{branchQuery.data?.branch.name ?? branchName}</CardTitle>
-            <CardDescription>
-              <T>Runtime bundles resolve each Message to the selected Locale value for this Branch.</T>
-            </CardDescription>
-          </div>
+      <Card className="gap-0 overflow-hidden">
+        <CardHeader className="border-b">
           <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem]">
             <InputGroup>
               <InputGroupInput
                 value={search}
                 onChange={(event) => translationEditorStore.actions.setSearch(event.target.value)}
-                placeholder={t("Search Messages")}
+                placeholder={t("Search translations")}
               />
               <InputGroupAddon align="inline-start">
                 <SearchIcon className="text-muted-foreground" />
               </InputGroupAddon>
             </InputGroup>
-            <Field className="gap-1">
-              <FieldContent className="gap-0">
-                <FieldLabel htmlFor="translation-locale">{t("Locale")}</FieldLabel>
-              </FieldContent>
-              <NativeSelect
-                id="translation-locale"
+            <Field className="gap-0">
+              <FieldLabel htmlFor="translation-locale" className="sr-only">
+                {t("Locale")}
+              </FieldLabel>
+              <Select
                 value={resolvedLocale}
-                onChange={(event) => translationEditorStore.actions.selectLocale(event.target.value)}
+                onValueChange={(nextLocale) => translationEditorStore.actions.selectLocale((nextLocale as string) ?? "")}
               >
-                {branchQuery.data?.project.locales.map((projectLocale) => (
-                  <option key={projectLocale} value={projectLocale}>
-                    {projectLocale}
-                  </option>
-                ))}
-              </NativeSelect>
+                <SelectTrigger id="translation-locale" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {branchQuery.data?.project.locales.map((projectLocale) => (
+                    <SelectItem key={projectLocale} value={projectLocale}>
+                      {projectLocale}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
           </div>
         </CardHeader>

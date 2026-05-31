@@ -40,14 +40,12 @@ function OrganizationLayout() {
     <TooltipProvider delay={0}>
       <SidebarProvider className="flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-background">
         <header className="flex h-14 w-full shrink-0 items-center justify-between gap-3 border-b bg-background px-4">
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-full min-w-0 items-center gap-1">
             <SidebarTrigger className="-ml-2 md:hidden" />
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md border text-sm font-semibold">BT</div>
-            <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-6" />
             <OrgSwitcher />
             {project && (
               <>
-                <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-6" />
+                <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-14" />
                 <ProjectSwitcher project={project} />
               </>
             )}
