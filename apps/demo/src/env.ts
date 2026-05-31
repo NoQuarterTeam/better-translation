@@ -5,7 +5,6 @@ import { z } from "zod"
 export const env = createEnv({
   extends: [vercel()],
   server: {},
-
   /**
    * The prefix that client-side variables must have. This is enforced both at
    * a type-level and at runtime.
