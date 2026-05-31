@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router"
 
 import { db } from "@/server/db"
 
+const runtimeBundleCacheControl = "public, max-age=0, s-maxage=60, stale-while-revalidate=3600"
+
 export const Route = createFileRoute("/projects/$projectId/branches/$branchName/locales/{$locale}.json")({
   server: {
     handlers: {
@@ -51,7 +53,7 @@ export const Route = createFileRoute("/projects/$projectId/branches/$branchName/
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: runtimeBundleHeaders(status === 200 ? "public, s-maxage=60, stale-while-revalidate=600" : "no-cache"),
+    headers: runtimeBundleHeaders(status === 200 ? runtimeBundleCacheControl : "no-cache"),
   })
 }
 
@@ -61,6 +63,8 @@ function runtimeBundleHeaders(cacheControl: string) {
     "access-control-allow-methods": "GET, OPTIONS",
     "access-control-allow-origin": "*",
     "cache-control": cacheControl,
+    "cdn-cache-control": cacheControl,
     "content-type": "application/json; charset=utf-8",
+    "vercel-cdn-cache-control": cacheControl,
   }
 }
