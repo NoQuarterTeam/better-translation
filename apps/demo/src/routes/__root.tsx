@@ -1,7 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query"
 import { createRootRouteWithContext, HeadContent, Outlet, ScriptOnce, Scripts } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
-import { setResponseHeader } from "@tanstack/react-start/server"
 import z from "zod"
 
 import { loadMessages } from "better-translation/messages"
@@ -18,15 +17,9 @@ interface MyRouterContext {
   queryClient: QueryClient
 }
 
-const runtimeBundleCacheControl = "public, max-age=0, s-maxage=60, stale-while-revalidate=3600"
-
 const getMessagesFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ locale: z.string() }))
   .handler(async ({ data }) => {
-    setResponseHeader("Cache-Control", runtimeBundleCacheControl)
-    setResponseHeader("CDN-Cache-Control", runtimeBundleCacheControl)
-    setResponseHeader("Vercel-CDN-Cache-Control", runtimeBundleCacheControl)
-
     return await loadMessages(data.locale).catch(() => ({}))
   })
 
