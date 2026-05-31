@@ -1,3 +1,4 @@
+import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useParams } from "@tanstack/react-router"
 import { GitBranchIcon, KeyRoundIcon, LanguagesIcon, SettingsIcon } from "lucide-react"
 
@@ -15,10 +16,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
+import { projectBranchRedirectNameQueryOptions } from "../index/-data"
+
 export function ProjectSidebar() {
   const { orgSlug, projectSlug } = useParams({ from: "/app/$orgSlug/projects/$projectSlug" })
   const params = useParams({ strict: false })
   const branchName = typeof params.branchName === "string" ? params.branchName : null
+  const redirectBranchName = useSuspenseQuery(projectBranchRedirectNameQueryOptions(orgSlug, projectSlug)).data
+  const messagesBranchName = branchName ?? redirectBranchName
   const { isMobile, setOpenMobile } = useSidebar()
   const closeMobile = () => {
     if (isMobile) setOpenMobile(false)
@@ -36,10 +41,10 @@ export function ProjectSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={
-                    branchName ? (
+                    messagesBranchName ? (
                       <Link
                         to="/app/$orgSlug/projects/$projectSlug/branches/$branchName"
-                        params={{ orgSlug, projectSlug, branchName }}
+                        params={{ orgSlug, projectSlug, branchName: messagesBranchName }}
                         onClick={closeMobile}
                         className="opacity-50 data-[status=active]:bg-muted data-[status=active]:opacity-100"
                       />

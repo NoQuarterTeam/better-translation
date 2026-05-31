@@ -154,7 +154,7 @@ function ProjectsPage() {
             <T>Each Project maps to one Consumer app using the Better Translation Vite plugin.</T>
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent>
           <DataTable columns={columns} data={projects} />
         </CardContent>
       </Card>

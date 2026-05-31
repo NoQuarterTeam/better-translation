@@ -21,7 +21,6 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/in
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 
-import { setSelectedBranchFn } from "../../../../-data"
 import { branchWorkspaceQueryOptions, saveLocaleValueFn, translateLocaleValueFn, type getBranchWorkspaceFn } from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/branches/$branchName/")({
@@ -30,7 +29,6 @@ export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/branch
     const data = await context.queryClient.ensureQueryData(
       branchWorkspaceQueryOptions(params.orgSlug, params.projectSlug, params.branchName),
     )
-    await setSelectedBranchFn({ data: params })
     return {
       crumb: {
         label: data.branch.name,
@@ -44,16 +42,10 @@ export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/branch
   },
 })
 
-const translationEditorStore = new Store(
-  {
-    locale: "",
-    search: "",
-  },
-  (store) => ({
-    selectLocale: (locale: string) => store.setState((state) => ({ ...state, locale })),
-    setSearch: (search: string) => store.setState((state) => ({ ...state, search })),
-  }),
-)
+const translationEditorStore = new Store({ locale: "", search: "" }, (store) => ({
+  selectLocale: (locale: string) => store.setState((state) => ({ ...state, locale })),
+  setSearch: (search: string) => store.setState((state) => ({ ...state, search })),
+}))
 
 type BranchWorkspace = Awaited<ReturnType<typeof getBranchWorkspaceFn>>
 type MessageRow = BranchWorkspace["messages"][number]
@@ -89,7 +81,7 @@ function BranchPage() {
         cell: ({ row }) => {
           const localeValue = row.original.localeValues[resolvedLocale]
           return (
-            <div className="max-w-[48rem]">
+            <div className="max-w-3xl">
               <div className="truncate">{localeValue?.value ?? row.original.defaultMessage}</div>
               <div className="mt-1 truncate text-xs text-muted-foreground">
                 <T>Original</T>: {row.original.defaultMessage}
@@ -177,7 +169,7 @@ function BranchPage() {
             </Field>
           </div>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent>
           <DataTable columns={columns} data={filteredMessages} />
         </CardContent>
       </Card>
