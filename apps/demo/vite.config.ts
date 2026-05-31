@@ -6,10 +6,6 @@ import { defineConfig } from "vite-plus"
 
 import { betterTranslation } from "better-translation/vite"
 
-const betterTranslationEndpoint =
-  process.env.BETTER_TRANSLATION_ENDPOINT ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://bt.localhost:1355")
-
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
@@ -19,7 +15,7 @@ export default defineConfig({
       runtime: {
         type: "remote",
         projectId: "prj_rdbk7ts1qriiqpz9glzm537t",
-        endpoint: betterTranslationEndpoint,
+        endpoint: process.env.BETTER_TRANSLATION_ENDPOINT,
       },
     }),
     // devtools(),
