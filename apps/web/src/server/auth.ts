@@ -1,7 +1,7 @@
 import { OrganizationInviteEmail, ResetPasswordEmail, VerifyEmail } from "@better-translation/email"
 import { waitUntil } from "@vercel/functions"
-import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
+import { betterAuth } from "better-auth/minimal"
 import { organization } from "better-auth/plugins"
 import { tanstackStartCookies } from "better-auth/tanstack-start"
 
