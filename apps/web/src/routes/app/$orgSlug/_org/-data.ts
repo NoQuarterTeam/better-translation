@@ -38,6 +38,7 @@ export const getOrganizationOverviewFn = createServerFn({ method: "GET" })
         locales: true,
         name: true,
         publicId: true,
+        slug: true,
         updatedAt: true,
       },
       limit: 5,

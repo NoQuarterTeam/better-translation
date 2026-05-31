@@ -297,14 +297,17 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
 
     for (const id of Object.keys(manifest)) {
       if (Object.hasOwn(messages, id)) continue
-      if (Object.hasOwn(existingMessages, id)) {
-        const existingMessage = existingMessages[id]!
+      const entry = manifest[id]!
+      const existingMessage = existingMessages[id]
+      const cachedMessage = getFreshCachedMessage(id, locale)
+
+      if (existingMessage !== undefined && !isUntranslatedLocaleValue(existingMessage, entry)) {
         messages[id] = existingMessage
         continue
       }
-      const cachedMessage = cache.entries[getCacheKey(id, locale)]?.translation
+
       if (cachedMessage !== undefined) messages[id] = cachedMessage
-      else if (isRemoteOfflineDev(resolvedRuntime, isDev)) messages[id] = manifest[id]!.defaultMessage
+      else if (shouldWriteDefaultLocaleFallback()) messages[id] = entry.defaultMessage
     }
     return messages
   }
@@ -325,7 +328,9 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       if (locale === defaultLocale) continue
       const existingMessages = readLocaleMessages(locale)
       for (const [id, entry] of Object.entries(manifest)) {
-        if (!Object.hasOwn(existingMessages, id) && !Object.hasOwn(cache.entries, getCacheKey(id, locale))) {
+        const existingMessage = existingMessages[id]
+        const hasExistingMessage = existingMessage !== undefined && !isUntranslatedLocaleValue(existingMessage, entry)
+        if (!hasExistingMessage && getFreshCachedMessage(id, locale) === undefined) {
           const misses = missingByLocale.get(locale) ?? []
           misses.push({
             id,
@@ -393,11 +398,13 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       `${PREFIX} ${BOLD}Translating${RESET} ${CYAN}${totalMisses}${RESET} ${totalMisses === 1 ? "Message" : "Messages"} -> ${CYAN}${formatLocales(missLocales)}${RESET}`,
     )
 
+    let translatedCount = 0
     for (const [locale, misses] of missingByLocale) {
       const result = await resolvedTranslate(misses, locale)
 
       for (const miss of misses) {
-        const translated = result[miss.id] ?? miss.text
+        const translated = result[miss.id]?.trim()
+        if (!translated) continue
         cache.entries[getCacheKey(miss.id, locale)] = {
           sourceText: miss.text,
           meta: miss.meta,
@@ -405,10 +412,32 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
           translation: translated,
           timestamp: Date.now(),
         }
+        translatedCount += 1
       }
     }
 
+    log(
+      `${PREFIX} ${BOLD}Translated${RESET} ${CYAN}${translatedCount}${RESET}/${CYAN}${totalMisses}${RESET} ${totalMisses === 1 ? "Message" : "Messages"} -> ${CYAN}${formatLocales(missLocales)}${RESET}`,
+    )
+
     return true
+  }
+
+  function getFreshCachedMessage(id: string, locale: string) {
+    const entry = manifest[id]
+    const cachedMessage = cache.entries[getCacheKey(id, locale)]
+    if (!entry || !cachedMessage) return undefined
+    if (cachedMessage.sourceText !== entry.defaultMessage) return undefined
+    if (serializeMeta(cachedMessage.meta) !== serializeMeta(entry.meta)) return undefined
+    return cachedMessage.translation
+  }
+
+  function isUntranslatedLocaleValue(value: string, entry: Pick<ManifestEntry, "defaultMessage">) {
+    return resolvedTranslate !== undefined && value.trim() === entry.defaultMessage.trim()
+  }
+
+  function shouldWriteDefaultLocaleFallback() {
+    return resolvedTranslate !== undefined || isRemoteOfflineDev(resolvedRuntime, isDev)
   }
 
   function scheduleDevTranslation() {

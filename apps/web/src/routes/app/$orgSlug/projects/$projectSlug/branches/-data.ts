@@ -116,10 +116,10 @@ export const setDefaultProjectBranchFn = createServerFn({ method: "POST" })
     return branch
   })
 
-export const projectBranchesQueryOptions = (orgSlug: string, projectId: string) =>
+export const projectBranchesQueryOptions = (orgSlug: string, projectSlug: string) =>
   queryOptions({
-    queryKey: ["project-branches", orgSlug, projectId],
-    queryFn: () => listProjectBranchesFn({ data: { orgSlug, projectId } }),
+    queryKey: ["project-branches", orgSlug, projectSlug],
+    queryFn: () => listProjectBranchesFn({ data: { orgSlug, projectSlug } }),
   })
 
 async function ensureBranchBelongsToProject(projectId: string, branchId: string) {

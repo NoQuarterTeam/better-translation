@@ -74,7 +74,6 @@ export const auth = betterAuth({
   },
   advanced: {
     backgroundTasks: { handler: waitUntil },
-    database: { generateId: false },
   },
   plugins: [
     tanstackStartCookies(),

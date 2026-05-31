@@ -27,10 +27,10 @@ import {
 
 import { createProjectApiKeyFn, projectApiKeysQueryOptions, revokeProjectApiKeyFn, type listProjectApiKeysFn } from "./-data"
 
-export const Route = createFileRoute("/app/$orgSlug/projects/$projectId/api-keys/")({
+export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/api-keys/")({
   component: ProjectApiKeysPage,
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(projectApiKeysQueryOptions(params.orgSlug, params.projectId))
+    await context.queryClient.ensureQueryData(projectApiKeysQueryOptions(params.orgSlug, params.projectSlug))
   },
   head: ({ match }) => {
     const t = createTranslator(match.context.messages)
@@ -45,14 +45,14 @@ function formatDate(date: Date | string) {
 }
 
 function ProjectApiKeysPage() {
-  const { orgSlug, projectId } = Route.useParams()
+  const { orgSlug, projectSlug } = Route.useParams()
   const { queryClient } = Route.useRouteContext()
   const t = useT()
-  const apiKeysQuery = useSuspenseQuery(projectApiKeysQueryOptions(orgSlug, projectId))
-  const apiKeysQueryKey = projectApiKeysQueryOptions(orgSlug, projectId).queryKey
+  const apiKeysQuery = useSuspenseQuery(projectApiKeysQueryOptions(orgSlug, projectSlug))
+  const apiKeysQueryKey = projectApiKeysQueryOptions(orgSlug, projectSlug).queryKey
 
   const revokeApiKeyMutation = useMutation({
-    mutationFn: (apiKeyId: string) => revokeProjectApiKeyFn({ data: { orgSlug, projectId, apiKeyId } }),
+    mutationFn: (apiKeyId: string) => revokeProjectApiKeyFn({ data: { orgSlug, projectSlug, apiKeyId } }),
     onSuccess: (apiKey) => {
       toast.success(t("API key revoked"))
       queryClient.setQueryData<ApiKeyRow[]>(apiKeysQueryKey, (apiKeys) => {
@@ -124,7 +124,7 @@ function ProjectApiKeysPage() {
             <T>Create API key</T>
           </DialogTrigger>
           <DialogContent>
-            <CreateApiKeyDialogContent orgSlug={orgSlug} projectId={projectId} />
+            <CreateApiKeyDialogContent orgSlug={orgSlug} projectSlug={projectSlug} />
           </DialogContent>
         </Dialog>
       </div>
@@ -138,13 +138,13 @@ function ProjectApiKeysPage() {
   )
 }
 
-function CreateApiKeyDialogContent({ orgSlug, projectId }: { orgSlug: string; projectId: string }) {
+function CreateApiKeyDialogContent({ orgSlug, projectSlug }: { orgSlug: string; projectSlug: string }) {
   const t = useT()
   const { queryClient } = Route.useRouteContext()
-  const apiKeysQueryKey = projectApiKeysQueryOptions(orgSlug, projectId).queryKey
+  const apiKeysQueryKey = projectApiKeysQueryOptions(orgSlug, projectSlug).queryKey
 
   const createApiKeyMutation = useMutation({
-    mutationFn: (data: { name: string; orgSlug: string; projectId: string }) => createProjectApiKeyFn({ data }),
+    mutationFn: (data: { name: string; orgSlug: string; projectSlug: string }) => createProjectApiKeyFn({ data }),
     onSuccess: ({ apiKey }) => {
       toast.success(t("API key created"))
       queryClient.setQueryData<ApiKeyRow[]>(apiKeysQueryKey, (apiKeys) => (apiKeys ? [apiKey, ...apiKeys] : [apiKey]))
@@ -163,7 +163,7 @@ function CreateApiKeyDialogContent({ orgSlug, projectId }: { orgSlug: string; pr
       }),
     },
     onSubmit: ({ value }) => {
-      createApiKeyMutation.mutate({ orgSlug, projectId, name: value.name.trim() })
+      createApiKeyMutation.mutate({ orgSlug, projectSlug, name: value.name.trim() })
     },
   })
 

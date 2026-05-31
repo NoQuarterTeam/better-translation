@@ -1,5 +1,5 @@
 import { getCookie } from "@tanstack/react-start/server"
-import { asc, desc, eq } from "drizzle-orm"
+import { and, asc, desc, eq } from "drizzle-orm"
 
 import { db } from "@/server/db"
 import { membersTable, organizationsTable, type User } from "@/server/db/schema"
@@ -11,13 +11,14 @@ export async function getDefaultOrganizationForUser(user: Pick<User, "id">) {
   const selectedOrganizationId = getCookie(selectedOrganizationCookieName)
 
   if (selectedOrganizationId) {
-    const membership = await db.query.membersTable.findFirst({
-      columns: {},
-      where: { userId: user.id, organization: { id: selectedOrganizationId } },
-      with: { organization: { columns: { id: true, slug: true } } },
-    })
+    const [organization] = await db
+      .select({ id: organizationsTable.id, slug: organizationsTable.slug })
+      .from(membersTable)
+      .innerJoin(organizationsTable, eq(organizationsTable.id, membersTable.organizationId))
+      .where(and(eq(membersTable.userId, user.id), eq(organizationsTable.id, selectedOrganizationId)))
+      .limit(1)
 
-    if (membership?.organization) return membership.organization
+    if (organization) return organization
   }
 
   const [organization] = await db

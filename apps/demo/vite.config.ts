@@ -18,17 +18,9 @@ export default defineConfig({
       defaultLocale: "en",
       runtime: {
         type: "remote",
-        projectId: "prj_w34UnfLNZtwr",
+        projectId: "prj_rdbk7ts1qriiqpz9glzm537t",
         endpoint: betterTranslationEndpoint,
       },
-      // runtime: {
-      //   type: "local",
-      //   target: "module",
-      //   translate: createAiTranslate({
-      //     prompt:
-      //       "This text is for a web application UI. Prefer natural, concise wording that feels correct in buttons, labels, validation messages, dialogs, menus, and other interface copy.",
-      //   }),
-      // },
     }),
     // devtools(),
     nitro(),

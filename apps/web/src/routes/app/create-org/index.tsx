@@ -38,6 +38,7 @@ function CreateOrgPage() {
   const navigate = useNavigate()
   const t = useT()
   const [apiError, setApiError] = useState<string | null>(null)
+  const [hasEditedSlug, setHasEditedSlug] = useState(false)
 
   const form = useAppForm({
     defaultValues: { name: "", slug: "" },
@@ -95,7 +96,18 @@ function CreateOrgPage() {
             >
               <form.AppField name="name">
                 {(field) => (
-                  <field.TextField label={t("Organization name")} placeholder="Acme Localization" autoComplete="organization" />
+                  <field.TextField
+                    label={t("Organization name")}
+                    placeholder="Acme Localization"
+                    autoComplete="organization"
+                    onChange={(e) => {
+                      const value = e.target.value
+                      field.handleChange(value)
+                      if (!hasEditedSlug) {
+                        form.setFieldValue("slug", slugify(value))
+                      }
+                    }}
+                  />
                 )}
               </form.AppField>
               <form.AppField name="slug">
@@ -104,6 +116,10 @@ function CreateOrgPage() {
                     label={t("URL slug")}
                     placeholder="acme-localization"
                     description={t("Lowercase, hyphens only. Used in URLs and must be unique.")}
+                    onChange={(e) => {
+                      setHasEditedSlug(true)
+                      field.handleChange(e.target.value)
+                    }}
                   />
                 )}
               </form.AppField>

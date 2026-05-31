@@ -24,17 +24,17 @@ import { Separator } from "@/components/ui/separator"
 import { setSelectedBranchFn } from "../../../../-data"
 import { branchWorkspaceQueryOptions, saveLocaleValueFn, translateLocaleValueFn, type getBranchWorkspaceFn } from "./-data"
 
-export const Route = createFileRoute("/app/$orgSlug/projects/$projectId/branches/$branchName/")({
+export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/branches/$branchName/")({
   component: BranchPage,
   loader: async ({ context, params }) => {
     const data = await context.queryClient.ensureQueryData(
-      branchWorkspaceQueryOptions(params.orgSlug, params.projectId, params.branchName),
+      branchWorkspaceQueryOptions(params.orgSlug, params.projectSlug, params.branchName),
     )
     await setSelectedBranchFn({ data: params })
     return {
       crumb: {
         label: data.branch.name,
-        url: `/app/${params.orgSlug}/projects/${params.projectId}/branches/${params.branchName}`,
+        url: `/app/${params.orgSlug}/projects/${params.projectSlug}/branches/${params.branchName}`,
       },
     }
   },
@@ -59,9 +59,9 @@ type BranchWorkspace = Awaited<ReturnType<typeof getBranchWorkspaceFn>>
 type MessageRow = BranchWorkspace["messages"][number]
 
 function BranchPage() {
-  const { orgSlug, projectId, branchName } = Route.useParams()
+  const { orgSlug, projectSlug, branchName } = Route.useParams()
   const t = useT()
-  const branchQuery = useSuspenseQuery(branchWorkspaceQueryOptions(orgSlug, projectId, branchName))
+  const branchQuery = useSuspenseQuery(branchWorkspaceQueryOptions(orgSlug, projectSlug, branchName))
   const locale = useSelector(translationEditorStore, (state) => state.locale)
   const search = useSelector(translationEditorStore, (state) => state.search)
   const resolvedLocale =
@@ -119,12 +119,12 @@ function BranchPage() {
             locale={resolvedLocale}
             message={row.original}
             orgSlug={orgSlug}
-            projectId={projectId}
+            projectSlug={projectSlug}
           />
         ),
       },
     ],
-    [branchName, branchQuery.data.project.defaultLocale, orgSlug, projectId, resolvedLocale, t],
+    [branchName, branchQuery.data.project.defaultLocale, orgSlug, projectSlug, resolvedLocale, t],
   )
 
   return (
@@ -191,14 +191,14 @@ function TranslationValueDialog({
   locale,
   message,
   orgSlug,
-  projectId,
+  projectSlug,
 }: {
   branchName: string
   defaultLocale: string
   locale: string
   message: MessageRow
   orgSlug: string
-  projectId: string
+  projectSlug: string
 }) {
   const [open, setOpen] = useState(false)
 
@@ -224,7 +224,7 @@ function TranslationValueDialog({
           locale={locale}
           message={message}
           orgSlug={orgSlug}
-          projectId={projectId}
+          projectSlug={projectSlug}
           onSaved={() => setOpen(false)}
         />
       </DialogContent>
@@ -239,7 +239,7 @@ function TranslationValueEditor({
   message,
   onSaved,
   orgSlug,
-  projectId,
+  projectSlug,
 }: {
   branchName: string
   defaultLocale: string
@@ -247,7 +247,7 @@ function TranslationValueEditor({
   message: MessageRow
   onSaved: () => void
   orgSlug: string
-  projectId: string
+  projectSlug: string
 }) {
   const t = useT()
   const { queryClient } = Route.useRouteContext()
@@ -267,23 +267,21 @@ function TranslationValueEditor({
   const saveMutation = useMutation({
     mutationFn: (data: { value: string }) =>
       saveLocaleValueFn({
-        data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectId, value: data.value },
+        data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectSlug, value: data.value },
       }),
     onSuccess: () => {
       toast.success(t("Locale value saved"))
-      void queryClient.invalidateQueries({ queryKey: ["branch-workspace", orgSlug, projectId, branchName] })
-      void queryClient.invalidateQueries({ queryKey: ["project-navigation", orgSlug, projectId] })
+      void queryClient.invalidateQueries(branchWorkspaceQueryOptions(orgSlug, projectSlug, branchName))
       onSaved()
     },
     onError: (error: Error) => toast.error(t("Could not save Locale value"), { description: error.message }),
   })
 
   const translateMutation = useMutation({
-    mutationFn: () => translateLocaleValueFn({ data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectId } }),
+    mutationFn: () => translateLocaleValueFn({ data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectSlug } }),
     onSuccess: () => {
       toast.success(t("Platform translator saved a Locale value"))
-      void queryClient.invalidateQueries({ queryKey: ["branch-workspace", orgSlug, projectId, branchName] })
-      void queryClient.invalidateQueries({ queryKey: ["project-navigation", orgSlug, projectId] })
+      void queryClient.invalidateQueries(branchWorkspaceQueryOptions(orgSlug, projectSlug, branchName))
     },
     onError: (error: Error) => toast.error(t("Could not translate Message"), { description: error.message }),
   })

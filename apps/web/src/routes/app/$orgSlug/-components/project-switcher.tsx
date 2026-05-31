@@ -16,12 +16,12 @@ import {
 import { organizationProjectsQueryOptions, setSelectedProjectFn } from "../-data"
 import { ResourceMark } from "./resource-mark"
 
-export function ProjectSwitcher({ projectId }: { projectId: string }) {
+export function ProjectSwitcher({ projectSlug }: { projectSlug: string }) {
   const { orgSlug } = useParams({ from: "/app/$orgSlug" })
   const navigate = useNavigate()
   const router = useRouter()
   const projects = useSuspenseQuery(organizationProjectsQueryOptions(orgSlug)).data
-  const project = projects.find((item) => item.publicId === projectId)
+  const project = projects.find((item) => item.slug === projectSlug)
   const branchName = project ? getProjectBranchName(project) : null
   const setSelectedProject = useMutation({ mutationFn: setSelectedProjectFn })
 
@@ -33,14 +33,14 @@ export function ProjectSwitcher({ projectId }: { projectId: string }) {
           className="h-9 min-w-0 justify-start gap-3 px-2 font-medium"
           render={
             branchName ? (
-              <Link to="/app/$orgSlug/projects/$projectId/branches/$branchName" params={{ orgSlug, projectId, branchName }} />
+              <Link to="/app/$orgSlug/projects/$projectSlug/branches/$branchName" params={{ orgSlug, projectSlug, branchName }} />
             ) : (
-              <Link to="/app/$orgSlug/projects/$projectId" params={{ orgSlug, projectId }} />
+              <Link to="/app/$orgSlug/projects/$projectSlug" params={{ orgSlug, projectSlug }} />
             )
           }
         >
-          <ResourceMark label={project?.name ?? projectId} className="size-6 rounded-md" />
-          <span className="hidden truncate sm:inline">{project?.name ?? projectId}</span>
+          <ResourceMark label={project?.name ?? projectSlug} className="size-6 rounded-md" />
+          <span className="hidden truncate sm:inline">{project?.name ?? projectSlug}</span>
         </Button>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className="h-9" />}>
           <ChevronsUpDownIcon data-icon="inline-end" className="text-muted-foreground" />
@@ -51,7 +51,7 @@ export function ProjectSwitcher({ projectId }: { projectId: string }) {
         <DropdownMenuGroup>
           <DropdownMenuLabel>Projects</DropdownMenuLabel>
           {projects.map((item) => {
-            const isActive = item.publicId === projectId
+            const isActive = item.slug === projectSlug
             const itemBranchName = getProjectBranchName(item)
 
             return (
@@ -61,16 +61,16 @@ export function ProjectSwitcher({ projectId }: { projectId: string }) {
                 onMouseEnter={() => {
                   if (!isActive && itemBranchName) {
                     void router.preloadRoute({
-                      to: "/app/$orgSlug/projects/$projectId/branches/$branchName",
-                      params: { orgSlug, projectId: item.publicId, branchName: itemBranchName },
+                      to: "/app/$orgSlug/projects/$projectSlug/branches/$branchName",
+                      params: { orgSlug, projectSlug: item.slug, branchName: itemBranchName },
                     })
                   }
                 }}
                 onFocus={() => {
                   if (!isActive && itemBranchName) {
                     void router.preloadRoute({
-                      to: "/app/$orgSlug/projects/$projectId/branches/$branchName",
-                      params: { orgSlug, projectId: item.publicId, branchName: itemBranchName },
+                      to: "/app/$orgSlug/projects/$projectSlug/branches/$branchName",
+                      params: { orgSlug, projectSlug: item.slug, branchName: itemBranchName },
                     })
                   }
                 }}
@@ -79,15 +79,15 @@ export function ProjectSwitcher({ projectId }: { projectId: string }) {
                   setSelectedProject.mutate({ data: { orgSlug, projectId: item.id } })
                   if (itemBranchName) {
                     void navigate({
-                      to: "/app/$orgSlug/projects/$projectId/branches/$branchName",
-                      params: { orgSlug, projectId: item.publicId, branchName: itemBranchName },
+                      to: "/app/$orgSlug/projects/$projectSlug/branches/$branchName",
+                      params: { orgSlug, projectSlug: item.slug, branchName: itemBranchName },
                     })
                     return
                   }
 
                   void navigate({
-                    to: "/app/$orgSlug/projects/$projectId",
-                    params: { orgSlug, projectId: item.publicId },
+                    to: "/app/$orgSlug/projects/$projectSlug",
+                    params: { orgSlug, projectSlug: item.slug },
                   })
                 }}
                 className="gap-3"
@@ -95,7 +95,7 @@ export function ProjectSwitcher({ projectId }: { projectId: string }) {
                 <ResourceMark label={item.name} className="size-7 rounded-md" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{item.name}</div>
-                  <div className="truncate font-mono text-xs leading-3 text-muted-foreground">{item.publicId}</div>
+                  <div className="truncate text-xs leading-3 text-muted-foreground">{item.slug}</div>
                 </div>
                 <CheckIcon className={isActive ? "opacity-100" : "opacity-0"} />
               </DropdownMenuItem>

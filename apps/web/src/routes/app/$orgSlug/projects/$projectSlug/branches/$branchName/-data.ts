@@ -83,10 +83,10 @@ export const getBranchWorkspaceFn = createServerFn({ method: "GET" })
     }
   })
 
-export const branchWorkspaceQueryOptions = (orgSlug: string, projectId: string, branchName: string) =>
+export const branchWorkspaceQueryOptions = (orgSlug: string, projectSlug: string, branchName: string) =>
   queryOptions({
-    queryKey: ["branch-workspace", orgSlug, projectId, branchName],
-    queryFn: () => getBranchWorkspaceFn({ data: { orgSlug, projectId, branchName } }),
+    queryKey: ["branch-workspace", orgSlug, projectSlug, branchName],
+    queryFn: () => getBranchWorkspaceFn({ data: { orgSlug, projectSlug, branchName } }),
   })
 
 export const saveLocaleValueFn = createServerFn({ method: "POST" })

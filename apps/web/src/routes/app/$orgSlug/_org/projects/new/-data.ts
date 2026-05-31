@@ -1,9 +1,10 @@
 import { createServerFn } from "@tanstack/react-start"
+import { eq } from "drizzle-orm"
 
 import { organizationMiddleware } from "@/lib/functions/middleware"
 import { parseZod } from "@/lib/functions/zod"
 import { db } from "@/server/db"
-import { projectInsertSchema, projectsTable } from "@/server/db/schema"
+import { branchInsertSchema, branchesTable, projectInsertSchema, projectsTable } from "@/server/db/schema"
 import { DEFAULT_TRANSLATION_MODEL } from "@/server/platform"
 
 export const createProjectFn = createServerFn({ method: "POST" })
@@ -20,6 +21,7 @@ export const createProjectFn = createServerFn({ method: "POST" })
           translationPrompt: true,
         })
         .extend({
+          defaultBranchName: branchInsertSchema.shape.name,
           translationModel: projectInsertSchema.shape.translationModel.optional().default(DEFAULT_TRANSLATION_MODEL),
           translationPrompt: projectInsertSchema.shape.translationPrompt
             .optional()
@@ -43,20 +45,41 @@ export const createProjectFn = createServerFn({ method: "POST" })
 
     if (existingProject) throw new Error("A Project with that slug already exists.")
 
-    const [project] = await db
-      .insert(projectsTable)
-      .values({
-        defaultLocale: data.defaultLocale,
-        locales: data.locales,
-        name: data.name,
-        organizationId: context.organization.id,
-        slug: data.slug,
-        translationModel: data.translationModel,
-        translationPrompt: data.translationPrompt,
-      })
-      .returning()
+    const project = await db.transaction(async (tx) => {
+      const [createdProject] = await tx
+        .insert(projectsTable)
+        .values({
+          defaultLocale: data.defaultLocale,
+          locales: data.locales,
+          name: data.name,
+          organizationId: context.organization.id,
+          slug: data.slug,
+          translationModel: data.translationModel,
+          translationPrompt: data.translationPrompt,
+        })
+        .returning()
 
-    if (!project) throw new Error("Could not create Project.")
+      if (!createdProject) throw new Error("Could not create Project.")
+
+      const [defaultBranch] = await tx
+        .insert(branchesTable)
+        .values({
+          name: data.defaultBranchName,
+          projectId: createdProject.id,
+        })
+        .returning()
+
+      if (!defaultBranch) throw new Error("Could not create default Branch.")
+
+      const [projectWithDefaultBranch] = await tx
+        .update(projectsTable)
+        .set({ defaultBranchId: defaultBranch.id })
+        .where(eq(projectsTable.id, createdProject.id))
+        .returning()
+
+      if (!projectWithDefaultBranch) throw new Error("Could not set default Branch.")
+      return projectWithDefaultBranch
+    })
 
     return project
   })

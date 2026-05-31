@@ -17,6 +17,7 @@ export const getProjectSettingsFn = createServerFn({ method: "GET" })
       locales: project.locales,
       name: project.name,
       publicId: project.publicId,
+      slug: project.slug,
       translationModel: project.translationModel,
       translationPrompt: project.translationPrompt,
     }
@@ -36,6 +37,7 @@ export const updateProjectNameFn = createServerFn({ method: "POST" })
         locales: projectsTable.locales,
         name: projectsTable.name,
         publicId: projectsTable.publicId,
+        slug: projectsTable.slug,
         translationModel: projectsTable.translationModel,
         translationPrompt: projectsTable.translationPrompt,
       })
@@ -67,6 +69,7 @@ export const updateProjectLocalesFn = createServerFn({ method: "POST" })
         locales: projectsTable.locales,
         name: projectsTable.name,
         publicId: projectsTable.publicId,
+        slug: projectsTable.slug,
         translationModel: projectsTable.translationModel,
         translationPrompt: projectsTable.translationPrompt,
       })
@@ -100,6 +103,7 @@ export const updateProjectTranslatorFn = createServerFn({ method: "POST" })
         locales: projectsTable.locales,
         name: projectsTable.name,
         publicId: projectsTable.publicId,
+        slug: projectsTable.slug,
         translationModel: projectsTable.translationModel,
         translationPrompt: projectsTable.translationPrompt,
       })
@@ -108,8 +112,8 @@ export const updateProjectTranslatorFn = createServerFn({ method: "POST" })
     return updatedProject
   })
 
-export const projectSettingsQueryOptions = (orgSlug: string, projectId: string) =>
+export const projectSettingsQueryOptions = (orgSlug: string, projectSlug: string) =>
   queryOptions({
-    queryKey: ["project-settings", orgSlug, projectId],
-    queryFn: () => getProjectSettingsFn({ data: { orgSlug, projectId } }),
+    queryKey: ["project-settings", orgSlug, projectSlug],
+    queryFn: () => getProjectSettingsFn({ data: { orgSlug, projectSlug } }),
   })

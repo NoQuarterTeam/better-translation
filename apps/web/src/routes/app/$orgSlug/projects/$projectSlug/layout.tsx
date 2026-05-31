@@ -4,7 +4,7 @@ import { SidebarInset } from "@/components/ui/sidebar"
 
 import { ProjectSidebar } from "./-components/project-sidebar"
 
-export const Route = createFileRoute("/app/$orgSlug/projects/$projectId")({
+export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug")({
   component: ProjectLayout,
 })
 

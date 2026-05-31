@@ -36,10 +36,10 @@ export const organizationMiddleware = createMiddleware({ type: "function" })
 
 export const projectMiddleware = createMiddleware({ type: "function" })
   .middleware([organizationMiddleware])
-  .inputValidator(parseZod(z.object({ projectId: z.string().trim().min(1) }).loose()))
+  .inputValidator(parseZod(z.object({ projectSlug: z.string().trim().min(1) }).loose()))
   .server(async ({ next, context, data }) => {
     const project = await db.query.projectsTable.findFirst({
-      where: { publicId: data.projectId, organizationId: context.organization.id },
+      where: { slug: data.projectSlug, organizationId: context.organization.id },
     })
 
     if (!project) throw new Error("Project not found.")
@@ -58,16 +58,16 @@ export const adminMiddleware = createMiddleware({ type: "function" })
   })
 
 async function getCurrentOrganizationAccess(params: { slug: string; userId: string }) {
-  const organizationAccess = await db.query.membersTable.findFirst({
+  const organization = await db.query.organizationsTable.findFirst({ where: { slug: params.slug } })
+
+  if (!organization) return null
+
+  const member = await db.query.membersTable.findFirst({
     columns: { id: true, role: true },
-    where: { userId: params.userId, organization: { slug: params.slug } },
-    with: { organization: true },
+    where: { organizationId: organization.id, userId: params.userId },
   })
 
-  if (!organizationAccess?.organization) return null
+  if (!member) return null
 
-  return {
-    organization: organizationAccess.organization,
-    member: { id: organizationAccess.id, role: organizationAccess.role },
-  }
+  return { organization, member }
 }

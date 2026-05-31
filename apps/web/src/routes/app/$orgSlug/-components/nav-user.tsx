@@ -1,6 +1,7 @@
 import { useNavigate, useRouter } from "@tanstack/react-router"
 import { LogOutIcon } from "lucide-react"
 
+import type { Locale } from "better-translation/messages"
 import { useT } from "better-translation/react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { authClient } from "@/lib/auth/client"
-import { getLocale, type AppLocale, setLocale } from "@/routes/-locale"
+import { getLocale, setLocale } from "@/routes/-locale"
 import type { User } from "@/server/db/schema"
 
 function createInitials(user: Pick<User, "name">) {
@@ -26,6 +27,11 @@ function createInitials(user: Pick<User, "name">) {
       .join("") || ""
   )
 }
+
+const languageOptions = [
+  { label: "English", value: "en" },
+  { label: "Nederlands", value: "nl" },
+] satisfies { label: string; value: Locale }[]
 
 export function NavUser() {
   const navigate = useNavigate()
@@ -65,8 +71,9 @@ export function NavUser() {
           <Select
             aria-label={t("Select locale")}
             value={locale}
+            items={languageOptions}
             onValueChange={(nextLocale) => {
-              setLocale(nextLocale as AppLocale)
+              setLocale(nextLocale as Locale)
               void router.invalidate()
             }}
           >
@@ -75,8 +82,11 @@ export function NavUser() {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="nl">Nederlands</SelectItem>
+                {languageOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectGroup>
             </SelectContent>
           </Select>

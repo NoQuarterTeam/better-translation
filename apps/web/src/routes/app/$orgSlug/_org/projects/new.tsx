@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
@@ -9,6 +10,7 @@ import { createTranslator } from "better-translation/server"
 import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
+import { organizationProjectsQueryOptions } from "../../-data"
 import { createProjectFn } from "./new/-data"
 
 export const Route = createFileRoute("/app/$orgSlug/_org/projects/new")({
@@ -34,9 +36,11 @@ function NewProjectPage() {
   const { queryClient } = Route.useRouteContext()
   const t = useT()
   const navigate = useNavigate()
+  const [hasEditedSlug, setHasEditedSlug] = useState(false)
 
   const createMutation = useMutation({
     mutationFn: (data: {
+      defaultBranchName: string
       defaultLocale: string
       locales: string[]
       name: string
@@ -47,9 +51,8 @@ function NewProjectPage() {
     }) => createProjectFn({ data }),
     onSuccess: (project) => {
       toast.success(t("Project created"))
-      void queryClient.invalidateQueries({ queryKey: ["projects", orgSlug] })
-      void queryClient.invalidateQueries({ queryKey: ["organization-projects", orgSlug] })
-      void navigate({ to: "/app/$orgSlug/projects/$projectId", params: { orgSlug, projectId: project.publicId } })
+      void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
+      void navigate({ to: "/app/$orgSlug/projects/$projectSlug", params: { orgSlug, projectSlug: project.slug } })
     },
   })
 
@@ -57,6 +60,7 @@ function NewProjectPage() {
     defaultValues: {
       name: "",
       slug: "",
+      defaultBranchName: "main",
       defaultLocale: "en",
       locales: "en,nl",
       translationModel: "openai/gpt-5.5",
@@ -70,6 +74,12 @@ function NewProjectPage() {
           .min(1, { error: t("Project name is required") })
           .max(120),
         slug: z.string().trim(),
+        defaultBranchName: z
+          .string()
+          .trim()
+          .min(1, { error: t("Branch name is required") })
+          .max(120)
+          .regex(/^[A-Za-z0-9._/-]+$/, { error: t("Use letters, numbers, dots, slashes, underscores, or dashes") }),
         defaultLocale: z.string().trim().min(2).max(20),
         locales: z.string().trim().min(2),
         translationModel: z.string().trim().min(1).max(120),
@@ -77,11 +87,11 @@ function NewProjectPage() {
       }),
     },
     onSubmit: ({ value }) => {
-      const slug = value.slug.trim() || slugify(value.name)
       createMutation.mutate({
         ...value,
         orgSlug,
-        slug,
+        slug: value.slug.trim() || slugify(value.name),
+        defaultBranchName: value.defaultBranchName.trim(),
         defaultLocale: value.defaultLocale.trim().toLowerCase(),
         locales: value.locales
           .split(",")
@@ -120,16 +130,35 @@ function NewProjectPage() {
               }}
             >
               <form.AppField name="name">
-                {(field) => <field.TextField label={t("Project name")} placeholder="Acme Web" />}
+                {(field) => (
+                  <field.TextField
+                    label={t("Project name")}
+                    placeholder="Acme Web"
+                    onChange={(e) => {
+                      const value = e.target.value
+                      field.handleChange(value)
+                      if (!hasEditedSlug) {
+                        form.setFieldValue("slug", slugify(value))
+                      }
+                    }}
+                  />
+                )}
               </form.AppField>
               <form.AppField name="slug">
                 {(field) => (
                   <field.TextField
-                    label={t("Slug")}
+                    label={t("URL slug")}
                     placeholder="acme-web"
-                    description={t("Leave blank to generate from the Project name.")}
+                    description={t("Lowercase, hyphens only. Used in URLs and must be unique.")}
+                    onChange={(e) => {
+                      setHasEditedSlug(true)
+                      field.handleChange(e.target.value)
+                    }}
                   />
                 )}
+              </form.AppField>
+              <form.AppField name="defaultBranchName">
+                {(field) => <field.TextField label={t("Default Branch")} placeholder="main" />}
               </form.AppField>
               <div className="grid gap-4 sm:grid-cols-2">
                 <form.AppField name="defaultLocale">

@@ -28,7 +28,7 @@ export const Route = createFileRoute("/app/$orgSlug")({
 
 function OrganizationLayout() {
   const params = useParams({ strict: false })
-  const projectId = typeof params.projectId === "string" ? params.projectId : null
+  const projectSlug = typeof params.projectSlug === "string" ? params.projectSlug : null
   const branchName = typeof params.branchName === "string" ? params.branchName : null
 
   return (
@@ -38,14 +38,14 @@ function OrganizationLayout() {
           <div className="flex h-full min-w-0 items-center gap-1">
             <SidebarTrigger className="-ml-2 md:hidden" />
             <OrgSwitcher />
-            {projectId && (
+            {projectSlug && (
               <>
                 <SwitcherSeparator />
-                <ProjectSwitcher projectId={projectId} />
+                <ProjectSwitcher projectSlug={projectSlug} />
                 {branchName && (
                   <>
                     <SwitcherSeparator />
-                    <BranchSwitcher branchName={branchName} projectId={projectId} />
+                    <BranchSwitcher branchName={branchName} projectSlug={projectSlug} />
                   </>
                 )}
               </>

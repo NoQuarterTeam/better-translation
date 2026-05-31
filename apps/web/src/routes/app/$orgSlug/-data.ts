@@ -76,7 +76,7 @@ export const setSelectedProjectFn = createServerFn({ method: "POST" })
   })
 
 const branchSwitcherInputSchema = z.object({
-  projectId: z.string().trim().min(1),
+  projectSlug: z.string().trim().min(1),
 })
 
 export const setSelectedBranchFn = createServerFn({ method: "POST" })
@@ -91,7 +91,7 @@ export const setSelectedBranchFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const project = await db.query.projectsTable.findFirst({
       columns: { id: true, publicId: true },
-      where: { organizationId: context.organization.id, publicId: data.projectId },
+      where: { organizationId: context.organization.id, slug: data.projectSlug },
     })
 
     if (!project) throw new Error("Project not found.")

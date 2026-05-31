@@ -9,6 +9,7 @@ import { createTranslator } from "better-translation/server"
 import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
+import { currentOrganizationQueryOptions } from "../../-data"
 import { organizationSettingsQueryOptions, updateOrganizationNameFn } from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug/_org/settings/")({
@@ -33,7 +34,7 @@ function OrganizationSettingsPage() {
     onSuccess: () => {
       toast.success(t("Organization updated"))
       void queryClient.invalidateQueries(organizationSettingsQueryOptions(orgSlug))
-      void queryClient.invalidateQueries({ queryKey: ["current-organization", orgSlug] })
+      void queryClient.invalidateQueries(currentOrganizationQueryOptions(orgSlug))
     },
   })
 

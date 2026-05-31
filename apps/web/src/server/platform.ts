@@ -5,7 +5,7 @@ import { env } from "@/env"
 
 export const DEFAULT_TRANSLATION_MODEL = "openai/gpt-5.5"
 
-const createSecretId = init({ length: 40 })
+const createSecretId = init({ length: 32 })
 
 export function createStableHash(value: string) {
   return createHash("sha256").update(value).digest("hex")

@@ -1,5 +1,6 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
+import { CopyIcon } from "lucide-react"
 import { toast } from "sonner"
 import * as z from "zod"
 
@@ -8,8 +9,10 @@ import { createTranslator } from "better-translation/server"
 
 import { useAppForm } from "@/components/react-form"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
+import { organizationProjectsQueryOptions } from "../../../-data"
 import {
   projectSettingsQueryOptions,
   updateProjectLocalesFn,
@@ -18,10 +21,10 @@ import {
   type getProjectSettingsFn,
 } from "./-data"
 
-export const Route = createFileRoute("/app/$orgSlug/projects/$projectId/settings/")({
+export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/settings/")({
   component: ProjectSettingsPage,
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(projectSettingsQueryOptions(params.orgSlug, params.projectId))
+    await context.queryClient.ensureQueryData(projectSettingsQueryOptions(params.orgSlug, params.projectSlug))
   },
   head: ({ match }) => {
     const t = createTranslator(match.context.messages)
@@ -32,20 +35,19 @@ export const Route = createFileRoute("/app/$orgSlug/projects/$projectId/settings
 type ProjectSettings = Awaited<ReturnType<typeof getProjectSettingsFn>>
 
 function ProjectSettingsPage() {
-  const { orgSlug, projectId } = Route.useParams()
+  const { orgSlug, projectSlug } = Route.useParams()
   const { queryClient } = Route.useRouteContext()
   const t = useT()
-  const project = useSuspenseQuery(projectSettingsQueryOptions(orgSlug, projectId)).data
-  const projectSettingsQueryKey = projectSettingsQueryOptions(orgSlug, projectId).queryKey
+  const project = useSuspenseQuery(projectSettingsQueryOptions(orgSlug, projectSlug)).data
+  const projectSettingsQueryKey = projectSettingsQueryOptions(orgSlug, projectSlug).queryKey
 
   const updateProjectSettings = (updatedProject: ProjectSettings) => {
     queryClient.setQueryData<ProjectSettings>(projectSettingsQueryKey, updatedProject)
-    void queryClient.invalidateQueries({ queryKey: ["organization-projects", orgSlug] })
-    void queryClient.invalidateQueries({ queryKey: ["projects", orgSlug] })
+    void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
   }
 
   const updateNameMutation = useMutation({
-    mutationFn: (data: { name: string; orgSlug: string; projectId: string }) => updateProjectNameFn({ data }),
+    mutationFn: (data: { name: string; orgSlug: string; projectSlug: string }) => updateProjectNameFn({ data }),
     onSuccess: (updatedProject) => {
       toast.success(t("Project updated"))
       updateProjectSettings(updatedProject)
@@ -53,7 +55,7 @@ function ProjectSettingsPage() {
   })
 
   const updateLocalesMutation = useMutation({
-    mutationFn: (data: { defaultLocale: string; locales: string[]; orgSlug: string; projectId: string }) =>
+    mutationFn: (data: { defaultLocale: string; locales: string[]; orgSlug: string; projectSlug: string }) =>
       updateProjectLocalesFn({ data }),
     onSuccess: (updatedProject) => {
       toast.success(t("Project Locales updated"))
@@ -62,7 +64,7 @@ function ProjectSettingsPage() {
   })
 
   const updateTranslatorMutation = useMutation({
-    mutationFn: (data: { orgSlug: string; projectId: string; translationModel: string; translationPrompt: string }) =>
+    mutationFn: (data: { orgSlug: string; projectSlug: string; translationModel: string; translationPrompt: string }) =>
       updateProjectTranslatorFn({ data }),
     onSuccess: (updatedProject) => {
       toast.success(t("Project translator updated"))
@@ -82,7 +84,7 @@ function ProjectSettingsPage() {
       }),
     },
     onSubmit: ({ value }) => {
-      updateNameMutation.mutate({ orgSlug, projectId, name: value.name.trim() })
+      updateNameMutation.mutate({ orgSlug, projectSlug, name: value.name.trim() })
     },
   })
 
@@ -100,7 +102,7 @@ function ProjectSettingsPage() {
     onSubmit: ({ value }) => {
       updateLocalesMutation.mutate({
         orgSlug,
-        projectId,
+        projectSlug,
         defaultLocale: value.defaultLocale.trim().toLowerCase(),
         locales: value.locales
           .split(",")
@@ -125,7 +127,7 @@ function ProjectSettingsPage() {
       updateTranslatorMutation.mutate({
         ...value,
         orgSlug,
-        projectId,
+        projectSlug,
         translationModel: value.translationModel.trim(),
         translationPrompt: value.translationPrompt.trim(),
       })
@@ -149,7 +151,7 @@ function ProjectSettingsPage() {
             <T>Project profile</T>
           </CardTitle>
           <CardDescription>
-            <T>The public Project id stays unchanged.</T>
+            <T>Update the Project display name.</T>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -170,6 +172,34 @@ function ProjectSettingsPage() {
               <profileForm.FormError>{updateNameMutation.error?.message}</profileForm.FormError>
             </form>
           </profileForm.AppForm>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <T>Project id</T>
+          </CardTitle>
+          <CardDescription>
+            <T>The public Project id stays unchanged.</T>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex w-fit max-w-full items-center gap-2 rounded-md border bg-muted/30 p-1">
+            <code className="min-w-0 truncate px-2 font-mono text-sm text-muted-foreground">{project.publicId}</code>
+            <Button
+              type="button"
+              variant="ghost"
+              className="shrink-0"
+              onClick={() => {
+                void navigator.clipboard.writeText(project.publicId)
+                toast.success(t("Copied"))
+              }}
+            >
+              <CopyIcon />
+              <T>Copy</T>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

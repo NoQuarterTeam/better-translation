@@ -4,6 +4,7 @@ import viteReact from "@vitejs/plugin-react"
 import { nitro } from "nitro/vite"
 import { defineConfig } from "vite-plus"
 
+import { createAiTranslate } from "better-translation/ai"
 import { betterTranslation } from "better-translation/vite"
 
 export default defineConfig({
@@ -12,18 +13,13 @@ export default defineConfig({
     betterTranslation({
       locales: ["en", "nl"],
       defaultLocale: "en",
-      // runtime: {
-      //   type: "remote",
-      //   projectId: "prj_tgaF4DuvXM4r",
-      //   endpoint: betterTranslationEndpoint,
-      // },
       runtime: {
         type: "local",
         target: "module",
-        // translate: createAiTranslate({
-        //   prompt:
-        //     "This text is for a web application UI. Prefer natural, concise wording that feels correct in buttons, labels, validation messages, dialogs, menus, and other interface copy.",
-        // }),
+        translate: createAiTranslate({
+          prompt:
+            "This text is for a web application UI. Prefer natural, concise wording that feels correct in buttons, labels, validation messages, dialogs, menus, and other interface copy.",
+        }),
       },
     }),
     // devtools(),

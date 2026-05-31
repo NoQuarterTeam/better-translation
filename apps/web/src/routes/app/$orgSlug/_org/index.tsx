@@ -79,13 +79,13 @@ function OrganizationPage() {
             overview.recentProjects.map((project) => (
               <Link
                 key={project.id}
-                to="/app/$orgSlug/projects/$projectId"
-                params={{ orgSlug, projectId: project.publicId }}
+                to="/app/$orgSlug/projects/$projectSlug"
+                params={{ orgSlug, projectSlug: project.slug }}
                 className="flex flex-col gap-3 rounded-md border p-4 no-underline transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <div className="font-medium">{project.name}</div>
-                  <div className="mt-1 font-mono text-xs text-muted-foreground">{project.publicId}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{project.slug}</div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge>{project.defaultLocale}</Badge>

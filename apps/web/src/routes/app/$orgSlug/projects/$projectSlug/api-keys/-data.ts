@@ -58,10 +58,10 @@ export const revokeProjectApiKeyFn = createServerFn({ method: "POST" })
     return apiKey
   })
 
-export const projectApiKeysQueryOptions = (orgSlug: string, projectId: string) =>
+export const projectApiKeysQueryOptions = (orgSlug: string, projectSlug: string) =>
   queryOptions({
-    queryKey: ["project-api-keys", orgSlug, projectId],
-    queryFn: () => listProjectApiKeysFn({ data: { orgSlug, projectId } }),
+    queryKey: ["project-api-keys", orgSlug, projectSlug],
+    queryFn: () => listProjectApiKeysFn({ data: { orgSlug, projectSlug } }),
   })
 
 async function listProjectApiKeys(projectId: string) {

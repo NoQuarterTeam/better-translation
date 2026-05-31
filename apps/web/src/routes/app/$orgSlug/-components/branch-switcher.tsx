@@ -16,18 +16,18 @@ import {
 
 import { organizationProjectsQueryOptions, setSelectedBranchFn } from "../-data"
 
-export function BranchSwitcher({ branchName, projectId }: { branchName: string; projectId: string }) {
+export function BranchSwitcher({ branchName, projectSlug }: { branchName: string; projectSlug: string }) {
   const { orgSlug } = useParams({ from: "/app/$orgSlug" })
   const projects = useSuspenseQuery(organizationProjectsQueryOptions(orgSlug)).data
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const router = useRouter()
-  const branches = projects.find((project) => project.publicId === projectId)?.branches ?? []
+  const branches = projects.find((project) => project.slug === projectSlug)?.branches ?? []
   const activeBranch = branches.find((branch) => branch.name === branchName)
   const setSelectedBranch = useMutation({
     mutationFn: setSelectedBranchFn,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["organization-projects", orgSlug] })
+      void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
     },
   })
 
@@ -54,25 +54,25 @@ export function BranchSwitcher({ branchName, projectId }: { branchName: string; 
                 onMouseEnter={() => {
                   if (!isActive) {
                     void router.preloadRoute({
-                      to: "/app/$orgSlug/projects/$projectId/branches/$branchName",
-                      params: { orgSlug, projectId, branchName: branch.name },
+                      to: "/app/$orgSlug/projects/$projectSlug/branches/$branchName",
+                      params: { orgSlug, projectSlug, branchName: branch.name },
                     })
                   }
                 }}
                 onFocus={() => {
                   if (!isActive) {
                     void router.preloadRoute({
-                      to: "/app/$orgSlug/projects/$projectId/branches/$branchName",
-                      params: { orgSlug, projectId, branchName: branch.name },
+                      to: "/app/$orgSlug/projects/$projectSlug/branches/$branchName",
+                      params: { orgSlug, projectSlug, branchName: branch.name },
                     })
                   }
                 }}
                 onClick={() => {
                   if (isActive) return
-                  setSelectedBranch.mutate({ data: { orgSlug, projectId, branchName: branch.name } })
+                  setSelectedBranch.mutate({ data: { orgSlug, projectSlug, branchName: branch.name } })
                   void navigate({
-                    to: "/app/$orgSlug/projects/$projectId/branches/$branchName",
-                    params: { orgSlug, projectId, branchName: branch.name },
+                    to: "/app/$orgSlug/projects/$projectSlug/branches/$branchName",
+                    params: { orgSlug, projectSlug, branchName: branch.name },
                   })
                 }}
               >

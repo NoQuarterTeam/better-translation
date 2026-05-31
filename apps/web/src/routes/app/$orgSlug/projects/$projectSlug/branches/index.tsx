@@ -31,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+import { organizationProjectsQueryOptions } from "../../../-data"
 import {
   createProjectBranchFn,
   projectBranchesQueryOptions,
@@ -39,10 +40,10 @@ import {
   type listProjectBranchesFn,
 } from "./-data"
 
-export const Route = createFileRoute("/app/$orgSlug/projects/$projectId/branches/")({
+export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/branches/")({
   component: ProjectBranchesPage,
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(projectBranchesQueryOptions(params.orgSlug, params.projectId))
+    await context.queryClient.ensureQueryData(projectBranchesQueryOptions(params.orgSlug, params.projectSlug))
   },
   head: ({ match }) => {
     const t = createTranslator(match.context.messages)
@@ -59,19 +60,18 @@ function formatDate(date: Date | string | null) {
 }
 
 function ProjectBranchesPage() {
-  const { orgSlug, projectId } = Route.useParams()
+  const { orgSlug, projectSlug } = Route.useParams()
   const { queryClient } = Route.useRouteContext()
   const t = useT()
-  const branchesQuery = useSuspenseQuery(projectBranchesQueryOptions(orgSlug, projectId))
+  const branchesQuery = useSuspenseQuery(projectBranchesQueryOptions(orgSlug, projectSlug))
 
   const refreshBranchData = useCallback(() => {
-    void queryClient.invalidateQueries(projectBranchesQueryOptions(orgSlug, projectId))
-    void queryClient.invalidateQueries({ queryKey: ["project-branch-redirect-name", orgSlug, projectId] })
-    void queryClient.invalidateQueries({ queryKey: ["organization-projects", orgSlug] })
-  }, [orgSlug, projectId, queryClient])
+    void queryClient.invalidateQueries(projectBranchesQueryOptions(orgSlug, projectSlug))
+    void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
+  }, [orgSlug, projectSlug, queryClient])
 
   const setDefaultBranch = useMutation({
-    mutationFn: (branchId: string) => setDefaultProjectBranchFn({ data: { orgSlug, projectId, branchId } }),
+    mutationFn: (branchId: string) => setDefaultProjectBranchFn({ data: { orgSlug, projectSlug, branchId } }),
     onSuccess: () => {
       toast.success(t("Default Branch updated"))
       refreshBranchData()
@@ -164,7 +164,7 @@ function ProjectBranchesPage() {
                   <T>Create a production Branch only if plugin sync has not created one yet.</T>
                 </p>
               </div>
-              <CreateProductionBranchDialog orgSlug={orgSlug} projectId={projectId} onCreated={refreshBranchData} />
+              <CreateProductionBranchDialog orgSlug={orgSlug} projectSlug={projectSlug} onCreated={refreshBranchData} />
             </div>
           ) : (
             <DataTable columns={branchColumns} data={branchesQuery.data.branches} />
@@ -178,16 +178,16 @@ function ProjectBranchesPage() {
 function CreateProductionBranchDialog({
   onCreated,
   orgSlug,
-  projectId,
+  projectSlug,
 }: {
   onCreated: () => void
   orgSlug: string
-  projectId: string
+  projectSlug: string
 }) {
   const [open, setOpen] = useState(false)
   const t = useT()
   const createBranch = useMutation({
-    mutationFn: (data: { name: string; orgSlug: string; projectId: string }) => createProjectBranchFn({ data }),
+    mutationFn: (data: { name: string; orgSlug: string; projectSlug: string }) => createProjectBranchFn({ data }),
     onSuccess: () => {
       toast.success(t("Branch created"))
       onCreated()
@@ -210,7 +210,7 @@ function CreateProductionBranchDialog({
     onSubmit: ({ value }) => {
       createBranch.mutate({
         orgSlug,
-        projectId,
+        projectSlug,
         name: value.name.trim(),
       })
     },
@@ -306,10 +306,11 @@ function EditBranchDialog({
   onUpdated: () => void
   open: boolean
 }) {
-  const { orgSlug, projectId } = Route.useParams()
+  const { orgSlug, projectSlug } = Route.useParams()
   const t = useT()
   const updateBranch = useMutation({
-    mutationFn: (data: { branchId: string; name: string; orgSlug: string; projectId: string }) => updateProjectBranchFn({ data }),
+    mutationFn: (data: { branchId: string; name: string; orgSlug: string; projectSlug: string }) =>
+      updateProjectBranchFn({ data }),
     onSuccess: () => {
       toast.success(t("Branch updated"))
       onUpdated()
@@ -330,7 +331,7 @@ function EditBranchDialog({
       }),
     },
     onSubmit: ({ value }) => {
-      updateBranch.mutate({ orgSlug, projectId, branchId: branch.id, name: value.name.trim() })
+      updateBranch.mutate({ orgSlug, projectSlug, branchId: branch.id, name: value.name.trim() })
     },
   })
 

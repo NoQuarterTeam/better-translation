@@ -30,10 +30,10 @@ export const getProjectBranchRedirectNameFn = createServerFn({ method: "GET" })
     return defaultBranch?.name ?? null
   })
 
-export const projectBranchRedirectNameQueryOptions = (orgSlug: string, projectId: string) =>
+export const projectBranchRedirectNameQueryOptions = (orgSlug: string, projectSlug: string) =>
   queryOptions({
-    queryKey: ["project-branch-redirect-name", orgSlug, projectId],
-    queryFn: () => getProjectBranchRedirectNameFn({ data: { orgSlug, projectId } }),
+    queryKey: ["project-branch-redirect-name", orgSlug, projectSlug],
+    queryFn: () => getProjectBranchRedirectNameFn({ data: { orgSlug, projectSlug } }),
   })
 
 function getSelectedBranchCookieName(projectPublicId: string) {

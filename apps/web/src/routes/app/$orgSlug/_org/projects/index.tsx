@@ -41,13 +41,13 @@ function ProjectsPage() {
         cell: ({ row }) => (
           <div className="min-w-0">
             <Link
-              to="/app/$orgSlug/projects/$projectId"
-              params={{ orgSlug, projectId: row.original.publicId }}
+              to="/app/$orgSlug/projects/$projectSlug"
+              params={{ orgSlug, projectSlug: row.original.slug }}
               className="font-medium underline-offset-4 hover:underline"
             >
               {row.original.name}
             </Link>
-            <div className="mt-1 font-mono text-xs text-muted-foreground">{row.original.publicId}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{row.original.slug}</div>
           </div>
         ),
       },
@@ -79,8 +79,8 @@ function ProjectsPage() {
         header: "",
         cell: ({ row }) => (
           <Link
-            to="/app/$orgSlug/projects/$projectId"
-            params={{ orgSlug, projectId: row.original.publicId }}
+            to="/app/$orgSlug/projects/$projectSlug"
+            params={{ orgSlug, projectSlug: row.original.slug }}
             className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ml-auto")}
             aria-label={t("Open Project")}
           >
