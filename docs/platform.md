@@ -9,11 +9,11 @@ The repo currently supports a local bundle-first workflow.
 - `packages/better-translation` publishes the Vite plugin and runtime helpers.
 - `apps/web` is the hosted app scaffold and current example surface.
 - The plugin scans configured source roots for markers such as `t("...")`, `useT()`, and `<T>...</T>`.
-- The plugin generates stable message ids and writes local artifacts.
+- The plugin generates stable lookup ids and writes local artifacts.
 - Missing non-default Locale values can be filled with a custom async `translate()` function, including the built-in AI helper.
 - Runtime code loads local JSON through the virtual `better-translation/messages` module.
 
-Remote runtime options exist in the package API. Remote sync posts the Manifest to the hosted service when a Project API key is configured, and the hosted service fills missing Locale values with the Platform translator when Project auto-translation is enabled. Do not treat publishing as implemented unless the code shows it.
+Remote runtime options exist in the package API. Remote sync posts the Manifest to the hosted service when a Project API key is configured, and the hosted service fills missing Locale values with the Platform translator during Manifest sync. Do not treat publishing as implemented unless the code shows it.
 
 ## Product Direction
 
@@ -33,7 +33,7 @@ Generated local snapshots are fallbacks, not a second source of truth.
 `packages/better-translation` owns:
 
 - Vite plugin configuration and source scanning.
-- Stable Message id generation.
+- Stable lookup id generation.
 - Manifest creation from source code.
 - Local runtime artifacts.
 - Virtual runtime loaders.
@@ -60,7 +60,7 @@ Runtime bundles are plain JSON maps:
 
 ```json
 {
-  "message.id": "Translated string"
+  "m_lookup": "Translated string"
 }
 ```
 
@@ -76,7 +76,7 @@ The Consumer app should keep calling `loadMessages(locale)`. The Vite plugin bak
 
 Sync credentials are used by plugin sync only. Runtime bundle reads should not expose write credentials to the Consumer app runtime.
 
-Missing non-default Locale values should be exceptional, not an expected steady state. When they do happen, the Runtime bundle should include the Default locale message for that key so the Consumer app renders complete UI.
+Missing non-default Locale values should be exceptional, not an expected steady state. Manifest sync should populate Branch Locale values before runtime reads them. When a value is still missing unexpectedly, the Runtime bundle should include the Branch Message's Default locale message for that key so the Consumer app renders complete UI.
 
 The public Runtime bundle stays flat even when a value falls back to the Default locale. Completeness, fallback status, and missing-translation warnings belong in hosted-service metadata and dashboard views, not in the runtime payload.
 
@@ -163,59 +163,59 @@ The plugin should resolve a Branch in this order:
 2. `BETTER_TRANSLATION_BRANCH`
 3. provider branch env, such as `VERCEL_GIT_COMMIT_REF`
 4. current Git branch
-5. the Project default branch, usually `main`
+5. the Project default Branch when it exists, otherwise the package fallback branch
 
-If the resolved Branch does not exist, plugin sync can create it. That is intentionally different from Project creation, which remains explicit.
+If the resolved Branch does not exist, plugin sync can create it. That is intentionally different from Project creation, which remains explicit. If a Project has no default Branch yet, the first synced Branch becomes the Project default Branch.
 
-The dashboard should let users view and edit each Branch. `main` is the default working branch for most users. Feature branches are optional and exist for PR-specific copy work.
+The dashboard should let users view and edit each Branch. Feature branches are optional and exist for PR-specific copy work.
 
-Locale value edits are live for the Branch they belong to. Editing `main` affects Consumer apps reading `main`; editing a feature branch affects only Consumer apps reading that feature branch.
+Locale value edits are live for the Branch they belong to. Editing the Project default Branch affects Consumer apps reading that Branch; editing a feature branch affects only Consumer apps reading that feature branch.
 
-## Branch Inheritance
+## Default Branch Seeding
 
-Branches inherit Locale values from their parent branch, usually `main`, unless they have a Branch override.
+Non-default Branches use the Project default Branch as a seed during Manifest sync.
 
-Runtime resolution for a feature branch should work like this:
+Manifest sync for a feature branch should work like this for each non-default Locale:
 
-1. use the Branch override for the requested Message and Locale when one exists
-2. otherwise use the parent branch Locale value when one exists
-3. otherwise use the Default locale message
+1. keep an existing Branch Locale value when one exists
+2. copy the Project default Branch Locale value when the same lookup id exists there and its Default locale text hash still matches
+3. otherwise generate and store a new Branch Locale value with the Platform translator
 
-Inherited values do not need to be copied into every branch. A feature branch can read the parent value directly until the branch intentionally changes that value.
+Runtime bundles read only the requested Branch's active Messages and Branch Locale values. They do not populate missing values or read through to the Project default Branch at runtime.
 
 ## Branch Overrides
 
-A Branch override stores the branch-specific Locale value plus the parent value hash it was based on.
+A Branch override stores the branch-specific Locale value plus the base value hash it was based on.
 
 At minimum, branch-specific Locale value storage should preserve:
 
 - the Project
 - the Branch
-- the Message id
+- the lookup id
 - the Locale
 - the translated value
 - the value source, such as `imported`, `ai`, or `manual`
 - the current value hash
-- the parent value hash used as the base when the override was created
+- the base value hash used when the override was created
 - update metadata such as time and editor when available
 
-The Message id identifies the same source Message across branches. The value hash identifies whether the translated Locale value changed.
+The lookup id identifies the same source Message across branches. Branch-scoped Message rows can have different Default locale text, context, placeholders, and source metadata for the same lookup id. The value hash identifies whether the translated Locale value changed.
 
 ## Branch Reconciliation
 
-Feature branch values must not overwrite `main` automatically.
+Feature branch values must not overwrite the Project default Branch automatically.
 
-When a feature branch is merged in Git, the next sync on `main` uploads the new Manifest to `main`. Locale values from the feature Branch remain branch-local unless a user explicitly applies them to `main`.
+When a feature branch is merged in Git, the next sync on the Project default Branch uploads the new Manifest there. Locale values from the feature Branch remain branch-local unless a user explicitly applies them to the Project default Branch.
 
-Future reconciliation can use the parent value hash on each Branch override to determine whether applying it to `main` is safe:
+Future reconciliation can use the base value hash on each Branch override to determine whether applying it to the Project default Branch is safe:
 
-- if the branch value changed and the parent value on `main` did not change, the override can be applied cleanly
-- if `main` changed and the branch did not change from its base, keep `main`
-- if both changed to the same value, keep `main`
+- if the branch value changed and the default Branch value did not change, the override can be applied cleanly
+- if the default Branch changed and the branch did not change from its base, keep the default Branch value
+- if both changed to the same value, keep the default Branch value
 - if both changed differently, require review
-- AI or imported values from a feature branch must not automatically overwrite newer manual edits on `main`
+- AI or imported values from a feature branch must not automatically overwrite newer manual edits on the Project default Branch
 
-The dashboard can offer an explicit "apply to main" action for a Branch override. That action writes the branch value to `main` only when the user chooses it.
+The dashboard can offer an explicit "apply to default Branch" action for a Branch override. That action writes the branch value to the Project default Branch only when the user chooses it.
 
 ## Remote Sync Timing
 
@@ -237,7 +237,7 @@ By default, local `vite dev` should:
 - read hosted Runtime bundles for the resolved Branch
 - use the Platform translator to fill blank branch Locale values
 - store generated Locale values on the hosted Branch
-- sync the current Manifest so the platform knows the latest Message ids
+- sync the current Manifest so the platform knows the latest lookup ids
 
 This makes `runtime.type: "remote"` mean "use the platform" during local dev as well as deployed builds.
 
@@ -259,26 +259,26 @@ In remote mode, the hosted platform owns Locale values. Package-local translatio
 
 Remote-mode AI translation should use the Platform translator, not duplicate per-repo AI settings.
 
-The Platform translator uses Project-level settings such as model, tone, glossary, and style guidance. Hosted auto-translation and local dev platform translation should both use those settings.
+The Platform translator uses Project-level settings such as model, tone, glossary, and style guidance. Manifest sync and local dev platform translation should both use those settings.
 
 When local dev calls the Platform translator, the request should include enough information to identify and translate the value:
 
 - Project id
 - resolved Branch
-- Message id
+- Lookup id
 - Default locale text
 - target Locale
 - context, placeholders, and source metadata when available
 
-Platform translator requests are canonical fill-blank writes. The hosted service should:
+Platform translator requests are canonical fill-blank writes. Manifest sync should:
 
-1. return an existing branch Locale value when one exists
-2. otherwise return an inherited parent branch value when one exists
+1. keep an existing Branch Locale value when one exists
+2. copy a matching Project default Branch value into the resolved Branch when one exists
 3. otherwise generate a new value using Project settings
 4. store the generated value on the resolved Branch with `source: "ai"`
-5. return the same stored value to local dev
+5. return flat runtime bundles from stored Branch values only
 
-Later build sync for the same Message id should reuse the stored value and should not retranslate it.
+Later build sync for the same lookup id should reuse the stored value and should not retranslate it.
 
 The Platform translator must fill blanks only. It must not overwrite manual hosted edits.
 
@@ -296,9 +296,9 @@ After migration, remote mode should not keep reading or writing editable local L
 
 Hosted-mode sync should not call package-local AI translation during `vite dev` or `vite build`. In remote mode, the Vite plugin only extracts and syncs the Manifest, then runtime code fetches hosted Runtime bundles.
 
-Remote sync uploads the Manifest. The hosted service then fills missing Locale values using the Platform translator when Project or Branch settings allow it.
+Remote sync uploads the Manifest. The hosted service then fills missing Branch Locale values using matching Project default Branch values or the Platform translator.
 
-Manifest sync should not wait for Platform translator calls. The hosted service stores the Manifest synchronously, returns the sync response, and runs fill-blank translation as background work.
+Manifest sync stores the Manifest and fills missing Branch Locale values as part of the sync request so runtime reads can stay read-only.
 
 AI-generated values are stored as branch-local Locale values with source metadata such as `ai`. They follow the same Branch override and reconciliation rules as other Locale values, and must not overwrite newer manual edits automatically.
 

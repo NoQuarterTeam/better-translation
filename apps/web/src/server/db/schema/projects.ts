@@ -1,4 +1,5 @@
-import { boolean, index, integer, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
+import { createId } from "@paralleldrive/cuid2"
+import { index, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod"
 import * as z from "zod"
 
@@ -9,23 +10,26 @@ export const projectsTable = pgTable(
   "projects",
   {
     ...baseColumns,
-    organizationId: integer("organization_id")
+    organizationId: text("organization_id")
       .notNull()
       .references(() => organizationsTable.id, { onDelete: "cascade" }),
-    publicId: text("public_id").notNull(),
+    publicId: text("public_id")
+      .unique()
+      .notNull()
+      .$defaultFn(() => `prj_${createId()}`),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
+    defaultBranchId: text("default_branch_id"),
     defaultLocale: text("default_locale").notNull().default("en"),
     locales: text("locales").array().notNull().default(["en"]),
     translationModel: text("translation_model").notNull().default("openai/gpt-5.5"),
     translationPrompt: text("translation_prompt")
       .notNull()
       .default("Translate the provided UI messages as concise, natural application UI copy."),
-    autoTranslate: boolean("auto_translate").notNull().default(true),
   },
   (table) => [
     index("project_organization_id_idx").on(table.organizationId),
-    uniqueIndex("project_public_id_idx").on(table.publicId),
+    index("project_default_branch_id_idx").on(table.defaultBranchId),
     uniqueIndex("project_organization_slug_idx").on(table.organizationId, table.slug),
   ],
 )

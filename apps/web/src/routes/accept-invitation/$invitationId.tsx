@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { authClient } from "@/lib/auth/client"
 import { cn } from "@/lib/utils"
 
-import { getOrganizationInvitationFn } from "./-data"
+import { organizationInvitationQueryOptions } from "./-data"
 
 export const Route = createFileRoute("/accept-invitation/$invitationId")({
   component: AcceptInvitationPage,
@@ -29,8 +29,7 @@ function AcceptInvitationPage() {
   const { data: session, isPending: sessionPending } = authClient.useSession()
 
   const invitationQuery = useQuery({
-    queryKey: ["organization-invitation", invitationId],
-    queryFn: () => getOrganizationInvitationFn({ data: { invitationId } }),
+    ...organizationInvitationQueryOptions(invitationId),
     enabled: Boolean(session?.user && invitationId),
   })
 

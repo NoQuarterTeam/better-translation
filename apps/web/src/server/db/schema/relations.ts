@@ -35,6 +35,11 @@ export const relations = defineRelations(schema, (r) => ({
   accountsTable: { user: r.one.usersTable({ from: r.accountsTable.userId, to: r.usersTable.id }) },
   projectsTable: {
     organization: r.one.organizationsTable({ from: r.projectsTable.organizationId, to: r.organizationsTable.id }),
+    defaultBranch: r.one.branchesTable({
+      from: r.projectsTable.defaultBranchId,
+      to: r.branchesTable.id,
+      optional: true,
+    }),
     branches: r.many.branchesTable(),
     messages: r.many.messagesTable(),
     apiKeys: r.many.apiKeysTable(),
@@ -42,15 +47,12 @@ export const relations = defineRelations(schema, (r) => ({
   },
   branchesTable: {
     project: r.one.projectsTable({ from: r.branchesTable.projectId, to: r.projectsTable.id }),
-    parentBranch: r.one.branchesTable({
-      from: r.branchesTable.parentBranchId,
-      to: r.branchesTable.id,
-      optional: true,
-    }),
+    messages: r.many.messagesTable(),
     localeValues: r.many.localeValuesTable(),
   },
   messagesTable: {
     project: r.one.projectsTable({ from: r.messagesTable.projectId, to: r.projectsTable.id }),
+    branch: r.one.branchesTable({ from: r.messagesTable.branchId, to: r.branchesTable.id }),
     localeValues: r.many.localeValuesTable(),
   },
   localeValuesTable: {

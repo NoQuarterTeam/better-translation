@@ -1,9 +1,10 @@
-import { integer, timestamp } from "drizzle-orm/pg-core"
+import { createId } from "@paralleldrive/cuid2"
+import { text, timestamp } from "drizzle-orm/pg-core"
 
 export const baseColumns = {
-  id: integer("id")
+  id: text("id")
     .primaryKey()
-    .generatedAlwaysAsIdentity({ startWith: 1000, increment: 1, minValue: 1, maxValue: 2147483647, cache: 1 }),
+    .$defaultFn(() => createId()),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

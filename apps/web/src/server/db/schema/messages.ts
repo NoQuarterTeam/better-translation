@@ -1,7 +1,8 @@
-import { boolean, index, integer, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
+import { boolean, index, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod"
 import * as z from "zod"
 
+import { branchesTable } from "./branches"
 import { projectsTable } from "./projects"
 import { baseColumns } from "./shared"
 
@@ -24,10 +25,13 @@ export const messagesTable = pgTable(
   "messages",
   {
     ...baseColumns,
-    projectId: integer("project_id")
+    projectId: text("project_id")
       .notNull()
       .references(() => projectsTable.id, { onDelete: "cascade" }),
-    messageId: text("message_id").notNull(),
+    branchId: text("branch_id")
+      .notNull()
+      .references(() => branchesTable.id, { onDelete: "cascade" }),
+    lookupId: text("lookup_id").notNull(),
     defaultMessage: text("default_message").notNull(),
     defaultMessageHash: text("default_message_hash").notNull(),
     meta: jsonb("meta").$type<MessageMeta>().notNull().default({}),
@@ -37,7 +41,8 @@ export const messagesTable = pgTable(
   },
   (table) => [
     index("message_project_id_idx").on(table.projectId),
-    uniqueIndex("message_project_message_id_idx").on(table.projectId, table.messageId),
+    index("message_branch_id_idx").on(table.branchId),
+    uniqueIndex("message_branch_lookup_id_idx").on(table.branchId, table.lookupId),
   ],
 )
 
@@ -59,7 +64,7 @@ const messageSourceSnapshotSchema = z.object({
 })
 
 const customFields = {
-  messageId: z.string().trim().min(1).max(240),
+  lookupId: z.string().trim().min(1).max(240),
   defaultMessage: z.string().min(1),
   defaultMessageHash: z.string().trim().min(1),
   meta: messageMetaSchema,

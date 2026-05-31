@@ -1,22 +1,15 @@
+import { queryOptions } from "@tanstack/react-query"
 import { createServerFn } from "@tanstack/react-start"
-import { and, count, desc, eq, isNull } from "drizzle-orm"
-import * as z from "zod"
+import { and, count, eq, isNull } from "drizzle-orm"
 
-import { authMiddleware } from "@/lib/functions/middleware"
-import { parseZod } from "@/lib/functions/zod"
+import { organizationMiddleware } from "@/lib/functions/middleware"
 import { db } from "@/server/db"
 import { apiKeysTable, branchesTable, localeValuesTable, messagesTable, projectsTable } from "@/server/db/schema"
-import { getCurrentOrganizationAccess } from "@/server/organizations"
-
-const orgInputSchema = z.object({ orgSlug: z.string().trim().min(1) })
 
 export const getOrganizationOverviewFn = createServerFn({ method: "GET" })
-  .middleware([authMiddleware])
-  .inputValidator(parseZod(orgInputSchema))
-  .handler(async ({ context, data }) => {
-    const organizationAccess = await getCurrentOrganizationAccess({ slug: data.orgSlug, userId: context.user.id })
-    if (!organizationAccess) throw new Error("Organization not found.")
-    const organizationId = organizationAccess.organization.id
+  .middleware([organizationMiddleware])
+  .handler(async ({ context }) => {
+    const organizationId = context.organization.id
 
     const [projectCount] = await db
       .select({ count: count() })
@@ -38,19 +31,19 @@ export const getOrganizationOverviewFn = createServerFn({ method: "GET" })
       .innerJoin(projectsTable, eq(apiKeysTable.projectId, projectsTable.id))
       .where(and(eq(projectsTable.organizationId, organizationId), isNull(apiKeysTable.revokedAt)))
 
-    const recentProjects = await db
-      .select({
-        id: projectsTable.id,
-        publicId: projectsTable.publicId,
-        name: projectsTable.name,
-        defaultLocale: projectsTable.defaultLocale,
-        locales: projectsTable.locales,
-        updatedAt: projectsTable.updatedAt,
-      })
-      .from(projectsTable)
-      .where(eq(projectsTable.organizationId, organizationId))
-      .orderBy(desc(projectsTable.updatedAt))
-      .limit(5)
+    const recentProjects = await db.query.projectsTable.findMany({
+      columns: {
+        defaultLocale: true,
+        id: true,
+        locales: true,
+        name: true,
+        publicId: true,
+        updatedAt: true,
+      },
+      limit: 5,
+      orderBy: { updatedAt: "desc" },
+      where: { organizationId },
+    })
 
     const overrideCounts = await Promise.all(
       recentProjects.map(async (project) => {
@@ -67,11 +60,17 @@ export const getOrganizationOverviewFn = createServerFn({ method: "GET" })
       activeApiKeyCount: Number(activeApiKeyCount?.count ?? 0),
       branchCount: Number(branchCount?.count ?? 0),
       messageCount: Number(messageCount?.count ?? 0),
-      organization: organizationAccess.organization,
+      organization: context.organization,
       projectCount: Number(projectCount?.count ?? 0),
       recentProjects: recentProjects.map((project) => ({
         ...project,
         overrideCount: new Map(overrideCounts).get(project.id) ?? 0,
       })),
     }
+  })
+
+export const organizationOverviewQueryOptions = (orgSlug: string) =>
+  queryOptions({
+    queryKey: ["organization-overview", orgSlug],
+    queryFn: () => getOrganizationOverviewFn({ data: { orgSlug } }),
   })

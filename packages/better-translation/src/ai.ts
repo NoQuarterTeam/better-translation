@@ -56,7 +56,7 @@ ${locale}
 
 ## Output Contract
 Return only the translated text for the provided source message.
-Do not include the message id, labels, explanations, markdown, code fences, or surrounding quotes.
+Do not include the lookup id, labels, explanations, markdown, code fences, or surrounding quotes.
 Use the message context when provided.`,
   ].join("\n\n")
 }

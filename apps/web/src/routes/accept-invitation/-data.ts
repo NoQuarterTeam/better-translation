@@ -1,3 +1,4 @@
+import { queryOptions } from "@tanstack/react-query"
 import { createServerFn } from "@tanstack/react-start"
 import { getRequestHeaders } from "@tanstack/react-start/server"
 import * as z from "zod"
@@ -12,4 +13,10 @@ export const getOrganizationInvitationFn = createServerFn({ method: "GET" })
       query: { id: data.invitationId },
       headers: getRequestHeaders(),
     })
+  })
+
+export const organizationInvitationQueryOptions = (invitationId: string) =>
+  queryOptions({
+    queryKey: ["organization-invitation", invitationId],
+    queryFn: () => getOrganizationInvitationFn({ data: { invitationId } }),
   })

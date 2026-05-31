@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Store, useSelector } from "@tanstack/react-store"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -18,11 +18,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 
-import { setSelectedBranchFn } from "../../-data"
-import { getBranchWorkspaceFn, saveLocaleValueFn, translateLocaleValueFn } from "./-data"
+import { setSelectedBranchFn } from "../../../../-data"
+import { branchWorkspaceQueryOptions, saveLocaleValueFn, translateLocaleValueFn, type getBranchWorkspaceFn } from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug/projects/$projectId/branches/$branchName/")({
   component: BranchPage,
@@ -44,11 +44,6 @@ export const Route = createFileRoute("/app/$orgSlug/projects/$projectId/branches
   },
 })
 
-const branchWorkspaceQueryOptions = (orgSlug: string, projectId: string, branchName: string) => ({
-  queryKey: ["branch-workspace", orgSlug, projectId, branchName],
-  queryFn: () => getBranchWorkspaceFn({ data: { orgSlug, projectId, branchName } }),
-})
-
 const translationEditorStore = new Store(
   {
     locale: "",
@@ -66,18 +61,17 @@ type MessageRow = BranchWorkspace["messages"][number]
 function BranchPage() {
   const { orgSlug, projectId, branchName } = Route.useParams()
   const t = useT()
-  const branchQuery = useQuery(branchWorkspaceQueryOptions(orgSlug, projectId, branchName))
+  const branchQuery = useSuspenseQuery(branchWorkspaceQueryOptions(orgSlug, projectId, branchName))
   const locale = useSelector(translationEditorStore, (state) => state.locale)
   const search = useSelector(translationEditorStore, (state) => state.search)
   const resolvedLocale =
-    locale && branchQuery.data?.project.locales.includes(locale)
+    locale && branchQuery.data.project.locales.includes(locale)
       ? locale
-      : (branchQuery.data?.project.locales.find((projectLocale) => projectLocale !== branchQuery.data?.project.defaultLocale) ??
-        branchQuery.data?.project.defaultLocale ??
-        "")
+      : (branchQuery.data.project.locales.find((projectLocale) => projectLocale !== branchQuery.data.project.defaultLocale) ??
+        branchQuery.data.project.defaultLocale)
 
   const filteredMessages = useMemo(() => {
-    const messages = branchQuery.data?.messages ?? []
+    const messages = branchQuery.data.messages
     const query = search.trim().toLowerCase()
     if (!query) return messages
     return messages.filter((message) =>
@@ -85,7 +79,7 @@ function BranchPage() {
         value.toLowerCase().includes(query),
       ),
     )
-  }, [branchQuery.data?.messages, resolvedLocale, search])
+  }, [branchQuery.data.messages, resolvedLocale, search])
 
   const columns = useMemo<ColumnDef<MessageRow>[]>(
     () => [
@@ -111,7 +105,7 @@ function BranchPage() {
           const localeValue = row.original.localeValues[resolvedLocale]
           if (localeValue?.source === "manual") return <Badge>{t("Manual")}</Badge>
           if (localeValue?.source === "ai") return <Badge variant="secondary">{t("AI")}</Badge>
-          if (localeValue?.source === "inherited") return <Badge variant="secondary">{t("Inherited")}</Badge>
+          if (localeValue?.source === "imported") return <Badge variant="secondary">{t("Imported")}</Badge>
           return <Badge variant="outline">{t("Default")}</Badge>
         },
       },
@@ -121,7 +115,7 @@ function BranchPage() {
         cell: ({ row }) => (
           <TranslationValueDialog
             branchName={branchName}
-            defaultLocale={branchQuery.data?.project.defaultLocale ?? ""}
+            defaultLocale={branchQuery.data.project.defaultLocale}
             locale={resolvedLocale}
             message={row.original}
             orgSlug={orgSlug}
@@ -130,7 +124,7 @@ function BranchPage() {
         ),
       },
     ],
-    [branchName, branchQuery.data?.project.defaultLocale, orgSlug, projectId, resolvedLocale, t],
+    [branchName, branchQuery.data.project.defaultLocale, orgSlug, projectId, resolvedLocale, t],
   )
 
   return (
@@ -144,11 +138,6 @@ function BranchPage() {
             <T>Edit branch-local Locale values and fill blanks with the Platform translator.</T>
           </p>
         </div>
-        {branchQuery.data?.parentBranch && (
-          <Badge variant="secondary">
-            <T>Inherits from</T> {branchQuery.data.parentBranch.name}
-          </Badge>
-        )}
       </div>
 
       <Card className="gap-0 overflow-hidden">
@@ -176,18 +165,20 @@ function BranchPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {branchQuery.data?.project.locales.map((projectLocale) => (
-                    <SelectItem key={projectLocale} value={projectLocale}>
-                      {projectLocale}
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    {branchQuery.data.project.locales.map((projectLocale) => (
+                      <SelectItem key={projectLocale} value={projectLocale}>
+                        {projectLocale}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </Field>
           </div>
         </CardHeader>
         <CardContent className="px-0">
-          <DataTable columns={columns} data={filteredMessages} isLoading={branchQuery.isPending} />
+          <DataTable columns={columns} data={filteredMessages} />
         </CardContent>
       </Card>
     </div>
@@ -227,7 +218,7 @@ function TranslationValueDialog({
           </DialogDescription>
         </DialogHeader>
         <TranslationValueEditor
-          key={`${message.messageId}:${locale}:${open ? "open" : "closed"}`}
+          key={`${message.lookupId}:${locale}:${open ? "open" : "closed"}`}
           branchName={branchName}
           defaultLocale={defaultLocale}
           locale={locale}
@@ -259,7 +250,7 @@ function TranslationValueEditor({
   projectId: string
 }) {
   const t = useT()
-  const queryClient = useQueryClient()
+  const { queryClient } = Route.useRouteContext()
   const localeValue = message.localeValues[locale]
   const isDefaultLocale = locale === defaultLocale
   const currentValue = localeValue?.value ?? message.defaultMessage
@@ -268,31 +259,31 @@ function TranslationValueEditor({
       ? t("Custom")
       : localeValue?.source === "ai"
         ? t("AI translated")
-        : localeValue?.source === "inherited"
-          ? t("Inherited")
+        : localeValue?.source === "imported"
+          ? t("Imported")
           : t("Using original")
   const sourceVariant = localeValue?.source === "manual" ? "default" : localeValue?.source === "default" ? "outline" : "secondary"
 
   const saveMutation = useMutation({
     mutationFn: (data: { value: string }) =>
       saveLocaleValueFn({
-        data: { branchName, locale, messageId: message.messageId, orgSlug, projectId, value: data.value },
+        data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectId, value: data.value },
       }),
     onSuccess: () => {
       toast.success(t("Locale value saved"))
       void queryClient.invalidateQueries({ queryKey: ["branch-workspace", orgSlug, projectId, branchName] })
-      void queryClient.invalidateQueries({ queryKey: ["project-detail", orgSlug, projectId] })
+      void queryClient.invalidateQueries({ queryKey: ["project-navigation", orgSlug, projectId] })
       onSaved()
     },
     onError: (error: Error) => toast.error(t("Could not save Locale value"), { description: error.message }),
   })
 
   const translateMutation = useMutation({
-    mutationFn: () => translateLocaleValueFn({ data: { branchName, locale, messageId: message.messageId, orgSlug, projectId } }),
+    mutationFn: () => translateLocaleValueFn({ data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectId } }),
     onSuccess: () => {
       toast.success(t("Platform translator saved a Locale value"))
       void queryClient.invalidateQueries({ queryKey: ["branch-workspace", orgSlug, projectId, branchName] })
-      void queryClient.invalidateQueries({ queryKey: ["project-detail", orgSlug, projectId] })
+      void queryClient.invalidateQueries({ queryKey: ["project-navigation", orgSlug, projectId] })
     },
     onError: (error: Error) => toast.error(t("Could not translate Message"), { description: error.message }),
   })
@@ -385,7 +376,7 @@ function TranslationValueEditor({
           <div className="font-medium text-foreground">
             <T>Reference</T>
           </div>
-          <div className="mt-1 font-mono">{message.messageId}</div>
+          <div className="mt-1 font-mono">{message.lookupId}</div>
         </div>
         {message.sources[0] && (
           <div>

@@ -1,6 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
@@ -10,11 +9,13 @@ import { createTranslator } from "better-translation/server"
 import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { currentOrganizationQueryOptions, useCurrentOrganization } from "../../-data"
-import { updateOrganizationNameFn } from "./-data"
+import { organizationSettingsQueryOptions, updateOrganizationNameFn } from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug/_org/settings/")({
   component: OrganizationSettingsPage,
+  loader: async ({ context, params }) => {
+    await context.queryClient.ensureQueryData(organizationSettingsQueryOptions(params.orgSlug))
+  },
   head: ({ match }) => {
     const t = createTranslator(match.context.messages)
     return { meta: [{ title: `${t("Organization settings")} · Better Translation` }] }
@@ -23,18 +24,17 @@ export const Route = createFileRoute("/app/$orgSlug/_org/settings/")({
 
 function OrganizationSettingsPage() {
   const { orgSlug } = Route.useParams()
-  const { organization } = useCurrentOrganization()
+  const { queryClient } = Route.useRouteContext()
+  const organization = useSuspenseQuery(organizationSettingsQueryOptions(orgSlug)).data
   const t = useT()
-  const queryClient = useQueryClient()
-  const [apiError, setApiError] = useState<string | null>(null)
 
   const updateMutation = useMutation({
     mutationFn: (data: { name: string; orgSlug: string }) => updateOrganizationNameFn({ data }),
     onSuccess: () => {
       toast.success(t("Organization updated"))
-      void queryClient.invalidateQueries({ queryKey: currentOrganizationQueryOptions(orgSlug).queryKey })
+      void queryClient.invalidateQueries(organizationSettingsQueryOptions(orgSlug))
+      void queryClient.invalidateQueries({ queryKey: ["current-organization", orgSlug] })
     },
-    onError: (error: Error) => setApiError(error.message),
   })
 
   const form = useAppForm({
@@ -49,7 +49,6 @@ function OrganizationSettingsPage() {
       }),
     },
     onSubmit: ({ value }) => {
-      setApiError(null)
       updateMutation.mutate({ orgSlug, name: value.name.trim() })
     },
   })
@@ -88,7 +87,7 @@ function OrganizationSettingsPage() {
               <form.SubmitButton className="w-fit">
                 {(isSubmitting) => (isSubmitting || updateMutation.isPending ? <T>Saving...</T> : <T>Save profile</T>)}
               </form.SubmitButton>
-              <form.FormError>{apiError}</form.FormError>
+              <form.FormError>{updateMutation.error?.message}</form.FormError>
             </form>
           </form.AppForm>
         </CardContent>

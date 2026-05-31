@@ -1,6 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
@@ -10,7 +9,7 @@ import { createTranslator } from "better-translation/server"
 import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { createProjectFn } from "./-data"
+import { createProjectFn } from "./new/-data"
 
 export const Route = createFileRoute("/app/$orgSlug/_org/projects/new")({
   component: NewProjectPage,
@@ -32,14 +31,12 @@ function slugify(name: string) {
 
 function NewProjectPage() {
   const { orgSlug } = Route.useParams()
+  const { queryClient } = Route.useRouteContext()
   const t = useT()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [apiError, setApiError] = useState<string | null>(null)
 
   const createMutation = useMutation({
     mutationFn: (data: {
-      autoTranslate: boolean
       defaultLocale: string
       locales: string[]
       name: string
@@ -54,7 +51,6 @@ function NewProjectPage() {
       void queryClient.invalidateQueries({ queryKey: ["organization-projects", orgSlug] })
       void navigate({ to: "/app/$orgSlug/projects/$projectId", params: { orgSlug, projectId: project.publicId } })
     },
-    onError: (error: Error) => setApiError(error.message),
   })
 
   const form = useAppForm({
@@ -65,7 +61,6 @@ function NewProjectPage() {
       locales: "en,nl",
       translationModel: "openai/gpt-5.5",
       translationPrompt: "Translate the provided UI messages as concise, natural application UI copy.",
-      autoTranslate: true,
     },
     validators: {
       onSubmit: z.object({
@@ -79,11 +74,9 @@ function NewProjectPage() {
         locales: z.string().trim().min(2),
         translationModel: z.string().trim().min(1).max(120),
         translationPrompt: z.string().trim().min(1).max(4000),
-        autoTranslate: z.boolean(),
       }),
     },
     onSubmit: ({ value }) => {
-      setApiError(null)
       const slug = value.slug.trim() || slugify(value.name)
       createMutation.mutate({
         ...value,
@@ -158,18 +151,10 @@ function NewProjectPage() {
                   />
                 )}
               </form.AppField>
-              <form.AppField name="autoTranslate">
-                {(field) => (
-                  <field.CheckboxField
-                    label={t("Enable Platform translator")}
-                    description={t("Allows AI fill-blank writes for this Project.")}
-                  />
-                )}
-              </form.AppField>
               <form.SubmitButton className="w-full">
                 {(isSubmitting) => (isSubmitting || createMutation.isPending ? <T>Creating...</T> : <T>Create Project</T>)}
               </form.SubmitButton>
-              <form.FormError>{apiError}</form.FormError>
+              <form.FormError>{createMutation.error?.message}</form.FormError>
             </form>
           </form.AppForm>
         </CardContent>

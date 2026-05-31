@@ -1,55 +1,18 @@
+import { queryOptions } from "@tanstack/react-query"
 import { createServerFn } from "@tanstack/react-start"
-import { and, count, desc, eq } from "drizzle-orm"
-import * as z from "zod"
+import { and, count, eq } from "drizzle-orm"
 
-import { authMiddleware } from "@/lib/functions/middleware"
-import { parseZod } from "@/lib/functions/zod"
+import { organizationMiddleware } from "@/lib/functions/middleware"
 import { db } from "@/server/db"
-import { branchesTable, messagesTable, projectInsertSchema, projectsTable } from "@/server/db/schema"
-import { getCurrentOrganizationAccess } from "@/server/organizations"
-import { createProjectPublicId, DEFAULT_TRANSLATION_BRANCH, DEFAULT_TRANSLATION_MODEL } from "@/server/platform"
-
-const defaultTranslationPrompt = "Translate the provided UI messages as concise, natural application UI copy."
-
-const orgInputSchema = z.object({ orgSlug: z.string().trim().min(1) })
-
-const createProjectInputSchema = projectInsertSchema
-  .pick({
-    name: true,
-    slug: true,
-    defaultLocale: true,
-    locales: true,
-    translationModel: true,
-    translationPrompt: true,
-    autoTranslate: true,
-  })
-  .extend({
-    orgSlug: orgInputSchema.shape.orgSlug,
-    translationModel: projectInsertSchema.shape.translationModel.optional().default(DEFAULT_TRANSLATION_MODEL),
-    translationPrompt: projectInsertSchema.shape.translationPrompt.optional().default(defaultTranslationPrompt),
-    autoTranslate: projectInsertSchema.shape.autoTranslate.optional().default(true),
-  })
-  .transform((project) => {
-    const defaultLocale = project.defaultLocale.toLowerCase()
-    return {
-      ...project,
-      defaultLocale,
-      locales: [...new Set([defaultLocale, ...project.locales.map((locale) => locale.toLowerCase())])],
-    }
-  })
+import { branchesTable, messagesTable } from "@/server/db/schema"
 
 export const listProjectsFn = createServerFn({ method: "GET" })
-  .middleware([authMiddleware])
-  .inputValidator(parseZod(orgInputSchema))
-  .handler(async ({ context, data }) => {
-    const organizationAccess = await getCurrentOrganizationAccess({ slug: data.orgSlug, userId: context.user.id })
-    if (!organizationAccess) throw new Error("Organization not found.")
-
-    const projects = await db
-      .select()
-      .from(projectsTable)
-      .where(eq(projectsTable.organizationId, organizationAccess.organization.id))
-      .orderBy(desc(projectsTable.updatedAt))
+  .middleware([organizationMiddleware])
+  .handler(async ({ context }) => {
+    const projects = await db.query.projectsTable.findMany({
+      orderBy: { updatedAt: "desc" },
+      where: { organizationId: context.organization.id },
+    })
 
     return Promise.all(
       projects.map(async (project) => {
@@ -71,43 +34,8 @@ export const listProjectsFn = createServerFn({ method: "GET" })
     )
   })
 
-export const createProjectFn = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .inputValidator(parseZod(createProjectInputSchema))
-  .handler(async ({ context, data }) => {
-    const organizationAccess = await getCurrentOrganizationAccess({ slug: data.orgSlug, userId: context.user.id })
-    if (!organizationAccess) throw new Error("Organization not found.")
-
-    const [existingProject] = await db
-      .select({ id: projectsTable.id })
-      .from(projectsTable)
-      .where(and(eq(projectsTable.organizationId, organizationAccess.organization.id), eq(projectsTable.slug, data.slug)))
-      .limit(1)
-
-    if (existingProject) throw new Error("A Project with that slug already exists.")
-
-    const [project] = await db
-      .insert(projectsTable)
-      .values({
-        autoTranslate: data.autoTranslate,
-        defaultLocale: data.defaultLocale,
-        locales: data.locales,
-        name: data.name,
-        organizationId: organizationAccess.organization.id,
-        publicId: createProjectPublicId(),
-        slug: data.slug,
-        translationModel: data.translationModel,
-        translationPrompt: data.translationPrompt,
-      })
-      .returning()
-
-    if (!project) throw new Error("Could not create Project.")
-
-    await db.insert(branchesTable).values({
-      projectId: project.id,
-      name: DEFAULT_TRANSLATION_BRANCH,
-      isDefault: true,
-    })
-
-    return project
+export const projectsQueryOptions = (orgSlug: string) =>
+  queryOptions({
+    queryKey: ["projects", orgSlug],
+    queryFn: () => listProjectsFn({ data: { orgSlug } }),
   })

@@ -30,7 +30,7 @@ export function saveCache(path: string, cache: TranslationCache) {
   writeFileSync(path, next)
 }
 
-/** Builds the cache key used to distinguish translations by stable message id and locale. */
-export function getCacheKey(messageId: string, locale: string) {
-  return `${messageId}\0${locale}`
+/** Builds the cache key used to distinguish translations by stable lookup id and locale. */
+export function getCacheKey(lookupId: string, locale: string) {
+  return `${lookupId}\0${locale}`
 }

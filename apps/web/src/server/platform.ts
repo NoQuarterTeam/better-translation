@@ -1,26 +1,29 @@
-import { nanoid } from "nanoid"
-import { createHash } from "node:crypto"
+import { init } from "@paralleldrive/cuid2"
+import { createHash, createHmac } from "node:crypto"
 
-export const DEFAULT_TRANSLATION_BRANCH = "main"
+import { env } from "@/env"
+
 export const DEFAULT_TRANSLATION_MODEL = "openai/gpt-5.5"
+
+const createSecretId = init({ length: 40 })
 
 export function createStableHash(value: string) {
   return createHash("sha256").update(value).digest("hex")
 }
 
-export function createProjectPublicId() {
-  return `prj_${nanoid(12)}`
+export function createProjectApiKeyHash(secret: string) {
+  return createHmac("sha256", env.BETTER_TRANSLATION_API_KEY_HASH_SECRET).update(secret).digest("hex")
 }
 
 export function createProjectApiKeySecret() {
-  return `bt_live_${nanoid(40)}`
+  return `bt_live_${createSecretId()}`
 }
 
 export function createProjectApiKeyRecord(secret: string) {
   return {
     keyPrefix: secret.slice(0, 12),
-    keyHash: createStableHash(secret),
-    keyLastFour: secret.slice(-4),
+    keyHash: createProjectApiKeyHash(secret),
+    keyLastFour: secret.slice(-8),
   }
 }
 

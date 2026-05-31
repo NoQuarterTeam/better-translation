@@ -1,9 +1,10 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 import { useNavigate, useParams, useRouter } from "@tanstack/react-router"
 import { CheckIcon, ChevronsUpDownIcon, GitBranchIcon } from "lucide-react"
 
 import { T } from "better-translation/react"
 
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,44 +13,34 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 
-import { setSelectedBranchFn, type getProjectDetailFn } from "../-data"
+import { organizationProjectsQueryOptions, setSelectedBranchFn } from "../-data"
 
-type ProjectDetail = Awaited<ReturnType<typeof getProjectDetailFn>>
-
-export function BranchSwitcher({
-  branches,
-  onNavigate,
-  currentBranchName,
-}: {
-  branches: ProjectDetail["branches"]
-  onNavigate?: () => void
-  currentBranchName: string
-}) {
-  const { orgSlug, projectId } = useParams({ from: "/app/$orgSlug/projects/$projectId" })
+export function BranchSwitcher({ branchName, projectId }: { branchName: string; projectId: string }) {
+  const { orgSlug } = useParams({ from: "/app/$orgSlug" })
+  const projects = useSuspenseQuery(organizationProjectsQueryOptions(orgSlug)).data
   const navigate = useNavigate()
-  const router = useRouter()
   const queryClient = useQueryClient()
-  const activeBranch = branches.find((branch) => branch.name === currentBranchName) ?? branches.find((branch) => branch.isDefault)
-  const branchName = activeBranch?.name ?? currentBranchName
+  const router = useRouter()
+  const branches = projects.find((project) => project.publicId === projectId)?.branches ?? []
+  const activeBranch = branches.find((branch) => branch.name === branchName)
   const setSelectedBranch = useMutation({
     mutationFn: setSelectedBranchFn,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["project-detail", orgSlug, projectId] })
+      void queryClient.invalidateQueries({ queryKey: ["organization-projects", orgSlug] })
     },
   })
 
   return (
     <DropdownMenu>
-      <SidebarMenuItem>
-        <DropdownMenuTrigger render={<SidebarMenuButton variant="outline" />}>
-          <GitBranchIcon className="text-muted-foreground" />
-          <span>{branchName}</span>
-          <ChevronsUpDownIcon className="ml-auto text-muted-foreground" />
-          <span className="sr-only">Switch Branch</span>
-        </DropdownMenuTrigger>
-      </SidebarMenuItem>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" className="h-9 max-w-56 min-w-0 justify-start gap-2 px-2 font-medium" />}
+      >
+        <GitBranchIcon className="text-muted-foreground" />
+        <span className="truncate">{activeBranch?.name ?? branchName}</span>
+        <ChevronsUpDownIcon data-icon="inline-end" className="ml-auto text-muted-foreground" />
+        <span className="sr-only">Switch Branch</span>
+      </DropdownMenuTrigger>
       <DropdownMenuContent className="min-w-72" align="start" sideOffset={8}>
         <DropdownMenuGroup>
           <DropdownMenuLabel>Branches</DropdownMenuLabel>
@@ -79,7 +70,6 @@ export function BranchSwitcher({
                 onClick={() => {
                   if (isActive) return
                   setSelectedBranch.mutate({ data: { orgSlug, projectId, branchName: branch.name } })
-                  onNavigate?.()
                   void navigate({
                     to: "/app/$orgSlug/projects/$projectId/branches/$branchName",
                     params: { orgSlug, projectId, branchName: branch.name },
@@ -90,21 +80,18 @@ export function BranchSwitcher({
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{branch.name}</div>
                   <div className="truncate text-xs leading-3 text-muted-foreground">
-                    {branch.isDefault ? (
-                      <T>Default</T>
-                    ) : branch.parentBranchName ? (
-                      <>
-                        <T>Inherits from</T> {branch.parentBranchName}
-                      </>
-                    ) : (
-                      <T>Feature</T>
-                    )}
+                    {branch.isDefault ? <T>Default</T> : <T>Feature</T>}
                   </div>
                 </div>
                 <CheckIcon className={isActive ? "opacity-100" : "opacity-0"} />
               </DropdownMenuItem>
             )
           })}
+          {branches.length === 0 && (
+            <DropdownMenuItem disabled>
+              <T>No Branches</T>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

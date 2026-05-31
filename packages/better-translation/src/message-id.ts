@@ -22,7 +22,7 @@ export function getMessageIdentity(message: string, meta?: TranslateOptions) {
   return serializedMeta ? `${message}\0${serializedMeta}` : message
 }
 
-/** Generates the stable hashed id used to store and look up a translated message. */
+/** Generates the stable hashed lookup id used to store and look up a translated message. */
 export function getMessageId(message: string, meta?: TranslateOptions) {
   const value = getMessageIdentity(message, meta)
   let hash = 2166136261

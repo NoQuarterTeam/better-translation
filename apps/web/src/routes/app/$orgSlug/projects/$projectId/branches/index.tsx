@@ -1,0 +1,370 @@
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
+import { createFileRoute } from "@tanstack/react-router"
+import type { ColumnDef } from "@tanstack/react-table"
+import { CheckIcon, GitBranchIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, StarIcon } from "lucide-react"
+import { useCallback, useMemo, useState } from "react"
+import { toast } from "sonner"
+import * as z from "zod"
+
+import { T, useT } from "better-translation/react"
+import { createTranslator } from "better-translation/server"
+
+import { DataTable } from "@/components/data-table"
+import { useAppForm } from "@/components/react-form"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+import {
+  createProjectBranchFn,
+  projectBranchesQueryOptions,
+  setDefaultProjectBranchFn,
+  updateProjectBranchFn,
+  type listProjectBranchesFn,
+} from "./-data"
+
+export const Route = createFileRoute("/app/$orgSlug/projects/$projectId/branches/")({
+  component: ProjectBranchesPage,
+  loader: async ({ context, params }) => {
+    await context.queryClient.ensureQueryData(projectBranchesQueryOptions(params.orgSlug, params.projectId))
+  },
+  head: ({ match }) => {
+    const t = createTranslator(match.context.messages)
+    return { meta: [{ title: `${t("Branches")} · Better Translation` }] }
+  },
+})
+
+type BranchesData = Awaited<ReturnType<typeof listProjectBranchesFn>>
+type BranchRow = BranchesData["branches"][number]
+
+function formatDate(date: Date | string | null) {
+  if (!date) return null
+  return new Date(date).toISOString().slice(0, 10)
+}
+
+function ProjectBranchesPage() {
+  const { orgSlug, projectId } = Route.useParams()
+  const { queryClient } = Route.useRouteContext()
+  const t = useT()
+  const branchesQuery = useSuspenseQuery(projectBranchesQueryOptions(orgSlug, projectId))
+
+  const refreshBranchData = useCallback(() => {
+    void queryClient.invalidateQueries(projectBranchesQueryOptions(orgSlug, projectId))
+    void queryClient.invalidateQueries({ queryKey: ["project-branch-redirect-name", orgSlug, projectId] })
+    void queryClient.invalidateQueries({ queryKey: ["organization-projects", orgSlug] })
+  }, [orgSlug, projectId, queryClient])
+
+  const setDefaultBranch = useMutation({
+    mutationFn: (branchId: string) => setDefaultProjectBranchFn({ data: { orgSlug, projectId, branchId } }),
+    onSuccess: () => {
+      toast.success(t("Default Branch updated"))
+      refreshBranchData()
+    },
+    onError: (error: Error) => toast.error(t("Could not update default Branch"), { description: error.message }),
+  })
+
+  const branchColumns = useMemo<ColumnDef<BranchRow>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: t("Branch"),
+        cell: ({ row }) => (
+          <div>
+            <div className="font-medium">{row.original.name}</div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "isDefault",
+        header: t("Tags"),
+        cell: ({ row }) => (
+          <div className="flex flex-wrap gap-2">
+            {row.original.isDefault ? (
+              <Badge>
+                <T>Default</T>
+              </Badge>
+            ) : (
+              <Badge variant="secondary">
+                <T>Feature</T>
+              </Badge>
+            )}
+            {row.original.lastSyncedAt && (
+              <Badge variant="outline">
+                <T>Synced</T>
+              </Badge>
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "valueCount",
+        header: t("Locale values"),
+        cell: ({ row }) => row.original.valueCount.toLocaleString("en-US"),
+      },
+      {
+        accessorKey: "lastSyncedAt",
+        header: t("Last sync"),
+        cell: ({ row }) => formatDate(row.original.lastSyncedAt) ?? t("Never"),
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <BranchActions
+            branch={row.original}
+            isSettingDefault={setDefaultBranch.isPending}
+            onSetDefault={() => setDefaultBranch.mutate(row.original.id)}
+            onUpdated={refreshBranchData}
+          />
+        ),
+      },
+    ],
+    [refreshBranchData, setDefaultBranch, t],
+  )
+
+  return (
+    <div className="flex flex-col gap-6 p-4 md:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            <T>Branches</T>
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            <T>Branches are created by plugin sync. Set which Branch represents production for this Project.</T>
+          </p>
+        </div>
+      </div>
+
+      <Card className="overflow-hidden">
+        <CardContent>
+          {branchesQuery.data.branches.length === 0 ? (
+            <div className="flex min-h-72 flex-col items-center justify-center gap-4 text-center">
+              <GitBranchIcon className="text-muted-foreground" />
+              <div>
+                <h2 className="font-medium">
+                  <T>No Branches</T>
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  <T>Create a production Branch only if plugin sync has not created one yet.</T>
+                </p>
+              </div>
+              <CreateProductionBranchDialog orgSlug={orgSlug} projectId={projectId} onCreated={refreshBranchData} />
+            </div>
+          ) : (
+            <DataTable columns={branchColumns} data={branchesQuery.data.branches} />
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function CreateProductionBranchDialog({
+  onCreated,
+  orgSlug,
+  projectId,
+}: {
+  onCreated: () => void
+  orgSlug: string
+  projectId: string
+}) {
+  const [open, setOpen] = useState(false)
+  const t = useT()
+  const createBranch = useMutation({
+    mutationFn: (data: { name: string; orgSlug: string; projectId: string }) => createProjectBranchFn({ data }),
+    onSuccess: () => {
+      toast.success(t("Branch created"))
+      onCreated()
+      setOpen(false)
+    },
+  })
+
+  const form = useAppForm({
+    defaultValues: { name: "main" },
+    validators: {
+      onSubmit: z.object({
+        name: z
+          .string()
+          .trim()
+          .min(1, { error: t("Branch name is required") })
+          .max(120)
+          .regex(/^[A-Za-z0-9._/-]+$/, { error: t("Use letters, numbers, dots, slashes, underscores, or dashes") }),
+      }),
+    },
+    onSubmit: ({ value }) => {
+      createBranch.mutate({
+        orgSlug,
+        projectId,
+        name: value.name.trim(),
+      })
+    },
+  })
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={<Button className="w-fit" />}>
+        <PlusIcon />
+        <T>Create production Branch</T>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            <T>Create production Branch</T>
+          </DialogTitle>
+          <DialogDescription>
+            <T>This creates the first Branch and marks it as the Project default.</T>
+          </DialogDescription>
+        </DialogHeader>
+        <form.AppForm>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void form.handleSubmit()
+            }}
+          >
+            <form.AppField name="name">
+              {(field) => <field.TextField label={t("Branch name")} placeholder="main" />}
+            </form.AppField>
+            <DialogFooter>
+              <form.SubmitButton className="w-fit">
+                {(isSubmitting) =>
+                  isSubmitting || createBranch.isPending ? <T>Creating...</T> : <T>Create production Branch</T>
+                }
+              </form.SubmitButton>
+            </DialogFooter>
+            <form.FormError>{createBranch.error?.message}</form.FormError>
+          </form>
+        </form.AppForm>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function BranchActions({
+  branch,
+  isSettingDefault,
+  onSetDefault,
+  onUpdated,
+}: {
+  branch: BranchRow
+  isSettingDefault: boolean
+  onSetDefault: () => void
+  onUpdated: () => void
+}) {
+  const [editOpen, setEditOpen] = useState(false)
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+          <MoreHorizontalIcon />
+          <span className="sr-only">Branch actions</span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-40">
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              <PencilIcon />
+              <T>Edit</T>
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={branch.isDefault || isSettingDefault} onClick={onSetDefault}>
+              {branch.isDefault ? <CheckIcon /> : <StarIcon />}
+              <T>Make default</T>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <EditBranchDialog branch={branch} open={editOpen} onOpenChange={setEditOpen} onUpdated={onUpdated} />
+    </>
+  )
+}
+
+function EditBranchDialog({
+  branch,
+  onOpenChange,
+  onUpdated,
+  open,
+}: {
+  branch: BranchRow
+  onOpenChange: (open: boolean) => void
+  onUpdated: () => void
+  open: boolean
+}) {
+  const { orgSlug, projectId } = Route.useParams()
+  const t = useT()
+  const updateBranch = useMutation({
+    mutationFn: (data: { branchId: string; name: string; orgSlug: string; projectId: string }) => updateProjectBranchFn({ data }),
+    onSuccess: () => {
+      toast.success(t("Branch updated"))
+      onUpdated()
+      onOpenChange(false)
+    },
+  })
+
+  const form = useAppForm({
+    defaultValues: { name: branch.name },
+    validators: {
+      onSubmit: z.object({
+        name: z
+          .string()
+          .trim()
+          .min(1, { error: t("Branch name is required") })
+          .max(120)
+          .regex(/^[A-Za-z0-9._/-]+$/, { error: t("Use letters, numbers, dots, slashes, underscores, or dashes") }),
+      }),
+    },
+    onSubmit: ({ value }) => {
+      updateBranch.mutate({ orgSlug, projectId, branchId: branch.id, name: value.name.trim() })
+    },
+  })
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            <T>Edit Branch</T>
+          </DialogTitle>
+          <DialogDescription>
+            <T>Update the Branch name used in editor and runtime URLs.</T>
+          </DialogDescription>
+        </DialogHeader>
+        <form.AppForm>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void form.handleSubmit()
+            }}
+          >
+            <form.AppField name="name">
+              {(field) => <field.TextField label={t("Branch name")} placeholder="main" />}
+            </form.AppField>
+            <DialogFooter>
+              <form.SubmitButton className="w-fit">
+                {(isSubmitting) => (isSubmitting || updateBranch.isPending ? <T>Saving...</T> : <T>Save Branch</T>)}
+              </form.SubmitButton>
+            </DialogFooter>
+            <form.FormError>{updateBranch.error?.message}</form.FormError>
+          </form>
+        </form.AppForm>
+      </DialogContent>
+    </Dialog>
+  )
+}

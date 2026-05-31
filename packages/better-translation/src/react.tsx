@@ -12,7 +12,7 @@ const TranslateContext = createContext<TranslateContextValue>({ messages: {} })
 
 /** Props for `TranslateProvider`. */
 export interface TranslateProviderProps {
-  /** Flattened locale message map keyed by stable message id. */
+  /** Flattened locale message map keyed by stable lookup id. */
   messages: Record<string, string>
   /** React subtree that should have access to translations. */
   children: ReactNode
@@ -60,7 +60,7 @@ export function Var(props: VarProps) {
 
 /** Props for `T`. */
 export interface TProps {
-  /** Explicit stable id to use instead of hashing the rendered source text, whether provided manually or by a transform. */
+  /** Explicit stable lookup id to use instead of hashing the rendered source text, whether provided manually or by a transform. */
   id?: string
   /** Extra disambiguating context for translators and custom grouping. */
   context?: string

@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { authClient } from "@/lib/auth/client"
 import { getLocale, type AppLocale, setLocale } from "@/routes/-locale"
 import type { User } from "@/server/db/schema"
@@ -62,19 +62,24 @@ export function NavUser() {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <div className="px-1 py-1.5" onClick={(e) => e.stopPropagation()}>
-          <NativeSelect
+          <Select
             aria-label={t("Select locale")}
-            size="sm"
-            className="w-full"
             value={locale}
-            onChange={(e) => {
-              setLocale(e.target.value as AppLocale)
+            onValueChange={(nextLocale) => {
+              setLocale(nextLocale as AppLocale)
               void router.invalidate()
             }}
           >
-            <NativeSelectOption value="en">English</NativeSelectOption>
-            <NativeSelectOption value="nl">Nederlands</NativeSelectOption>
-          </NativeSelect>
+            <SelectTrigger size="sm" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="nl">Nederlands</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem

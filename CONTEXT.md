@@ -17,11 +17,11 @@ A source-code call or component that identifies copy as translatable.
 _Avoid_: wrapper, tag
 
 **Message**:
-A single translatable unit of source copy identified by a stable message id.
+A single translatable unit of source copy identified by a stable lookup id.
 _Avoid_: string, text, phrase
 
-**Message id**:
-A stable lookup key for a Message.
+**Lookup id**:
+A stable key used to find a Message's Locale value at runtime. Better Translation can generate it from source copy and metadata, or a developer can provide it through an explicit `id` option on a Translation marker.
 _Avoid_: key, translation key
 
 **Default locale**:
@@ -33,7 +33,7 @@ A language or regional variant that a Consumer app supports.
 _Avoid_: language
 
 **Locale values**:
-Translated message values for one Locale, keyed by Message id.
+Translated message values for one Locale, keyed by lookup id.
 _Avoid_: translations file, locale file
 
 **Manifest**:
@@ -53,7 +53,7 @@ A hosted working line for Manifest and Locale value changes, usually named after
 _Avoid_: translation branch, channel, environment
 
 **Branch override**:
-A Locale value stored on a Branch because it intentionally differs from the value inherited from that branch's parent.
+A Branch-local Locale value stored for a Branch Message.
 _Avoid_: branch copy, forked translation
 
 **Platform translator**:

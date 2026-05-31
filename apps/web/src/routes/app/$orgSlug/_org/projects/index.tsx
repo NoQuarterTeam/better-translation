@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import type { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpRightIcon, BoxesIcon, GitBranchIcon, LanguagesIcon, PlusIcon } from "lucide-react"
@@ -13,7 +13,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
-import { listProjectsFn } from "./-data"
+import { projectsQueryOptions, type listProjectsFn } from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug/_org/projects/")({
   component: ProjectsPage,
@@ -26,17 +26,12 @@ export const Route = createFileRoute("/app/$orgSlug/_org/projects/")({
   },
 })
 
-const projectsQueryOptions = (orgSlug: string) => ({
-  queryKey: ["projects", orgSlug],
-  queryFn: () => listProjectsFn({ data: { orgSlug } }),
-})
-
 type ProjectRow = Awaited<ReturnType<typeof listProjectsFn>>[number]
 
 function ProjectsPage() {
   const { orgSlug } = Route.useParams()
   const t = useT()
-  const projectsQuery = useQuery(projectsQueryOptions(orgSlug))
+  const projects = useSuspenseQuery(projectsQueryOptions(orgSlug)).data
 
   const columns = useMemo<ColumnDef<ProjectRow>[]>(
     () => [
@@ -121,7 +116,7 @@ function ProjectsPage() {
               <CardDescription>
                 <T>Projects</T>
               </CardDescription>
-              <CardTitle className="text-3xl">{projectsQuery.data?.length ?? 0}</CardTitle>
+              <CardTitle className="text-3xl">{projects.length}</CardTitle>
             </div>
             <BoxesIcon className="text-muted-foreground" />
           </CardHeader>
@@ -132,9 +127,7 @@ function ProjectsPage() {
               <CardDescription>
                 <T>Branches</T>
               </CardDescription>
-              <CardTitle className="text-3xl">
-                {(projectsQuery.data ?? []).reduce((total, project) => total + project.branchCount, 0)}
-              </CardTitle>
+              <CardTitle className="text-3xl">{projects.reduce((total, project) => total + project.branchCount, 0)}</CardTitle>
             </div>
             <GitBranchIcon className="text-muted-foreground" />
           </CardHeader>
@@ -145,9 +138,7 @@ function ProjectsPage() {
               <CardDescription>
                 <T>Messages</T>
               </CardDescription>
-              <CardTitle className="text-3xl">
-                {(projectsQuery.data ?? []).reduce((total, project) => total + project.messageCount, 0)}
-              </CardTitle>
+              <CardTitle className="text-3xl">{projects.reduce((total, project) => total + project.messageCount, 0)}</CardTitle>
             </div>
             <LanguagesIcon className="text-muted-foreground" />
           </CardHeader>
@@ -164,7 +155,7 @@ function ProjectsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0">
-          <DataTable columns={columns} data={projectsQuery.data} isLoading={projectsQuery.isPending} />
+          <DataTable columns={columns} data={projects} />
         </CardContent>
       </Card>
     </div>

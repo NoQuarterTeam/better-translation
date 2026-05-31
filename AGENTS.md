@@ -41,7 +41,6 @@ The long-term goal is a hosted service where Projects sync extracted Messages to
 
 ```bash
 bun run check
-bun run build:packages
 bun --filter better-translation build
 ```
 
@@ -74,6 +73,8 @@ Read `CONTEXT.md` for product terminology and `docs/platform.md` for product dir
 ## Development
 
 - Don't generate drizzle migrations, this will happen later
+- Don't account for backwards compatibility when making changes, unless requested
+- We're typescript, it has types, trust that, dont be overly defensive when typing things
 
 ## Agent skills
 

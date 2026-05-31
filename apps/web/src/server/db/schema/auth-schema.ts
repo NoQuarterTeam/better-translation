@@ -1,4 +1,4 @@
-import { boolean, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core"
+import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core"
 import { createSelectSchema } from "drizzle-orm/zod"
 import * as z from "zod"
 
@@ -41,10 +41,10 @@ export const membersTable = pgTable(
   "members",
   {
     ...baseColumns,
-    organizationId: integer("organization_id")
+    organizationId: text("organization_id")
       .notNull()
       .references(() => organizationsTable.id, { onDelete: "cascade" }),
-    userId: integer("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => usersTable.id, { onDelete: "cascade" }),
     role: text("role").notNull(),
@@ -58,14 +58,14 @@ export const invitationsTable = pgTable(
   "invitations",
   {
     ...baseColumns,
-    organizationId: integer("organization_id")
+    organizationId: text("organization_id")
       .notNull()
       .references(() => organizationsTable.id, { onDelete: "cascade" }),
     email: text("email").notNull(),
     role: text("role"),
     status: text("status").notNull().default("pending"),
     expiresAt: timestamp("expires_at").notNull(),
-    inviterId: integer("inviter_id")
+    inviterId: text("inviter_id")
       .notNull()
       .references(() => usersTable.id, { onDelete: "cascade" }),
   },
@@ -82,10 +82,10 @@ export const sessionsTable = pgTable(
     token: text("token").notNull().unique(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
-    userId: integer("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => usersTable.id, { onDelete: "cascade" }),
-    activeOrganizationId: integer("active_organization_id").references(() => organizationsTable.id, {
+    activeOrganizationId: text("active_organization_id").references(() => organizationsTable.id, {
       onDelete: "set null",
     }),
   },
@@ -98,7 +98,7 @@ export const accountsTable = pgTable(
     ...baseColumns,
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
-    userId: integer("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => usersTable.id, { onDelete: "cascade" }),
     accessToken: text("access_token"),

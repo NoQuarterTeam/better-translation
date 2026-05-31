@@ -1,5 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query"
-import { createRootRouteWithContext, HeadContent, Outlet, ScriptOnce, Scripts } from "@tanstack/react-router"
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router"
+import { createServerFn } from "@tanstack/react-start"
+import z from "zod"
 
 import { loadMessages } from "better-translation/messages"
 import { TranslateProvider } from "better-translation/react"
@@ -15,18 +17,16 @@ interface MyRouterContext {
   queryClient: QueryClient
 }
 
-// const getMessagesFn = createServerFn({ method: "GET" })
-//   .inputValidator(z.object({ locale: z.string() }))
-//   .handler(async ({ data }) => {
-//     return new Response(JSON.stringify(await loadMessages(data.locale as AppLocale)), {
-//       headers: env.NODE_ENV === "production" ? { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600" } : {},
-//     })
-//   })
+const getMessagesFn = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ locale: z.string() }))
+  .handler(async ({ data }) => {
+    return await loadMessages(data.locale).catch(() => ({}))
+  })
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async () => {
     const locale = getLocale()
-    const messages = await loadMessages(locale).catch(() => ({}))
+    const messages = await getMessagesFn({ data: { locale } })
 
     return { locale, messages }
   },
@@ -68,7 +68,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <HeadContent />
         </head>
         <body>
-          <VitePreloadErrorHandler />
+          {/* <VitePreloadErrorHandler /> */}
           {children}
           <Toaster />
           <Scripts />
@@ -78,6 +78,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   )
 }
 
-function VitePreloadErrorHandler() {
-  return <ScriptOnce>{`window.addEventListener("vite:preloadError", () => { window.location.reload() })`}</ScriptOnce>
-}
+// function VitePreloadErrorHandler() {
+//   return <ScriptOnce>{`window.addEventListener("vite:preloadError", () => { window.location.reload() })`}</ScriptOnce>
+// }

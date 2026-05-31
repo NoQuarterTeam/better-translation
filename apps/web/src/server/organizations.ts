@@ -1,8 +1,8 @@
 import { getCookie } from "@tanstack/react-start/server"
-import { and, asc, desc, eq } from "drizzle-orm"
+import { asc, desc, eq } from "drizzle-orm"
 
 import { db } from "@/server/db"
-import { membersTable, organizationsTable, projectsTable, type User } from "@/server/db/schema"
+import { membersTable, organizationsTable, type User } from "@/server/db/schema"
 
 export const selectedOrganizationCookieName = "bt_selected_organization_id"
 export const selectedProjectCookieName = "bt_selected_project_id"
@@ -11,14 +11,13 @@ export async function getDefaultOrganizationForUser(user: Pick<User, "id">) {
   const selectedOrganizationId = getCookie(selectedOrganizationCookieName)
 
   if (selectedOrganizationId) {
-    const [organization] = await db
-      .select({ id: organizationsTable.id, slug: organizationsTable.slug })
-      .from(membersTable)
-      .innerJoin(organizationsTable, eq(organizationsTable.id, membersTable.organizationId))
-      .where(and(eq(membersTable.userId, user.id), eq(organizationsTable.id, Number(selectedOrganizationId))))
-      .limit(1)
+    const membership = await db.query.membersTable.findFirst({
+      columns: {},
+      where: { userId: user.id, organization: { id: selectedOrganizationId } },
+      with: { organization: { columns: { id: true, slug: true } } },
+    })
 
-    if (organization) return organization
+    if (membership?.organization) return membership.organization
   }
 
   const [organization] = await db
@@ -30,20 +29,6 @@ export async function getDefaultOrganizationForUser(user: Pick<User, "id">) {
     .limit(1)
 
   return organization ?? null
-}
-
-export async function getCurrentOrganizationAccess(params: { slug: string; userId: number }) {
-  const [organizationAccess] = await db
-    .select({
-      organization: organizationsTable,
-      member: { id: membersTable.id, role: membersTable.role },
-    })
-    .from(membersTable)
-    .innerJoin(organizationsTable, eq(organizationsTable.id, membersTable.organizationId))
-    .where(and(eq(membersTable.userId, params.userId), eq(organizationsTable.slug, params.slug)))
-    .limit(1)
-
-  return organizationAccess ?? null
 }
 
 export async function listUserOrganizations(user: Pick<User, "id">) {
@@ -60,18 +45,46 @@ export async function listUserOrganizations(user: Pick<User, "id">) {
     .orderBy(asc(organizationsTable.name))
 }
 
-export async function listOrganizationProjects(organizationId: number) {
-  return db
-    .select({
-      defaultLocale: projectsTable.defaultLocale,
-      id: projectsTable.id,
-      locales: projectsTable.locales,
-      name: projectsTable.name,
-      publicId: projectsTable.publicId,
-      slug: projectsTable.slug,
-      updatedAt: projectsTable.updatedAt,
-    })
-    .from(projectsTable)
-    .where(eq(projectsTable.organizationId, organizationId))
-    .orderBy(asc(projectsTable.name))
+export async function listOrganizationProjects(organizationId: string) {
+  const projects = await db.query.projectsTable.findMany({
+    columns: {
+      defaultBranchId: true,
+      defaultLocale: true,
+      id: true,
+      locales: true,
+      name: true,
+      publicId: true,
+      slug: true,
+      updatedAt: true,
+    },
+    orderBy: { name: "asc" },
+    where: { organizationId },
+    with: {
+      branches: {
+        columns: {
+          id: true,
+          name: true,
+          updatedAt: true,
+        },
+        orderBy: { updatedAt: "desc" },
+      },
+      defaultBranch: { columns: { name: true } },
+    },
+  })
+
+  return projects.map(({ defaultBranch, ...project }) => ({
+    ...project,
+    branches: project.branches
+      .map((branch) => ({
+        ...branch,
+        isDefault: branch.id === project.defaultBranchId,
+      }))
+      .sort((left, right) => Number(right.isDefault) - Number(left.isDefault)),
+    defaultBranchName: defaultBranch?.name ?? null,
+    selectedBranchName: getCookie(getSelectedBranchCookieName(project.publicId)) ?? null,
+  }))
+}
+
+export function getSelectedBranchCookieName(projectPublicId: string) {
+  return `bt_selected_branch_${projectPublicId}`
 }

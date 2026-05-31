@@ -7,11 +7,7 @@ export const getSession = async () => {
   const data = await auth.api.getSession({ headers: getRequestHeaders() })
   if (!data) return null
 
-  // Better Auth has numeric fields as strings, we want them as numbers.
-  return {
-    session: { ...data.session, id: Number(data.session.id) },
-    user: { ...data.user, id: Number(data.user.id) },
-  }
+  return data
 }
 
 export const ensureSession = async () => {

@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { and, eq, inArray } from "drizzle-orm"
 
 import { db } from "@/server/db"
-import { branchesTable, localeValuesTable, messagesTable, projectsTable } from "@/server/db/schema"
 
 export const Route = createFileRoute("/projects/$projectId/branches/$branchName/locales/{$locale}.json")({
   server: {
@@ -14,42 +12,34 @@ export const Route = createFileRoute("/projects/$projectId/branches/$branchName/
         })
       },
       GET: async ({ params }) => {
-        const [project] = await db.select().from(projectsTable).where(eq(projectsTable.publicId, params.projectId)).limit(1)
+        const project = await db.query.projectsTable.findFirst({ where: { publicId: params.projectId } })
 
         if (!project) return json({ error: "Project not found" }, 404)
         if (!project.locales.includes(params.locale)) return json({ error: "Locale not found" }, 404)
 
-        const [branch] = await db
-          .select()
-          .from(branchesTable)
-          .where(and(eq(branchesTable.projectId, project.id), eq(branchesTable.name, params.branchName)))
-          .limit(1)
+        const branch = await db.query.branchesTable.findFirst({
+          where: { projectId: project.id, name: params.branchName },
+        })
 
         if (!branch) return json({ error: "Branch not found" }, 404)
 
-        const messages = await db
-          .select()
-          .from(messagesTable)
-          .where(and(eq(messagesTable.projectId, project.id), eq(messagesTable.active, true)))
+        const messages = await db.query.messagesTable.findMany({
+          where: { active: true, branchId: branch.id, projectId: project.id },
+        })
 
         if (params.locale === project.defaultLocale) {
-          return json(Object.fromEntries(messages.map((message) => [message.messageId, message.defaultMessage])))
+          return json(Object.fromEntries(messages.map((message) => [message.lookupId, message.defaultMessage])))
         }
 
-        const branchIds = branch.parentBranchId ? [branch.id, branch.parentBranchId] : [branch.id]
-        const values = await db
-          .select()
-          .from(localeValuesTable)
-          .where(and(inArray(localeValuesTable.branchId, branchIds), eq(localeValuesTable.locale, params.locale)))
+        const values = await db.query.localeValuesTable.findMany({
+          where: { branchId: branch.id, locale: params.locale },
+        })
 
         return json(
           Object.fromEntries(
             messages.map((message) => {
               const branchValue = values.find((value) => value.branchId === branch.id && value.messageId === message.id)
-              const parentValue = values.find(
-                (value) => value.branchId === branch.parentBranchId && value.messageId === message.id,
-              )
-              return [message.messageId, branchValue?.value ?? parentValue?.value ?? message.defaultMessage]
+              return [message.lookupId, branchValue?.value ?? message.defaultMessage]
             }),
           ),
         )

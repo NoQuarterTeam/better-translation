@@ -1,8 +1,12 @@
 import { redirect } from "@tanstack/react-router"
 import { createMiddleware } from "@tanstack/react-start"
+import * as z from "zod"
 
 import { db } from "@/server/db"
+import { getDefaultOrganizationForUser } from "@/server/organizations"
 import { ensureSession } from "@/server/sessions"
+
+import { parseZod } from "./zod"
 
 export const authMiddleware = createMiddleware({ type: "function" }).server(async ({ next }) => {
   const session = await ensureSession()
@@ -13,6 +17,36 @@ export const authMiddleware = createMiddleware({ type: "function" }).server(asyn
   return next({ context: { ...session, user } })
 })
 
+export const organizationMiddleware = createMiddleware({ type: "function" })
+  .middleware([authMiddleware])
+  .inputValidator(parseZod(z.object({ orgSlug: z.string().trim().min(1) }).loose()))
+  .server(async ({ next, context, data }) => {
+    const organizationAccess = await getCurrentOrganizationAccess({ slug: data.orgSlug, userId: context.user.id })
+
+    if (!organizationAccess) {
+      const defaultOrganization = await getDefaultOrganizationForUser({ id: context.user.id })
+      if (!defaultOrganization) throw redirect({ to: "/app/create-org" })
+      throw redirect({ to: "/app/$orgSlug", params: { orgSlug: defaultOrganization.slug } })
+    }
+
+    return next({
+      context: { ...context, organization: organizationAccess.organization, member: organizationAccess.member },
+    })
+  })
+
+export const projectMiddleware = createMiddleware({ type: "function" })
+  .middleware([organizationMiddleware])
+  .inputValidator(parseZod(z.object({ projectId: z.string().trim().min(1) }).loose()))
+  .server(async ({ next, context, data }) => {
+    const project = await db.query.projectsTable.findFirst({
+      where: { publicId: data.projectId, organizationId: context.organization.id },
+    })
+
+    if (!project) throw new Error("Project not found.")
+
+    return next({ context: { ...context, project } })
+  })
+
 export const adminMiddleware = createMiddleware({ type: "function" })
   .middleware([authMiddleware])
   .server(async ({ next, context }) => {
@@ -22,3 +56,18 @@ export const adminMiddleware = createMiddleware({ type: "function" })
       context: { ...context, user: { ...context.user, isAdmin: true as const } },
     })
   })
+
+async function getCurrentOrganizationAccess(params: { slug: string; userId: string }) {
+  const organizationAccess = await db.query.membersTable.findFirst({
+    columns: { id: true, role: true },
+    where: { userId: params.userId, organization: { slug: params.slug } },
+    with: { organization: true },
+  })
+
+  if (!organizationAccess?.organization) return null
+
+  return {
+    organization: organizationAccess.organization,
+    member: { id: organizationAccess.id, role: organizationAccess.role },
+  }
+}

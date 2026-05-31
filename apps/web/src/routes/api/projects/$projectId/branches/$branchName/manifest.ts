@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { waitUntil } from "@vercel/functions"
-import { and, eq, inArray, isNull, notInArray } from "drizzle-orm"
+import { and, eq, notInArray } from "drizzle-orm"
 import * as z from "zod"
 
 import { db } from "@/server/db"
-import { localeValuesTable, messagesTable, apiKeysTable, projectsTable, branchesTable } from "@/server/db/schema"
-import { createStableHash, DEFAULT_TRANSLATION_BRANCH, readBearerToken } from "@/server/platform"
+import { apiKeysTable, branchesTable, localeValuesTable, messagesTable, projectsTable } from "@/server/db/schema"
+import { createProjectApiKeyHash, createStableHash, readBearerToken } from "@/server/platform"
 import { translateMessagesWithPlatform } from "@/server/platform-translator"
 
 const manifestSourceSchema = z.object({
@@ -40,6 +39,11 @@ const manifestSyncSchema = z
     }
   })
 
+type ManifestSync = z.infer<typeof manifestSyncSchema>
+type ManifestMessages = ManifestSync["messages"]
+type Message = typeof messagesTable.$inferSelect
+type LocaleValue = typeof localeValuesTable.$inferSelect
+
 export const Route = createFileRoute("/api/projects/$projectId/branches/$branchName/manifest")({
   server: {
     handlers: {
@@ -53,255 +57,441 @@ export const Route = createFileRoute("/api/projects/$projectId/branches/$branchN
         const parsed = manifestSyncSchema.safeParse(await request.json())
         if (!parsed.success) return json({ error: "Invalid Manifest payload", issues: parsed.error.issues }, 400)
 
-        await db.update(apiKeysTable).set({ lastUsedAt: new Date() }).where(eq(apiKeysTable.id, projectAuth.apiKeyId))
+        await markApiKeyUsed(projectAuth.apiKeyId)
 
-        const [defaultBranch] = await db
-          .insert(branchesTable)
-          .values({
-            projectId: projectAuth.project.id,
-            name: DEFAULT_TRANSLATION_BRANCH,
-            isDefault: true,
-          })
-          .onConflictDoNothing({
-            target: [branchesTable.projectId, branchesTable.name],
-          })
-          .returning()
+        const branch = await upsertBranch(projectAuth.project.id, params.branchName)
+        const defaultBranchId = projectAuth.project.defaultBranchId ?? branch.id
 
-        const defaultBranchId =
-          defaultBranch?.id ??
-          (
-            await db
-              .select({ id: branchesTable.id })
-              .from(branchesTable)
-              .where(and(eq(branchesTable.projectId, projectAuth.project.id), eq(branchesTable.name, DEFAULT_TRANSLATION_BRANCH)))
-              .limit(1)
-          )[0]?.id
+        await updateProjectManifestState({
+          defaultBranchId,
+          defaultLocale: parsed.data.defaultLocale,
+          locales: parsed.data.locales,
+          projectId: projectAuth.project.id,
+        })
 
-        const [branch] = await db
-          .insert(branchesTable)
-          .values({
-            projectId: projectAuth.project.id,
-            name: params.branchName,
-            parentBranchId: params.branchName === DEFAULT_TRANSLATION_BRANCH ? null : defaultBranchId,
-            isDefault: params.branchName === DEFAULT_TRANSLATION_BRANCH,
-          })
-          .onConflictDoNothing({
-            target: [branchesTable.projectId, branchesTable.name],
-          })
-          .returning()
+        const syncedMessages = await syncBranchMessages({
+          branchId: branch.id,
+          messages: parsed.data.messages,
+          projectId: projectAuth.project.id,
+        })
 
-        const branchId =
-          branch?.id ??
-          (
-            await db
-              .select({ id: branchesTable.id })
-              .from(branchesTable)
-              .where(and(eq(branchesTable.projectId, projectAuth.project.id), eq(branchesTable.name, params.branchName)))
-              .limit(1)
-          )[0]?.id
+        const filledValueCount = await fillMissingLocaleValues({
+          branch,
+          defaultLocale: parsed.data.defaultLocale,
+          defaultBranchId,
+          locales: parsed.data.locales,
+          messages: syncedMessages,
+          project: projectAuth.project,
+        })
 
-        if (!branchId) return json({ error: "Could not create Branch" }, 500)
-
-        const [syncedBranch] = await db.select().from(branchesTable).where(eq(branchesTable.id, branchId)).limit(1)
-
-        if (!syncedBranch) return json({ error: "Could not load Branch" }, 500)
-
-        await db
-          .update(projectsTable)
-          .set({
-            defaultLocale: parsed.data.defaultLocale,
-            locales: parsed.data.locales,
-            updatedAt: new Date(),
-          })
-          .where(eq(projectsTable.id, projectAuth.project.id))
-
-        const incomingMessageIds = Object.keys(parsed.data.messages)
-        for (const [messageId, message] of Object.entries(parsed.data.messages)) {
-          await db
-            .insert(messagesTable)
-            .values({
-              projectId: projectAuth.project.id,
-              messageId,
-              defaultMessage: message.defaultMessage,
-              defaultMessageHash: createStableHash(message.defaultMessage),
-              meta: message.meta,
-              placeholders: message.placeholders,
-              sources: message.sources,
-              active: true,
-            })
-            .onConflictDoUpdate({
-              target: [messagesTable.projectId, messagesTable.messageId],
-              set: {
-                defaultMessage: message.defaultMessage,
-                defaultMessageHash: createStableHash(message.defaultMessage),
-                meta: message.meta,
-                placeholders: message.placeholders,
-                sources: message.sources,
-                active: true,
-                updatedAt: new Date(),
-              },
-            })
-        }
-
-        if (incomingMessageIds.length > 0) {
-          await db
-            .update(messagesTable)
-            .set({ active: false, updatedAt: new Date() })
-            .where(
-              and(eq(messagesTable.projectId, projectAuth.project.id), notInArray(messagesTable.messageId, incomingMessageIds)),
-            )
-        } else {
-          await db
-            .update(messagesTable)
-            .set({ active: false, updatedAt: new Date() })
-            .where(eq(messagesTable.projectId, projectAuth.project.id))
-        }
-
-        const activeMessages = await db
-          .select()
-          .from(messagesTable)
-          .where(and(eq(messagesTable.projectId, projectAuth.project.id), eq(messagesTable.active, true)))
-
-        const translationQueued =
-          projectAuth.project.autoTranslate &&
-          activeMessages.length > 0 &&
-          parsed.data.locales.some((locale) => locale !== parsed.data.defaultLocale)
-
-        if (translationQueued) {
-          waitUntil(
-            fillMissingLocaleValues({
-              branch: syncedBranch,
-              defaultLocale: parsed.data.defaultLocale,
-              locales: parsed.data.locales,
-              messages: activeMessages,
-              project: projectAuth.project,
-            }).catch((error: unknown) => {
-              console.error("Failed to fill missing Locale values after Manifest sync", error)
-            }),
-          )
-        }
-
-        await db
-          .update(branchesTable)
-          .set({ lastSyncedAt: new Date(), updatedAt: new Date() })
-          .where(eq(branchesTable.id, branchId))
+        await markBranchSynced(branch.id)
 
         return json({
           projectId: projectAuth.project.publicId,
           branch: params.branchName,
           defaultLocale: parsed.data.defaultLocale,
           locales: parsed.data.locales,
-          messageCount: incomingMessageIds.length,
-          translationQueued,
+          filledValueCount,
+          messageCount: syncedMessages.length,
         })
       },
     },
   },
 })
 
+async function markApiKeyUsed(apiKeyId: string) {
+  await db.update(apiKeysTable).set({ lastUsedAt: new Date() }).where(eq(apiKeysTable.id, apiKeyId))
+}
+
+async function upsertBranch(projectId: string, name: string) {
+  const [branch] = await db
+    .insert(branchesTable)
+    .values({ projectId, name })
+    .onConflictDoNothing({ target: [branchesTable.projectId, branchesTable.name] })
+    .returning()
+
+  const existingBranch = branch ?? (await db.query.branchesTable.findFirst({ where: { projectId, name } }))
+
+  if (!existingBranch) throw new Error("Could not create Branch.")
+  return existingBranch
+}
+
+async function updateProjectManifestState({
+  defaultBranchId,
+  defaultLocale,
+  locales,
+  projectId,
+}: {
+  defaultBranchId: string
+  defaultLocale: string
+  locales: string[]
+  projectId: string
+}) {
+  await db
+    .update(projectsTable)
+    .set({ defaultBranchId, defaultLocale, locales, updatedAt: new Date() })
+    .where(eq(projectsTable.id, projectId))
+}
+
+async function syncBranchMessages({
+  branchId,
+  messages,
+  projectId,
+}: {
+  branchId: string
+  messages: ManifestMessages
+  projectId: string
+}) {
+  const syncedMessages = []
+
+  for (const [lookupId, message] of Object.entries(messages)) {
+    const syncedMessage = await upsertBranchMessage({ branchId, lookupId, message, projectId })
+    syncedMessages.push(syncedMessage)
+  }
+
+  await deactivateMissingBranchMessages({ branchId, messageIds: syncedMessages.map((message) => message.id) })
+
+  return syncedMessages
+}
+
+async function upsertBranchMessage({
+  branchId,
+  lookupId,
+  message,
+  projectId,
+}: {
+  branchId: string
+  lookupId: string
+  message: ManifestMessages[string]
+  projectId: string
+}) {
+  const defaultMessageHash = createStableHash(message.defaultMessage)
+  const [syncedMessage] = await db
+    .insert(messagesTable)
+    .values({
+      active: true,
+      branchId,
+      defaultMessage: message.defaultMessage,
+      defaultMessageHash,
+      lookupId,
+      meta: message.meta,
+      placeholders: message.placeholders,
+      projectId,
+      sources: message.sources,
+    })
+    .onConflictDoUpdate({
+      target: [messagesTable.branchId, messagesTable.lookupId],
+      set: {
+        active: true,
+        defaultMessage: message.defaultMessage,
+        defaultMessageHash,
+        meta: message.meta,
+        placeholders: message.placeholders,
+        sources: message.sources,
+        updatedAt: new Date(),
+      },
+    })
+    .returning()
+
+  if (!syncedMessage) throw new Error(`Could not sync Message ${lookupId}.`)
+  return syncedMessage
+}
+
+async function deactivateMissingBranchMessages({ branchId, messageIds }: { branchId: string; messageIds: string[] }) {
+  const query = db.update(messagesTable).set({ active: false, updatedAt: new Date() })
+
+  if (messageIds.length === 0) {
+    await query.where(eq(messagesTable.branchId, branchId))
+    return
+  }
+
+  await query.where(and(eq(messagesTable.branchId, branchId), notInArray(messagesTable.id, messageIds)))
+}
+
+async function markBranchSynced(branchId: string) {
+  await db.update(branchesTable).set({ lastSyncedAt: new Date(), updatedAt: new Date() }).where(eq(branchesTable.id, branchId))
+}
+
 async function fillMissingLocaleValues({
   branch,
   defaultLocale,
+  defaultBranchId,
   locales,
   messages,
   project,
 }: {
   branch: typeof branchesTable.$inferSelect
   defaultLocale: string
+  defaultBranchId: string
   locales: string[]
   messages: (typeof messagesTable.$inferSelect)[]
   project: typeof projectsTable.$inferSelect
 }) {
-  if (!project.autoTranslate) return 0
   if (messages.length === 0) return 0
 
   const targetLocales = locales.filter((locale) => locale !== defaultLocale)
   if (targetLocales.length === 0) return 0
 
-  const branchIds = branch.parentBranchId ? [branch.id, branch.parentBranchId] : [branch.id]
-  const existingValues = await db
-    .select({
-      branchId: localeValuesTable.branchId,
-      locale: localeValuesTable.locale,
-      messageId: localeValuesTable.messageId,
-    })
-    .from(localeValuesTable)
-    .where(and(eq(localeValuesTable.projectId, project.id), inArray(localeValuesTable.branchId, branchIds)))
+  const fillContext = await loadLocaleFillContext({
+    branchId: branch.id,
+    defaultBranchId,
+    messages,
+    projectId: project.id,
+  })
 
-  let translatedValueCount = 0
+  let filledValueCount = 0
 
   for (const locale of targetLocales) {
-    const missingMessages = messages.filter((message) => {
-      const hasBranchValue = existingValues.some(
-        (value) => value.branchId === branch.id && value.messageId === message.id && value.locale === locale,
-      )
-      const hasParentValue = existingValues.some(
-        (value) => value.branchId === branch.parentBranchId && value.messageId === message.id && value.locale === locale,
-      )
-      return !hasBranchValue && !hasParentValue
-    })
+    const fillPlan = getLocaleFillPlan({ ...fillContext, locale, messages })
+    if (fillPlan.length === 0) continue
 
-    if (missingMessages.length === 0) continue
+    const messagesNeedingTranslation = []
 
-    const translations = await translateMessagesWithPlatform({
-      locale,
-      model: project.translationModel,
-      prompt: project.translationPrompt,
-      messages: missingMessages.map((message) => ({
-        context: typeof message.meta.context === "string" ? message.meta.context : undefined,
-        defaultMessage: message.defaultMessage,
-        id: message.messageId,
-        placeholders: message.placeholders,
-        sources: message.sources,
-      })),
-    })
-
-    for (const message of missingMessages) {
-      const value = translations[message.messageId]?.trim()
-      if (!value) throw new Error(`The Platform translator returned no value for ${message.messageId}.`)
-
-      const [insertedValue] = await db
-        .insert(localeValuesTable)
-        .values({
+    for (const item of fillPlan) {
+      if (item.defaultBranchValue) {
+        await copyDefaultBranchLocaleValue({
           branchId: branch.id,
+          defaultBranchValue: item.defaultBranchValue,
           locale,
-          messageId: message.id,
-          parentValueHash: message.defaultMessageHash,
+          message: item.message,
           projectId: project.id,
-          source: "ai",
-          value,
-          valueHash: createStableHash(value),
         })
-        .onConflictDoNothing({
-          target: [localeValuesTable.branchId, localeValuesTable.messageId, localeValuesTable.locale],
-        })
-        .returning({ id: localeValuesTable.id })
+        filledValueCount += 1
+        continue
+      }
 
-      if (insertedValue) translatedValueCount += 1
+      messagesNeedingTranslation.push(item.message)
     }
+
+    if (messagesNeedingTranslation.length === 0) continue
+
+    filledValueCount += await translateLocaleValues({
+      branchId: branch.id,
+      locale,
+      messages: messagesNeedingTranslation,
+      project,
+    })
   }
 
-  return translatedValueCount
+  return filledValueCount
+}
+
+async function loadLocaleFillContext({
+  branchId,
+  defaultBranchId,
+  messages,
+  projectId,
+}: {
+  branchId: string
+  defaultBranchId: string
+  messages: Message[]
+  projectId: string
+}) {
+  const defaultBranchMessages =
+    branchId === defaultBranchId
+      ? []
+      : await db.query.messagesTable.findMany({
+          where: {
+            active: true,
+            branchId: defaultBranchId,
+            lookupId: { in: messages.map((message) => message.lookupId) },
+            projectId,
+          },
+        })
+  const branchValues = await db.query.localeValuesTable.findMany({
+    where: { branchId, messageId: { in: messages.map((message) => message.id) }, projectId },
+  })
+  const defaultBranchValues =
+    defaultBranchMessages.length === 0
+      ? []
+      : await db.query.localeValuesTable.findMany({
+          where: {
+            branchId: defaultBranchId,
+            messageId: { in: defaultBranchMessages.map((message) => message.id) },
+            projectId,
+          },
+        })
+
+  return {
+    branchValueByMessageAndLocale: new Map(branchValues.map((value) => [localeValueKey(value.messageId, value.locale), value])),
+    defaultBranchMessageByLookupId: new Map(defaultBranchMessages.map((message) => [message.lookupId, message])),
+    defaultBranchValueByMessageAndLocale: new Map(
+      defaultBranchValues.map((value) => [localeValueKey(value.messageId, value.locale), value]),
+    ),
+  }
+}
+
+function getLocaleFillPlan({
+  branchValueByMessageAndLocale,
+  defaultBranchMessageByLookupId,
+  defaultBranchValueByMessageAndLocale,
+  locale,
+  messages,
+}: Awaited<ReturnType<typeof loadLocaleFillContext>> & {
+  locale: string
+  messages: Message[]
+}) {
+  return messages
+    .filter((message) => shouldFillBranchValue(message, branchValueByMessageAndLocale.get(localeValueKey(message.id, locale))))
+    .map((message) => ({
+      defaultBranchValue: getMatchingDefaultBranchValue({
+        defaultBranchMessageByLookupId,
+        defaultBranchValueByMessageAndLocale,
+        locale,
+        message,
+      }),
+      message,
+    }))
+}
+
+function shouldFillBranchValue(message: Message, branchValue: LocaleValue | undefined) {
+  if (!branchValue) return true
+  if (branchValue.source === "manual") return false
+  return branchValue.baseValueHash !== message.defaultMessageHash
+}
+
+function getMatchingDefaultBranchValue({
+  defaultBranchMessageByLookupId,
+  defaultBranchValueByMessageAndLocale,
+  locale,
+  message,
+}: {
+  defaultBranchMessageByLookupId: Map<string, Message>
+  defaultBranchValueByMessageAndLocale: Map<string, LocaleValue>
+  locale: string
+  message: Message
+}) {
+  const defaultBranchMessage = defaultBranchMessageByLookupId.get(message.lookupId)
+  if (!defaultBranchMessage) return null
+  if (defaultBranchMessage.defaultMessageHash !== message.defaultMessageHash) return null
+  return defaultBranchValueByMessageAndLocale.get(localeValueKey(defaultBranchMessage.id, locale)) ?? null
+}
+
+async function copyDefaultBranchLocaleValue({
+  branchId,
+  defaultBranchValue,
+  locale,
+  message,
+  projectId,
+}: {
+  branchId: string
+  defaultBranchValue: LocaleValue
+  locale: string
+  message: Message
+  projectId: string
+}) {
+  await db
+    .insert(localeValuesTable)
+    .values({
+      baseValueHash: message.defaultMessageHash,
+      branchId,
+      locale,
+      messageId: message.id,
+      projectId,
+      source: "imported",
+      value: defaultBranchValue.value,
+      valueHash: defaultBranchValue.valueHash,
+    })
+    .onConflictDoUpdate({
+      target: [localeValuesTable.branchId, localeValuesTable.messageId, localeValuesTable.locale],
+      set: {
+        baseValueHash: message.defaultMessageHash,
+        source: "imported",
+        value: defaultBranchValue.value,
+        valueHash: defaultBranchValue.valueHash,
+        updatedAt: new Date(),
+      },
+    })
+}
+
+async function translateLocaleValues({
+  branchId,
+  locale,
+  messages,
+  project,
+}: {
+  branchId: string
+  locale: string
+  messages: Message[]
+  project: typeof projectsTable.$inferSelect
+}) {
+  const translations = await translateMessagesWithPlatform({
+    locale,
+    model: project.translationModel,
+    prompt: project.translationPrompt,
+    messages: messages.map((message) => ({
+      context: typeof message.meta.context === "string" ? message.meta.context : undefined,
+      defaultMessage: message.defaultMessage,
+      id: message.lookupId,
+      placeholders: message.placeholders,
+      sources: message.sources,
+    })),
+  })
+
+  for (const message of messages) {
+    const value = translations[message.lookupId]?.trim()
+    if (!value) throw new Error(`The Platform translator returned no value for ${message.lookupId}.`)
+    await upsertTranslatedLocaleValue({ branchId, locale, message, projectId: project.id, value })
+  }
+
+  return messages.length
+}
+
+async function upsertTranslatedLocaleValue({
+  branchId,
+  locale,
+  message,
+  projectId,
+  value,
+}: {
+  branchId: string
+  locale: string
+  message: Message
+  projectId: string
+  value: string
+}) {
+  await db
+    .insert(localeValuesTable)
+    .values({
+      baseValueHash: message.defaultMessageHash,
+      branchId,
+      locale,
+      messageId: message.id,
+      projectId,
+      source: "ai",
+      value,
+      valueHash: createStableHash(value),
+    })
+    .onConflictDoUpdate({
+      target: [localeValuesTable.branchId, localeValuesTable.messageId, localeValuesTable.locale],
+      set: {
+        baseValueHash: message.defaultMessageHash,
+        source: "ai",
+        value,
+        valueHash: createStableHash(value),
+        updatedAt: new Date(),
+      },
+    })
+}
+
+function localeValueKey(messageId: string, locale: string) {
+  return `${messageId}:${locale}`
 }
 
 async function getAuthorizedProject(projectId: string, token: string) {
-  const [row] = await db
-    .select({
-      apiKeyId: apiKeysTable.id,
-      project: projectsTable,
-    })
-    .from(apiKeysTable)
-    .innerJoin(projectsTable, eq(apiKeysTable.projectId, projectsTable.id))
-    .where(
-      and(
-        eq(projectsTable.publicId, projectId),
-        eq(apiKeysTable.keyHash, createStableHash(token)),
-        isNull(apiKeysTable.revokedAt),
-      ),
-    )
-    .limit(1)
+  const apiKey = await db.query.apiKeysTable.findFirst({
+    columns: { id: true },
+    where: {
+      keyHash: createProjectApiKeyHash(token),
+      project: { publicId: projectId },
+      revokedAt: { isNull: true },
+    },
+    with: { project: true },
+  })
 
-  return row ?? null
+  if (!apiKey?.project) return null
+
+  return { apiKeyId: apiKey.id, project: apiKey.project }
 }
 
 function json(body: unknown, status = 200) {

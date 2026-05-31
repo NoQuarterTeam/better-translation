@@ -30,6 +30,7 @@ import { Route as AppOrgSlugOrgSettingsIndexRouteImport } from './routes/app/$or
 import { Route as AppOrgSlugOrgProjectsIndexRouteImport } from './routes/app/$orgSlug/_org/projects/index'
 import { Route as AppOrgSlugOrgProjectsNewRouteImport } from './routes/app/$orgSlug/_org/projects/new'
 import { Route as AppOrgSlugProjectsProjectIdSettingsIndexRouteImport } from './routes/app/$orgSlug/projects/$projectId/settings/index'
+import { Route as AppOrgSlugProjectsProjectIdBranchesIndexRouteImport } from './routes/app/$orgSlug/projects/$projectId/branches/index'
 import { Route as AppOrgSlugProjectsProjectIdApiKeysIndexRouteImport } from './routes/app/$orgSlug/projects/$projectId/api-keys/index'
 import { Route as ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRouteImport } from './routes/projects/$projectId/branches/$branchName/locales/{$locale}[.]json'
 import { Route as ApiProjectsProjectIdBranchesBranchNameManifestRouteImport } from './routes/api/projects/$projectId/branches/$branchName/manifest'
@@ -145,6 +146,12 @@ const AppOrgSlugProjectsProjectIdSettingsIndexRoute =
     path: '/settings/',
     getParentRoute: () => AppOrgSlugProjectsProjectIdLayoutRoute,
   } as any)
+const AppOrgSlugProjectsProjectIdBranchesIndexRoute =
+  AppOrgSlugProjectsProjectIdBranchesIndexRouteImport.update({
+    id: '/branches/',
+    path: '/branches/',
+    getParentRoute: () => AppOrgSlugProjectsProjectIdLayoutRoute,
+  } as any)
 const AppOrgSlugProjectsProjectIdApiKeysIndexRoute =
   AppOrgSlugProjectsProjectIdApiKeysIndexRouteImport.update({
     id: '/api-keys/',
@@ -194,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
   '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
   '/app/$orgSlug/projects/$projectId/api-keys/': typeof AppOrgSlugProjectsProjectIdApiKeysIndexRoute
+  '/app/$orgSlug/projects/$projectId/branches/': typeof AppOrgSlugProjectsProjectIdBranchesIndexRoute
   '/app/$orgSlug/projects/$projectId/settings/': typeof AppOrgSlugProjectsProjectIdSettingsIndexRoute
   '/app/$orgSlug/projects/$projectId/branches/$branchName/': typeof AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute
 }
@@ -217,6 +225,7 @@ export interface FileRoutesByTo {
   '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
   '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
   '/app/$orgSlug/projects/$projectId/api-keys': typeof AppOrgSlugProjectsProjectIdApiKeysIndexRoute
+  '/app/$orgSlug/projects/$projectId/branches': typeof AppOrgSlugProjectsProjectIdBranchesIndexRoute
   '/app/$orgSlug/projects/$projectId/settings': typeof AppOrgSlugProjectsProjectIdSettingsIndexRoute
   '/app/$orgSlug/projects/$projectId/branches/$branchName': typeof AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute
 }
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
   '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
   '/app/$orgSlug/projects/$projectId/api-keys/': typeof AppOrgSlugProjectsProjectIdApiKeysIndexRoute
+  '/app/$orgSlug/projects/$projectId/branches/': typeof AppOrgSlugProjectsProjectIdBranchesIndexRoute
   '/app/$orgSlug/projects/$projectId/settings/': typeof AppOrgSlugProjectsProjectIdSettingsIndexRoute
   '/app/$orgSlug/projects/$projectId/branches/$branchName/': typeof AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute
 }
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/api/projects/$projectId/branches/$branchName/manifest'
     | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
     | '/app/$orgSlug/projects/$projectId/api-keys/'
+    | '/app/$orgSlug/projects/$projectId/branches/'
     | '/app/$orgSlug/projects/$projectId/settings/'
     | '/app/$orgSlug/projects/$projectId/branches/$branchName/'
   fileRoutesByTo: FileRoutesByTo
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/api/projects/$projectId/branches/$branchName/manifest'
     | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
     | '/app/$orgSlug/projects/$projectId/api-keys'
+    | '/app/$orgSlug/projects/$projectId/branches'
     | '/app/$orgSlug/projects/$projectId/settings'
     | '/app/$orgSlug/projects/$projectId/branches/$branchName'
   id:
@@ -322,6 +334,7 @@ export interface FileRouteTypes {
     | '/api/projects/$projectId/branches/$branchName/manifest'
     | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
     | '/app/$orgSlug/projects/$projectId/api-keys/'
+    | '/app/$orgSlug/projects/$projectId/branches/'
     | '/app/$orgSlug/projects/$projectId/settings/'
     | '/app/$orgSlug/projects/$projectId/branches/$branchName/'
   fileRoutesById: FileRoutesById
@@ -487,6 +500,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSlugProjectsProjectIdSettingsIndexRouteImport
       parentRoute: typeof AppOrgSlugProjectsProjectIdLayoutRoute
     }
+    '/app/$orgSlug/projects/$projectId/branches/': {
+      id: '/app/$orgSlug/projects/$projectId/branches/'
+      path: '/branches'
+      fullPath: '/app/$orgSlug/projects/$projectId/branches/'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectIdBranchesIndexRouteImport
+      parentRoute: typeof AppOrgSlugProjectsProjectIdLayoutRoute
+    }
     '/app/$orgSlug/projects/$projectId/api-keys/': {
       id: '/app/$orgSlug/projects/$projectId/api-keys/'
       path: '/api-keys'
@@ -560,6 +580,7 @@ const AppOrgSlugOrgLayoutRouteWithChildren =
 interface AppOrgSlugProjectsProjectIdLayoutRouteChildren {
   AppOrgSlugProjectsProjectIdIndexRoute: typeof AppOrgSlugProjectsProjectIdIndexRoute
   AppOrgSlugProjectsProjectIdApiKeysIndexRoute: typeof AppOrgSlugProjectsProjectIdApiKeysIndexRoute
+  AppOrgSlugProjectsProjectIdBranchesIndexRoute: typeof AppOrgSlugProjectsProjectIdBranchesIndexRoute
   AppOrgSlugProjectsProjectIdSettingsIndexRoute: typeof AppOrgSlugProjectsProjectIdSettingsIndexRoute
   AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute: typeof AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute
 }
@@ -570,6 +591,8 @@ const AppOrgSlugProjectsProjectIdLayoutRouteChildren: AppOrgSlugProjectsProjectI
       AppOrgSlugProjectsProjectIdIndexRoute,
     AppOrgSlugProjectsProjectIdApiKeysIndexRoute:
       AppOrgSlugProjectsProjectIdApiKeysIndexRoute,
+    AppOrgSlugProjectsProjectIdBranchesIndexRoute:
+      AppOrgSlugProjectsProjectIdBranchesIndexRoute,
     AppOrgSlugProjectsProjectIdSettingsIndexRoute:
       AppOrgSlugProjectsProjectIdSettingsIndexRoute,
     AppOrgSlugProjectsProjectIdBranchesBranchNameIndexRoute:

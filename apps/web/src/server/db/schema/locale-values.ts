@@ -1,4 +1,4 @@
-import { index, integer, pgEnum, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
+import { index, pgEnum, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod"
 import * as z from "zod"
 
@@ -14,21 +14,21 @@ export const localeValuesTable = pgTable(
   "locale_values",
   {
     ...baseColumns,
-    projectId: integer("project_id")
+    projectId: text("project_id")
       .notNull()
       .references(() => projectsTable.id, { onDelete: "cascade" }),
-    branchId: integer("branch_id")
+    branchId: text("branch_id")
       .notNull()
       .references(() => branchesTable.id, { onDelete: "cascade" }),
-    messageId: integer("message_id")
+    messageId: text("message_id")
       .notNull()
       .references(() => messagesTable.id, { onDelete: "cascade" }),
     locale: text("locale").notNull(),
     value: text("value").notNull(),
     source: localeValueSourceEnum("source").notNull(),
     valueHash: text("value_hash").notNull(),
-    parentValueHash: text("parent_value_hash"),
-    updatedById: integer("updated_by_id").references(() => usersTable.id, { onDelete: "set null" }),
+    baseValueHash: text("base_value_hash"),
+    updatedById: text("updated_by_id").references(() => usersTable.id, { onDelete: "set null" }),
   },
   (table) => [
     index("locale_value_project_id_idx").on(table.projectId),
@@ -42,7 +42,7 @@ const customFields = {
   locale: z.string().trim().min(2).max(20),
   value: z.string().trim().min(1),
   valueHash: z.string().trim().min(1),
-  parentValueHash: z.string().trim().min(1).nullable(),
+  baseValueHash: z.string().trim().min(1).nullable(),
 }
 
 export const localeValueSchema = createSelectSchema(localeValuesTable).extend(customFields)

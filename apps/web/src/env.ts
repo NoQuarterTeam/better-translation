@@ -6,6 +6,7 @@ export const env = createEnv({
   extends: [vercel()],
   server: {
     DATABASE_URL: z.url(),
+    BETTER_TRANSLATION_API_KEY_HASH_SECRET: z.string().min(32),
     RESEND_API_KEY: z.string(),
   },
 
@@ -27,6 +28,7 @@ export const env = createEnv({
    */
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    BETTER_TRANSLATION_API_KEY_HASH_SECRET: process.env.BETTER_TRANSLATION_API_KEY_HASH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
   },

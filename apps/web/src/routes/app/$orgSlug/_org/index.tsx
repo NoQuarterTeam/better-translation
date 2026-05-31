@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { BoxesIcon, GitBranchIcon, KeyRoundIcon, LanguagesIcon } from "lucide-react"
 
@@ -10,7 +10,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
-import { getOrganizationOverviewFn } from "./-data"
+import { organizationOverviewQueryOptions } from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug/_org/")({
   component: OrganizationPage,
@@ -23,28 +23,21 @@ export const Route = createFileRoute("/app/$orgSlug/_org/")({
   },
 })
 
-const organizationOverviewQueryOptions = (orgSlug: string) => ({
-  queryKey: ["organization-overview", orgSlug],
-  queryFn: () => getOrganizationOverviewFn({ data: { orgSlug } }),
-})
-
 function OrganizationPage() {
   const { orgSlug } = Route.useParams()
-  const overviewQuery = useQuery(organizationOverviewQueryOptions(orgSlug))
+  const overview = useSuspenseQuery(organizationOverviewQueryOptions(orgSlug)).data
   const stats = [
-    { label: "Projects", value: overviewQuery.data?.projectCount ?? 0, icon: BoxesIcon },
-    { label: "Branches", value: overviewQuery.data?.branchCount ?? 0, icon: GitBranchIcon },
-    { label: "Messages", value: overviewQuery.data?.messageCount ?? 0, icon: LanguagesIcon },
-    { label: "Active API keys", value: overviewQuery.data?.activeApiKeyCount ?? 0, icon: KeyRoundIcon },
+    { label: "Projects", value: overview.projectCount, icon: BoxesIcon },
+    { label: "Branches", value: overview.branchCount, icon: GitBranchIcon },
+    { label: "Messages", value: overview.messageCount, icon: LanguagesIcon },
+    { label: "Active API keys", value: overview.activeApiKeyCount, icon: KeyRoundIcon },
   ] as const
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {overviewQuery.data?.organization.name ?? <T>Organization</T>}
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{overview.organization.name}</h1>
           <p className="text-sm text-muted-foreground">
             <T>Hosted translation platform activity for this organization.</T>
           </p>
@@ -78,12 +71,12 @@ function OrganizationPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          {(overviewQuery.data?.recentProjects ?? []).length === 0 ? (
+          {overview.recentProjects.length === 0 ? (
             <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
               <T>No Projects yet.</T>
             </div>
           ) : (
-            overviewQuery.data?.recentProjects.map((project) => (
+            overview.recentProjects.map((project) => (
               <Link
                 key={project.id}
                 to="/app/$orgSlug/projects/$projectId"

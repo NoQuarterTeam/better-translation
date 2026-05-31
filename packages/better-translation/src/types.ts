@@ -1,6 +1,6 @@
 /** A single extracted message discovered during source scanning. */
 export interface ExtractedMessage {
-  /** Stable message id used for lookups and locale file keys. */
+  /** Stable lookup id used for lookups and locale file keys. */
   id: string
   /** Source-language text that should be translated. */
   defaultMessage: string
@@ -46,13 +46,13 @@ export interface ManifestEntry {
   sources: MessageSource[]
 }
 
-/** In-memory manifest keyed by stable message id. */
+/** In-memory manifest keyed by stable lookup id. */
 export type MessageManifest = Record<string, ManifestEntry>
 
-/** Private on-disk manifest keyed by stable message id. */
+/** Private on-disk manifest keyed by stable lookup id. */
 export type MessageManifestFile = MessageManifest
 
-/** Flat runtime message map keyed by stable message id. */
+/** Flat runtime message map keyed by stable lookup id. */
 export type RuntimeMessages = Record<string, string>
 
 /** A single translated message entry written to a locale file. */
@@ -75,7 +75,7 @@ export interface LocaleFile {
   locale: string
   /** Source locale used as the untranslated fallback. */
   defaultLocale: string
-  /** Locale entries keyed by stable message id. */
+  /** Locale entries keyed by stable lookup id. */
   messages: Record<string, LocaleMessageEntry>
 }
 
@@ -83,7 +83,7 @@ export interface LocaleFile {
 export interface TranslationCache {
   /** Cache schema version used for invalidation. */
   version: number
-  /** Cached translations keyed by stable message id and locale. */
+  /** Cached translations keyed by stable lookup id and locale. */
   entries: Record<
     string,
     {
@@ -103,7 +103,7 @@ export interface TranslationCache {
 
 /** Extra metadata that can influence translation and message grouping. */
 export interface TranslateOptions {
-  /** Explicit stable message id for direct runtime lookups, whether provided manually or by a transform. */
+  /** Explicit stable lookup id for direct runtime lookups, whether provided manually or by a transform. */
   id?: string
   /** Extra disambiguating context for translators and custom ids. */
   context?: string
@@ -111,7 +111,7 @@ export interface TranslateOptions {
 
 /** A full message payload passed to the translate callback. */
 export interface TranslateMessage {
-  /** Stable message id used for locale file keys and translation results. */
+  /** Stable lookup id used for locale file keys and translation results. */
   id: string
   /** Source-language text that should be translated. */
   text: string

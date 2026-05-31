@@ -1,6 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
@@ -11,68 +10,68 @@ import { useAppForm } from "@/components/react-form"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { projectDetailQueryOptions, updateProjectLocalesFn, updateProjectNameFn, updateProjectTranslatorFn } from "../-data"
+import {
+  projectSettingsQueryOptions,
+  updateProjectLocalesFn,
+  updateProjectNameFn,
+  updateProjectTranslatorFn,
+  type getProjectSettingsFn,
+} from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug/projects/$projectId/settings/")({
   component: ProjectSettingsPage,
+  loader: async ({ context, params }) => {
+    await context.queryClient.ensureQueryData(projectSettingsQueryOptions(params.orgSlug, params.projectId))
+  },
   head: ({ match }) => {
     const t = createTranslator(match.context.messages)
     return { meta: [{ title: `${t("Project settings")} · Better Translation` }] }
   },
 })
 
+type ProjectSettings = Awaited<ReturnType<typeof getProjectSettingsFn>>
+
 function ProjectSettingsPage() {
   const { orgSlug, projectId } = Route.useParams()
+  const { queryClient } = Route.useRouteContext()
   const t = useT()
-  const queryClient = useQueryClient()
-  const projectQuery = useQuery(projectDetailQueryOptions(orgSlug, projectId))
-  const project = projectQuery.data?.project
-  const [profileError, setProfileError] = useState<string | null>(null)
-  const [localesError, setLocalesError] = useState<string | null>(null)
-  const [translatorError, setTranslatorError] = useState<string | null>(null)
+  const project = useSuspenseQuery(projectSettingsQueryOptions(orgSlug, projectId)).data
+  const projectSettingsQueryKey = projectSettingsQueryOptions(orgSlug, projectId).queryKey
 
-  const invalidateProject = () => {
-    void queryClient.invalidateQueries({ queryKey: ["project-detail", orgSlug, projectId] })
+  const updateProjectSettings = (updatedProject: ProjectSettings) => {
+    queryClient.setQueryData<ProjectSettings>(projectSettingsQueryKey, updatedProject)
     void queryClient.invalidateQueries({ queryKey: ["organization-projects", orgSlug] })
     void queryClient.invalidateQueries({ queryKey: ["projects", orgSlug] })
   }
 
   const updateNameMutation = useMutation({
     mutationFn: (data: { name: string; orgSlug: string; projectId: string }) => updateProjectNameFn({ data }),
-    onSuccess: () => {
+    onSuccess: (updatedProject) => {
       toast.success(t("Project updated"))
-      invalidateProject()
+      updateProjectSettings(updatedProject)
     },
-    onError: (error: Error) => setProfileError(error.message),
   })
 
   const updateLocalesMutation = useMutation({
     mutationFn: (data: { defaultLocale: string; locales: string[]; orgSlug: string; projectId: string }) =>
       updateProjectLocalesFn({ data }),
-    onSuccess: () => {
+    onSuccess: (updatedProject) => {
       toast.success(t("Project Locales updated"))
-      invalidateProject()
+      updateProjectSettings(updatedProject)
     },
-    onError: (error: Error) => setLocalesError(error.message),
   })
 
   const updateTranslatorMutation = useMutation({
-    mutationFn: (data: {
-      autoTranslate: boolean
-      orgSlug: string
-      projectId: string
-      translationModel: string
-      translationPrompt: string
-    }) => updateProjectTranslatorFn({ data }),
-    onSuccess: () => {
+    mutationFn: (data: { orgSlug: string; projectId: string; translationModel: string; translationPrompt: string }) =>
+      updateProjectTranslatorFn({ data }),
+    onSuccess: (updatedProject) => {
       toast.success(t("Project translator updated"))
-      invalidateProject()
+      updateProjectSettings(updatedProject)
     },
-    onError: (error: Error) => setTranslatorError(error.message),
   })
 
   const profileForm = useAppForm({
-    defaultValues: { name: project?.name ?? "" },
+    defaultValues: { name: project.name },
     validators: {
       onSubmit: z.object({
         name: z
@@ -83,15 +82,14 @@ function ProjectSettingsPage() {
       }),
     },
     onSubmit: ({ value }) => {
-      setProfileError(null)
       updateNameMutation.mutate({ orgSlug, projectId, name: value.name.trim() })
     },
   })
 
   const localesForm = useAppForm({
     defaultValues: {
-      defaultLocale: project?.defaultLocale ?? "en",
-      locales: project?.locales.join(",") ?? "en",
+      defaultLocale: project.defaultLocale,
+      locales: project.locales.join(","),
     },
     validators: {
       onSubmit: z.object({
@@ -100,7 +98,6 @@ function ProjectSettingsPage() {
       }),
     },
     onSubmit: ({ value }) => {
-      setLocalesError(null)
       updateLocalesMutation.mutate({
         orgSlug,
         projectId,
@@ -115,20 +112,16 @@ function ProjectSettingsPage() {
 
   const translatorForm = useAppForm({
     defaultValues: {
-      translationModel: project?.translationModel ?? "openai/gpt-5.5",
-      translationPrompt:
-        project?.translationPrompt ?? "Translate the provided UI messages as concise, natural application UI copy.",
-      autoTranslate: project?.autoTranslate ?? true,
+      translationModel: project.translationModel,
+      translationPrompt: project.translationPrompt,
     },
     validators: {
       onSubmit: z.object({
         translationModel: z.string().trim().min(1).max(120),
         translationPrompt: z.string().trim().min(1).max(4000),
-        autoTranslate: z.boolean(),
       }),
     },
     onSubmit: ({ value }) => {
-      setTranslatorError(null)
       updateTranslatorMutation.mutate({
         ...value,
         orgSlug,
@@ -174,7 +167,7 @@ function ProjectSettingsPage() {
               <profileForm.SubmitButton className="w-fit">
                 {(isSubmitting) => (isSubmitting || updateNameMutation.isPending ? <T>Saving...</T> : <T>Save profile</T>)}
               </profileForm.SubmitButton>
-              <profileForm.FormError>{profileError}</profileForm.FormError>
+              <profileForm.FormError>{updateNameMutation.error?.message}</profileForm.FormError>
             </form>
           </profileForm.AppForm>
         </CardContent>
@@ -191,7 +184,7 @@ function ProjectSettingsPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-2">
-            {project?.locales.map((locale) => (
+            {project.locales.map((locale) => (
               <Badge key={locale} variant={locale === project.defaultLocale ? "default" : "secondary"}>
                 {locale}
               </Badge>
@@ -216,7 +209,7 @@ function ProjectSettingsPage() {
               <localesForm.SubmitButton className="w-fit">
                 {(isSubmitting) => (isSubmitting || updateLocalesMutation.isPending ? <T>Saving...</T> : <T>Save Locales</T>)}
               </localesForm.SubmitButton>
-              <localesForm.FormError>{localesError}</localesForm.FormError>
+              <localesForm.FormError>{updateLocalesMutation.error?.message}</localesForm.FormError>
             </form>
           </localesForm.AppForm>
         </CardContent>
@@ -252,20 +245,12 @@ function ProjectSettingsPage() {
                   />
                 )}
               </translatorForm.AppField>
-              <translatorForm.AppField name="autoTranslate">
-                {(field) => (
-                  <field.CheckboxField
-                    label={t("Enable Platform translator")}
-                    description={t("Allows AI fill-blank writes for this Project.")}
-                  />
-                )}
-              </translatorForm.AppField>
               <translatorForm.SubmitButton className="w-fit">
                 {(isSubmitting) =>
                   isSubmitting || updateTranslatorMutation.isPending ? <T>Saving...</T> : <T>Save translator</T>
                 }
               </translatorForm.SubmitButton>
-              <translatorForm.FormError>{translatorError}</translatorForm.FormError>
+              <translatorForm.FormError>{updateTranslatorMutation.error?.message}</translatorForm.FormError>
             </form>
           </translatorForm.AppForm>
         </CardContent>

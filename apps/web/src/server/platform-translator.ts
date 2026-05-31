@@ -88,7 +88,7 @@ ${locale}
 
 ## Output Contract
 Return only the translated text for the provided source Message.
-Do not include the Message id, labels, explanations, markdown, code fences, or surrounding quotes.
+Do not include the lookup id, labels, explanations, markdown, code fences, or surrounding quotes.
 Keep placeholders exactly as provided.
 Use the Message context when provided.`,
   ].join("\n\n")
