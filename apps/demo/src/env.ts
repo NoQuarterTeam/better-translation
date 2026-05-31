@@ -4,12 +4,7 @@ import { z } from "zod"
 
 export const env = createEnv({
   extends: [vercel()],
-  server: {
-    DATABASE_URL: z.url(),
-    RESEND_API_KEY: z.string(),
-    BETTER_TRANSLATION_API_KEY_HASH_SECRET: z.string(),
-    AI_GATEWAY_API_KEY: z.string(),
-  },
+  server: {},
 
   /**
    * The prefix that client-side variables must have. This is enforced both at
@@ -29,10 +24,6 @@ export const env = createEnv({
    */
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-    DATABASE_URL: process.env.DATABASE_URL,
-    RESEND_API_KEY: process.env.RESEND_API_KEY,
-    BETTER_TRANSLATION_API_KEY_HASH_SECRET: process.env.BETTER_TRANSLATION_API_KEY_HASH_SECRET,
-    AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
   },
 
   /**
