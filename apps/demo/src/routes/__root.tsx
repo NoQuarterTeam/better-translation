@@ -12,7 +12,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 
 import appCss from "../styles.css?url"
-import { getLocale } from "./-locale"
+import { getLocaleFn } from "./-locale"
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -32,7 +32,7 @@ const getMessagesFn = createServerFn({ method: "GET" })
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async () => {
-    const locale = getLocale()
+    const locale = await getLocaleFn()
     const messages = await getMessagesFn({ data: { locale } })
 
     return { locale, messages }

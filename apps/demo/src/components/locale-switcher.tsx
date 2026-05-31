@@ -4,7 +4,7 @@ import * as React from "react"
 import type { Locale } from "better-translation/messages"
 import { useT } from "better-translation/react"
 
-import { setLocale } from "@/routes/-locale"
+import { setLocaleFn } from "@/routes/-locale"
 
 import { NativeSelect, NativeSelectOption } from "./ui/native-select"
 
@@ -18,8 +18,7 @@ export function LocaleSwitcher() {
       size="sm"
       value={locale}
       onChange={(e) => {
-        setLocale(e.target.value as Locale)
-        void router.invalidate()
+        void setLocaleFn({ data: { locale: e.target.value as Locale } }).then(() => router.invalidate())
       }}
     >
       <NativeSelectOption value="en">English</NativeSelectOption>

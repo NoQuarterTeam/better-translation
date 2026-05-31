@@ -1,4 +1,4 @@
-import { useNavigate, useRouter } from "@tanstack/react-router"
+import { useNavigate, useRouteContext, useRouter } from "@tanstack/react-router"
 import { LogOutIcon } from "lucide-react"
 
 import type { Locale } from "better-translation/messages"
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { authClient } from "@/lib/auth/client"
-import { getLocale, setLocale } from "@/routes/-locale"
+import { setLocaleFn } from "@/routes/-locale"
 import type { User } from "@/server/db/schema"
 
 function createInitials(user: Pick<User, "name">) {
@@ -39,7 +39,7 @@ export function NavUser() {
   const t = useT()
   const { data: session, isPending } = authClient.useSession()
   const user = session?.user
-  const locale = getLocale()
+  const { locale } = useRouteContext({ from: "/" })
 
   if (isPending || !user) return null
 
@@ -73,8 +73,7 @@ export function NavUser() {
             value={locale}
             items={languageOptions}
             onValueChange={(nextLocale) => {
-              setLocale(nextLocale as Locale)
-              void router.invalidate()
+              void setLocaleFn({ data: { locale: nextLocale as Locale } }).then(() => router.invalidate())
             }}
           >
             <SelectTrigger size="sm" className="w-full">

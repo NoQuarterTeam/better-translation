@@ -1,5 +1,6 @@
-import { createIsomorphicFn } from "@tanstack/react-start"
-import { getCookie } from "@tanstack/react-start/server"
+import { createServerFn } from "@tanstack/react-start"
+import { getCookie, setCookie } from "@tanstack/react-start/server"
+import z from "zod"
 
 import { locales, type Locale } from "better-translation/messages"
 
@@ -10,16 +11,16 @@ export function resolveLocale(locale: unknown): Locale {
   return typeof locale === "string" && (locales as readonly string[]).includes(locale) ? (locale as Locale) : "en"
 }
 
-function readClientCookie(): string | undefined {
-  const raw = document.cookie.split("; ").find((entry) => entry.startsWith(`${LOCALE_COOKIE}=`))
-  return raw ? decodeURIComponent(raw.slice(LOCALE_COOKIE.length + 1)) : undefined
-}
+export const getLocaleFn = createServerFn({ method: "GET" }).handler((): Locale => resolveLocale(getCookie(LOCALE_COOKIE)))
 
-export const getLocale = createIsomorphicFn()
-  .server((): Locale => resolveLocale(getCookie(LOCALE_COOKIE)))
-  .client((): Locale => resolveLocale(readClientCookie()))
-
-export function setLocale(locale: Locale) {
-  const secure = window.location.protocol === "https:" ? "; Secure" : ""
-  document.cookie = `${LOCALE_COOKIE}=${encodeURIComponent(locale)}; Max-Age=${ONE_YEAR_SECONDS}; Path=/; SameSite=Lax${secure}`
-}
+export const setLocaleFn = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ locale: z.string() }))
+  .handler(({ data }) => {
+    setCookie(LOCALE_COOKIE, resolveLocale(data.locale), {
+      httpOnly: true,
+      maxAge: ONE_YEAR_SECONDS,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    })
+  })
