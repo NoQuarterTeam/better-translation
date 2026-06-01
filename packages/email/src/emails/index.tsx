@@ -5,7 +5,7 @@ export function Layout({ children, preview }: { children: React.ReactNode; previ
     <Html>
       <Head />
       <Preview>{preview}</Preview>
-      <Tailwind config={{ theme: { extend: { colors: { brand: "#69BFA4" } } } }}>
+      <Tailwind config={{ theme: { extend: { colors: { brand: "#007A56" } } } }}>
         <Body className="mx-auto bg-white px-2 py-8 font-sans text-neutral-900">{children}</Body>
       </Tailwind>
     </Html>
