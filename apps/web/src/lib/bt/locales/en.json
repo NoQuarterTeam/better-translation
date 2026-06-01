@@ -17,6 +17,7 @@
   "m_13bzcw5": "Copied",
   "m_13e6ipt": "No repositories available",
   "m_13ztmfb": "Forgot password",
+  "m_14vl47s": "GitHub returned without an installation id. Check that the GitHub App Setup URL points to /api/github/setup, then start the connection again.",
   "m_14x8uyc": "Connect one repository to this Project for Branch cleanup.",
   "m_156vt9d": "We sent a verification link. If you do not see it, check spam or resend below.",
   "m_15pzra0": "Could not create organization",

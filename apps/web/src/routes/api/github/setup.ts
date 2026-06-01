@@ -15,9 +15,14 @@ export const Route = createFileRoute("/api/github/setup")({
 
         const redirectUrl = new URL(`/app/${parsedState.orgSlug}/projects/${parsedState.projectSlug}/settings`, requestUrl)
 
-        if (installationId && setupState) {
-          redirectUrl.searchParams.set("githubInstallationId", installationId)
+        if (setupState) {
           redirectUrl.searchParams.set("githubSetupState", setupState)
+        }
+
+        if (installationId) {
+          redirectUrl.searchParams.set("githubInstallationId", installationId)
+        } else {
+          redirectUrl.searchParams.set("githubSetupError", "missing_installation_id")
         }
 
         return Response.redirect(redirectUrl, 302)

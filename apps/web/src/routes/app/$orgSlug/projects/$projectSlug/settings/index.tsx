@@ -29,10 +29,19 @@ import {
 
 export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/settings/")({
   component: ProjectSettingsPage,
-  validateSearch: z.object({
-    githubInstallationId: z.string().optional().catch(undefined),
-    githubSetupState: z.string().optional().catch(undefined),
-  }),
+  validateSearch: z
+    .object({
+      githubInstallationId: z.string().optional().catch(undefined),
+      githubSetupError: z.enum(["missing_installation_id"]).optional().catch(undefined),
+      githubSetupState: z.string().optional().catch(undefined),
+      installation_id: z.string().optional().catch(undefined),
+      state: z.string().optional().catch(undefined),
+    })
+    .transform((search) => ({
+      githubInstallationId: search.githubInstallationId ?? search.installation_id,
+      githubSetupError: search.githubSetupError,
+      githubSetupState: search.githubSetupState ?? search.state,
+    })),
   loader: async ({ context, params }) => {
     await context.queryClient.ensureQueryData(projectSettingsQueryOptions(params.orgSlug, params.projectSlug))
   },
@@ -180,6 +189,7 @@ function ProjectSettingsPage() {
 
       <GitHubSettingsCard
         githubInstallationId={search.githubInstallationId}
+        githubSetupError={search.githubSetupError}
         githubSetupState={search.githubSetupState}
         project={project}
         updateProjectSettings={updateProjectSettings}
@@ -228,11 +238,13 @@ function ProjectSettingsPage() {
 
 function GitHubSettingsCard({
   githubInstallationId,
+  githubSetupError,
   githubSetupState,
   project,
   updateProjectSettings,
 }: {
   githubInstallationId?: string
+  githubSetupError?: "missing_installation_id"
   githubSetupState?: string
   project: ProjectSettings
   updateProjectSettings: (project: ProjectSettings) => void
@@ -369,6 +381,14 @@ function GitHubSettingsCard({
               <p className="text-sm text-muted-foreground">
                 <T>Set GITHUB_APP_SLUG before connecting GitHub repositories.</T>
               </p>
+            )}
+            {githubSetupError === "missing_installation_id" && (
+              <FieldError>
+                <T>
+                  GitHub returned without an installation id. Check that the GitHub App Setup URL points to /api/github/setup,
+                  then start the connection again.
+                </T>
+              </FieldError>
             )}
             {githubInstallationId && githubSetupState && (
               <form
