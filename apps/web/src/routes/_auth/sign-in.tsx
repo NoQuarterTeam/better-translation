@@ -10,6 +10,8 @@ import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { authClient } from "@/lib/auth/client"
 
+import { SocialAuthButtons } from "./-social-auth-buttons"
+
 const signInSearchSchema = z.object({
   redirect: z.string().startsWith("/").max(500).optional().catch(undefined),
 })
@@ -26,6 +28,7 @@ export const Route = createFileRoute("/_auth/sign-in")({
 function SignInPage() {
   const { redirect } = Route.useSearch()
   const t = useT()
+  const callbackURL = redirect ?? "/app"
 
   const [apiError, setApiError] = useState<string | null>(null)
 
@@ -42,7 +45,6 @@ function SignInPage() {
     },
     onSubmit: async ({ value }) => {
       setApiError(null)
-      const callbackURL = redirect ?? "/app"
       await authClient.signIn.email(
         { email: value.email.trim(), password: value.password, rememberMe: true, callbackURL },
         {
@@ -69,12 +71,18 @@ function SignInPage() {
               <T>Sign in</T>
             </CardTitle>
             <CardDescription>
-              <T>Enter your email and password to continue.</T>
+              <T>Choose a sign-in method to continue.</T>
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-5">
+        <SocialAuthButtons callbackURL={callbackURL} />
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="h-px flex-1 bg-border" />
+          <T>or continue with email</T>
+          <div className="h-px flex-1 bg-border" />
+        </div>
         <form.AppForm>
           <form
             className="space-y-4"
@@ -103,7 +111,11 @@ function SignInPage() {
       <CardFooter className="flex flex-col gap-3 border-t pt-4">
         <p className="text-center text-sm text-muted-foreground">
           <T>Need a new account?</T>{" "}
-          <Link to="/sign-up" className="text-primary underline-offset-4 hover:underline">
+          <Link
+            to="/sign-up"
+            search={{ redirect: callbackURL === "/app" ? undefined : callbackURL }}
+            className="text-primary underline-offset-4 hover:underline"
+          >
             <T>Sign up</T>
           </Link>
         </p>

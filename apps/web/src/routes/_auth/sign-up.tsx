@@ -10,7 +10,12 @@ import { useAppForm } from "@/components/react-form"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { authClient } from "@/lib/auth/client"
 
+import { SocialAuthButtons } from "./-social-auth-buttons"
+
 export const Route = createFileRoute("/_auth/sign-up")({
+  validateSearch: z.object({
+    redirect: z.string().startsWith("/").max(500).optional().catch(undefined),
+  }),
   component: SignUpPage,
   head: ({ match }) => {
     const t = createTranslator(match.context.messages)
@@ -22,7 +27,9 @@ const MIN_PASSWORD = 8
 
 function SignUpPage() {
   const navigate = Route.useNavigate()
+  const { redirect } = Route.useSearch()
   const t = useT()
+  const callbackURL = redirect ?? "/app"
   const [apiError, setApiError] = useState<string | null>(null)
 
   const form = useAppForm({
@@ -56,7 +63,7 @@ function SignUpPage() {
           email: value.email.trim(),
           name: value.name.trim(),
           password: value.password,
-          callbackURL: "/app",
+          callbackURL,
         },
         {
           onError: ({ error }) => {
@@ -79,11 +86,17 @@ function SignUpPage() {
             <T>Create your account</T>
           </CardTitle>
           <CardDescription>
-            <T>Sign up with your email to use Better Translation.</T>
+            <T>Choose a sign-up method to use Better Translation.</T>
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-5">
+        <SocialAuthButtons callbackURL={callbackURL} requestSignUp />
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="h-px flex-1 bg-border" />
+          <T>or continue with email</T>
+          <div className="h-px flex-1 bg-border" />
+        </div>
         <form.AppForm>
           <form
             className="space-y-4"
@@ -133,7 +146,11 @@ function SignUpPage() {
       <CardFooter className="flex flex-col gap-2 border-t pt-4">
         <p className="text-center text-sm text-muted-foreground">
           <T>Already have an account?</T>{" "}
-          <Link to="/sign-in" className="text-primary underline-offset-4 hover:underline">
+          <Link
+            to="/sign-in"
+            search={{ redirect: callbackURL === "/app" ? undefined : callbackURL }}
+            className="text-primary underline-offset-4 hover:underline"
+          >
             <T>Sign in</T>
           </Link>
         </p>

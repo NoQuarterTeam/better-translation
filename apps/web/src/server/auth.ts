@@ -5,6 +5,7 @@ import { betterAuth } from "better-auth/minimal"
 import { organization } from "better-auth/plugins"
 import { tanstackStartCookies } from "better-auth/tanstack-start"
 
+import { env } from "@/env"
 import { getBaseUrl } from "@/lib/config"
 import { db } from "@/server/db"
 import {
@@ -70,6 +71,16 @@ export const auth = betterAuth({
           react: VerifyEmail({ firstName: getFirstName(user.name), verifyUrl: url }),
         }),
       )
+    },
+  },
+  socialProviders: {
+    github: {
+      clientId: env.GITHUB_CLIENT_ID ?? "",
+      clientSecret: env.GITHUB_CLIENT_SECRET ?? "",
+    },
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: env.GOOGLE_CLIENT_SECRET ?? "",
     },
   },
   advanced: {
