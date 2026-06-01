@@ -95,3 +95,31 @@ export async function organizationCanUseGitHubInstallation({
 
   return Boolean(installation)
 }
+
+export async function getOrganizationGitHubInstallation({
+  installationId,
+  organizationId,
+}: {
+  installationId: string
+  organizationId: string
+}) {
+  const [installation] = await db
+    .select({
+      id: githubInstallationsTable.id,
+      installationId: githubInstallationsTable.installationId,
+    })
+    .from(organizationGithubInstallationsTable)
+    .innerJoin(
+      githubInstallationsTable,
+      eq(githubInstallationsTable.id, organizationGithubInstallationsTable.githubInstallationId),
+    )
+    .where(
+      and(
+        eq(organizationGithubInstallationsTable.organizationId, organizationId),
+        eq(githubInstallationsTable.installationId, installationId),
+      ),
+    )
+    .limit(1)
+
+  return installation ?? null
+}

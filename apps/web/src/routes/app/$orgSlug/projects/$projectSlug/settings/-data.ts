@@ -13,7 +13,11 @@ import {
   listGitHubInstallationRepositories,
   verifyGitHubSetupState,
 } from "@/server/github"
-import { listOrganizationGitHubInstallations, organizationCanUseGitHubInstallation } from "@/server/github-installations"
+import {
+  getOrganizationGitHubInstallation,
+  listOrganizationGitHubInstallations,
+  organizationCanUseGitHubInstallation,
+} from "@/server/github-installations"
 
 const githubSetupSchema = z.object({
   installationId: z.string().trim().min(1),
@@ -67,7 +71,12 @@ export const listGitHubInstallationRepositoriesFn = createServerFn({ method: "GE
   .middleware([projectMiddleware])
   .inputValidator(parseZod(githubSetupSchema))
   .handler(async ({ context, data }) => {
-    if (!(await canUseGitHubInstallation(context.project, context.organization, data))) {
+    const githubInstallation = await getOrganizationGitHubInstallation({
+      installationId: data.installationId,
+      organizationId: context.organization.id,
+    })
+
+    if (!githubInstallation && !(await canUseGitHubInstallation(context.project, context.organization, data))) {
       throw new Error("GitHub setup session expired. Start the connection again.")
     }
 
@@ -87,7 +96,12 @@ export const connectProjectGitHubRepositoryFn = createServerFn({ method: "POST" 
     ),
   )
   .handler(async ({ context, data }) => {
-    if (!(await canUseGitHubInstallation(context.project, context.organization, data))) {
+    const githubInstallation = await getOrganizationGitHubInstallation({
+      installationId: data.installationId,
+      organizationId: context.organization.id,
+    })
+
+    if (!githubInstallation && !(await canUseGitHubInstallation(context.project, context.organization, data))) {
       throw new Error("GitHub setup session expired. Start the connection again.")
     }
 
@@ -120,7 +134,7 @@ export const connectProjectGitHubRepositoryFn = createServerFn({ method: "POST" 
         .set({
           defaultBranchId,
           githubBranchCleanupEnabled: data.githubBranchCleanupEnabled,
-          githubInstallationId: data.installationId,
+          githubInstallationRecordId: githubInstallation?.id ?? context.project.githubInstallationRecordId,
           githubRepositoryId: repository.id,
           githubRepositoryName: repository.name,
           githubRepositoryOwner: repository.owner,
@@ -161,6 +175,7 @@ export const disconnectProjectGitHubFn = createServerFn({ method: "POST" })
       .update(projectsTable)
       .set({
         githubBranchCleanupEnabled: false,
+        githubInstallationRecordId: null,
         githubRepositoryId: null,
         githubRepositoryName: null,
         githubRepositoryOwner: null,
@@ -204,7 +219,6 @@ async function canUseGitHubInstallation(
   organization: { id: string; slug: string },
   data: { installationId: string; setupState?: string },
 ) {
-  if (data.installationId === project.githubInstallationId) return true
   if (await organizationCanUseGitHubInstallation({ installationId: data.installationId, organizationId: organization.id }))
     return true
   if (!data.setupState) return false
@@ -212,6 +226,13 @@ async function canUseGitHubInstallation(
 }
 
 async function getProjectSettings(project: typeof projectsTable.$inferSelect, organization: { id: string; slug: string }) {
+  const githubInstallation = project.githubInstallationRecordId
+    ? await db.query.githubInstallationsTable.findFirst({
+        columns: { installationId: true },
+        where: { id: project.githubInstallationRecordId },
+      })
+    : null
+
   return {
     name: project.name,
     publicId: project.publicId,
@@ -222,7 +243,7 @@ async function getProjectSettings(project: typeof projectsTable.$inferSelect, or
       orgSlug: organization.slug,
       projectSlug: project.slug,
     }),
-    githubInstallationId: project.githubInstallationId,
+    githubInstallationId: githubInstallation?.installationId ?? null,
     githubInstallations: await listOrganizationGitHubInstallations(organization.id),
     githubRepositoryId: project.githubRepositoryId,
     githubRepositoryName: project.githubRepositoryName,

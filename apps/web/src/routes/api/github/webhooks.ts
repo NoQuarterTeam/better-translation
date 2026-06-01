@@ -93,17 +93,20 @@ export const Route = createFileRoute("/api/github/webhooks")({
 
 async function disconnectDeletedInstallation(installationId: string) {
   const disconnectedAt = new Date()
+  const installation = await getGitHubInstallationRecord(installationId)
+  if (!installation) return 0
+
   const projects = await db
     .update(projectsTable)
     .set({
       githubBranchCleanupEnabled: false,
-      githubInstallationId: null,
+      githubInstallationRecordId: null,
       githubRepositoryId: null,
       githubRepositoryName: null,
       githubRepositoryOwner: null,
       updatedAt: disconnectedAt,
     })
-    .where(eq(projectsTable.githubInstallationId, installationId))
+    .where(eq(projectsTable.githubInstallationRecordId, installation.id))
     .returning({ id: projectsTable.id })
 
   await db.delete(githubInstallationsTable).where(eq(githubInstallationsTable.installationId, installationId))
@@ -119,19 +122,38 @@ async function disconnectRemovedRepositories({
   repositoryIds: string[]
 }) {
   const disconnectedAt = new Date()
+  const installation = await getGitHubInstallationRecord(installationId)
+  if (!installation) return 0
+
   const projects = await db
     .update(projectsTable)
     .set({
       githubBranchCleanupEnabled: false,
+      githubInstallationRecordId: null,
       githubRepositoryId: null,
       githubRepositoryName: null,
       githubRepositoryOwner: null,
       updatedAt: disconnectedAt,
     })
-    .where(and(eq(projectsTable.githubInstallationId, installationId), inArray(projectsTable.githubRepositoryId, repositoryIds)))
+    .where(
+      and(
+        eq(projectsTable.githubInstallationRecordId, installation.id),
+        inArray(projectsTable.githubRepositoryId, repositoryIds),
+      ),
+    )
     .returning({ id: projectsTable.id })
 
   return projects.length
+}
+
+async function getGitHubInstallationRecord(installationId: string) {
+  const [installation] = await db
+    .select({ id: githubInstallationsTable.id })
+    .from(githubInstallationsTable)
+    .where(eq(githubInstallationsTable.installationId, installationId))
+    .limit(1)
+
+  return installation ?? null
 }
 
 async function archiveDeletedBranch({

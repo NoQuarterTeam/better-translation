@@ -59,6 +59,11 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.branchesTable.id,
       optional: true,
     }),
+    githubInstallation: r.one.githubInstallationsTable({
+      from: r.projectsTable.githubInstallationRecordId,
+      to: r.githubInstallationsTable.id,
+      optional: true,
+    }),
     branches: r.many.branchesTable(),
     messages: r.many.messagesTable(),
     apiKeys: r.many.apiKeysTable(),

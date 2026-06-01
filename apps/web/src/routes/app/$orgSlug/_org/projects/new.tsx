@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { ExternalLinkIcon, GitBranchIcon, PlusIcon, SearchIcon } from "lucide-react"
+import { GitBranchIcon, PlusIcon, SearchIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -12,11 +12,10 @@ import { useAppForm } from "@/components/react-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FieldError } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { ResourceMark } from "../../-components/resource-mark"
+import { GitHubAccountSelect } from "../../-components/github-account-select"
 import { organizationProjectsQueryOptions } from "../../-data"
 import {
   createProjectFn,
@@ -76,10 +75,10 @@ function NewProjectPage() {
         <TabsList>
           <TabsTrigger value="github">
             <GitBranchIcon />
-            <T>Connect GitHub repo</T>
+            <T>Connect repository</T>
           </TabsTrigger>
           <TabsTrigger value="manual">
-            <GitBranchIcon />
+            <PlusIcon />
             <T>Create manually</T>
           </TabsTrigger>
         </TabsList>
@@ -126,10 +125,6 @@ function GitHubImportCard() {
     onError: (error: Error) => toast.error(t("Could not import repository"), { description: error.message }),
   })
 
-  const selectedInstallation = setup.githubInstallations.find(
-    (installation) => installation.installationId === selectedInstallationId,
-  )
-
   return (
     <Card>
       <CardHeader>
@@ -141,55 +136,28 @@ function GitHubImportCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-          <NativeSelect
-            value={selectedInstallationId}
-            disabled={setup.githubInstallations.length === 0}
-            onChange={(event) => setSelectedInstallationId(event.target.value)}
-          >
-            {setup.githubInstallations.length === 0 ? (
-              <NativeSelectOption value="">{t("No GitHub accounts connected")}</NativeSelectOption>
-            ) : (
-              setup.githubInstallations.map((installation) => (
-                <NativeSelectOption key={installation.id} value={installation.installationId}>
-                  {installation.accountLogin}
-                </NativeSelectOption>
-              ))
-            )}
-          </NativeSelect>
-          <div className="relative">
-            <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-8"
-              placeholder={t("Search repositories...")}
-              value={repositorySearch}
-              onChange={(event) => setRepositorySearch(event.target.value)}
-            />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <GitHubAccountSelect
+            className="flex gap-2"
+            githubInstallUrl={setup.githubInstallUrl}
+            installations={setup.githubInstallations}
+            onAddAccountComplete={() => void setupQuery.refetch()}
+            onSelectInstallation={(installationId) => setSelectedInstallationId(installationId)}
+            selectedInstallationId={selectedInstallationId}
+          />
+          <div>
+            <InputGroup>
+              <InputGroupAddon>
+                <SearchIcon />
+              </InputGroupAddon>
+              <InputGroupInput
+                placeholder={t("Search repositories...")}
+                value={repositorySearch}
+                onChange={(event) => setRepositorySearch(event.target.value)}
+              />
+            </InputGroup>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!setup.githubInstallUrl}
-            onClick={() => openGitHubSetup(setup.githubInstallUrl, () => void setupQuery.refetch())}
-          >
-            <PlusIcon />
-            <T>Add GitHub Account</T>
-            <ExternalLinkIcon />
-          </Button>
         </div>
-
-        {selectedInstallation && (
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <ResourceMark
-              label={selectedInstallation.accountLogin}
-              imageUrl={selectedInstallation.accountAvatarUrl}
-              className="size-6 rounded-md"
-            />
-            <span>
-              <T>Showing repositories available to</T> {selectedInstallation.accountLogin}
-            </span>
-          </div>
-        )}
 
         {githubSetupErrorMessage(search.githubSetupError)}
 
@@ -366,20 +334,6 @@ function ManualProjectCard() {
       </CardContent>
     </Card>
   )
-}
-
-function openGitHubSetup(url: string | null, onClose?: () => void) {
-  if (!url) return
-  const popup = window.open(url, "better-translation-github", "width=1040,height=760,noopener,noreferrer")
-  if (!popup) {
-    window.location.href = url
-    return
-  }
-  const interval = window.setInterval(() => {
-    if (!popup?.closed) return
-    window.clearInterval(interval)
-    onClose?.()
-  }, 500)
 }
 
 function githubSetupErrorMessage(error?: "missing_installation_id") {

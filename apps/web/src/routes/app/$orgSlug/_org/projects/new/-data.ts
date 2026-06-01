@@ -8,7 +8,11 @@ import { parseZod } from "@/lib/functions/zod"
 import { db } from "@/server/db"
 import { branchesTable, projectInsertSchema, projectsTable } from "@/server/db/schema"
 import { createGitHubInstallUrl, ensureGitHubInstallationRepository, listGitHubInstallationRepositories } from "@/server/github"
-import { listOrganizationGitHubInstallations, organizationCanUseGitHubInstallation } from "@/server/github-installations"
+import {
+  getOrganizationGitHubInstallation,
+  listOrganizationGitHubInstallations,
+  organizationCanUseGitHubInstallation,
+} from "@/server/github-installations"
 
 const defaultTranslationPrompt = "Translate the provided UI messages as concise, natural application UI copy."
 
@@ -91,12 +95,12 @@ export const createProjectFromGitHubRepositoryFn = createServerFn({ method: "POS
 
     if (existingProject) throw new Error("A Project with that slug already exists.")
 
-    const canUseInstallation = await organizationCanUseGitHubInstallation({
+    const githubInstallation = await getOrganizationGitHubInstallation({
       installationId: data.installationId,
       organizationId: context.organization.id,
     })
 
-    if (!canUseInstallation) throw new Error("Connect this GitHub account before importing a repository.")
+    if (!githubInstallation) throw new Error("Connect this GitHub account before importing a repository.")
 
     const repository = await ensureGitHubInstallationRepository({
       installationId: data.installationId,
@@ -110,7 +114,7 @@ export const createProjectFromGitHubRepositoryFn = createServerFn({ method: "POS
         .insert(projectsTable)
         .values({
           githubBranchCleanupEnabled: false,
-          githubInstallationId: data.installationId,
+          githubInstallationRecordId: githubInstallation.id,
           githubRepositoryId: repository.id,
           githubRepositoryName: repository.name,
           githubRepositoryOwner: repository.owner,
