@@ -49,9 +49,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
-  id: '/app/',
-  path: '/app/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppLayoutRoute,
 } as any)
 const AcceptInvitationInvitationIdRoute =
   AcceptInvitationInvitationIdRouteImport.update({
@@ -90,9 +90,9 @@ const AppOrgSlugLayoutRoute = AppOrgSlugLayoutRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppCreateOrgIndexRoute = AppCreateOrgIndexRouteImport.update({
-  id: '/app/create-org/',
-  path: '/app/create-org/',
-  getParentRoute: () => rootRouteImport,
+  id: '/create-org/',
+  path: '/create-org/',
+  getParentRoute: () => AppLayoutRoute,
 } as any)
 const ApiGithubWebhooksRoute = ApiGithubWebhooksRouteImport.update({
   id: '/api/github/webhooks',
@@ -380,11 +380,9 @@ export interface RootRouteChildren {
   AuthLayoutRoute: typeof AuthLayoutRouteWithChildren
   AppOrgSlugLayoutRoute: typeof AppOrgSlugLayoutRouteWithChildren
   AcceptInvitationInvitationIdRoute: typeof AcceptInvitationInvitationIdRoute
-  AppIndexRoute: typeof AppIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiGithubSetupRoute: typeof ApiGithubSetupRoute
   ApiGithubWebhooksRoute: typeof ApiGithubWebhooksRoute
-  AppCreateOrgIndexRoute: typeof AppCreateOrgIndexRoute
   ApiProjectsProjectIdBranchesBranchNameManifestRoute: typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
   ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute: typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
 }
@@ -407,10 +405,10 @@ declare module '@tanstack/react-router' {
     }
     '/app/': {
       id: '/app/'
-      path: '/app'
+      path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AppLayoutRoute
     }
     '/accept-invitation/$invitationId': {
       id: '/accept-invitation/$invitationId'
@@ -463,10 +461,10 @@ declare module '@tanstack/react-router' {
     }
     '/app/create-org/': {
       id: '/app/create-org/'
-      path: '/app/create-org'
+      path: '/create-org'
       fullPath: '/app/create-org/'
       preLoaderRoute: typeof AppCreateOrgIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AppLayoutRoute
     }
     '/api/github/webhooks': {
       id: '/api/github/webhooks'
@@ -684,11 +682,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLayoutRoute: AuthLayoutRouteWithChildren,
   AppOrgSlugLayoutRoute: AppOrgSlugLayoutRouteWithChildren,
   AcceptInvitationInvitationIdRoute: AcceptInvitationInvitationIdRoute,
-  AppIndexRoute: AppIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiGithubSetupRoute: ApiGithubSetupRoute,
   ApiGithubWebhooksRoute: ApiGithubWebhooksRoute,
-  AppCreateOrgIndexRoute: AppCreateOrgIndexRoute,
   ApiProjectsProjectIdBranchesBranchNameManifestRoute:
     ApiProjectsProjectIdBranchesBranchNameManifestRoute,
   ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute:
