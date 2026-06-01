@@ -78,7 +78,11 @@ function AcceptInvitationPage() {
             >
               <T>Sign in</T>
             </Link>
-            <Link to="/sign-up" className={cn(buttonVariants({ variant: "outline" }), "w-full no-underline")}>
+            <Link
+              to="/sign-up"
+              search={{ redirect: `/accept-invitation/${invitationId}` }}
+              className={cn(buttonVariants({ variant: "outline" }), "w-full no-underline")}
+            >
               <T>Create an account</T>
             </Link>
           </CardFooter>
