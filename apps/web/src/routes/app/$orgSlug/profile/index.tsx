@@ -14,7 +14,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Separator } from "@/components/ui/separator"
 import { authClient } from "@/lib/auth/client"
-import { userSchema } from "@/server/db/schema"
 
 import { linkedAccountsQueryOptions } from "./-data"
 
@@ -34,11 +33,6 @@ export const Route = createFileRoute("/app/$orgSlug/profile/")({
     const t = createTranslator(match.context.messages)
     return { meta: [{ title: `${t("Profile")} · Better Translation` }] }
   },
-})
-
-const profileFormSchema = z.object({
-  name: userSchema.shape.name,
-  image: z.url().or(z.literal("")),
 })
 
 function ProfilePage() {
@@ -96,7 +90,13 @@ function ProfilePage() {
       image: user?.image ?? "",
     },
     validators: {
-      onSubmit: profileFormSchema,
+      onSubmit: z.object({
+        name: z
+          .string()
+          .trim()
+          .min(1, { error: t("Name is required") }),
+        image: z.url().or(z.literal("")),
+      }),
     },
     onSubmit: ({ value }) => {
       updateProfile.mutate(value)
