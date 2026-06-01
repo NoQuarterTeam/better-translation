@@ -15,6 +15,7 @@ export const branchesTable = pgTable(
     name: text("name").notNull(),
     defaultLocale: text("default_locale").notNull().default("en"),
     locales: text("locales").array().notNull().default(["en"]),
+    archivedAt: timestamp("archived_at"),
     lastSyncedAt: timestamp("last_synced_at"),
   },
   (table) => [

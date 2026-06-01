@@ -14,7 +14,7 @@ export const listProjectBranchesFn = createServerFn({ method: "GET" })
     const { project } = context
     const branches = await db.query.branchesTable.findMany({
       orderBy: { updatedAt: "desc" },
-      where: { projectId: project.id },
+      where: { archivedAt: { isNull: true }, projectId: project.id },
     })
 
     const valueCounts =
@@ -52,7 +52,7 @@ export const createProjectBranchFn = createServerFn({ method: "POST" })
     const { project } = context
     const existingBranch = await db.query.branchesTable.findFirst({
       columns: { id: true },
-      where: { projectId: project.id },
+      where: { archivedAt: { isNull: true }, projectId: project.id },
     })
 
     if (existingBranch) throw new Error("Branches are created by Manifest sync after the first Branch exists.")
@@ -88,7 +88,7 @@ export const updateProjectBranchFn = createServerFn({ method: "POST" })
 
     const duplicateBranch = await db.query.branchesTable.findFirst({
       columns: { id: true },
-      where: { projectId: project.id, name: data.name },
+      where: { archivedAt: { isNull: true }, projectId: project.id, name: data.name },
     })
 
     if (duplicateBranch && duplicateBranch.id !== data.branchId) throw new Error("A Branch with that name already exists.")
@@ -116,6 +116,26 @@ export const setDefaultProjectBranchFn = createServerFn({ method: "POST" })
     return branch
   })
 
+export const archiveProjectBranchFn = createServerFn({ method: "POST" })
+  .middleware([projectMiddleware])
+  .inputValidator(parseZod(z.object({ branchId: z.string().trim().min(1) })))
+  .handler(async ({ context, data }) => {
+    const { project } = context
+    const branch = await ensureBranchBelongsToProject(project.id, data.branchId)
+
+    if (branch.id === project.defaultBranchId) throw new Error("The Production Branch cannot be archived.")
+
+    const archivedAt = new Date()
+    const [archivedBranch] = await db
+      .update(branchesTable)
+      .set({ archivedAt, updatedAt: archivedAt })
+      .where(eq(branchesTable.id, branch.id))
+      .returning()
+
+    if (!archivedBranch) throw new Error("Could not archive Branch.")
+    return archivedBranch
+  })
+
 export const projectBranchesQueryOptions = (orgSlug: string, projectSlug: string) =>
   queryOptions({
     queryKey: ["project-branches", orgSlug, projectSlug],
@@ -124,7 +144,7 @@ export const projectBranchesQueryOptions = (orgSlug: string, projectSlug: string
 
 async function ensureBranchBelongsToProject(projectId: string, branchId: string) {
   const branch = await db.query.branchesTable.findFirst({
-    where: { id: branchId, projectId },
+    where: { archivedAt: { isNull: true }, id: branchId, projectId },
   })
 
   if (!branch) throw new Error("Branch not found.")

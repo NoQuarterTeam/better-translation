@@ -201,7 +201,7 @@ function getMessageLocaleValue({
 
 async function getProjectBranch(projectId: string, branchName: string) {
   const branch = await db.query.branchesTable.findFirst({
-    where: { projectId, name: branchName },
+    where: { archivedAt: { isNull: true }, projectId, name: branchName },
   })
 
   if (!branch) throw new Error("Branch not found.")

@@ -66,6 +66,7 @@ export async function listOrganizationProjects(organizationId: string) {
           updatedAt: true,
         },
         orderBy: { updatedAt: "desc" },
+        where: { archivedAt: { isNull: true } },
       },
       defaultBranch: { columns: { name: true } },
     },

@@ -48,9 +48,25 @@ _Avoid_: manifest, locale metadata
 The hosted-service container for one Consumer app's Messages, Locale values, and Branches.
 _Avoid_: app, workspace
 
+**Repository connection**:
+An optional Project link to one GitHub repository used for upstream Branch lifecycle signals.
+_Avoid_: GitHub account, repo auth
+
 **Branch**:
 A hosted working line for Manifest and Locale value changes, usually named after a Git branch.
 _Avoid_: translation branch, channel, environment
+
+**Production Branch**:
+The Branch whose Locale values represent a Project's main production line and seed new feature Branches.
+_Avoid_: default Branch, main Branch
+
+**Archived Branch**:
+A Branch kept for runtime reads and history but excluded from normal active Branch workflows.
+_Avoid_: deleted branch, stale branch
+
+**Branch cleanup**:
+An optional Project behavior that archives non-production Branches when their matching upstream branch no longer exists.
+_Avoid_: branch deletion, pruning
 
 **Branch override**:
 A Branch-local Locale value stored for a Branch Message.

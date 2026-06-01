@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2"
-import { index, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
+import { boolean, index, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod"
 import * as z from "zod"
 
@@ -20,6 +20,11 @@ export const projectsTable = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     defaultBranchId: text("default_branch_id"),
+    githubRepositoryOwner: text("github_repository_owner"),
+    githubRepositoryName: text("github_repository_name"),
+    githubRepositoryId: text("github_repository_id"),
+    githubInstallationId: text("github_installation_id"),
+    githubBranchCleanupEnabled: boolean("github_branch_cleanup_enabled").notNull().default(false),
     translationModel: text("translation_model").notNull().default("openai/gpt-5.5"),
     translationPrompt: text("translation_prompt")
       .notNull()
@@ -28,6 +33,7 @@ export const projectsTable = pgTable(
   (table) => [
     index("project_organization_id_idx").on(table.organizationId),
     index("project_default_branch_id_idx").on(table.defaultBranchId),
+    index("project_github_repository_idx").on(table.githubRepositoryOwner, table.githubRepositoryName),
     uniqueIndex("project_organization_slug_idx").on(table.organizationId, table.slug),
   ],
 )
@@ -42,6 +48,23 @@ const customFields = {
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   translationModel: z.string().trim().min(1).max(120),
   translationPrompt: z.string().trim().min(1).max(4000),
+  githubRepositoryOwner: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .regex(/^[A-Za-z0-9.-]+$/)
+    .nullable(),
+  githubRepositoryName: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .regex(/^[A-Za-z0-9._-]+$/)
+    .nullable(),
+  githubBranchCleanupEnabled: z.boolean(),
+  githubRepositoryId: z.string().trim().min(1).nullable(),
+  githubInstallationId: z.string().trim().min(1).nullable(),
 }
 
 export const projectSchema = createSelectSchema(projectsTable).extend(customFields)

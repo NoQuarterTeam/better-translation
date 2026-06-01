@@ -51,9 +51,6 @@ function NewProjectPage() {
     defaultValues: {
       name: "",
       slug: "",
-      defaultBranchName: "main",
-      defaultLocale: "en",
-      locales: "en,nl",
       translationModel: "openai/gpt-5.5",
       translationPrompt: "Translate the provided UI messages as concise, natural application UI copy.",
     },
@@ -65,14 +62,6 @@ function NewProjectPage() {
           .min(1, { error: t("Project name is required") })
           .max(120),
         slug: z.string().trim(),
-        defaultBranchName: z
-          .string()
-          .trim()
-          .min(1, { error: t("Branch name is required") })
-          .max(120)
-          .regex(/^[A-Za-z0-9._/-]+$/, { error: t("Use letters, numbers, dots, slashes, underscores, or dashes") }),
-        defaultLocale: z.string().trim().min(2).max(20),
-        locales: z.string().trim().min(2),
         translationModel: z.string().trim().min(1).max(120),
         translationPrompt: z.string().trim().min(1).max(4000),
       }),
@@ -83,12 +72,6 @@ function NewProjectPage() {
           ...value,
           orgSlug,
           slug: value.slug.trim() || slugify(value.name),
-          defaultBranchName: value.defaultBranchName.trim(),
-          defaultLocale: value.defaultLocale.trim().toLowerCase(),
-          locales: value.locales
-            .split(",")
-            .map((locale) => locale.trim().toLowerCase())
-            .filter(Boolean),
         },
       })
     },
@@ -150,17 +133,6 @@ function NewProjectPage() {
                   />
                 )}
               </form.AppField>
-              <form.AppField name="defaultBranchName">
-                {(field) => <field.TextField label={t("Default Branch")} placeholder="main" />}
-              </form.AppField>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <form.AppField name="defaultLocale">
-                  {(field) => <field.TextField label={t("Default Branch locale")} placeholder="en" />}
-                </form.AppField>
-                <form.AppField name="locales">
-                  {(field) => <field.TextField label={t("Default Branch Locales")} placeholder="en,nl,de" />}
-                </form.AppField>
-              </div>
               <form.AppField name="translationModel">
                 {(field) => <field.TextField label={t("Translation model")} placeholder="openai/gpt-5.5" />}
               </form.AppField>
@@ -173,6 +145,19 @@ function NewProjectPage() {
                   />
                 )}
               </form.AppField>
+              <div className="rounded-md border p-4">
+                <div>
+                  <h2 className="text-sm font-medium">
+                    <T>Production Branch setup</T>
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    <T>
+                      After creating the Project, set the Production Branch manually or connect GitHub to use the repository
+                      default branch.
+                    </T>
+                  </p>
+                </div>
+              </div>
               <form.SubmitButton className="w-full">
                 {(isSubmitting) => (isSubmitting || createMutation.isPending ? <T>Creating...</T> : <T>Create Project</T>)}
               </form.SubmitButton>

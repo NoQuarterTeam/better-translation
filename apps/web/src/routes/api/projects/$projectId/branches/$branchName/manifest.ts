@@ -117,7 +117,7 @@ async function upsertBranch({
     .values({ defaultLocale, locales, projectId, name })
     .onConflictDoUpdate({
       target: [branchesTable.projectId, branchesTable.name],
-      set: { defaultLocale, locales, updatedAt: new Date() },
+      set: { archivedAt: null, defaultLocale, locales, updatedAt: new Date() },
     })
     .returning()
 

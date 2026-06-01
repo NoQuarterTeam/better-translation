@@ -164,27 +164,43 @@ The plugin should resolve a Branch in this order:
 2. `BETTER_TRANSLATION_BRANCH`
 3. provider branch env, such as `VERCEL_GIT_COMMIT_REF`
 4. current Git branch
-5. the Project default Branch when it exists, otherwise the package fallback branch
+5. the Project's Production Branch when it exists, otherwise the package fallback branch
 
-If the resolved Branch does not exist, plugin sync can create it. That is intentionally different from Project creation, which remains explicit. If a Project has no default Branch yet, the first synced Branch becomes the Project default Branch.
+If the resolved Branch does not exist, plugin sync can create it. That is intentionally different from Project creation, which remains explicit. If a Project has no Production Branch yet, the first synced Branch becomes the Production Branch.
 
 The dashboard should let users view and edit each Branch. Feature branches are optional and exist for PR-specific copy work.
 
-Each Branch stores the Default locale and supported Locale list from its latest synced Manifest. Projects do not own a single global locale configuration, because a feature Branch can temporarily add, remove, or change locale settings before that change reaches the Project default Branch.
+The Production Branch is protected and should not be deleted or archived by automatic Branch lifecycle cleanup.
 
-Locale value edits are live for the Branch they belong to. Editing the Project default Branch affects Consumer apps reading that Branch; editing a feature branch affects only Consumer apps reading that feature branch.
+New Projects should guide users through choosing the first Production Branch before Manifest sync when possible. The user can create it manually, connect GitHub and use the repository default branch, or let the first plugin sync set the Production Branch.
 
-## Default Branch Seeding
+A Project can optionally connect to one GitHub repository through a GitHub App. Repository connection is not required for remote mode, Manifest sync, or Runtime bundle loading. It can power optional Branch cleanup.
 
-Non-default Branches use the Project default Branch as a seed during Manifest sync.
+Repository connection is separate from user sign-in. A user may authenticate with GitHub without connecting a repository to a Project, and a Project repository connection only applies to that Project.
+
+Branch cleanup is a Project setting. When enabled, the hosted service archives non-production Branches whose matching upstream branch no longer exists. The Production Branch is always protected from automatic cleanup.
+
+Branch cleanup should be webhook-driven. GitHub branch deletion events are the signal for archiving a matching non-production Branch. Pull request close or merge events should not archive Branches by themselves.
+
+When the hosted service can tell that a non-default upstream branch no longer exists, the matching Branch should become an Archived Branch rather than being hard-deleted immediately. Archived Branches keep their Messages and Locale values available for Runtime bundle reads, because preview deployments can outlive the upstream branch that created them.
+
+If Manifest sync later targets an Archived Branch, the Branch should become active again and sync normally. A new sync is enough evidence that the Branch is relevant again.
+
+Each Branch stores the Default locale and supported Locale list from its latest synced Manifest. Projects do not own a single global locale configuration, because a feature Branch can temporarily add, remove, or change locale settings before that change reaches the Production Branch.
+
+Locale value edits are live for the Branch they belong to. Editing the Production Branch affects Consumer apps reading that Branch; editing a feature branch affects only Consumer apps reading that feature branch.
+
+## Production Branch Seeding
+
+Non-production Branches use the Production Branch as a seed during Manifest sync.
 
 Manifest sync for a feature branch should work like this for each non-default Locale:
 
 1. keep an existing Branch Locale value when one exists
-2. copy the Project default Branch Locale value when the same lookup id exists there and its Default locale text hash still matches
+2. copy the Production Branch Locale value when the same lookup id exists there and its Default locale text hash still matches
 3. otherwise generate and store a new Branch Locale value with the Platform translator
 
-Runtime bundles read only the requested Branch's active Messages and Branch Locale values. They do not populate missing values or read through to the Project default Branch at runtime.
+Runtime bundles read only the requested Branch's active Messages and Branch Locale values. They do not populate missing values or read through to the Production Branch at runtime.
 
 ## Branch Overrides
 
@@ -206,19 +222,19 @@ The lookup id identifies the same source Message across branches. Branch-scoped 
 
 ## Branch Reconciliation
 
-Feature branch values must not overwrite the Project default Branch automatically.
+Feature branch values must not overwrite the Production Branch automatically.
 
-When a feature branch is merged in Git, the next sync on the Project default Branch uploads the new Manifest there. Locale values from the feature Branch remain branch-local unless a user explicitly applies them to the Project default Branch.
+When a feature branch is merged in Git, the next sync on the Production Branch uploads the new Manifest there. Locale values from the feature Branch remain branch-local unless a user explicitly applies them to the Production Branch.
 
-Future reconciliation can use the base value hash on each Branch override to determine whether applying it to the Project default Branch is safe:
+Future reconciliation can use the base value hash on each Branch override to determine whether applying it to the Production Branch is safe:
 
-- if the branch value changed and the default Branch value did not change, the override can be applied cleanly
-- if the default Branch changed and the branch did not change from its base, keep the default Branch value
-- if both changed to the same value, keep the default Branch value
+- if the branch value changed and the Production Branch value did not change, the override can be applied cleanly
+- if the Production Branch changed and the branch did not change from its base, keep the Production Branch value
+- if both changed to the same value, keep the Production Branch value
 - if both changed differently, require review
-- AI or imported values from a feature branch must not automatically overwrite newer manual edits on the Project default Branch
+- AI or imported values from a feature branch must not automatically overwrite newer manual edits on the Production Branch
 
-The dashboard can offer an explicit "apply to default Branch" action for a Branch override. That action writes the branch value to the Project default Branch only when the user chooses it.
+The dashboard can offer an explicit "apply to Production Branch" action for a Branch override. That action writes the branch value to the Production Branch only when the user chooses it.
 
 ## Remote Sync Timing
 
@@ -276,7 +292,7 @@ When local dev calls the Platform translator, the request should include enough 
 Platform translator requests are canonical fill-blank writes. Manifest sync should:
 
 1. keep an existing Branch Locale value when one exists
-2. copy a matching Project default Branch value into the resolved Branch when one exists
+2. copy a matching Production Branch value into the resolved Branch when one exists
 3. otherwise generate a new value using Project settings
 4. store the generated value on the resolved Branch with `source: "ai"`
 5. return flat runtime bundles from stored Branch values only
@@ -299,7 +315,7 @@ After migration, remote mode should not keep reading or writing editable local L
 
 Hosted-mode sync should not call package-local AI translation during `vite dev` or `vite build`. In remote mode, the Vite plugin only extracts and syncs the Manifest, then runtime code fetches hosted Runtime bundles.
 
-Remote sync uploads the Manifest. The hosted service then fills missing Branch Locale values using matching Project default Branch values or the Platform translator.
+Remote sync uploads the Manifest. The hosted service then fills missing Branch Locale values using matching Production Branch values or the Platform translator.
 
 Manifest sync stores the Manifest and fills missing Branch Locale values as part of the sync request so runtime reads can stay read-only.
 

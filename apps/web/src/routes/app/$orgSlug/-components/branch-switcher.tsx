@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 import { useNavigate, useParams, useRouter } from "@tanstack/react-router"
-import { CheckIcon, ChevronsUpDownIcon, GitBranchIcon } from "lucide-react"
+import { CheckIcon, ChevronsUpDownIcon, GitBranchIcon, StarIcon } from "lucide-react"
 
 import { T } from "better-translation/react"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -85,9 +86,7 @@ export function BranchSwitcher() {
                 <GitBranchIcon className="text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{branch.name}</div>
-                  <div className="truncate text-xs leading-3 text-muted-foreground">
-                    {branch.isDefault ? <T>Default</T> : <T>Feature</T>}
-                  </div>
+                  <BranchRoleBadge isProduction={branch.isDefault} />
                 </div>
                 <CheckIcon className={isActive ? "opacity-100" : "opacity-0"} />
               </DropdownMenuItem>
@@ -101,5 +100,19 @@ export function BranchSwitcher() {
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
+  )
+}
+
+function BranchRoleBadge({ isProduction }: { isProduction: boolean }) {
+  return isProduction ? (
+    <Badge className="mt-1">
+      <StarIcon data-icon="inline-start" />
+      <T>Production</T>
+    </Badge>
+  ) : (
+    <Badge variant="secondary" className="mt-1">
+      <GitBranchIcon data-icon="inline-start" />
+      <T>Feature</T>
+    </Badge>
   )
 }

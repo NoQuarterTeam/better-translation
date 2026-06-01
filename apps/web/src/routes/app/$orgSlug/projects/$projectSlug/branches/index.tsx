@@ -1,7 +1,7 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import type { ColumnDef } from "@tanstack/react-table"
-import { CheckIcon, GitBranchIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, StarIcon } from "lucide-react"
+import { ArchiveIcon, CheckIcon, GitBranchIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, StarIcon } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -33,6 +33,7 @@ import {
 
 import { organizationProjectsQueryOptions } from "../../../-data"
 import {
+  archiveProjectBranchFn,
   createProjectBranchFn,
   projectBranchesQueryOptions,
   setDefaultProjectBranchFn,
@@ -80,15 +81,7 @@ function ProjectBranchesPage() {
         header: t("Tags"),
         cell: ({ row }) => (
           <div className="flex flex-wrap gap-2">
-            {row.original.isDefault ? (
-              <Badge>
-                <T>Default</T>
-              </Badge>
-            ) : (
-              <Badge variant="secondary">
-                <T>Feature</T>
-              </Badge>
-            )}
+            <BranchRoleBadge isProduction={row.original.isDefault} />
             {row.original.lastSyncedAt && (
               <Badge variant="outline">
                 <T>Synced</T>
@@ -142,7 +135,16 @@ function ProjectBranchesPage() {
                   <T>Create a production Branch only if plugin sync has not created one yet.</T>
                 </p>
               </div>
-              <CreateProductionBranchDialog />
+              <div className="flex flex-wrap justify-center gap-2">
+                <CreateProductionBranchDialog />
+                <Button
+                  variant="outline"
+                  render={<Link to="/app/$orgSlug/projects/$projectSlug/settings" params={{ orgSlug, projectSlug }} />}
+                >
+                  <GitBranchIcon />
+                  <T>Connect GitHub</T>
+                </Button>
+              </div>
             </div>
           ) : (
             <DataTable columns={branchColumns} data={branchesQuery.data.branches} />
@@ -232,6 +234,20 @@ function CreateProductionBranchDialog() {
   )
 }
 
+function BranchRoleBadge({ isProduction }: { isProduction: boolean }) {
+  return isProduction ? (
+    <Badge>
+      <StarIcon data-icon="inline-start" />
+      <T>Production</T>
+    </Badge>
+  ) : (
+    <Badge variant="secondary">
+      <GitBranchIcon data-icon="inline-start" />
+      <T>Feature</T>
+    </Badge>
+  )
+}
+
 function BranchActions({ branch }: { branch: BranchRow }) {
   const { orgSlug, projectSlug } = Route.useParams()
   const { queryClient } = Route.useRouteContext()
@@ -240,11 +256,20 @@ function BranchActions({ branch }: { branch: BranchRow }) {
   const setDefaultBranch = useMutation({
     mutationFn: setDefaultProjectBranchFn,
     onSuccess: () => {
-      toast.success(t("Default Branch updated"))
+      toast.success(t("Production Branch updated"))
       void queryClient.invalidateQueries(projectBranchesQueryOptions(orgSlug, projectSlug))
       void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
     },
-    onError: (error: Error) => toast.error(t("Could not update default Branch"), { description: error.message }),
+    onError: (error: Error) => toast.error(t("Could not update Production Branch"), { description: error.message }),
+  })
+  const archiveBranch = useMutation({
+    mutationFn: archiveProjectBranchFn,
+    onSuccess: () => {
+      toast.success(t("Branch archived"))
+      void queryClient.invalidateQueries(projectBranchesQueryOptions(orgSlug, projectSlug))
+      void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
+    },
+    onError: (error: Error) => toast.error(t("Could not archive Branch"), { description: error.message }),
   })
 
   return (
@@ -265,7 +290,14 @@ function BranchActions({ branch }: { branch: BranchRow }) {
               onClick={() => setDefaultBranch.mutate({ data: { orgSlug, projectSlug, branchId: branch.id } })}
             >
               {branch.isDefault ? <CheckIcon /> : <StarIcon />}
-              <T>Make default</T>
+              <T>Make Production</T>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={branch.isDefault || archiveBranch.isPending}
+              onClick={() => archiveBranch.mutate({ data: { orgSlug, projectSlug, branchId: branch.id } })}
+            >
+              <ArchiveIcon />
+              <T>Archive Branch</T>
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

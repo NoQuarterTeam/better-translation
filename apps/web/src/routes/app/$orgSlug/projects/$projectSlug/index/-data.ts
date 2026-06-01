@@ -14,7 +14,7 @@ export const getProjectBranchRedirectNameFn = createServerFn({ method: "GET" })
     if (selectedBranchName) {
       const selectedBranch = await db.query.branchesTable.findFirst({
         columns: { name: true },
-        where: { projectId: project.id, name: selectedBranchName },
+        where: { archivedAt: { isNull: true }, projectId: project.id, name: selectedBranchName },
       })
 
       if (selectedBranch) return selectedBranch.name
@@ -24,7 +24,7 @@ export const getProjectBranchRedirectNameFn = createServerFn({ method: "GET" })
 
     const defaultBranch = await db.query.branchesTable.findFirst({
       columns: { name: true },
-      where: { id: project.defaultBranchId, projectId: project.id },
+      where: { archivedAt: { isNull: true }, id: project.defaultBranchId, projectId: project.id },
     })
 
     return defaultBranch?.name ?? null

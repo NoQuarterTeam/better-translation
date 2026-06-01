@@ -20,6 +20,8 @@ import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-pass
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password'
 import { Route as AppOrgSlugLayoutRouteImport } from './routes/app/$orgSlug/layout'
 import { Route as AppCreateOrgIndexRouteImport } from './routes/app/create-org/index'
+import { Route as ApiGithubWebhooksRouteImport } from './routes/api/github/webhooks'
+import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
 import { Route as AppOrgSlugOrgLayoutRouteImport } from './routes/app/$orgSlug/_org/layout'
 import { Route as AppOrgSlugOrgIndexRouteImport } from './routes/app/$orgSlug/_org/index'
@@ -89,6 +91,16 @@ const AppOrgSlugLayoutRoute = AppOrgSlugLayoutRouteImport.update({
 const AppCreateOrgIndexRoute = AppCreateOrgIndexRouteImport.update({
   id: '/app/create-org/',
   path: '/app/create-org/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGithubWebhooksRoute = ApiGithubWebhooksRouteImport.update({
+  id: '/api/github/webhooks',
+  path: '/api/github/webhooks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGithubSetupRoute = ApiGithubSetupRouteImport.update({
+  id: '/api/github/setup',
+  path: '/api/github/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -190,6 +202,8 @@ export interface FileRoutesByFullPath {
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/github/setup': typeof ApiGithubSetupRoute
+  '/api/github/webhooks': typeof ApiGithubWebhooksRoute
   '/app/create-org/': typeof AppCreateOrgIndexRoute
   '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
   '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersRoute
@@ -216,6 +230,8 @@ export interface FileRoutesByTo {
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
   '/app': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/github/setup': typeof ApiGithubSetupRoute
+  '/api/github/webhooks': typeof ApiGithubWebhooksRoute
   '/app/create-org': typeof AppCreateOrgIndexRoute
   '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersRoute
   '/app/$orgSlug/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
@@ -243,6 +259,8 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/app/$orgSlug/_org': typeof AppOrgSlugOrgLayoutRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/github/setup': typeof ApiGithubSetupRoute
+  '/api/github/webhooks': typeof ApiGithubWebhooksRoute
   '/app/create-org/': typeof AppCreateOrgIndexRoute
   '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
   '/app/$orgSlug/_org/users': typeof AppOrgSlugOrgUsersRoute
@@ -271,6 +289,8 @@ export interface FileRouteTypes {
     | '/accept-invitation/$invitationId'
     | '/app/'
     | '/api/auth/$'
+    | '/api/github/setup'
+    | '/api/github/webhooks'
     | '/app/create-org/'
     | '/app/$orgSlug/projects/$projectSlug'
     | '/app/$orgSlug/users'
@@ -297,6 +317,8 @@ export interface FileRouteTypes {
     | '/accept-invitation/$invitationId'
     | '/app'
     | '/api/auth/$'
+    | '/api/github/setup'
+    | '/api/github/webhooks'
     | '/app/create-org'
     | '/app/$orgSlug/users'
     | '/app/$orgSlug/projects/new'
@@ -323,6 +345,8 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/$orgSlug/_org'
     | '/api/auth/$'
+    | '/api/github/setup'
+    | '/api/github/webhooks'
     | '/app/create-org/'
     | '/app/$orgSlug/projects/$projectSlug'
     | '/app/$orgSlug/_org/users'
@@ -346,6 +370,8 @@ export interface RootRouteChildren {
   AcceptInvitationInvitationIdRoute: typeof AcceptInvitationInvitationIdRoute
   AppIndexRoute: typeof AppIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiGithubSetupRoute: typeof ApiGithubSetupRoute
+  ApiGithubWebhooksRoute: typeof ApiGithubWebhooksRoute
   AppCreateOrgIndexRoute: typeof AppCreateOrgIndexRoute
   ApiProjectsProjectIdBranchesBranchNameManifestRoute: typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
   ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute: typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
@@ -428,6 +454,20 @@ declare module '@tanstack/react-router' {
       path: '/app/create-org'
       fullPath: '/app/create-org/'
       preLoaderRoute: typeof AppCreateOrgIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/github/webhooks': {
+      id: '/api/github/webhooks'
+      path: '/api/github/webhooks'
+      fullPath: '/api/github/webhooks'
+      preLoaderRoute: typeof ApiGithubWebhooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/github/setup': {
+      id: '/api/github/setup'
+      path: '/api/github/setup'
+      fullPath: '/api/github/setup'
+      preLoaderRoute: typeof ApiGithubSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -625,6 +665,8 @@ const rootRouteChildren: RootRouteChildren = {
   AcceptInvitationInvitationIdRoute: AcceptInvitationInvitationIdRoute,
   AppIndexRoute: AppIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiGithubSetupRoute: ApiGithubSetupRoute,
+  ApiGithubWebhooksRoute: ApiGithubWebhooksRoute,
   AppCreateOrgIndexRoute: AppCreateOrgIndexRoute,
   ApiProjectsProjectIdBranchesBranchNameManifestRoute:
     ApiProjectsProjectIdBranchesBranchNameManifestRoute,

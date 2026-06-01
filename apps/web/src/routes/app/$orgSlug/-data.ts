@@ -98,7 +98,7 @@ export const setSelectedBranchFn = createServerFn({ method: "POST" })
 
     const branch = await db.query.branchesTable.findFirst({
       columns: { name: true },
-      where: { projectId: project.id, name: data.branchName },
+      where: { archivedAt: { isNull: true }, projectId: project.id, name: data.branchName },
     })
 
     if (!branch) throw new Error("Branch not found.")
