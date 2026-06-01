@@ -15,6 +15,12 @@ const githubInstallationRepositoriesResponseSchema = z.object({
   ),
 })
 
+const githubAppInstallationsResponseSchema = z.array(
+  z.object({
+    id: z.number().int(),
+  }),
+)
+
 type GitHubSetupState = { expiresAt: number; orgSlug: string; projectSlug: string }
 
 export function createGitHubInstallUrl(state: GitHubSetupState) {
@@ -75,6 +81,22 @@ export async function listGitHubInstallationRepositories(installationId: string)
     name: repository.name,
     owner: repository.owner.login,
   }))
+}
+
+export async function findSingleGitHubAppInstallationId() {
+  const appJwt = createGitHubAppJwt()
+  const response = await fetch("https://api.github.com/app/installations?per_page=100", {
+    headers: githubJsonHeaders(appJwt),
+  })
+
+  if (!response.ok) throw new Error("Could not load GitHub App installations.")
+
+  const parsed = githubAppInstallationsResponseSchema.safeParse(await response.json())
+  if (!parsed.success) throw new Error("GitHub returned an invalid installations payload.")
+  const [installation] = parsed.data
+  if (parsed.data.length !== 1 || !installation) return null
+
+  return String(installation.id)
 }
 
 export async function ensureGitHubInstallationRepository(params: {

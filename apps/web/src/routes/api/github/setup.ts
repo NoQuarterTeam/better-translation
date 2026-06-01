@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 
-import { readGitHubSetupState } from "@/server/github"
+import { findSingleGitHubAppInstallationId, readGitHubSetupState } from "@/server/github"
 
 export const Route = createFileRoute("/api/github/setup")({
   server: {
@@ -8,7 +8,7 @@ export const Route = createFileRoute("/api/github/setup")({
       GET: async ({ request }) => {
         const requestUrl = new URL(request.url)
         const setupState = requestUrl.searchParams.get("state")
-        const installationId = requestUrl.searchParams.get("installation_id")
+        const installationId = requestUrl.searchParams.get("installation_id") ?? (await findSingleGitHubAppInstallationId())
         const parsedState = setupState ? readGitHubSetupState(setupState) : null
 
         if (!parsedState) return Response.redirect(new URL("/app", requestUrl), 302)
