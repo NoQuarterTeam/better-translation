@@ -4,7 +4,7 @@ import * as z from "zod"
 
 import { env } from "@/env"
 import { db } from "@/server/db"
-import { branchesTable, projectsTable } from "@/server/db/schema"
+import { branchesTable, githubInstallationsTable, projectsTable } from "@/server/db/schema"
 import { verifyGitHubWebhookSignature } from "@/server/github"
 
 const githubRepositorySchema = z.object({
@@ -81,8 +81,8 @@ export const Route = createFileRoute("/api/github/webhooks")({
 
         const archivedCount = await archiveDeletedBranch({
           branchName: parsed.data.ref,
-          repositoryName: parsed.data.repository.name.toLowerCase(),
-          repositoryOwner: parsed.data.repository.owner.login.toLowerCase(),
+          repositoryName: parsed.data.repository.name,
+          repositoryOwner: parsed.data.repository.owner.login,
         })
 
         return json({ archivedCount, ok: true })
@@ -105,6 +105,8 @@ async function disconnectDeletedInstallation(installationId: string) {
     })
     .where(eq(projectsTable.githubInstallationId, installationId))
     .returning({ id: projectsTable.id })
+
+  await db.delete(githubInstallationsTable).where(eq(githubInstallationsTable.installationId, installationId))
 
   return projects.length
 }

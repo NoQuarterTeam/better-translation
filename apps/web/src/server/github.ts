@@ -16,7 +16,17 @@ const githubInstallationRepositoriesResponseSchema = z.object({
   ),
 })
 
-type GitHubSetupState = { expiresAt: number; orgSlug: string; projectSlug: string }
+const githubInstallationSchema = z.object({
+  account: z.object({
+    avatar_url: z.string().nullable(),
+    login: z.string().trim().min(1),
+    type: z.string().trim().min(1),
+  }),
+  id: z.number().int(),
+  repository_selection: z.string().trim().min(1),
+})
+
+type GitHubSetupState = { expiresAt: number; orgSlug: string; projectSlug?: string }
 
 export function createGitHubInstallUrl(state: GitHubSetupState) {
   if (!env.GITHUB_APP_SLUG) return null
@@ -36,7 +46,9 @@ export function signGitHubSetupState(state: GitHubSetupState) {
 export function verifyGitHubSetupState(state: string, expected: Pick<GitHubSetupState, "orgSlug" | "projectSlug">) {
   const parsed = readGitHubSetupState(state)
   if (!parsed) return false
-  return parsed.orgSlug === expected.orgSlug && parsed.projectSlug === expected.projectSlug
+  if (parsed.orgSlug !== expected.orgSlug) return false
+  if (expected.projectSlug && parsed.projectSlug !== expected.projectSlug) return false
+  return true
 }
 
 export function readGitHubSetupState(state: string) {
@@ -93,6 +105,26 @@ export async function listGitHubInstallationRepositories(installationId: string)
       name: repository.name,
       owner: repository.owner.login,
     }))
+}
+
+export async function getGitHubAppInstallation(installationId: string) {
+  const appJwt = createGitHubAppJwt()
+  const response = await fetch(`https://api.github.com/app/installations/${installationId}`, {
+    headers: githubJsonHeaders(appJwt),
+  })
+
+  if (!response.ok) throw new Error("Could not load GitHub installation.")
+
+  const parsed = githubInstallationSchema.safeParse(await response.json())
+  if (!parsed.success) throw new Error("GitHub returned an invalid installation payload.")
+
+  return {
+    accountAvatarUrl: parsed.data.account.avatar_url,
+    accountLogin: parsed.data.account.login,
+    accountType: parsed.data.account.type,
+    installationId: String(parsed.data.id),
+    repositorySelection: parsed.data.repository_selection,
+  }
 }
 
 export async function ensureGitHubInstallationRepository(params: {
@@ -171,7 +203,11 @@ function githubJsonHeaders(token: string) {
 function parseGitHubSetupState(payload: string) {
   try {
     return z
-      .object({ expiresAt: z.number().int(), orgSlug: z.string().trim().min(1), projectSlug: z.string().trim().min(1) })
+      .object({
+        expiresAt: z.number().int(),
+        orgSlug: z.string().trim().min(1),
+        projectSlug: z.string().trim().min(1).optional(),
+      })
       .parse(JSON.parse(Buffer.from(payload, "base64url").toString("utf-8")))
   } catch {
     return null

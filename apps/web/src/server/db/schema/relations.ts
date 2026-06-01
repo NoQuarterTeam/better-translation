@@ -15,6 +15,7 @@ export const relations = defineRelations(schema, (r) => ({
     members: r.many.membersTable(),
     invitations: r.many.invitationsTable(),
     projects: r.many.projectsTable(),
+    githubInstallations: r.many.organizationGithubInstallationsTable(),
   },
   membersTable: {
     user: r.one.usersTable({ from: r.membersTable.userId, to: r.usersTable.id }),
@@ -33,6 +34,24 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
   accountsTable: { user: r.one.usersTable({ from: r.accountsTable.userId, to: r.usersTable.id }) },
+  githubInstallationsTable: {
+    connectedBy: r.one.usersTable({
+      from: r.githubInstallationsTable.connectedByUserId,
+      to: r.usersTable.id,
+      optional: true,
+    }),
+    organizations: r.many.organizationGithubInstallationsTable(),
+  },
+  organizationGithubInstallationsTable: {
+    organization: r.one.organizationsTable({
+      from: r.organizationGithubInstallationsTable.organizationId,
+      to: r.organizationsTable.id,
+    }),
+    githubInstallation: r.one.githubInstallationsTable({
+      from: r.organizationGithubInstallationsTable.githubInstallationId,
+      to: r.githubInstallationsTable.id,
+    }),
+  },
   projectsTable: {
     organization: r.one.organizationsTable({ from: r.projectsTable.organizationId, to: r.organizationsTable.id }),
     defaultBranch: r.one.branchesTable({

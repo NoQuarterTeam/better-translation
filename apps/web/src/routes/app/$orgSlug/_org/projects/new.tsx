@@ -1,6 +1,7 @@
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useState } from "react"
+import { ExternalLinkIcon, GitBranchIcon, PlusIcon, SearchIcon } from "lucide-react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
@@ -8,13 +9,42 @@ import { T, useT } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
 import { useAppForm } from "@/components/react-form"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FieldError } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+import { ResourceMark } from "../../-components/resource-mark"
 import { organizationProjectsQueryOptions } from "../../-data"
-import { createProjectFn } from "./new/-data"
+import {
+  createProjectFn,
+  createProjectFromGitHubRepositoryFn,
+  newProjectGitHubRepositoriesQueryOptions,
+  newProjectGitHubSetupQueryOptions,
+} from "./new/-data"
+
+const githubInstallationIdSearchSchema = z.union([z.string(), z.number()]).transform(String).optional().catch(undefined)
 
 export const Route = createFileRoute("/app/$orgSlug/_org/projects/new")({
   component: NewProjectPage,
+  validateSearch: z
+    .object({
+      githubInstallationId: githubInstallationIdSearchSchema,
+      githubSetupError: z.enum(["missing_installation_id"]).optional().catch(undefined),
+      githubSetupState: z.string().optional().catch(undefined),
+      installation_id: githubInstallationIdSearchSchema,
+      state: z.string().optional().catch(undefined),
+    })
+    .transform((search) => ({
+      githubInstallationId: search.githubInstallationId ?? search.installation_id,
+      githubSetupError: search.githubSetupError,
+      githubSetupState: search.githubSetupState ?? search.state,
+    })),
+  loader: async ({ context, params }) => {
+    await context.queryClient.ensureQueryData(newProjectGitHubSetupQueryOptions(params.orgSlug))
+  },
   head: ({ match }) => {
     const t = createTranslator(match.context.messages)
     return { meta: [{ title: `${t("New Project")} · Better Translation` }] }
@@ -32,6 +62,200 @@ function slugify(name: string) {
 }
 
 function NewProjectPage() {
+  return (
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-4 md:p-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          <T>New Project</T>
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          <T>Create a Project from a GitHub repository or configure it manually.</T>
+        </p>
+      </div>
+      <Tabs defaultValue="github">
+        <TabsList>
+          <TabsTrigger value="github">
+            <GitBranchIcon />
+            <T>Connect GitHub repo</T>
+          </TabsTrigger>
+          <TabsTrigger value="manual">
+            <GitBranchIcon />
+            <T>Create manually</T>
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="github">
+          <GitHubImportCard />
+        </TabsContent>
+        <TabsContent value="manual">
+          <ManualProjectCard />
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+
+function GitHubImportCard() {
+  const { orgSlug } = Route.useParams()
+  const search = Route.useSearch()
+  const { queryClient } = Route.useRouteContext()
+  const navigate = useNavigate()
+  const t = useT()
+  const setupQuery = useSuspenseQuery(newProjectGitHubSetupQueryOptions(orgSlug))
+  const setup = setupQuery.data
+  const [selectedInstallationId, setSelectedInstallationId] = useState(search.githubInstallationId ?? "")
+  const [repositorySearch, setRepositorySearch] = useState("")
+  const repositoriesQuery = useQuery(newProjectGitHubRepositoriesQueryOptions(orgSlug, selectedInstallationId))
+  const query = repositorySearch.trim().toLowerCase()
+  const repositories = repositoriesQuery.data ?? []
+  const filteredRepositories = query
+    ? repositories.filter((repository) => repository.fullName.toLowerCase().includes(query))
+    : repositories
+
+  useEffect(() => {
+    if (selectedInstallationId || setup.githubInstallations.length === 0) return
+    setSelectedInstallationId(setup.githubInstallations[0]?.installationId ?? "")
+  }, [selectedInstallationId, setup.githubInstallations])
+
+  const createFromRepository = useMutation({
+    mutationFn: createProjectFromGitHubRepositoryFn,
+    onSuccess: (project) => {
+      toast.success(t("Project imported"))
+      void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
+      void navigate({ to: "/app/$orgSlug/projects/$projectSlug", params: { orgSlug, projectSlug: project.slug } })
+    },
+    onError: (error: Error) => toast.error(t("Could not import repository"), { description: error.message }),
+  })
+
+  const selectedInstallation = setup.githubInstallations.find(
+    (installation) => installation.installationId === selectedInstallationId,
+  )
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <T>Import GitHub repository</T>
+        </CardTitle>
+        <CardDescription>
+          <T>Create a Project from a repository and use its default branch as the Production Branch.</T>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <NativeSelect
+            value={selectedInstallationId}
+            disabled={setup.githubInstallations.length === 0}
+            onChange={(event) => setSelectedInstallationId(event.target.value)}
+          >
+            {setup.githubInstallations.length === 0 ? (
+              <NativeSelectOption value="">{t("No GitHub accounts connected")}</NativeSelectOption>
+            ) : (
+              setup.githubInstallations.map((installation) => (
+                <NativeSelectOption key={installation.id} value={installation.installationId}>
+                  {installation.accountLogin}
+                </NativeSelectOption>
+              ))
+            )}
+          </NativeSelect>
+          <div className="relative">
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              className="pl-8"
+              placeholder={t("Search repositories...")}
+              value={repositorySearch}
+              onChange={(event) => setRepositorySearch(event.target.value)}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!setup.githubInstallUrl}
+            onClick={() => openGitHubSetup(setup.githubInstallUrl, () => void setupQuery.refetch())}
+          >
+            <PlusIcon />
+            <T>Add GitHub Account</T>
+            <ExternalLinkIcon />
+          </Button>
+        </div>
+
+        {selectedInstallation && (
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <ResourceMark
+              label={selectedInstallation.accountLogin}
+              imageUrl={selectedInstallation.accountAvatarUrl}
+              className="size-6 rounded-md"
+            />
+            <span>
+              <T>Showing repositories available to</T> {selectedInstallation.accountLogin}
+            </span>
+          </div>
+        )}
+
+        {githubSetupErrorMessage(search.githubSetupError)}
+
+        <div className="overflow-hidden rounded-md border">
+          {setup.githubInstallations.length === 0 ? (
+            <div className="flex flex-col gap-3 p-6 text-center">
+              <GitBranchIcon className="mx-auto text-muted-foreground" />
+              <div className="font-medium">
+                <T>No GitHub accounts connected</T>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                <T>Add a GitHub account to import a repository into this organization.</T>
+              </p>
+            </div>
+          ) : repositoriesQuery.isLoading ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              <T>Loading repositories...</T>
+            </div>
+          ) : filteredRepositories.length === 0 ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              <T>No repositories found.</T>
+            </div>
+          ) : (
+            filteredRepositories.map((repository) => (
+              <div
+                key={repository.id}
+                className="flex flex-col gap-3 border-b p-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-medium">{repository.name}</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+                    <span>{repository.owner}</span>
+                    <span>/</span>
+                    <span>{repository.defaultBranch}</span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  disabled={createFromRepository.isPending}
+                  onClick={() =>
+                    createFromRepository.mutate({
+                      data: {
+                        installationId: selectedInstallationId,
+                        name: repository.name,
+                        orgSlug,
+                        repositoryId: repository.id,
+                        repositoryName: repository.name,
+                        repositoryOwner: repository.owner,
+                        slug: slugify(repository.name),
+                      },
+                    })
+                  }
+                >
+                  <T>Import</T>
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+        <FieldError>{repositoriesQuery.error?.message ?? createFromRepository.error?.message}</FieldError>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ManualProjectCard() {
   const { orgSlug } = Route.useParams()
   const { queryClient } = Route.useRouteContext()
   const t = useT()
@@ -49,25 +273,27 @@ function NewProjectPage() {
 
   const form = useAppForm({
     defaultValues: {
+      defaultBranchName: "",
       name: "",
       slug: "",
-      translationPrompt: "Translate the provided UI messages as concise, natural application UI copy.",
     },
     validators: {
       onSubmit: z.object({
+        defaultBranchName: z.string().trim(),
         name: z
           .string()
           .trim()
           .min(1, { error: t("Project name is required") })
           .max(120),
         slug: z.string().trim(),
-        translationPrompt: z.string().trim().min(1).max(4000),
       }),
     },
     onSubmit: ({ value }) => {
+      const defaultBranchName = value.defaultBranchName.trim()
       createMutation.mutate({
         data: {
-          ...value,
+          defaultBranchName: defaultBranchName || undefined,
+          name: value.name,
           orgSlug,
           slug: value.slug.trim() || slugify(value.name),
         },
@@ -76,91 +302,94 @@ function NewProjectPage() {
   })
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 md:p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          <T>New Project</T>
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          <T>Create the hosted Project that one Consumer app will sync to.</T>
-        </p>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <T>Project details</T>
-          </CardTitle>
-          <CardDescription>
-            <T>The public Project id is generated after creation and is what the Vite plugin uses.</T>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form.AppForm>
-            <form
-              className="flex flex-col gap-4"
-              onSubmit={(e) => {
-                e.preventDefault()
-                void form.handleSubmit()
-              }}
-            >
-              <form.AppField name="name">
-                {(field) => (
-                  <field.TextField
-                    label={t("Project name")}
-                    placeholder="Acme Web"
-                    onChange={(e) => {
-                      const value = e.target.value
-                      field.handleChange(value)
-                      if (!hasEditedSlug) {
-                        form.setFieldValue("slug", slugify(value))
-                      }
-                    }}
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name="slug">
-                {(field) => (
-                  <field.TextField
-                    label={t("URL slug")}
-                    placeholder="acme-web"
-                    description={t("Lowercase, hyphens only. Used in URLs and must be unique.")}
-                    onChange={(e) => {
-                      setHasEditedSlug(true)
-                      field.handleChange(e.target.value)
-                    }}
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name="translationPrompt">
-                {(field) => (
-                  <field.TextareaField
-                    label={t("Translator guidance")}
-                    placeholder={t("Tone, glossary, and style guidance")}
-                    rows={4}
-                  />
-                )}
-              </form.AppField>
-              <div className="rounded-md border p-4">
-                <div>
-                  <h2 className="text-sm font-medium">
-                    <T>Production Branch setup</T>
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    <T>
-                      After creating the Project, set the Production Branch manually or connect GitHub to use the repository
-                      default branch.
-                    </T>
-                  </p>
-                </div>
-              </div>
-              <form.SubmitButton className="w-full">
-                {(isSubmitting) => (isSubmitting || createMutation.isPending ? <T>Creating...</T> : <T>Create Project</T>)}
-              </form.SubmitButton>
-              <form.FormError>{createMutation.error?.message}</form.FormError>
-            </form>
-          </form.AppForm>
-        </CardContent>
-      </Card>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <T>Project details</T>
+        </CardTitle>
+        <CardDescription>
+          <T>Create a Project without connecting a GitHub repository.</T>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form.AppForm>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              void form.handleSubmit()
+            }}
+          >
+            <form.AppField name="name">
+              {(field) => (
+                <field.TextField
+                  label={t("Project name")}
+                  placeholder="Acme Web"
+                  onChange={(e) => {
+                    const value = e.target.value
+                    field.handleChange(value)
+                    if (!hasEditedSlug) {
+                      form.setFieldValue("slug", slugify(value))
+                    }
+                  }}
+                />
+              )}
+            </form.AppField>
+            <form.AppField name="slug">
+              {(field) => (
+                <field.TextField
+                  label={t("URL slug")}
+                  placeholder="acme-web"
+                  description={t("Lowercase, hyphens only. Used in URLs and must be unique.")}
+                  onChange={(e) => {
+                    setHasEditedSlug(true)
+                    field.handleChange(e.target.value)
+                  }}
+                />
+              )}
+            </form.AppField>
+            <form.AppField name="defaultBranchName">
+              {(field) => (
+                <field.TextField
+                  label={t("Production Branch")}
+                  placeholder="main"
+                  description={t("Optional. If omitted, the first Vite plugin sync sets the Production Branch.")}
+                />
+              )}
+            </form.AppField>
+            <form.SubmitButton className="w-full">
+              {(isSubmitting) => (isSubmitting || createMutation.isPending ? <T>Creating...</T> : <T>Create Project</T>)}
+            </form.SubmitButton>
+            <form.FormError>{createMutation.error?.message}</form.FormError>
+          </form>
+        </form.AppForm>
+      </CardContent>
+    </Card>
+  )
+}
+
+function openGitHubSetup(url: string | null, onClose?: () => void) {
+  if (!url) return
+  const popup = window.open(url, "better-translation-github", "width=1040,height=760,noopener,noreferrer")
+  if (!popup) {
+    window.location.href = url
+    return
+  }
+  const interval = window.setInterval(() => {
+    if (!popup?.closed) return
+    window.clearInterval(interval)
+    onClose?.()
+  }, 500)
+}
+
+function githubSetupErrorMessage(error?: "missing_installation_id") {
+  if (!error) return null
+  return (
+    <FieldError>
+      <T>
+        GitHub returned without an installation id. Check that the GitHub App Setup URL points to /api/github/setup, then start
+        the connection again.
+      </T>
+    </FieldError>
   )
 }

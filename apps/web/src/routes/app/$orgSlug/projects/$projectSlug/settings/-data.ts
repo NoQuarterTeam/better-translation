@@ -13,6 +13,7 @@ import {
   listGitHubInstallationRepositories,
   verifyGitHubSetupState,
 } from "@/server/github"
+import { listOrganizationGitHubInstallations, organizationCanUseGitHubInstallation } from "@/server/github-installations"
 
 const githubSetupSchema = z.object({
   installationId: z.string().trim().min(1),
@@ -22,7 +23,7 @@ const githubSetupSchema = z.object({
 export const getProjectSettingsFn = createServerFn({ method: "GET" })
   .middleware([projectMiddleware])
   .handler(async ({ context }) => {
-    return getProjectSettings(context.project, context.organization.slug)
+    return getProjectSettings(context.project, context.organization)
   })
 
 export const updateProjectNameFn = createServerFn({ method: "POST" })
@@ -36,7 +37,7 @@ export const updateProjectNameFn = createServerFn({ method: "POST" })
       .returning()
 
     if (!updatedProject) throw new Error("Could not update Project.")
-    return getProjectSettings(updatedProject, context.organization.slug)
+    return getProjectSettings(updatedProject, context.organization)
   })
 
 export const updateProjectTranslatorFn = createServerFn({ method: "POST" })
@@ -59,14 +60,14 @@ export const updateProjectTranslatorFn = createServerFn({ method: "POST" })
       .returning()
 
     if (!updatedProject) throw new Error("Could not update Project.")
-    return getProjectSettings(updatedProject, context.organization.slug)
+    return getProjectSettings(updatedProject, context.organization)
   })
 
 export const listGitHubInstallationRepositoriesFn = createServerFn({ method: "GET" })
   .middleware([projectMiddleware])
   .inputValidator(parseZod(githubSetupSchema))
   .handler(async ({ context, data }) => {
-    if (!canUseGitHubInstallation(context.project, context.organization.slug, data)) {
+    if (!(await canUseGitHubInstallation(context.project, context.organization, data))) {
       throw new Error("GitHub setup session expired. Start the connection again.")
     }
 
@@ -86,7 +87,7 @@ export const connectProjectGitHubRepositoryFn = createServerFn({ method: "POST" 
     ),
   )
   .handler(async ({ context, data }) => {
-    if (!canUseGitHubInstallation(context.project, context.organization.slug, data)) {
+    if (!(await canUseGitHubInstallation(context.project, context.organization, data))) {
       throw new Error("GitHub setup session expired. Start the connection again.")
     }
 
@@ -121,8 +122,8 @@ export const connectProjectGitHubRepositoryFn = createServerFn({ method: "POST" 
           githubBranchCleanupEnabled: data.githubBranchCleanupEnabled,
           githubInstallationId: data.installationId,
           githubRepositoryId: repository.id,
-          githubRepositoryName: repository.name.toLowerCase(),
-          githubRepositoryOwner: repository.owner.toLowerCase(),
+          githubRepositoryName: repository.name,
+          githubRepositoryOwner: repository.owner,
           updatedAt: new Date(),
         })
         .where(eq(projectsTable.id, context.project.id))
@@ -132,7 +133,7 @@ export const connectProjectGitHubRepositoryFn = createServerFn({ method: "POST" 
       return project
     })
 
-    return getProjectSettings(updatedProject, context.organization.slug)
+    return getProjectSettings(updatedProject, context.organization)
   })
 
 export const updateProjectGitHubCleanupFn = createServerFn({ method: "POST" })
@@ -150,7 +151,7 @@ export const updateProjectGitHubCleanupFn = createServerFn({ method: "POST" })
       .returning()
 
     if (!updatedProject) throw new Error("Could not update GitHub settings.")
-    return getProjectSettings(updatedProject, context.organization.slug)
+    return getProjectSettings(updatedProject, context.organization)
   })
 
 export const disconnectProjectGitHubFn = createServerFn({ method: "POST" })
@@ -169,7 +170,7 @@ export const disconnectProjectGitHubFn = createServerFn({ method: "POST" })
       .returning()
 
     if (!updatedProject) throw new Error("Could not disconnect GitHub repository.")
-    return getProjectSettings(updatedProject, context.organization.slug)
+    return getProjectSettings(updatedProject, context.organization)
   })
 
 export const projectSettingsQueryOptions = (orgSlug: string, projectSlug: string) =>
@@ -198,17 +199,19 @@ export const githubInstallationRepositoriesQueryOptions = ({
       }),
   })
 
-function canUseGitHubInstallation(
+async function canUseGitHubInstallation(
   project: typeof projectsTable.$inferSelect,
-  orgSlug: string,
+  organization: { id: string; slug: string },
   data: { installationId: string; setupState?: string },
 ) {
   if (data.installationId === project.githubInstallationId) return true
+  if (await organizationCanUseGitHubInstallation({ installationId: data.installationId, organizationId: organization.id }))
+    return true
   if (!data.setupState) return false
-  return verifyGitHubSetupState(data.setupState, { orgSlug, projectSlug: project.slug })
+  return verifyGitHubSetupState(data.setupState, { orgSlug: organization.slug, projectSlug: project.slug })
 }
 
-function getProjectSettings(project: typeof projectsTable.$inferSelect, orgSlug: string) {
+async function getProjectSettings(project: typeof projectsTable.$inferSelect, organization: { id: string; slug: string }) {
   return {
     name: project.name,
     publicId: project.publicId,
@@ -216,10 +219,11 @@ function getProjectSettings(project: typeof projectsTable.$inferSelect, orgSlug:
     githubBranchCleanupEnabled: project.githubBranchCleanupEnabled,
     githubInstallUrl: createGitHubInstallUrl({
       expiresAt: Date.now() + 15 * 60 * 1000,
-      orgSlug,
+      orgSlug: organization.slug,
       projectSlug: project.slug,
     }),
     githubInstallationId: project.githubInstallationId,
+    githubInstallations: await listOrganizationGitHubInstallations(organization.id),
     githubRepositoryId: project.githubRepositoryId,
     githubRepositoryName: project.githubRepositoryName,
     githubRepositoryOwner: project.githubRepositoryOwner,

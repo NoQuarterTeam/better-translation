@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { and, eq } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 
+import { auth } from "@/server/auth"
 import { db } from "@/server/db"
-import { organizationsTable, projectsTable } from "@/server/db/schema"
+import { organizationsTable } from "@/server/db/schema"
 import { readGitHubSetupState } from "@/server/github"
+import { upsertOrganizationGitHubInstallation } from "@/server/github-installations"
 
 export const Route = createFileRoute("/api/github/setup")({
   server: {
@@ -16,15 +18,19 @@ export const Route = createFileRoute("/api/github/setup")({
 
         if (!parsedState) return Response.redirect(new URL("/app", requestUrl), 302)
 
+        const redirectPath = parsedState.projectSlug
+          ? `/app/${parsedState.orgSlug}/projects/${parsedState.projectSlug}/settings`
+          : `/app/${parsedState.orgSlug}/projects/new`
+        const redirectUrl = new URL(redirectPath, requestUrl)
+
         if (installationId) {
+          const session = await auth.api.getSession({ headers: request.headers })
           await storeGitHubInstallation({
+            connectedByUserId: session?.user.id ?? null,
             installationId,
             orgSlug: parsedState.orgSlug,
-            projectSlug: parsedState.projectSlug,
           })
         }
-
-        const redirectUrl = new URL(`/app/${parsedState.orgSlug}/projects/${parsedState.projectSlug}/settings`, requestUrl)
 
         if (setupState) {
           redirectUrl.searchParams.set("githubSetupState", setupState)
@@ -43,13 +49,13 @@ export const Route = createFileRoute("/api/github/setup")({
 })
 
 async function storeGitHubInstallation({
+  connectedByUserId,
   installationId,
   orgSlug,
-  projectSlug,
 }: {
+  connectedByUserId: string | null
   installationId: string
   orgSlug: string
-  projectSlug: string
 }) {
   const [organization] = await db
     .select({ id: organizationsTable.id })
@@ -59,8 +65,9 @@ async function storeGitHubInstallation({
 
   if (!organization) return
 
-  await db
-    .update(projectsTable)
-    .set({ githubInstallationId: installationId, updatedAt: new Date() })
-    .where(and(eq(projectsTable.organizationId, organization.id), eq(projectsTable.slug, projectSlug)))
+  await upsertOrganizationGitHubInstallation({
+    connectedByUserId,
+    installationId,
+    organizationId: organization.id,
+  })
 }

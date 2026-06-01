@@ -52,7 +52,8 @@ Read `CONTEXT.md` for product terminology and `docs/platform.md` for product dir
 
 - Make sure to install packages with Bun, especially if making changes to the workspace packages
 - We use vite-plus as the workspace tooling
-- Always run the format and lint scripts in the root package.json to verify the changes made are correct
+- Always run the format, lint, and check scripts in the root package.json to verify routine changes
+- Only run `bun --cwd apps/web build` when the change is deploy-sensitive, SSR/runtime-sensitive, touches route generation or build output, or when diagnosing a specific deployment/build issue
 
 ## Code Style
 

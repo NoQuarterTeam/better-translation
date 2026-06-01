@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { CopyIcon, ExternalLinkIcon, GitBranchIcon, UnplugIcon } from "lucide-react"
-import { useState } from "react"
+import { CopyIcon, ExternalLinkIcon, GitBranchIcon, PlusIcon, UnplugIcon } from "lucide-react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
@@ -121,7 +121,7 @@ function ProjectSettingsPage() {
   })
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6">
+    <div className="flex max-w-3xl flex-col gap-6 p-4 md:p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
           <T>Project settings</T>
@@ -252,11 +252,12 @@ function GitHubSettingsCard({
   updateProjectSettings: (project: ProjectSettings) => void
 }) {
   const { orgSlug, projectSlug } = Route.useParams()
+  const { queryClient } = Route.useRouteContext()
   const navigate = useNavigate()
   const t = useT()
   const [selectedRepositoryId, setSelectedRepositoryId] = useState("")
-  const [cleanupEnabled, setCleanupEnabled] = useState(true)
-  const activeGitHubInstallationId = githubInstallationId ?? project.githubInstallationId ?? ""
+  const [selectedInstallationId, setSelectedInstallationId] = useState(githubInstallationId ?? project.githubInstallationId ?? "")
+  const activeGitHubInstallationId = project.githubInstallationId ?? selectedInstallationId
   const hasGitHubInstallation = Boolean(activeGitHubInstallationId)
   const repositoryQuery = useQuery(
     githubInstallationRepositoriesQueryOptions({
@@ -267,7 +268,12 @@ function GitHubSettingsCard({
     }),
   )
   const repositories = repositoryQuery.data ?? []
-  const selectedRepository = repositories.find((repository) => repository.id === selectedRepositoryId) ?? repositories[0]
+  const selectedRepository = repositories.find((repository) => repository.id === selectedRepositoryId)
+
+  useEffect(() => {
+    if (project.githubRepositoryId || selectedInstallationId || project.githubInstallations.length === 0) return
+    setSelectedInstallationId(project.githubInstallations[0]?.installationId ?? "")
+  }, [project.githubInstallations, project.githubRepositoryId, selectedInstallationId])
 
   const connectRepository = useMutation({
     mutationFn: connectProjectGitHubRepositoryFn,
@@ -333,7 +339,7 @@ function GitHubSettingsCard({
                 onClick={() => disconnectRepository.mutate({ data: { orgSlug, projectSlug } })}
               >
                 <UnplugIcon />
-                <T>Disconnect repository</T>
+                <T>Disconnect</T>
               </Button>
             </div>
             <Field orientation="horizontal">
@@ -362,31 +368,32 @@ function GitHubSettingsCard({
           </>
         ) : (
           <>
-            <div className="flex flex-col gap-3 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="font-medium">
-                  {hasGitHubInstallation ? <T>GitHub App installed</T> : <T>No repository connected</T>}
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {hasGitHubInstallation ? (
-                    <T>Choose the repository this Project should use for Branch cleanup.</T>
-                  ) : (
+            {!hasGitHubInstallation && (
+              <div className="flex flex-col gap-3 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="font-medium">
+                    <T>No repository connected</T>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     <T>Install the GitHub App, then choose the repository for this Project.</T>
-                  )}
-                </p>
-              </div>
-              {!hasGitHubInstallation && (
+                  </p>
+                </div>
                 <Button
                   type="button"
                   disabled={!project.githubInstallUrl}
-                  render={project.githubInstallUrl ? <a href={project.githubInstallUrl} /> : undefined}
+                  onClick={() =>
+                    openGitHubSetup(
+                      project.githubInstallUrl,
+                      () => void queryClient.invalidateQueries(projectSettingsQueryOptions(orgSlug, projectSlug)),
+                    )
+                  }
                 >
                   <GitBranchIcon />
                   <T>Connect GitHub repository</T>
                   <ExternalLinkIcon />
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
             {!hasGitHubInstallation && !project.githubInstallUrl && (
               <p className="text-sm text-muted-foreground">
                 <T>Set GITHUB_APP_SLUG before connecting GitHub repositories.</T>
@@ -402,13 +409,13 @@ function GitHubSettingsCard({
             )}
             {activeGitHubInstallationId && (
               <form
-                className="flex flex-col gap-4 rounded-md border p-4"
+                className="flex flex-col gap-4"
                 onSubmit={(event) => {
                   event.preventDefault()
                   if (!selectedRepository) return
                   connectRepository.mutate({
                     data: {
-                      githubBranchCleanupEnabled: cleanupEnabled,
+                      githubBranchCleanupEnabled: false,
                       installationId: activeGitHubInstallationId,
                       orgSlug,
                       projectSlug,
@@ -421,64 +428,94 @@ function GitHubSettingsCard({
                 }}
               >
                 <Field>
-                  <FieldContent className="gap-0">
-                    <FieldLabel htmlFor="githubRepository">
-                      <T>Repository</T>
-                    </FieldLabel>
-                    <FieldDescription>
-                      <T>Choose the repository this Project should be connected to.</T>
-                    </FieldDescription>
-                  </FieldContent>
-                  <NativeSelect
-                    id="githubRepository"
-                    value={selectedRepository?.id ?? ""}
-                    disabled={repositoryQuery.isLoading || repositories.length === 0}
-                    onChange={(event) => setSelectedRepositoryId(event.target.value)}
-                  >
-                    {repositoryQuery.isLoading && (
-                      <NativeSelectOption value="">{t("Loading repositories...")}</NativeSelectOption>
-                    )}
-                    {!repositoryQuery.isLoading && repositories.length === 0 && (
-                      <NativeSelectOption value="">{t("No repositories available")}</NativeSelectOption>
-                    )}
-                    {repositories.map((repository) => (
-                      <NativeSelectOption key={repository.id} value={repository.id}>
-                        {repository.fullName}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto]">
+                    <NativeSelect
+                      id="githubInstallation"
+                      value={selectedInstallationId}
+                      disabled={project.githubInstallations.length === 0}
+                      onChange={(event) => {
+                        setSelectedInstallationId(event.target.value)
+                        setSelectedRepositoryId("")
+                      }}
+                    >
+                      {project.githubInstallations.map((installation) => (
+                        <NativeSelectOption key={installation.id} value={installation.installationId}>
+                          {installation.accountLogin}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                    <NativeSelect
+                      id="githubRepository"
+                      value={selectedRepositoryId}
+                      disabled={repositoryQuery.isLoading || repositories.length === 0}
+                      onChange={(event) => setSelectedRepositoryId(event.target.value)}
+                    >
+                      {repositoryQuery.isLoading && (
+                        <NativeSelectOption value="">{t("Loading repositories...")}</NativeSelectOption>
+                      )}
+                      {!repositoryQuery.isLoading && repositories.length === 0 && (
+                        <NativeSelectOption value="">{t("No repositories available")}</NativeSelectOption>
+                      )}
+                      {!repositoryQuery.isLoading && repositories.length > 0 && (
+                        <NativeSelectOption value="" disabled>
+                          {t("Select repository...")}
+                        </NativeSelectOption>
+                      )}
+                      {repositories.map((repository) => (
+                        <NativeSelectOption key={repository.id} value={repository.id}>
+                          {repository.fullName}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                    <Button
+                      type="submit"
+                      className="shrink-0"
+                      disabled={!selectedRepository || connectRepository.isPending || repositoryQuery.isLoading}
+                    >
+                      <GitBranchIcon />
+                      {connectRepository.isPending ? <T>Connecting...</T> : <T>Connect</T>}
+                    </Button>
+                  </div>
                   {repositoryQuery.error && <FieldError>{repositoryQuery.error.message}</FieldError>}
                 </Field>
-                <Field orientation="horizontal">
-                  <Checkbox
-                    id="newGitHubBranchCleanupEnabled"
-                    checked={cleanupEnabled}
-                    onCheckedChange={(checked) => setCleanupEnabled(checked === true)}
-                  />
-                  <FieldContent>
-                    <FieldLabel htmlFor="newGitHubBranchCleanupEnabled" className="cursor-pointer">
-                      <T>Enable Branch cleanup</T>
-                    </FieldLabel>
-                    <FieldDescription>
-                      <T>When GitHub deletes a branch, matching non-production Branches are archived automatically.</T>
-                    </FieldDescription>
-                  </FieldContent>
-                </Field>
-                <div>
-                  <Button
-                    type="submit"
-                    disabled={!selectedRepository || connectRepository.isPending || repositoryQuery.isLoading}
-                  >
-                    <GitBranchIcon />
-                    {connectRepository.isPending ? <T>Connecting...</T> : <T>Connect selected repository</T>}
-                  </Button>
-                </div>
                 <FieldError>{repositoryQuery.error?.message ?? connectRepository.error?.message}</FieldError>
               </form>
+            )}
+            {project.githubInstallations.length > 0 && project.githubInstallUrl && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-fit"
+                onClick={() =>
+                  openGitHubSetup(
+                    project.githubInstallUrl,
+                    () => void queryClient.invalidateQueries(projectSettingsQueryOptions(orgSlug, projectSlug)),
+                  )
+                }
+              >
+                <PlusIcon />
+                <T>Add GitHub Account</T>
+                <ExternalLinkIcon />
+              </Button>
             )}
           </>
         )}
       </CardContent>
     </Card>
   )
+}
+
+function openGitHubSetup(url: string | null, onClose?: () => void) {
+  if (!url) return
+  const popup = window.open(url, "better-translation-github", "width=1040,height=760,noopener,noreferrer")
+  if (!popup) {
+    window.location.href = url
+    return
+  }
+
+  const interval = window.setInterval(() => {
+    if (!popup.closed) return
+    window.clearInterval(interval)
+    onClose?.()
+  }, 500)
 }
