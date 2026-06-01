@@ -40,7 +40,7 @@ function ProjectSettingsPage() {
   }
 
   const updateNameMutation = useMutation({
-    mutationFn: (data: { name: string; orgSlug: string; projectSlug: string }) => updateProjectNameFn({ data }),
+    mutationFn: updateProjectNameFn,
     onSuccess: (updatedProject) => {
       toast.success(t("Project updated"))
       updateProjectSettings(updatedProject)
@@ -48,8 +48,7 @@ function ProjectSettingsPage() {
   })
 
   const updateTranslatorMutation = useMutation({
-    mutationFn: (data: { orgSlug: string; projectSlug: string; translationModel: string; translationPrompt: string }) =>
-      updateProjectTranslatorFn({ data }),
+    mutationFn: updateProjectTranslatorFn,
     onSuccess: (updatedProject) => {
       toast.success(t("Project translator updated"))
       updateProjectSettings(updatedProject)
@@ -68,7 +67,7 @@ function ProjectSettingsPage() {
       }),
     },
     onSubmit: ({ value }) => {
-      updateNameMutation.mutate({ orgSlug, projectSlug, name: value.name.trim() })
+      updateNameMutation.mutate({ data: { orgSlug, projectSlug, name: value.name.trim() } })
     },
   })
 
@@ -85,11 +84,13 @@ function ProjectSettingsPage() {
     },
     onSubmit: ({ value }) => {
       updateTranslatorMutation.mutate({
-        ...value,
-        orgSlug,
-        projectSlug,
-        translationModel: value.translationModel.trim(),
-        translationPrompt: value.translationPrompt.trim(),
+        data: {
+          ...value,
+          orgSlug,
+          projectSlug,
+          translationModel: value.translationModel.trim(),
+          translationPrompt: value.translationPrompt.trim(),
+        },
       })
     },
   })

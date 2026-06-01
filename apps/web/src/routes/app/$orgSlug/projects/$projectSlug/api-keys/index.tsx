@@ -46,22 +46,8 @@ function formatDate(date: Date | string) {
 
 function ProjectApiKeysPage() {
   const { orgSlug, projectSlug } = Route.useParams()
-  const { queryClient } = Route.useRouteContext()
   const t = useT()
   const apiKeysQuery = useSuspenseQuery(projectApiKeysQueryOptions(orgSlug, projectSlug))
-  const apiKeysQueryKey = projectApiKeysQueryOptions(orgSlug, projectSlug).queryKey
-
-  const revokeApiKeyMutation = useMutation({
-    mutationFn: (apiKeyId: string) => revokeProjectApiKeyFn({ data: { orgSlug, projectSlug, apiKeyId } }),
-    onSuccess: (apiKey) => {
-      toast.success(t("API key revoked"))
-      queryClient.setQueryData<ApiKeyRow[]>(apiKeysQueryKey, (apiKeys) => {
-        if (!apiKeys) return apiKeys
-        return apiKeys.map((row) => (row.id === apiKey.id ? { ...row, revokedAt: apiKey.revokedAt } : row))
-      })
-    },
-    onError: (error: Error) => toast.error(t("Could not revoke API key"), { description: error.message }),
-  })
 
   const apiKeyColumns = useMemo<ColumnDef<ApiKeyRow>[]>(
     () => [
@@ -91,20 +77,10 @@ function ProjectApiKeysPage() {
       {
         id: "actions",
         header: "",
-        cell: ({ row }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={Boolean(row.original.revokedAt) || revokeApiKeyMutation.isPending}
-            onClick={() => revokeApiKeyMutation.mutate(row.original.id)}
-          >
-            <ShieldOffIcon />
-            <T>Revoke</T>
-          </Button>
-        ),
+        cell: ({ row }) => <ApiKeyActions apiKey={row.original} />,
       },
     ],
-    [revokeApiKeyMutation, t],
+    [t],
   )
 
   return (
@@ -124,7 +100,7 @@ function ProjectApiKeysPage() {
             <T>Create API key</T>
           </DialogTrigger>
           <DialogContent>
-            <CreateApiKeyDialogContent orgSlug={orgSlug} projectSlug={projectSlug} />
+            <CreateApiKeyDialogContent />
           </DialogContent>
         </Dialog>
       </div>
@@ -138,13 +114,44 @@ function ProjectApiKeysPage() {
   )
 }
 
-function CreateApiKeyDialogContent({ orgSlug, projectSlug }: { orgSlug: string; projectSlug: string }) {
+function ApiKeyActions({ apiKey }: { apiKey: ApiKeyRow }) {
+  const { orgSlug, projectSlug } = Route.useParams()
+  const t = useT()
+  const { queryClient } = Route.useRouteContext()
+  const apiKeysQueryKey = projectApiKeysQueryOptions(orgSlug, projectSlug).queryKey
+  const revokeApiKeyMutation = useMutation({
+    mutationFn: revokeProjectApiKeyFn,
+    onSuccess: (revokedApiKey) => {
+      toast.success(t("API key revoked"))
+      queryClient.setQueryData<ApiKeyRow[]>(apiKeysQueryKey, (apiKeys) => {
+        if (!apiKeys) return apiKeys
+        return apiKeys.map((row) => (row.id === revokedApiKey.id ? { ...row, revokedAt: revokedApiKey.revokedAt } : row))
+      })
+    },
+    onError: (error: Error) => toast.error(t("Could not revoke API key"), { description: error.message }),
+  })
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      disabled={Boolean(apiKey.revokedAt) || revokeApiKeyMutation.isPending}
+      onClick={() => revokeApiKeyMutation.mutate({ data: { orgSlug, projectSlug, apiKeyId: apiKey.id } })}
+    >
+      <ShieldOffIcon />
+      <T>Revoke</T>
+    </Button>
+  )
+}
+
+function CreateApiKeyDialogContent() {
+  const { orgSlug, projectSlug } = Route.useParams()
   const t = useT()
   const { queryClient } = Route.useRouteContext()
   const apiKeysQueryKey = projectApiKeysQueryOptions(orgSlug, projectSlug).queryKey
 
   const createApiKeyMutation = useMutation({
-    mutationFn: (data: { name: string; orgSlug: string; projectSlug: string }) => createProjectApiKeyFn({ data }),
+    mutationFn: createProjectApiKeyFn,
     onSuccess: ({ apiKey }) => {
       toast.success(t("API key created"))
       queryClient.setQueryData<ApiKeyRow[]>(apiKeysQueryKey, (apiKeys) => (apiKeys ? [apiKey, ...apiKeys] : [apiKey]))
@@ -163,7 +170,7 @@ function CreateApiKeyDialogContent({ orgSlug, projectSlug }: { orgSlug: string; 
       }),
     },
     onSubmit: ({ value }) => {
-      createApiKeyMutation.mutate({ orgSlug, projectSlug, name: value.name.trim() })
+      createApiKeyMutation.mutate({ data: { orgSlug, projectSlug, name: value.name.trim() } })
     },
   })
 

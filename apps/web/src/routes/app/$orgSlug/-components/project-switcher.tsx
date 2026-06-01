@@ -16,14 +16,19 @@ import {
 import { organizationProjectsQueryOptions, setSelectedProjectFn } from "../-data"
 import { ResourceMark } from "./resource-mark"
 
-export function ProjectSwitcher({ projectSlug }: { projectSlug: string }) {
+export function ProjectSwitcher() {
   const { orgSlug } = useParams({ from: "/app/$orgSlug" })
+  const params = useParams({ strict: false })
+  const projectSlug = typeof params.projectSlug === "string" ? params.projectSlug : null
   const navigate = useNavigate()
   const router = useRouter()
   const projects = useSuspenseQuery(organizationProjectsQueryOptions(orgSlug)).data
+
+  const setSelectedProject = useMutation({ mutationFn: setSelectedProjectFn })
+  if (!projectSlug) return null
+
   const project = projects.find((item) => item.slug === projectSlug)
   const branchName = project ? getProjectBranchName(project) : null
-  const setSelectedProject = useMutation({ mutationFn: setSelectedProjectFn })
 
   return (
     <DropdownMenu>

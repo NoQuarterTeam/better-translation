@@ -131,7 +131,7 @@ function EditableLocaleValueCell({ locale, message }: { locale: string; message:
   const currentValue = localeValue?.value ?? message.defaultMessage
 
   const translateMutation = useMutation({
-    mutationFn: () => translateLocaleValueFn({ data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectSlug } }),
+    mutationFn: translateLocaleValueFn,
     onSuccess: () => {
       toast.success(t("Platform translator saved a Locale value"))
       void queryClient.invalidateQueries(branchWorkspaceQueryOptions(orgSlug, projectSlug, branchName))
@@ -152,7 +152,9 @@ function EditableLocaleValueCell({ locale, message }: { locale: string; message:
           size="icon-sm"
           aria-label={t("Use AI translation")}
           disabled={translateMutation.isPending}
-          onClick={() => translateMutation.mutate()}
+          onClick={() =>
+            translateMutation.mutate({ data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectSlug } })
+          }
         >
           <BotIcon />
         </Button>
@@ -186,10 +188,7 @@ function TranslationValueEditor({ locale, message, onSaved }: { locale: string; 
   const localeValue = getLocaleValue(message, locale)
 
   const saveMutation = useMutation({
-    mutationFn: (data: { value: string }) =>
-      saveLocaleValueFn({
-        data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectSlug, value: data.value },
-      }),
+    mutationFn: saveLocaleValueFn,
     onSuccess: () => {
       toast.success(t("Locale value saved"))
       void queryClient.invalidateQueries(branchWorkspaceQueryOptions(orgSlug, projectSlug, branchName))
@@ -208,7 +207,10 @@ function TranslationValueEditor({ locale, message, onSaved }: { locale: string; 
           .min(1, { error: t("Locale value is required") }),
       }),
     },
-    onSubmit: ({ value }) => saveMutation.mutate({ value: value.value }),
+    onSubmit: ({ value }) =>
+      saveMutation.mutate({
+        data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectSlug, value: value.value },
+      }),
   })
 
   return (

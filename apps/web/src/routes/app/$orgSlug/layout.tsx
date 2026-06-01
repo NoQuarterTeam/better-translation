@@ -41,11 +41,11 @@ function OrganizationLayout() {
             {projectSlug && (
               <>
                 <SwitcherSeparator />
-                <ProjectSwitcher projectSlug={projectSlug} />
+                <ProjectSwitcher />
                 {branchName && (
                   <>
                     <SwitcherSeparator />
-                    <BranchSwitcher branchName={branchName} projectSlug={projectSlug} />
+                    <BranchSwitcher />
                   </>
                 )}
               </>

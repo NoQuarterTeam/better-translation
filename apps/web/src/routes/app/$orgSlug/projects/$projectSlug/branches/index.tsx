@@ -2,7 +2,7 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import type { ColumnDef } from "@tanstack/react-table"
 import { CheckIcon, GitBranchIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, StarIcon } from "lucide-react"
-import { useCallback, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
@@ -61,23 +61,8 @@ function formatDate(date: Date | string | null) {
 
 function ProjectBranchesPage() {
   const { orgSlug, projectSlug } = Route.useParams()
-  const { queryClient } = Route.useRouteContext()
   const t = useT()
   const branchesQuery = useSuspenseQuery(projectBranchesQueryOptions(orgSlug, projectSlug))
-
-  const refreshBranchData = useCallback(() => {
-    void queryClient.invalidateQueries(projectBranchesQueryOptions(orgSlug, projectSlug))
-    void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
-  }, [orgSlug, projectSlug, queryClient])
-
-  const setDefaultBranch = useMutation({
-    mutationFn: (branchId: string) => setDefaultProjectBranchFn({ data: { orgSlug, projectSlug, branchId } }),
-    onSuccess: () => {
-      toast.success(t("Default Branch updated"))
-      refreshBranchData()
-    },
-    onError: (error: Error) => toast.error(t("Could not update default Branch"), { description: error.message }),
-  })
 
   const branchColumns = useMemo<ColumnDef<BranchRow>[]>(
     () => [
@@ -125,17 +110,10 @@ function ProjectBranchesPage() {
       {
         id: "actions",
         header: "",
-        cell: ({ row }) => (
-          <BranchActions
-            branch={row.original}
-            isSettingDefault={setDefaultBranch.isPending}
-            onSetDefault={() => setDefaultBranch.mutate(row.original.id)}
-            onUpdated={refreshBranchData}
-          />
-        ),
+        cell: ({ row }) => <BranchActions branch={row.original} />,
       },
     ],
-    [refreshBranchData, setDefaultBranch, t],
+    [t],
   )
 
   return (
@@ -164,7 +142,7 @@ function ProjectBranchesPage() {
                   <T>Create a production Branch only if plugin sync has not created one yet.</T>
                 </p>
               </div>
-              <CreateProductionBranchDialog orgSlug={orgSlug} projectSlug={projectSlug} onCreated={refreshBranchData} />
+              <CreateProductionBranchDialog />
             </div>
           ) : (
             <DataTable columns={branchColumns} data={branchesQuery.data.branches} />
@@ -175,22 +153,17 @@ function ProjectBranchesPage() {
   )
 }
 
-function CreateProductionBranchDialog({
-  onCreated,
-  orgSlug,
-  projectSlug,
-}: {
-  onCreated: () => void
-  orgSlug: string
-  projectSlug: string
-}) {
+function CreateProductionBranchDialog() {
+  const { orgSlug, projectSlug } = Route.useParams()
+  const { queryClient } = Route.useRouteContext()
   const [open, setOpen] = useState(false)
   const t = useT()
   const createBranch = useMutation({
-    mutationFn: (data: { name: string; orgSlug: string; projectSlug: string }) => createProjectBranchFn({ data }),
+    mutationFn: createProjectBranchFn,
     onSuccess: () => {
       toast.success(t("Branch created"))
-      onCreated()
+      void queryClient.invalidateQueries(projectBranchesQueryOptions(orgSlug, projectSlug))
+      void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
       setOpen(false)
     },
   })
@@ -209,9 +182,11 @@ function CreateProductionBranchDialog({
     },
     onSubmit: ({ value }) => {
       createBranch.mutate({
-        orgSlug,
-        projectSlug,
-        name: value.name.trim(),
+        data: {
+          orgSlug,
+          projectSlug,
+          name: value.name.trim(),
+        },
       })
     },
   })
@@ -257,18 +232,20 @@ function CreateProductionBranchDialog({
   )
 }
 
-function BranchActions({
-  branch,
-  isSettingDefault,
-  onSetDefault,
-  onUpdated,
-}: {
-  branch: BranchRow
-  isSettingDefault: boolean
-  onSetDefault: () => void
-  onUpdated: () => void
-}) {
+function BranchActions({ branch }: { branch: BranchRow }) {
+  const { orgSlug, projectSlug } = Route.useParams()
+  const { queryClient } = Route.useRouteContext()
+  const t = useT()
   const [editOpen, setEditOpen] = useState(false)
+  const setDefaultBranch = useMutation({
+    mutationFn: setDefaultProjectBranchFn,
+    onSuccess: () => {
+      toast.success(t("Default Branch updated"))
+      void queryClient.invalidateQueries(projectBranchesQueryOptions(orgSlug, projectSlug))
+      void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
+    },
+    onError: (error: Error) => toast.error(t("Could not update default Branch"), { description: error.message }),
+  })
 
   return (
     <>
@@ -283,14 +260,17 @@ function BranchActions({
               <PencilIcon />
               <T>Edit</T>
             </DropdownMenuItem>
-            <DropdownMenuItem disabled={branch.isDefault || isSettingDefault} onClick={onSetDefault}>
+            <DropdownMenuItem
+              disabled={branch.isDefault || setDefaultBranch.isPending}
+              onClick={() => setDefaultBranch.mutate({ data: { orgSlug, projectSlug, branchId: branch.id } })}
+            >
               {branch.isDefault ? <CheckIcon /> : <StarIcon />}
               <T>Make default</T>
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-      <EditBranchDialog branch={branch} open={editOpen} onOpenChange={setEditOpen} onUpdated={onUpdated} />
+      <EditBranchDialog branch={branch} open={editOpen} onOpenChange={setEditOpen} />
     </>
   )
 }
@@ -298,22 +278,21 @@ function BranchActions({
 function EditBranchDialog({
   branch,
   onOpenChange,
-  onUpdated,
   open,
 }: {
   branch: BranchRow
   onOpenChange: (open: boolean) => void
-  onUpdated: () => void
   open: boolean
 }) {
   const { orgSlug, projectSlug } = Route.useParams()
+  const { queryClient } = Route.useRouteContext()
   const t = useT()
   const updateBranch = useMutation({
-    mutationFn: (data: { branchId: string; name: string; orgSlug: string; projectSlug: string }) =>
-      updateProjectBranchFn({ data }),
+    mutationFn: updateProjectBranchFn,
     onSuccess: () => {
       toast.success(t("Branch updated"))
-      onUpdated()
+      void queryClient.invalidateQueries(projectBranchesQueryOptions(orgSlug, projectSlug))
+      void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
       onOpenChange(false)
     },
   })
@@ -331,7 +310,7 @@ function EditBranchDialog({
       }),
     },
     onSubmit: ({ value }) => {
-      updateBranch.mutate({ orgSlug, projectSlug, branchId: branch.id, name: value.name.trim() })
+      updateBranch.mutate({ data: { orgSlug, projectSlug, branchId: branch.id, name: value.name.trim() } })
     },
   })
 

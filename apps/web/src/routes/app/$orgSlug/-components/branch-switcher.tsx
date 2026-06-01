@@ -16,20 +16,26 @@ import {
 
 import { organizationProjectsQueryOptions, setSelectedBranchFn } from "../-data"
 
-export function BranchSwitcher({ branchName, projectSlug }: { branchName: string; projectSlug: string }) {
+export function BranchSwitcher() {
   const { orgSlug } = useParams({ from: "/app/$orgSlug" })
+  const params = useParams({ strict: false })
+  const projectSlug = typeof params.projectSlug === "string" ? params.projectSlug : null
+  const branchName = typeof params.branchName === "string" ? params.branchName : null
   const projects = useSuspenseQuery(organizationProjectsQueryOptions(orgSlug)).data
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const router = useRouter()
-  const branches = projects.find((project) => project.slug === projectSlug)?.branches ?? []
-  const activeBranch = branches.find((branch) => branch.name === branchName)
   const setSelectedBranch = useMutation({
     mutationFn: setSelectedBranchFn,
     onSuccess: () => {
       void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
     },
   })
+
+  if (!projectSlug || !branchName) return null
+
+  const branches = projects.find((project) => project.slug === projectSlug)?.branches ?? []
+  const activeBranch = branches.find((branch) => branch.name === branchName)
 
   return (
     <DropdownMenu>

@@ -39,16 +39,7 @@ function NewProjectPage() {
   const [hasEditedSlug, setHasEditedSlug] = useState(false)
 
   const createMutation = useMutation({
-    mutationFn: (data: {
-      defaultBranchName: string
-      defaultLocale: string
-      locales: string[]
-      name: string
-      orgSlug: string
-      slug: string
-      translationModel: string
-      translationPrompt: string
-    }) => createProjectFn({ data }),
+    mutationFn: createProjectFn,
     onSuccess: (project) => {
       toast.success(t("Project created"))
       void queryClient.invalidateQueries(organizationProjectsQueryOptions(orgSlug))
@@ -88,15 +79,17 @@ function NewProjectPage() {
     },
     onSubmit: ({ value }) => {
       createMutation.mutate({
-        ...value,
-        orgSlug,
-        slug: value.slug.trim() || slugify(value.name),
-        defaultBranchName: value.defaultBranchName.trim(),
-        defaultLocale: value.defaultLocale.trim().toLowerCase(),
-        locales: value.locales
-          .split(",")
-          .map((locale) => locale.trim().toLowerCase())
-          .filter(Boolean),
+        data: {
+          ...value,
+          orgSlug,
+          slug: value.slug.trim() || slugify(value.name),
+          defaultBranchName: value.defaultBranchName.trim(),
+          defaultLocale: value.defaultLocale.trim().toLowerCase(),
+          locales: value.locales
+            .split(",")
+            .map((locale) => locale.trim().toLowerCase())
+            .filter(Boolean),
+        },
       })
     },
   })

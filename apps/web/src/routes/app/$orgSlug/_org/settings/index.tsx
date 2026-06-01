@@ -30,7 +30,7 @@ function OrganizationSettingsPage() {
   const t = useT()
 
   const updateMutation = useMutation({
-    mutationFn: (data: { name: string; orgSlug: string }) => updateOrganizationNameFn({ data }),
+    mutationFn: updateOrganizationNameFn,
     onSuccess: () => {
       toast.success(t("Organization updated"))
       void queryClient.invalidateQueries(organizationSettingsQueryOptions(orgSlug))
@@ -50,7 +50,7 @@ function OrganizationSettingsPage() {
       }),
     },
     onSubmit: ({ value }) => {
-      updateMutation.mutate({ orgSlug, name: value.name.trim() })
+      updateMutation.mutate({ data: { orgSlug, name: value.name.trim() } })
     },
   })
 
