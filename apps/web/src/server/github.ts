@@ -32,7 +32,7 @@ export function createGitHubInstallUrl(state: GitHubSetupState) {
   if (!env.GITHUB_APP_SLUG) return null
 
   const signedState = signGitHubSetupState(state)
-  const url = new URL(`https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`)
+  const url = new URL(`https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/select_target`)
   url.searchParams.set("state", signedState)
   return url.toString()
 }

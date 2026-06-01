@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { GitBranchIcon, PlusIcon, SearchIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
@@ -104,22 +104,21 @@ function GitHubImportCard() {
   const setup = setupQuery.data
   const isLoadingGitHubAccounts = setupQuery.isFetching && setup.githubInstallations.length === 0
   const [selectedInstallationId, setSelectedInstallationId] = useState(search.githubInstallationId ?? "")
+  const activeInstallationId = selectedInstallationId || setup.githubInstallations[0]?.installationId || ""
   const [repositoryPage, setRepositoryPage] = useState(1)
   const [repositorySearch, setRepositorySearch] = useState("")
   const repositoriesQuery = useQuery(
     newProjectGitHubRepositoriesQueryOptions({
-      installationId: selectedInstallationId,
+      installationId: activeInstallationId,
       orgSlug,
       page: repositoryPage,
       search: repositorySearch,
     }),
   )
   const repositories = repositoriesQuery.data?.repositories ?? []
-
-  useEffect(() => {
-    if (selectedInstallationId || setup.githubInstallations.length === 0) return
-    setSelectedInstallationId(setup.githubInstallations[0]?.installationId ?? "")
-  }, [selectedInstallationId, setup.githubInstallations])
+  const showPaginationSkeleton = isLoadingGitHubAccounts || (Boolean(activeInstallationId) && repositoriesQuery.isLoading)
+  const showPagination =
+    repositoriesQuery.data && (repositoriesQuery.data.page > 1 || repositoriesQuery.data.hasMore) && !showPaginationSkeleton
 
   const createFromRepository = useMutation({
     mutationFn: createProjectFromGitHubRepositoryFn,
@@ -142,34 +141,38 @@ function GitHubImportCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <GitHubAccountSelect
-            className="flex gap-2"
-            githubInstallUrl={setup.githubInstallUrl}
-            installations={setup.githubInstallations}
-            onAddAccountComplete={() => void setupQuery.refetch()}
-            onSelectInstallation={(installationId) => {
-              setSelectedInstallationId(installationId)
-              setRepositoryPage(1)
-            }}
-            selectedInstallationId={selectedInstallationId}
-          />
-          <div>
-            <InputGroup>
-              <InputGroupAddon>
-                <SearchIcon />
-              </InputGroupAddon>
-              <InputGroupInput
-                placeholder={t("Search repositories...")}
-                value={repositorySearch}
-                onChange={(event) => {
-                  setRepositorySearch(event.target.value)
-                  setRepositoryPage(1)
-                }}
-              />
-            </InputGroup>
+        {isLoadingGitHubAccounts ? (
+          <GitHubImportToolbarSkeleton />
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <GitHubAccountSelect
+              className="flex gap-2"
+              githubInstallUrl={setup.githubInstallUrl}
+              installations={setup.githubInstallations}
+              onAddAccountComplete={() => void setupQuery.refetch()}
+              onSelectInstallation={(installationId) => {
+                setSelectedInstallationId(installationId)
+                setRepositoryPage(1)
+              }}
+              selectedInstallationId={activeInstallationId}
+            />
+            <div>
+              <InputGroup>
+                <InputGroupAddon>
+                  <SearchIcon />
+                </InputGroupAddon>
+                <InputGroupInput
+                  placeholder={t("Search repositories...")}
+                  value={repositorySearch}
+                  onChange={(event) => {
+                    setRepositorySearch(event.target.value)
+                    setRepositoryPage(1)
+                  }}
+                />
+              </InputGroup>
+            </div>
           </div>
-        </div>
+        )}
 
         {githubSetupErrorMessage(search.githubSetupError)}
 
@@ -213,7 +216,7 @@ function GitHubImportCard() {
                     onClick={() =>
                       createFromRepository.mutate({
                         data: {
-                          installationId: selectedInstallationId,
+                          installationId: activeInstallationId,
                           name: repository.name,
                           orgSlug,
                           repositoryId: repository.id,
@@ -231,7 +234,9 @@ function GitHubImportCard() {
             )}
           </div>
         )}
-        {repositoriesQuery.data && (repositoriesQuery.data.page > 1 || repositoriesQuery.data.hasMore) && (
+        {showPaginationSkeleton ? (
+          <GitHubRepositoryPaginationSkeleton />
+        ) : showPagination ? (
           <div className="flex items-center justify-end gap-2">
             <Button
               type="button"
@@ -250,10 +255,19 @@ function GitHubImportCard() {
               <T>Next</T>
             </Button>
           </div>
-        )}
+        ) : null}
         <FieldError>{repositoriesQuery.error?.message ?? createFromRepository.error?.message}</FieldError>
       </CardContent>
     </Card>
+  )
+}
+
+function GitHubImportToolbarSkeleton() {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <Skeleton className="h-9 w-56" />
+      <Skeleton className="h-9 w-64 max-w-full" />
+    </div>
   )
 }
 
@@ -278,6 +292,15 @@ function GitHubRepositoryRowsSkeleton() {
         </div>
       ))}
     </>
+  )
+}
+
+function GitHubRepositoryPaginationSkeleton() {
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <Skeleton className="h-9 w-24" />
+      <Skeleton className="h-9 w-16" />
+    </div>
   )
 }
 
