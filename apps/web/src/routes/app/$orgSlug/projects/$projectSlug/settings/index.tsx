@@ -27,21 +27,21 @@ import {
   type getProjectSettingsFn,
 } from "./-data"
 
+const githubInstallationIdSearchSchema = z.union([z.string(), z.number()]).transform(String).optional().catch(undefined)
+
 export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/settings/")({
   component: ProjectSettingsPage,
   validateSearch: z
     .object({
-      githubInstallationId: z.string().optional().catch(undefined),
+      githubInstallationId: githubInstallationIdSearchSchema,
       githubSetupError: z.enum(["missing_installation_id"]).optional().catch(undefined),
-      githubSetupSource: z.literal("api").optional().catch(undefined),
       githubSetupState: z.string().optional().catch(undefined),
-      installation_id: z.string().optional().catch(undefined),
+      installation_id: githubInstallationIdSearchSchema,
       state: z.string().optional().catch(undefined),
     })
     .transform((search) => ({
       githubInstallationId: search.githubInstallationId ?? search.installation_id,
       githubSetupError: search.githubSetupError,
-      githubSetupSource: search.githubSetupSource,
       githubSetupState: search.githubSetupState ?? search.state,
     })),
   loader: async ({ context, params }) => {
