@@ -76,6 +76,7 @@ Read `CONTEXT.md` for product terminology and `docs/platform.md` for product dir
 - Don't generate drizzle migrations, this will happen later
 - Don't account for backwards compatibility when making changes, unless requested
 - We're typescript, it has types, trust that, dont be overly defensive when typing things
+- When changing `packages/better-translation`, run `bun changeset` and commit the generated changeset with the code change.
 
 ## Agent skills
 

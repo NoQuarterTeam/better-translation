@@ -159,15 +159,17 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
 
   function buildMessageManifest(): MessageManifestFile {
     return Object.fromEntries(
-      Object.entries(manifest).map(([id, entry]) => [
-        id,
-        {
-          defaultMessage: entry.defaultMessage,
-          meta: entry.meta,
-          placeholders: entry.placeholders,
-          sources: entry.sources,
-        },
-      ]),
+      Object.entries(manifest)
+        .sort(compareManifestEntryIds)
+        .map(([id, entry]) => [
+          id,
+          {
+            defaultMessage: entry.defaultMessage,
+            meta: entry.meta,
+            placeholders: entry.placeholders,
+            sources: entry.sources.length > 1 ? [...entry.sources].sort(compareMessageSources) : entry.sources,
+          },
+        ]),
     )
   }
 
@@ -284,20 +286,19 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     assertFileContents(resolve(root, localesDir, GITIGNORE_FILENAME), GITIGNORE_CONTENTS, "generated .gitignore")
   }
 
-  function buildLocalLocaleMessages(locale: string): RuntimeMessages {
+  function buildLocalLocaleMessages(locale: string, manifestEntries: Array<[string, ManifestEntry]>): RuntimeMessages {
     const existingMessages = readLocaleMessages(locale)
     const messages: RuntimeMessages = {}
 
     if (locale === defaultLocale) {
-      for (const [id, entry] of Object.entries(manifest)) {
+      for (const [id, entry] of manifestEntries) {
         messages[id] = entry.defaultMessage
       }
       return messages
     }
 
-    for (const id of Object.keys(manifest)) {
+    for (const [id, entry] of manifestEntries) {
       if (Object.hasOwn(messages, id)) continue
-      const entry = manifest[id]!
       const existingMessage = existingMessages[id]
       const cachedMessage = getFreshCachedMessage(id, locale)
 
@@ -316,18 +317,23 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     if (!usesLocalStorage) return
     const dir = getLocalesDirPath()
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    const manifestEntries = Object.entries(manifest).sort(compareManifestEntryIds)
     for (const locale of locales) {
-      writeFileIfChanged(resolve(dir, `${locale}.json`), JSON.stringify(buildLocalLocaleMessages(locale), null, 2) + "\n")
+      writeFileIfChanged(
+        resolve(dir, `${locale}.json`),
+        JSON.stringify(buildLocalLocaleMessages(locale, manifestEntries), null, 2) + "\n",
+      )
     }
   }
 
   function getMissingMessagesByLocale() {
     const missingByLocale = new Map<string, TranslateMessage[]>()
+    const manifestEntries = Object.entries(manifest).sort(compareManifestEntryIds)
 
     for (const locale of locales) {
       if (locale === defaultLocale) continue
       const existingMessages = readLocaleMessages(locale)
-      for (const [id, entry] of Object.entries(manifest)) {
+      for (const [id, entry] of manifestEntries) {
         const existingMessage = existingMessages[id]
         const hasExistingMessage = existingMessage !== undefined && !isUntranslatedLocaleValue(existingMessage, entry)
         if (!hasExistingMessage && getFreshCachedMessage(id, locale) === undefined) {
@@ -1012,6 +1018,20 @@ function isSameSource(left: MessageSource, right: MessageSource) {
     left.marker === right.marker &&
     left.start === right.start &&
     left.end === right.end
+  )
+}
+
+function compareManifestEntryIds([left]: [string, ManifestEntry], [right]: [string, ManifestEntry]) {
+  return left.localeCompare(right)
+}
+
+function compareMessageSources(left: MessageSource, right: MessageSource) {
+  return (
+    left.file.localeCompare(right.file) ||
+    left.start - right.start ||
+    left.end - right.end ||
+    left.kind.localeCompare(right.kind) ||
+    left.marker.localeCompare(right.marker)
   )
 }
 
