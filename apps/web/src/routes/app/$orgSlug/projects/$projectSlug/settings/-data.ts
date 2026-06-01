@@ -16,7 +16,7 @@ import {
 
 const githubSetupSchema = z.object({
   installationId: z.string().trim().min(1),
-  setupState: z.string().trim().min(1),
+  setupState: z.string().trim().min(1).optional(),
 })
 
 export const getProjectSettingsFn = createServerFn({ method: "GET" })
@@ -66,7 +66,7 @@ export const listGitHubInstallationRepositoriesFn = createServerFn({ method: "GE
   .middleware([projectMiddleware])
   .inputValidator(parseZod(githubSetupSchema))
   .handler(async ({ context, data }) => {
-    if (!verifyGitHubSetupState(data.setupState, { orgSlug: context.organization.slug, projectSlug: context.project.slug })) {
+    if (!canUseGitHubInstallation(context.project, context.organization.slug, data)) {
       throw new Error("GitHub setup session expired. Start the connection again.")
     }
 
@@ -86,7 +86,7 @@ export const connectProjectGitHubRepositoryFn = createServerFn({ method: "POST" 
     ),
   )
   .handler(async ({ context, data }) => {
-    if (!verifyGitHubSetupState(data.setupState, { orgSlug: context.organization.slug, projectSlug: context.project.slug })) {
+    if (!canUseGitHubInstallation(context.project, context.organization.slug, data)) {
       throw new Error("GitHub setup session expired. Start the connection again.")
     }
 
@@ -160,7 +160,6 @@ export const disconnectProjectGitHubFn = createServerFn({ method: "POST" })
       .update(projectsTable)
       .set({
         githubBranchCleanupEnabled: false,
-        githubInstallationId: null,
         githubRepositoryId: null,
         githubRepositoryName: null,
         githubRepositoryOwner: null,
@@ -188,16 +187,26 @@ export const githubInstallationRepositoriesQueryOptions = ({
   installationId: string
   orgSlug: string
   projectSlug: string
-  setupState: string
+  setupState?: string
 }) =>
   queryOptions({
-    enabled: Boolean(installationId && setupState),
+    enabled: Boolean(installationId),
     queryKey: ["github-installation-repositories", orgSlug, projectSlug, installationId, setupState],
     queryFn: () =>
       listGitHubInstallationRepositoriesFn({
         data: { installationId, orgSlug, projectSlug, setupState },
       }),
   })
+
+function canUseGitHubInstallation(
+  project: typeof projectsTable.$inferSelect,
+  orgSlug: string,
+  data: { installationId: string; setupState?: string },
+) {
+  if (data.installationId === project.githubInstallationId) return true
+  if (!data.setupState) return false
+  return verifyGitHubSetupState(data.setupState, { orgSlug, projectSlug: project.slug })
+}
 
 function getProjectSettings(project: typeof projectsTable.$inferSelect, orgSlug: string) {
   return {

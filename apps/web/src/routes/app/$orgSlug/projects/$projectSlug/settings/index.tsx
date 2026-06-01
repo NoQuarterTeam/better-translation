@@ -256,12 +256,14 @@ function GitHubSettingsCard({
   const t = useT()
   const [selectedRepositoryId, setSelectedRepositoryId] = useState("")
   const [cleanupEnabled, setCleanupEnabled] = useState(true)
+  const activeGitHubInstallationId = githubInstallationId ?? project.githubInstallationId ?? ""
+  const hasGitHubInstallation = Boolean(activeGitHubInstallationId)
   const repositoryQuery = useQuery(
     githubInstallationRepositoriesQueryOptions({
-      installationId: githubInstallationId ?? "",
+      installationId: activeGitHubInstallationId,
       orgSlug,
       projectSlug,
-      setupState: githubSetupState ?? "",
+      setupState: githubSetupState,
     }),
   )
   const repositories = repositoryQuery.data ?? []
@@ -331,7 +333,7 @@ function GitHubSettingsCard({
                 onClick={() => disconnectRepository.mutate({ data: { orgSlug, projectSlug } })}
               >
                 <UnplugIcon />
-                <T>Disconnect</T>
+                <T>Disconnect repository</T>
               </Button>
             </div>
             <Field orientation="horizontal">
@@ -363,23 +365,29 @@ function GitHubSettingsCard({
             <div className="flex flex-col gap-3 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="font-medium">
-                  <T>No repository connected</T>
+                  {hasGitHubInstallation ? <T>GitHub App installed</T> : <T>No repository connected</T>}
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  <T>Install the GitHub App, then choose the repository for this Project.</T>
+                  {hasGitHubInstallation ? (
+                    <T>Choose the repository this Project should use for Branch cleanup.</T>
+                  ) : (
+                    <T>Install the GitHub App, then choose the repository for this Project.</T>
+                  )}
                 </p>
               </div>
-              <Button
-                type="button"
-                disabled={!project.githubInstallUrl}
-                render={project.githubInstallUrl ? <a href={project.githubInstallUrl} /> : undefined}
-              >
-                <GitBranchIcon />
-                <T>Connect GitHub repository</T>
-                <ExternalLinkIcon />
-              </Button>
+              {!hasGitHubInstallation && (
+                <Button
+                  type="button"
+                  disabled={!project.githubInstallUrl}
+                  render={project.githubInstallUrl ? <a href={project.githubInstallUrl} /> : undefined}
+                >
+                  <GitBranchIcon />
+                  <T>Connect GitHub repository</T>
+                  <ExternalLinkIcon />
+                </Button>
+              )}
             </div>
-            {!project.githubInstallUrl && (
+            {!hasGitHubInstallation && !project.githubInstallUrl && (
               <p className="text-sm text-muted-foreground">
                 <T>Set GITHUB_APP_SLUG before connecting GitHub repositories.</T>
               </p>
@@ -392,7 +400,7 @@ function GitHubSettingsCard({
                 </T>
               </FieldError>
             )}
-            {githubInstallationId && githubSetupState && (
+            {activeGitHubInstallationId && (
               <form
                 className="flex flex-col gap-4 rounded-md border p-4"
                 onSubmit={(event) => {
@@ -401,7 +409,7 @@ function GitHubSettingsCard({
                   connectRepository.mutate({
                     data: {
                       githubBranchCleanupEnabled: cleanupEnabled,
-                      installationId: githubInstallationId,
+                      installationId: activeGitHubInstallationId,
                       orgSlug,
                       projectSlug,
                       repositoryId: selectedRepository.id,
@@ -439,6 +447,7 @@ function GitHubSettingsCard({
                       </NativeSelectOption>
                     ))}
                   </NativeSelect>
+                  {repositoryQuery.error && <FieldError>{repositoryQuery.error.message}</FieldError>}
                 </Field>
                 <Field orientation="horizontal">
                   <Checkbox

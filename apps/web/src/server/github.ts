@@ -11,6 +11,7 @@ const githubInstallationRepositoriesResponseSchema = z.object({
       id: z.number().int(),
       name: z.string().trim().min(1),
       owner: z.object({ login: z.string().trim().min(1) }),
+      pushed_at: z.string().nullable(),
     }),
   ),
 })
@@ -59,22 +60,39 @@ export function readGitHubSetupState(state: string) {
 
 export async function listGitHubInstallationRepositories(installationId: string) {
   const token = await createGitHubInstallationToken(installationId)
-  const response = await fetch("https://api.github.com/installation/repositories?per_page=100", {
-    headers: githubJsonHeaders(token),
-  })
+  const repositories: z.infer<typeof githubInstallationRepositoriesResponseSchema>["repositories"] = []
 
-  if (!response.ok) throw new Error("Could not load GitHub repositories.")
+  for (let page = 1; ; page++) {
+    const url = new URL("https://api.github.com/installation/repositories")
+    url.searchParams.set("page", String(page))
+    url.searchParams.set("per_page", "100")
 
-  const parsed = githubInstallationRepositoriesResponseSchema.safeParse(await response.json())
-  if (!parsed.success) throw new Error("GitHub returned an invalid repositories payload.")
+    const response = await fetch(url, {
+      headers: githubJsonHeaders(token),
+    })
 
-  return parsed.data.repositories.map((repository) => ({
-    defaultBranch: repository.default_branch,
-    fullName: repository.full_name,
-    id: String(repository.id),
-    name: repository.name,
-    owner: repository.owner.login,
-  }))
+    if (!response.ok) throw new Error("Could not load GitHub repositories.")
+
+    const parsed = githubInstallationRepositoriesResponseSchema.safeParse(await response.json())
+    if (!parsed.success) throw new Error("GitHub returned an invalid repositories payload.")
+
+    repositories.push(...parsed.data.repositories)
+
+    if (parsed.data.repositories.length < 100) break
+  }
+
+  return repositories
+    .sort((a, b) => {
+      const latestPush = (b.pushed_at ? Date.parse(b.pushed_at) : 0) - (a.pushed_at ? Date.parse(a.pushed_at) : 0)
+      return latestPush || a.full_name.localeCompare(b.full_name)
+    })
+    .map((repository) => ({
+      defaultBranch: repository.default_branch,
+      fullName: repository.full_name,
+      id: String(repository.id),
+      name: repository.name,
+      owner: repository.owner.login,
+    }))
 }
 
 export async function ensureGitHubInstallationRepository(params: {
