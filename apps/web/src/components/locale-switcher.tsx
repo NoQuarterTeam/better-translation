@@ -1,28 +1,38 @@
 import { useRouteContext, useRouter } from "@tanstack/react-router"
-import * as React from "react"
 
-import type { Locale } from "better-translation/messages"
+import { locales, type Locale } from "better-translation/messages"
 import { useT } from "better-translation/react"
 
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { formatLocale } from "@/lib/locales"
 import { setLocaleFn } from "@/routes/-locale"
 
-import { NativeSelect, NativeSelectOption } from "./ui/native-select"
-
-export function LocaleSwitcher() {
+export function LocaleSwitcher({ className }: { className?: string }) {
   const router = useRouter()
   const t = useT()
   const { locale } = useRouteContext({ from: "__root__" })
+
   return (
-    <NativeSelect
+    <Select
       aria-label={t("Select locale")}
-      size="sm"
       value={locale}
-      onChange={(e) => {
-        void setLocaleFn({ data: { locale: e.target.value as Locale } }).then(() => router.invalidate())
+      items={locales.map((option) => ({ label: formatLocale(option, [option]), value: option }))}
+      onValueChange={(nextLocale) => {
+        void setLocaleFn({ data: { locale: nextLocale as Locale } }).then(() => router.invalidate())
       }}
     >
-      <NativeSelectOption value="en">English</NativeSelectOption>
-      <NativeSelectOption value="nl">Nederlands</NativeSelectOption>
-    </NativeSelect>
+      <SelectTrigger size="sm" className={className}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          {locales.map((option) => (
+            <SelectItem key={option} value={option}>
+              {formatLocale(option, [option])}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   )
 }

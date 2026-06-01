@@ -1,9 +1,9 @@
-import { useNavigate, useRouteContext, useRouter } from "@tanstack/react-router"
+import { useNavigate } from "@tanstack/react-router"
 import { LogOutIcon } from "lucide-react"
 
-import type { Locale } from "better-translation/messages"
 import { useT } from "better-translation/react"
 
+import { LocaleSwitcher } from "@/components/locale-switcher"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -14,9 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { authClient } from "@/lib/auth/client"
-import { setLocaleFn } from "@/routes/-locale"
 import type { User } from "@/server/db/schema"
 
 function createInitials(user: Pick<User, "name">) {
@@ -28,18 +26,11 @@ function createInitials(user: Pick<User, "name">) {
   )
 }
 
-const languageOptions = [
-  { label: "English", value: "en" },
-  { label: "Nederlands", value: "nl" },
-] satisfies { label: string; value: Locale }[]
-
 export function NavUser() {
   const navigate = useNavigate()
-  const router = useRouter()
   const t = useT()
   const { data: session, isPending } = authClient.useSession()
   const user = session?.user
-  const { locale } = useRouteContext({ from: "__root__" })
 
   if (isPending || !user) return null
 
@@ -68,27 +59,7 @@ export function NavUser() {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <div className="px-1 py-1.5" onClick={(e) => e.stopPropagation()}>
-          <Select
-            aria-label={t("Select locale")}
-            value={locale}
-            items={languageOptions}
-            onValueChange={(nextLocale) => {
-              void setLocaleFn({ data: { locale: nextLocale as Locale } }).then(() => router.invalidate())
-            }}
-          >
-            <SelectTrigger size="sm" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {languageOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          <LocaleSwitcher className="w-full" />
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem

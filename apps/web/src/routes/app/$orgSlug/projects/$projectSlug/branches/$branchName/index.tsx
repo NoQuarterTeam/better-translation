@@ -16,10 +16,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Field, FieldLabel } from "@/components/ui/field"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { formatLocale } from "@/lib/locales"
 
 import { branchWorkspaceQueryOptions, saveLocaleValueFn, translateLocaleValueFn, type getBranchWorkspaceFn } from "./-data"
 
@@ -52,6 +52,7 @@ type MessageRow = BranchWorkspace["messages"][number]
 
 function BranchPage() {
   const { orgSlug, projectSlug, branchName } = Route.useParams()
+  const { locale: appLocale } = Route.useRouteContext()
   const t = useT()
   const branchQuery = useSuspenseQuery(branchWorkspaceQueryOptions(orgSlug, projectSlug, branchName))
   const locale = useSelector(translationEditorStore, (state) => state.locale)
@@ -77,7 +78,7 @@ function BranchPage() {
     () => [
       {
         id: "translation",
-        header: resolvedLocale || t("Locale"),
+        header: t("Message"),
         cell: ({ row }) => {
           const localeValue = row.original.localeValues[resolvedLocale]
           return (
@@ -132,42 +133,35 @@ function BranchPage() {
         </div>
       </div>
 
-      <Card className="gap-0 overflow-hidden">
-        <CardHeader className="border-b">
-          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem]">
-            <InputGroup>
-              <InputGroupInput
-                value={search}
-                onChange={(event) => translationEditorStore.actions.setSearch(event.target.value)}
-                placeholder={t("Search translations")}
-              />
-              <InputGroupAddon align="inline-start">
-                <SearchIcon className="text-muted-foreground" />
-              </InputGroupAddon>
-            </InputGroup>
-            <Field className="gap-0">
-              <FieldLabel htmlFor="translation-locale" className="sr-only">
-                {t("Locale")}
-              </FieldLabel>
-              <Select
-                value={resolvedLocale}
-                onValueChange={(nextLocale) => translationEditorStore.actions.selectLocale((nextLocale as string) ?? "")}
-              >
-                <SelectTrigger id="translation-locale" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {branchQuery.data.project.locales.map((projectLocale) => (
-                      <SelectItem key={projectLocale} value={projectLocale}>
-                        {projectLocale}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
+      <Tabs
+        value={resolvedLocale}
+        onValueChange={(nextLocale) => {
+          if (typeof nextLocale === "string") translationEditorStore.actions.selectLocale(nextLocale)
+        }}
+      >
+        <div className="overflow-x-auto">
+          <TabsList>
+            {branchQuery.data.project.locales.map((projectLocale) => (
+              <TabsTrigger key={projectLocale} value={projectLocale}>
+                {formatLocale(projectLocale, [appLocale])}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+      </Tabs>
+
+      <Card className="overflow-hidden">
+        <CardHeader>
+          <InputGroup>
+            <InputGroupInput
+              value={search}
+              onChange={(event) => translationEditorStore.actions.setSearch(event.target.value)}
+              placeholder={t("Search translations")}
+            />
+            <InputGroupAddon align="inline-start">
+              <SearchIcon className="text-muted-foreground" />
+            </InputGroupAddon>
+          </InputGroup>
         </CardHeader>
         <CardContent>
           <DataTable columns={columns} data={filteredMessages} />
