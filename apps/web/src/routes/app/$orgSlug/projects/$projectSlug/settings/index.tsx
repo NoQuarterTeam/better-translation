@@ -33,6 +33,7 @@ export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/settin
     .object({
       githubInstallationId: z.string().optional().catch(undefined),
       githubSetupError: z.enum(["missing_installation_id"]).optional().catch(undefined),
+      githubSetupSource: z.literal("api").optional().catch(undefined),
       githubSetupState: z.string().optional().catch(undefined),
       installation_id: z.string().optional().catch(undefined),
       state: z.string().optional().catch(undefined),
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/settin
     .transform((search) => ({
       githubInstallationId: search.githubInstallationId ?? search.installation_id,
       githubSetupError: search.githubSetupError,
+      githubSetupSource: search.githubSetupSource,
       githubSetupState: search.githubSetupState ?? search.state,
     })),
   loader: async ({ context, params }) => {
