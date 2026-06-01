@@ -123,8 +123,6 @@ function SignInPage() {
           <Link to="/forgot-password" className="text-primary underline-offset-4 hover:underline">
             <T>Forgot your password?</T>
           </Link>
-          <T>Oh yeah!</T>
-          <T>Cool beans!</T>
         </div>
       </CardFooter>
     </Card>
