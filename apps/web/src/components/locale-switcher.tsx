@@ -11,7 +11,7 @@ import { NativeSelect, NativeSelectOption } from "./ui/native-select"
 export function LocaleSwitcher() {
   const router = useRouter()
   const t = useT()
-  const { locale } = useRouteContext({ from: "/" })
+  const { locale } = useRouteContext({ from: "__root__" })
   return (
     <NativeSelect
       aria-label={t("Select locale")}

@@ -39,7 +39,7 @@ export function NavUser() {
   const t = useT()
   const { data: session, isPending } = authClient.useSession()
   const user = session?.user
-  const { locale } = useRouteContext({ from: "/" })
+  const { locale } = useRouteContext({ from: "__root__" })
 
   if (isPending || !user) return null
 
