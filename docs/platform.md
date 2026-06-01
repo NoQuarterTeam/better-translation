@@ -50,6 +50,7 @@ The hosted service owns:
 - Synced Manifests.
 - Branch-local Locale values.
 - Branches.
+- Branch locale configuration from each synced Manifest.
 - Public Runtime bundle endpoints.
 
 The hosted service should not be treated as the only realistic Consumer app. Keep a separate Consumer app surface or example path that reflects how an adopter would use the package.
@@ -168,6 +169,8 @@ The plugin should resolve a Branch in this order:
 If the resolved Branch does not exist, plugin sync can create it. That is intentionally different from Project creation, which remains explicit. If a Project has no default Branch yet, the first synced Branch becomes the Project default Branch.
 
 The dashboard should let users view and edit each Branch. Feature branches are optional and exist for PR-specific copy work.
+
+Each Branch stores the Default locale and supported Locale list from its latest synced Manifest. Projects do not own a single global locale configuration, because a feature Branch can temporarily add, remove, or change locale settings before that change reaches the Project default Branch.
 
 Locale value edits are live for the Branch they belong to. Editing the Project default Branch affects Consumer apps reading that Branch; editing a feature branch affects only Consumer apps reading that feature branch.
 

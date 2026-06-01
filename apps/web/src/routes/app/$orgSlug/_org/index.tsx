@@ -88,10 +88,6 @@ function OrganizationPage() {
                   <div className="mt-1 text-xs text-muted-foreground">{project.slug}</div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge>{project.defaultLocale}</Badge>
-                  <Badge variant="secondary">
-                    {project.locales.length.toLocaleString()} <T>Locales</T>
-                  </Badge>
                   <Badge variant="secondary">
                     {project.overrideCount.toLocaleString()} <T>Overrides</T>
                   </Badge>

@@ -162,10 +162,10 @@ function NewProjectPage() {
               </form.AppField>
               <div className="grid gap-4 sm:grid-cols-2">
                 <form.AppField name="defaultLocale">
-                  {(field) => <field.TextField label={t("Default locale")} placeholder="en" />}
+                  {(field) => <field.TextField label={t("Default Branch locale")} placeholder="en" />}
                 </form.AppField>
                 <form.AppField name="locales">
-                  {(field) => <field.TextField label={t("Locales")} placeholder="en,nl,de" />}
+                  {(field) => <field.TextField label={t("Default Branch Locales")} placeholder="en,nl,de" />}
                 </form.AppField>
               </div>
               <form.AppField name="translationModel">

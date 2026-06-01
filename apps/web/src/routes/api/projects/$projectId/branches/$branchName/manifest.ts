@@ -59,15 +59,15 @@ export const Route = createFileRoute("/api/projects/$projectId/branches/$branchN
 
         await markApiKeyUsed(projectAuth.apiKeyId)
 
-        const branch = await upsertBranch(projectAuth.project.id, params.branchName)
-        const defaultBranchId = projectAuth.project.defaultBranchId ?? branch.id
-
-        await updateProjectManifestState({
-          defaultBranchId,
+        const branch = await upsertBranch({
           defaultLocale: parsed.data.defaultLocale,
           locales: parsed.data.locales,
+          name: params.branchName,
           projectId: projectAuth.project.id,
         })
+        const defaultBranchId = projectAuth.project.defaultBranchId ?? branch.id
+
+        await updateProjectManifestState({ defaultBranchId, projectId: projectAuth.project.id })
 
         const syncedMessages = await syncBranchMessages({
           branchId: branch.id,
@@ -77,9 +77,7 @@ export const Route = createFileRoute("/api/projects/$projectId/branches/$branchN
 
         const filledValueCount = await fillMissingLocaleValues({
           branch,
-          defaultLocale: parsed.data.defaultLocale,
           defaultBranchId,
-          locales: parsed.data.locales,
           messages: syncedMessages,
           project: projectAuth.project,
         })
@@ -103,34 +101,32 @@ async function markApiKeyUsed(apiKeyId: string) {
   await db.update(apiKeysTable).set({ lastUsedAt: new Date() }).where(eq(apiKeysTable.id, apiKeyId))
 }
 
-async function upsertBranch(projectId: string, name: string) {
-  const [branch] = await db
-    .insert(branchesTable)
-    .values({ projectId, name })
-    .onConflictDoNothing({ target: [branchesTable.projectId, branchesTable.name] })
-    .returning()
-
-  const existingBranch = branch ?? (await db.query.branchesTable.findFirst({ where: { projectId, name } }))
-
-  if (!existingBranch) throw new Error("Could not create Branch.")
-  return existingBranch
-}
-
-async function updateProjectManifestState({
-  defaultBranchId,
+async function upsertBranch({
   defaultLocale,
   locales,
+  name,
   projectId,
 }: {
-  defaultBranchId: string
   defaultLocale: string
   locales: string[]
+  name: string
   projectId: string
 }) {
-  await db
-    .update(projectsTable)
-    .set({ defaultBranchId, defaultLocale, locales, updatedAt: new Date() })
-    .where(eq(projectsTable.id, projectId))
+  const [branch] = await db
+    .insert(branchesTable)
+    .values({ defaultLocale, locales, projectId, name })
+    .onConflictDoUpdate({
+      target: [branchesTable.projectId, branchesTable.name],
+      set: { defaultLocale, locales, updatedAt: new Date() },
+    })
+    .returning()
+
+  if (!branch) throw new Error("Could not create Branch.")
+  return branch
+}
+
+async function updateProjectManifestState({ defaultBranchId, projectId }: { defaultBranchId: string; projectId: string }) {
+  await db.update(projectsTable).set({ defaultBranchId, updatedAt: new Date() }).where(eq(projectsTable.id, projectId))
 }
 
 async function syncBranchMessages({
@@ -214,22 +210,18 @@ async function markBranchSynced(branchId: string) {
 
 async function fillMissingLocaleValues({
   branch,
-  defaultLocale,
   defaultBranchId,
-  locales,
   messages,
   project,
 }: {
   branch: typeof branchesTable.$inferSelect
-  defaultLocale: string
   defaultBranchId: string
-  locales: string[]
   messages: (typeof messagesTable.$inferSelect)[]
   project: typeof projectsTable.$inferSelect
 }) {
   if (messages.length === 0) return 0
 
-  const targetLocales = locales.filter((locale) => locale !== defaultLocale)
+  const targetLocales = branch.locales.filter((locale) => locale !== branch.defaultLocale)
   if (targetLocales.length === 0) return 0
 
   const fillContext = await loadLocaleFillContext({

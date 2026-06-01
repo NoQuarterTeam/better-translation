@@ -1,6 +1,5 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { Store, useSelector } from "@tanstack/react-store"
 import type { ColumnDef } from "@tanstack/react-table"
 import { BotIcon, CheckIcon, PencilIcon, SearchIcon } from "lucide-react"
 import { useMemo, useState } from "react"
@@ -12,13 +11,11 @@ import { createTranslator } from "better-translation/server"
 
 import { DataTable } from "@/components/data-table"
 import { useAppForm } from "@/components/react-form"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ButtonGroup } from "@/components/ui/button-group"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
-import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatLocale } from "@/lib/locales"
 
 import { branchWorkspaceQueryOptions, saveLocaleValueFn, translateLocaleValueFn, type getBranchWorkspaceFn } from "./-data"
@@ -42,82 +39,53 @@ export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/branch
   },
 })
 
-const translationEditorStore = new Store({ locale: "", search: "" }, (store) => ({
-  selectLocale: (locale: string) => store.setState((state) => ({ ...state, locale })),
-  setSearch: (search: string) => store.setState((state) => ({ ...state, search })),
-}))
-
 type BranchWorkspace = Awaited<ReturnType<typeof getBranchWorkspaceFn>>
 type MessageRow = BranchWorkspace["messages"][number]
+
+function getLocaleValue(message: MessageRow, locale: string) {
+  return message.localeValues[locale]
+}
+
+function getLocaleEntries(message: MessageRow) {
+  return Object.entries(message.localeValues)
+}
 
 function BranchPage() {
   const { orgSlug, projectSlug, branchName } = Route.useParams()
   const { locale: appLocale } = Route.useRouteContext()
   const t = useT()
   const branchQuery = useSuspenseQuery(branchWorkspaceQueryOptions(orgSlug, projectSlug, branchName))
-  const locale = useSelector(translationEditorStore, (state) => state.locale)
-  const search = useSelector(translationEditorStore, (state) => state.search)
-  const resolvedLocale =
-    locale && branchQuery.data.project.locales.includes(locale)
-      ? locale
-      : (branchQuery.data.project.locales.find((projectLocale) => projectLocale !== branchQuery.data.project.defaultLocale) ??
-        branchQuery.data.project.defaultLocale)
+  const [search, setSearch] = useState("")
+  const editableLocales = branchQuery.data.branch.locales.filter(
+    (branchLocale) => branchLocale !== branchQuery.data.branch.defaultLocale,
+  )
 
   const filteredMessages = useMemo(() => {
     const messages = branchQuery.data.messages
     const query = search.trim().toLowerCase()
     if (!query) return messages
-    return messages.filter((message) =>
-      [message.defaultMessage, message.localeValues[resolvedLocale]?.value ?? ""].some((value) =>
-        value.toLowerCase().includes(query),
-      ),
-    )
-  }, [branchQuery.data.messages, resolvedLocale, search])
+    return messages.filter((message) => {
+      const searchableValues = [message.defaultMessage, ...getLocaleEntries(message).map(([, localeValue]) => localeValue.value)]
+      return searchableValues.some((value) => value.toLowerCase().includes(query))
+    })
+  }, [branchQuery.data.messages, search])
 
   const columns = useMemo<ColumnDef<MessageRow>[]>(
     () => [
       {
-        id: "translation",
-        header: t("Message"),
-        cell: ({ row }) => {
-          const localeValue = row.original.localeValues[resolvedLocale]
-          return (
-            <div className="max-w-3xl">
-              <div className="truncate">{localeValue?.value ?? row.original.defaultMessage}</div>
-              <div className="mt-1 truncate text-xs text-muted-foreground">
-                <T>Original</T>: {row.original.defaultMessage}
-              </div>
-            </div>
-          )
-        },
+        id: branchQuery.data.branch.defaultLocale,
+        header: `${formatLocale(branchQuery.data.branch.defaultLocale, [appLocale])} (${t("Original")})`,
+        cell: ({ row }) => <div className="max-w-2xl min-w-96 leading-6 whitespace-normal">{row.original.defaultMessage}</div>,
       },
-      {
-        id: "status",
-        header: t("Status"),
-        cell: ({ row }) => {
-          const localeValue = row.original.localeValues[resolvedLocale]
-          if (localeValue?.source === "manual") return <Badge>{t("Manual")}</Badge>
-          if (localeValue?.source === "ai") return <Badge variant="secondary">{t("AI")}</Badge>
-          if (localeValue?.source === "imported") return <Badge variant="secondary">{t("Imported")}</Badge>
-          return <Badge variant="outline">{t("Default")}</Badge>
-        },
-      },
-      {
-        id: "actions",
-        header: "",
-        cell: ({ row }) => (
-          <TranslationValueDialog
-            branchName={branchName}
-            defaultLocale={branchQuery.data.project.defaultLocale}
-            locale={resolvedLocale}
-            message={row.original}
-            orgSlug={orgSlug}
-            projectSlug={projectSlug}
-          />
-        ),
-      },
+      ...editableLocales.map(
+        (locale): ColumnDef<MessageRow> => ({
+          id: `locale-${locale}`,
+          header: formatLocale(locale, [appLocale]),
+          cell: ({ row }) => <EditableLocaleValueCell locale={locale} message={row.original} />,
+        }),
+      ),
     ],
-    [branchName, branchQuery.data.project.defaultLocale, orgSlug, projectSlug, resolvedLocale, t],
+    [appLocale, branchQuery.data.branch.defaultLocale, editableLocales, t],
   )
 
   return (
@@ -133,30 +101,13 @@ function BranchPage() {
         </div>
       </div>
 
-      <Tabs
-        value={resolvedLocale}
-        onValueChange={(nextLocale) => {
-          if (typeof nextLocale === "string") translationEditorStore.actions.selectLocale(nextLocale)
-        }}
-      >
-        <div className="overflow-x-auto">
-          <TabsList>
-            {branchQuery.data.project.locales.map((projectLocale) => (
-              <TabsTrigger key={projectLocale} value={projectLocale}>
-                {formatLocale(projectLocale, [appLocale])}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-      </Tabs>
-
       <Card className="overflow-hidden">
         <CardHeader>
           <InputGroup>
             <InputGroupInput
               value={search}
-              onChange={(event) => translationEditorStore.actions.setSearch(event.target.value)}
-              placeholder={t("Search translations")}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t("Search messages")}
             />
             <InputGroupAddon align="inline-start">
               <SearchIcon className="text-muted-foreground" />
@@ -171,84 +122,68 @@ function BranchPage() {
   )
 }
 
-function TranslationValueDialog({
-  branchName,
-  defaultLocale,
-  locale,
-  message,
-  orgSlug,
-  projectSlug,
-}: {
-  branchName: string
-  defaultLocale: string
-  locale: string
-  message: MessageRow
-  orgSlug: string
-  projectSlug: string
-}) {
+function EditableLocaleValueCell({ locale, message }: { locale: string; message: MessageRow }) {
+  const { orgSlug, projectSlug, branchName } = Route.useParams()
+  const { queryClient } = Route.useRouteContext()
+  const t = useT()
   const [open, setOpen] = useState(false)
+  const localeValue = getLocaleValue(message, locale)
+  const currentValue = localeValue?.value ?? message.defaultMessage
+
+  const translateMutation = useMutation({
+    mutationFn: () => translateLocaleValueFn({ data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectSlug } }),
+    onSuccess: () => {
+      toast.success(t("Platform translator saved a Locale value"))
+      void queryClient.invalidateQueries(branchWorkspaceQueryOptions(orgSlug, projectSlug, branchName))
+    },
+    onError: (error: Error) => toast.error(t("Could not translate Message"), { description: error.message }),
+  })
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="ghost" size="sm" className="ml-auto" />}>
-        <PencilIcon />
-        <T>Edit</T>
-      </DialogTrigger>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            <T>Customize translation</T>
-          </DialogTitle>
-          <DialogDescription>
-            <T>Review the original copy and current translation, then save a custom version for this Branch.</T>
-          </DialogDescription>
-        </DialogHeader>
-        <TranslationValueEditor
-          key={`${message.lookupId}:${locale}:${open ? "open" : "closed"}`}
-          branchName={branchName}
-          defaultLocale={defaultLocale}
-          locale={locale}
-          message={message}
-          orgSlug={orgSlug}
-          projectSlug={projectSlug}
-          onSaved={() => setOpen(false)}
-        />
-      </DialogContent>
-    </Dialog>
+    <div className="grid min-w-96 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 whitespace-normal">
+      <div className="line-clamp-3 leading-6">{currentValue}</div>
+      <ButtonGroup>
+        <Button type="button" variant="outline" size="icon-sm" aria-label={t("Edit Locale value")} onClick={() => setOpen(true)}>
+          <PencilIcon />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          aria-label={t("Use AI translation")}
+          disabled={translateMutation.isPending}
+          onClick={() => translateMutation.mutate()}
+        >
+          <BotIcon />
+        </Button>
+      </ButtonGroup>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              <T>Edit Locale value</T>
+            </DialogTitle>
+            <DialogDescription>
+              <T>Update the branch-local value for this Locale.</T>
+            </DialogDescription>
+          </DialogHeader>
+          <TranslationValueEditor
+            key={`${message.lookupId}:${locale}:${open ? "open" : "closed"}`}
+            locale={locale}
+            message={message}
+            onSaved={() => setOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }
 
-function TranslationValueEditor({
-  branchName,
-  defaultLocale,
-  locale,
-  message,
-  onSaved,
-  orgSlug,
-  projectSlug,
-}: {
-  branchName: string
-  defaultLocale: string
-  locale: string
-  message: MessageRow
-  onSaved: () => void
-  orgSlug: string
-  projectSlug: string
-}) {
+function TranslationValueEditor({ locale, message, onSaved }: { locale: string; message: MessageRow; onSaved: () => void }) {
+  const { orgSlug, projectSlug, branchName } = Route.useParams()
   const t = useT()
   const { queryClient } = Route.useRouteContext()
-  const localeValue = message.localeValues[locale]
-  const isDefaultLocale = locale === defaultLocale
-  const currentValue = localeValue?.value ?? message.defaultMessage
-  const sourceLabel =
-    localeValue?.source === "manual"
-      ? t("Custom")
-      : localeValue?.source === "ai"
-        ? t("AI translated")
-        : localeValue?.source === "imported"
-          ? t("Imported")
-          : t("Using original")
-  const sourceVariant = localeValue?.source === "manual" ? "default" : localeValue?.source === "default" ? "outline" : "secondary"
+  const localeValue = getLocaleValue(message, locale)
 
   const saveMutation = useMutation({
     mutationFn: (data: { value: string }) =>
@@ -261,15 +196,6 @@ function TranslationValueEditor({
       onSaved()
     },
     onError: (error: Error) => toast.error(t("Could not save Locale value"), { description: error.message }),
-  })
-
-  const translateMutation = useMutation({
-    mutationFn: () => translateLocaleValueFn({ data: { branchName, locale, lookupId: message.lookupId, orgSlug, projectSlug } }),
-    onSuccess: () => {
-      toast.success(t("Platform translator saved a Locale value"))
-      void queryClient.invalidateQueries(branchWorkspaceQueryOptions(orgSlug, projectSlug, branchName))
-    },
-    onError: (error: Error) => toast.error(t("Could not translate Message"), { description: error.message }),
   })
 
   const form = useAppForm({
@@ -286,24 +212,7 @@ function TranslationValueEditor({
   })
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-lg border bg-muted/20 p-3">
-          <div className="text-xs font-medium text-muted-foreground">
-            <T>Original</T> · {defaultLocale}
-          </div>
-          <p className="mt-2 text-base leading-7">{message.defaultMessage}</p>
-        </div>
-        <div className="rounded-lg border p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-medium text-muted-foreground">
-              <T>Current translation</T> · {locale}
-            </div>
-            <Badge variant={sourceVariant}>{sourceLabel}</Badge>
-          </div>
-          <p className="mt-2 text-base leading-7">{currentValue}</p>
-        </div>
-      </div>
+    <div className="flex flex-col gap-4 pt-2">
       <form.AppForm>
         <form
           className="flex flex-col gap-4"
@@ -315,65 +224,29 @@ function TranslationValueEditor({
           <form.AppField name="value">
             {(field) => (
               <field.TextareaField
-                label={t("Custom version")}
-                description={
-                  isDefaultLocale
-                    ? t("The Default locale is the original copy and cannot be customized here.")
-                    : t("Saved custom versions apply to this Branch.")
-                }
+                label={formatLocale(locale, [locale])}
+                description={t("Saved custom versions apply to this Branch.")}
                 placeholder={t("Write the translation people should see")}
                 rows={5}
-                disabled={isDefaultLocale}
               />
             )}
           </form.AppField>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <form.SubmitButton size="lg" className="w-full sm:flex-1" disabled={saveMutation.isPending || isDefaultLocale}>
+            <form.SubmitButton size="lg" className="w-full sm:flex-1" disabled={saveMutation.isPending}>
               {(isSubmitting) =>
                 isSubmitting || saveMutation.isPending ? (
                   <T>Saving...</T>
                 ) : (
                   <>
                     <CheckIcon />
-                    <T>Save custom translation</T>
+                    <T>Save value</T>
                   </>
                 )
               }
             </form.SubmitButton>
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="w-full sm:flex-1"
-              disabled={translateMutation.isPending || isDefaultLocale}
-              onClick={() => translateMutation.mutate()}
-            >
-              <BotIcon />
-              {translateMutation.isPending ? <T>Translating...</T> : <T>Use AI translation</T>}
-            </Button>
           </div>
         </form>
       </form.AppForm>
-      <Separator />
-      <div className="grid gap-2 rounded-md bg-muted/30 p-3 text-xs text-muted-foreground sm:grid-cols-2">
-        <div>
-          <div className="font-medium text-foreground">
-            <T>Reference</T>
-          </div>
-          <div className="mt-1 font-mono">{message.lookupId}</div>
-        </div>
-        {message.sources[0] && (
-          <div>
-            <div className="font-medium text-foreground">
-              <T>Source</T>
-            </div>
-            <div className="mt-1 font-mono">
-              {message.sources[0].file}
-              {message.sources[0].line ? `:${message.sources[0].line}` : ""}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   )
 }

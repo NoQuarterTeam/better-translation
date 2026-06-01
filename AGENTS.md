@@ -69,6 +69,7 @@ Read `CONTEXT.md` for product terminology and `docs/platform.md` for product dir
 
 - TanStack server funcitons live in -data.ts files next to the page that uses them.
 - Keep behaviour as close to the owning source as possible. Component-specific hooks, mutations, permissions, invalidation, and toasts should live inside the component or module that owns that behaviour instead of being lifted into parent pages by default.
+- In TanStack route files, prefer `Route.useParams()`, `Route.useRouteContext()`, and related route hooks inside route-local child components instead of prop-drilling params, query clients, app locale, or other route context through the tree.
 
 ## Development
 

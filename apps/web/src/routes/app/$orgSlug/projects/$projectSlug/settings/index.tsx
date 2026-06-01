@@ -8,18 +8,11 @@ import { T, useT } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
 import { useAppForm } from "@/components/react-form"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { organizationProjectsQueryOptions } from "../../../-data"
-import {
-  projectSettingsQueryOptions,
-  updateProjectLocalesFn,
-  updateProjectNameFn,
-  updateProjectTranslatorFn,
-  type getProjectSettingsFn,
-} from "./-data"
+import { projectSettingsQueryOptions, updateProjectNameFn, updateProjectTranslatorFn, type getProjectSettingsFn } from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug/projects/$projectSlug/settings/")({
   component: ProjectSettingsPage,
@@ -54,15 +47,6 @@ function ProjectSettingsPage() {
     },
   })
 
-  const updateLocalesMutation = useMutation({
-    mutationFn: (data: { defaultLocale: string; locales: string[]; orgSlug: string; projectSlug: string }) =>
-      updateProjectLocalesFn({ data }),
-    onSuccess: (updatedProject) => {
-      toast.success(t("Project Locales updated"))
-      updateProjectSettings(updatedProject)
-    },
-  })
-
   const updateTranslatorMutation = useMutation({
     mutationFn: (data: { orgSlug: string; projectSlug: string; translationModel: string; translationPrompt: string }) =>
       updateProjectTranslatorFn({ data }),
@@ -85,30 +69,6 @@ function ProjectSettingsPage() {
     },
     onSubmit: ({ value }) => {
       updateNameMutation.mutate({ orgSlug, projectSlug, name: value.name.trim() })
-    },
-  })
-
-  const localesForm = useAppForm({
-    defaultValues: {
-      defaultLocale: project.defaultLocale,
-      locales: project.locales.join(","),
-    },
-    validators: {
-      onSubmit: z.object({
-        defaultLocale: z.string().trim().min(2).max(20),
-        locales: z.string().trim().min(2),
-      }),
-    },
-    onSubmit: ({ value }) => {
-      updateLocalesMutation.mutate({
-        orgSlug,
-        projectSlug,
-        defaultLocale: value.defaultLocale.trim().toLowerCase(),
-        locales: value.locales
-          .split(",")
-          .map((locale) => locale.trim().toLowerCase())
-          .filter(Boolean),
-      })
     },
   })
 
@@ -141,7 +101,7 @@ function ProjectSettingsPage() {
           <T>Project settings</T>
         </h1>
         <p className="text-sm text-muted-foreground">
-          <T>Manage Project profile, Locale configuration, and Platform translator settings.</T>
+          <T>Manage Project profile and Platform translator settings.</T>
         </p>
       </div>
 
@@ -200,48 +160,6 @@ function ProjectSettingsPage() {
               <T>Copy</T>
             </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <T>Locales</T>
-          </CardTitle>
-          <CardDescription>
-            <T>Update the Default locale and supported Locale list for this Project.</T>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-wrap gap-2">
-            {project.locales.map((locale) => (
-              <Badge key={locale} variant={locale === project.defaultLocale ? "default" : "secondary"}>
-                {locale}
-              </Badge>
-            ))}
-          </div>
-          <localesForm.AppForm>
-            <form
-              className="flex flex-col gap-4"
-              onSubmit={(event) => {
-                event.preventDefault()
-                void localesForm.handleSubmit()
-              }}
-            >
-              <div className="grid gap-4 sm:grid-cols-2">
-                <localesForm.AppField name="defaultLocale">
-                  {(field) => <field.TextField label={t("Default locale")} placeholder="en" />}
-                </localesForm.AppField>
-                <localesForm.AppField name="locales">
-                  {(field) => <field.TextField label={t("Locales")} placeholder="en,nl,de" />}
-                </localesForm.AppField>
-              </div>
-              <localesForm.SubmitButton className="w-fit">
-                {(isSubmitting) => (isSubmitting || updateLocalesMutation.isPending ? <T>Saving...</T> : <T>Save Locales</T>)}
-              </localesForm.SubmitButton>
-              <localesForm.FormError>{updateLocalesMutation.error?.message}</localesForm.FormError>
-            </form>
-          </localesForm.AppForm>
         </CardContent>
       </Card>
 

@@ -13,6 +13,8 @@ export const branchesTable = pgTable(
       .notNull()
       .references(() => projectsTable.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    defaultLocale: text("default_locale").notNull().default("en"),
+    locales: text("locales").array().notNull().default(["en"]),
     lastSyncedAt: timestamp("last_synced_at"),
   },
   (table) => [
@@ -28,6 +30,8 @@ const customFields = {
     .min(1)
     .max(120)
     .regex(/^[A-Za-z0-9._/-]+$/),
+  defaultLocale: z.string().trim().min(2).max(20),
+  locales: z.array(z.string().trim().min(2).max(20)).min(1).max(20),
 }
 
 export const branchSchema = createSelectSchema(branchesTable).extend(customFields)

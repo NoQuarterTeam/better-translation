@@ -17,30 +17,31 @@ export const Route = createFileRoute("/projects/$projectId/branches/$branchName/
         const project = await db.query.projectsTable.findFirst({ where: { publicId: params.projectId } })
 
         if (!project) return json({ error: "Project not found" }, 404)
-        if (!project.locales.includes(params.locale)) return json({ error: "Locale not found" }, 404)
 
         const branch = await db.query.branchesTable.findFirst({
           where: { projectId: project.id, name: params.branchName },
         })
 
         if (!branch) return json({ error: "Branch not found" }, 404)
+        if (!branch.locales.includes(params.locale)) return json({ error: "Locale not found" }, 404)
 
         const messages = await db.query.messagesTable.findMany({
           where: { active: true, branchId: branch.id, projectId: project.id },
         })
 
-        if (params.locale === project.defaultLocale) {
+        if (params.locale === branch.defaultLocale) {
           return json(Object.fromEntries(messages.map((message) => [message.lookupId, message.defaultMessage])))
         }
 
         const values = await db.query.localeValuesTable.findMany({
           where: { branchId: branch.id, locale: params.locale },
         })
+        const valueByMessageId = new Map(values.map((value) => [value.messageId, value]))
 
         return json(
           Object.fromEntries(
             messages.map((message) => {
-              const branchValue = values.find((value) => value.branchId === branch.id && value.messageId === message.id)
+              const branchValue = valueByMessageId.get(message.id)
               return [message.lookupId, branchValue?.value ?? message.defaultMessage]
             }),
           ),

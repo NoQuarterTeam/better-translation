@@ -50,9 +50,7 @@ export async function listOrganizationProjects(organizationId: string) {
   const projects = await db.query.projectsTable.findMany({
     columns: {
       defaultBranchId: true,
-      defaultLocale: true,
       id: true,
-      locales: true,
       name: true,
       publicId: true,
       slug: true,

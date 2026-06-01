@@ -20,8 +20,6 @@ export const projectsTable = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     defaultBranchId: text("default_branch_id"),
-    defaultLocale: text("default_locale").notNull().default("en"),
-    locales: text("locales").array().notNull().default(["en"]),
     translationModel: text("translation_model").notNull().default("openai/gpt-5.5"),
     translationPrompt: text("translation_prompt")
       .notNull()
@@ -42,8 +40,6 @@ const customFields = {
     .min(1)
     .max(64)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  defaultLocale: z.string().trim().min(2).max(20),
-  locales: z.array(z.string().trim().min(2).max(20)).min(1).max(20),
   translationModel: z.string().trim().min(1).max(120),
   translationPrompt: z.string().trim().min(1).max(4000),
 }

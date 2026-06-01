@@ -15,13 +15,13 @@ export const createProjectFn = createServerFn({ method: "POST" })
         .pick({
           name: true,
           slug: true,
-          defaultLocale: true,
-          locales: true,
           translationModel: true,
           translationPrompt: true,
         })
         .extend({
           defaultBranchName: branchInsertSchema.shape.name,
+          defaultLocale: branchInsertSchema.shape.defaultLocale,
+          locales: branchInsertSchema.shape.locales,
           translationModel: projectInsertSchema.shape.translationModel.optional().default(DEFAULT_TRANSLATION_MODEL),
           translationPrompt: projectInsertSchema.shape.translationPrompt
             .optional()
@@ -49,8 +49,6 @@ export const createProjectFn = createServerFn({ method: "POST" })
       const [createdProject] = await tx
         .insert(projectsTable)
         .values({
-          defaultLocale: data.defaultLocale,
-          locales: data.locales,
           name: data.name,
           organizationId: context.organization.id,
           slug: data.slug,
@@ -64,6 +62,8 @@ export const createProjectFn = createServerFn({ method: "POST" })
       const [defaultBranch] = await tx
         .insert(branchesTable)
         .values({
+          defaultLocale: data.defaultLocale,
+          locales: data.locales,
           name: data.defaultBranchName,
           projectId: createdProject.id,
         })

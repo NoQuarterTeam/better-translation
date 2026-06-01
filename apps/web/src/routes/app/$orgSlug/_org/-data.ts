@@ -33,9 +33,7 @@ export const getOrganizationOverviewFn = createServerFn({ method: "GET" })
 
     const recentProjects = await db.query.projectsTable.findMany({
       columns: {
-        defaultLocale: true,
         id: true,
-        locales: true,
         name: true,
         publicId: true,
         slug: true,

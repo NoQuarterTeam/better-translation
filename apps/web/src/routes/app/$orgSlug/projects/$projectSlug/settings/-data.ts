@@ -13,8 +13,6 @@ export const getProjectSettingsFn = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { project } = context
     return {
-      defaultLocale: project.defaultLocale,
-      locales: project.locales,
       name: project.name,
       publicId: project.publicId,
       slug: project.slug,
@@ -33,40 +31,6 @@ export const updateProjectNameFn = createServerFn({ method: "POST" })
       .set({ name: data.name, updatedAt: new Date() })
       .where(eq(projectsTable.id, project.id))
       .returning({
-        defaultLocale: projectsTable.defaultLocale,
-        locales: projectsTable.locales,
-        name: projectsTable.name,
-        publicId: projectsTable.publicId,
-        slug: projectsTable.slug,
-        translationModel: projectsTable.translationModel,
-        translationPrompt: projectsTable.translationPrompt,
-      })
-
-    if (!updatedProject) throw new Error("Could not update Project.")
-    return updatedProject
-  })
-
-export const updateProjectLocalesFn = createServerFn({ method: "POST" })
-  .middleware([projectMiddleware])
-  .inputValidator(
-    parseZod(
-      z.object({
-        defaultLocale: projectInsertSchema.shape.defaultLocale,
-        locales: projectInsertSchema.shape.locales,
-      }),
-    ),
-  )
-  .handler(async ({ context, data }) => {
-    const { project } = context
-    const defaultLocale = data.defaultLocale.toLowerCase()
-    const locales = [...new Set([defaultLocale, ...data.locales.map((locale) => locale.toLowerCase())])]
-    const [updatedProject] = await db
-      .update(projectsTable)
-      .set({ defaultLocale, locales, updatedAt: new Date() })
-      .where(eq(projectsTable.id, project.id))
-      .returning({
-        defaultLocale: projectsTable.defaultLocale,
-        locales: projectsTable.locales,
         name: projectsTable.name,
         publicId: projectsTable.publicId,
         slug: projectsTable.slug,
@@ -99,8 +63,6 @@ export const updateProjectTranslatorFn = createServerFn({ method: "POST" })
       })
       .where(eq(projectsTable.id, project.id))
       .returning({
-        defaultLocale: projectsTable.defaultLocale,
-        locales: projectsTable.locales,
         name: projectsTable.name,
         publicId: projectsTable.publicId,
         slug: projectsTable.slug,

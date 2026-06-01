@@ -8,7 +8,6 @@ import { T, useT } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
 import { DataTable } from "@/components/data-table"
-import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -52,19 +51,6 @@ function ProjectsPage() {
         ),
       },
       {
-        accessorKey: "defaultLocale",
-        header: t("Locales"),
-        cell: ({ row }) => (
-          <div className="flex flex-wrap items-center gap-1">
-            {row.original.locales.map((locale) => (
-              <Badge key={locale} variant={locale === row.original.defaultLocale ? "default" : "secondary"}>
-                {locale}
-              </Badge>
-            ))}
-          </div>
-        ),
-      },
-      {
         accessorKey: "branchCount",
         header: t("Branches"),
         cell: ({ row }) => row.original.branchCount.toLocaleString(),
@@ -82,7 +68,7 @@ function ProjectsPage() {
             to="/app/$orgSlug/projects/$projectSlug"
             params={{ orgSlug, projectSlug: row.original.slug }}
             className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ml-auto")}
-            aria-label={t("Open Project")}
+            aria-label="Open project"
           >
             <ArrowUpRightIcon />
           </Link>

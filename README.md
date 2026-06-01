@@ -261,7 +261,7 @@ function SignInForm() {
 
   return (
     <>
-      <input aria-label={t("Email")} />
+      <input aria-label="Email" />
       <button>{t("Sign in")}</button>
       <p>{t("Could not sign in", { context: "Authentication error toast" })}</p>
       <p>{t("Welcome back, {name}", { name: user.name })}</p>

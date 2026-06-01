@@ -42,6 +42,7 @@ export const messagesTable = pgTable(
   (table) => [
     index("message_project_id_idx").on(table.projectId),
     index("message_branch_id_idx").on(table.branchId),
+    index("message_project_branch_active_idx").on(table.projectId, table.branchId, table.active),
     uniqueIndex("message_branch_lookup_id_idx").on(table.branchId, table.lookupId),
   ],
 )
