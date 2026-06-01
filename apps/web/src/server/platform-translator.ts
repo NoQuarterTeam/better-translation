@@ -2,6 +2,7 @@ import type { generateText } from "ai"
 
 type AiModel = Parameters<typeof generateText>[0]["model"]
 const DEFAULT_TRANSLATION_CONCURRENCY = 4
+const PLATFORM_TRANSLATION_MODEL = "openai/gpt-5.5"
 
 export type PlatformTranslatorMessage = {
   context?: string
@@ -14,15 +15,13 @@ export type PlatformTranslatorMessage = {
 export async function translateMessageWithPlatform({
   locale,
   message,
-  model,
   prompt,
 }: {
   locale: string
   message: PlatformTranslatorMessage
-  model: string
   prompt: string
 }) {
-  const translated = (await translateWithAi({ locale, message, model, prompt })).trim()
+  const translated = (await translateWithAi({ locale, message, prompt })).trim()
   if (!translated) throw new Error(`The Platform translator returned no value for ${message.id}.`)
   return translated
 }
@@ -31,13 +30,11 @@ export async function translateMessagesWithPlatform({
   concurrency = DEFAULT_TRANSLATION_CONCURRENCY,
   locale,
   messages,
-  model,
   prompt,
 }: {
   concurrency?: number
   locale: string
   messages: PlatformTranslatorMessage[]
-  model: string
   prompt: string
 }) {
   const translations: Record<string, string> = {}
@@ -49,7 +46,7 @@ export async function translateMessagesWithPlatform({
       while (nextIndex < messages.length) {
         const message = messages[nextIndex]
         nextIndex += 1
-        if (message) translations[message.id] = await translateMessageWithPlatform({ locale, message, model, prompt })
+        if (message) translations[message.id] = await translateMessageWithPlatform({ locale, message, prompt })
       }
     }),
   )
@@ -60,17 +57,15 @@ export async function translateMessagesWithPlatform({
 async function translateWithAi({
   locale,
   message,
-  model,
   prompt,
 }: {
   locale: string
   message: PlatformTranslatorMessage
-  model: string
   prompt: string
 }) {
   const { generateText } = await import("ai")
   const { text } = await generateText({
-    model: model as AiModel,
+    model: PLATFORM_TRANSLATION_MODEL as AiModel,
     system: createSystemPrompt(locale, prompt),
     prompt: createUserPrompt(message, locale),
   })

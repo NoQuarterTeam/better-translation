@@ -409,7 +409,6 @@ async function translateLocaleValues({
 }) {
   const translations = await translateMessagesWithPlatform({
     locale,
-    model: project.translationModel,
     prompt: project.translationPrompt,
     messages: messages.map((message) => ({
       context: typeof message.meta.context === "string" ? message.meta.context : undefined,

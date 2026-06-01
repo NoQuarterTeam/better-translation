@@ -3,8 +3,6 @@ import { createHash, createHmac } from "node:crypto"
 
 import { env } from "@/env"
 
-export const DEFAULT_TRANSLATION_MODEL = "openai/gpt-5.5"
-
 const createSecretId = init({ length: 32 })
 
 export function createStableHash(value: string) {

@@ -4,7 +4,6 @@ import { organizationMiddleware } from "@/lib/functions/middleware"
 import { parseZod } from "@/lib/functions/zod"
 import { db } from "@/server/db"
 import { projectInsertSchema, projectsTable } from "@/server/db/schema"
-import { DEFAULT_TRANSLATION_MODEL } from "@/server/platform"
 
 export const createProjectFn = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
@@ -14,11 +13,9 @@ export const createProjectFn = createServerFn({ method: "POST" })
         .pick({
           name: true,
           slug: true,
-          translationModel: true,
           translationPrompt: true,
         })
         .extend({
-          translationModel: projectInsertSchema.shape.translationModel.optional().default(DEFAULT_TRANSLATION_MODEL),
           translationPrompt: projectInsertSchema.shape.translationPrompt
             .optional()
             .default("Translate the provided UI messages as concise, natural application UI copy."),
@@ -39,7 +36,6 @@ export const createProjectFn = createServerFn({ method: "POST" })
         name: data.name,
         organizationId: context.organization.id,
         slug: data.slug,
-        translationModel: data.translationModel,
         translationPrompt: data.translationPrompt,
       })
       .returning()

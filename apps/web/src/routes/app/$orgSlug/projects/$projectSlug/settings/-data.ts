@@ -44,7 +44,6 @@ export const updateProjectTranslatorFn = createServerFn({ method: "POST" })
   .inputValidator(
     parseZod(
       z.object({
-        translationModel: projectInsertSchema.shape.translationModel,
         translationPrompt: projectInsertSchema.shape.translationPrompt,
       }),
     ),
@@ -53,7 +52,6 @@ export const updateProjectTranslatorFn = createServerFn({ method: "POST" })
     const [updatedProject] = await db
       .update(projectsTable)
       .set({
-        translationModel: data.translationModel,
         translationPrompt: data.translationPrompt,
         updatedAt: new Date(),
       })
@@ -217,7 +215,6 @@ function getProjectSettings(project: typeof projectsTable.$inferSelect, orgSlug:
     githubRepositoryName: project.githubRepositoryName,
     githubRepositoryOwner: project.githubRepositoryOwner,
     hasProductionBranch: Boolean(project.defaultBranchId),
-    translationModel: project.translationModel,
     translationPrompt: project.translationPrompt,
   }
 }

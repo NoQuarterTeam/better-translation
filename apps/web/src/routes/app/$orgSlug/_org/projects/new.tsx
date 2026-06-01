@@ -51,7 +51,6 @@ function NewProjectPage() {
     defaultValues: {
       name: "",
       slug: "",
-      translationModel: "openai/gpt-5.5",
       translationPrompt: "Translate the provided UI messages as concise, natural application UI copy.",
     },
     validators: {
@@ -62,7 +61,6 @@ function NewProjectPage() {
           .min(1, { error: t("Project name is required") })
           .max(120),
         slug: z.string().trim(),
-        translationModel: z.string().trim().min(1).max(120),
         translationPrompt: z.string().trim().min(1).max(4000),
       }),
     },
@@ -132,9 +130,6 @@ function NewProjectPage() {
                     }}
                   />
                 )}
-              </form.AppField>
-              <form.AppField name="translationModel">
-                {(field) => <field.TextField label={t("Translation model")} placeholder="openai/gpt-5.5" />}
               </form.AppField>
               <form.AppField name="translationPrompt">
                 {(field) => (

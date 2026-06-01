@@ -196,7 +196,7 @@ runtime: {
 }
 ```
 
-Remote mode does not use package-local `translate`; hosted translation runs through the Platform translator so Project-level model, tone, glossary, and billing settings are shared.
+Remote mode does not use package-local `translate`; hosted translation runs through the Platform translator so Better Translation can own the model, billing, and shared behavior while Projects provide tone, glossary, and style guidance.
 
 ```ts
 type TranslateFn = (
@@ -630,7 +630,7 @@ The local runtime is the working package flow today. The hosted platform directi
 - Missing non-default values fall back to the Default locale text in the Runtime bundle.
 - Local dev reads hosted Runtime bundles by default in remote mode.
 - Local dev can opt out of platform reads and writes with `dev.offline: true`.
-- Platform translator requests fill blank branch values using Project-level AI settings and must never overwrite manual edits.
+- Platform translator requests fill blank branch values using Project guidance and must never overwrite manual edits.
 
 Remote runtime URLs are expected to be branch-addressed:
 
@@ -638,7 +638,7 @@ Remote runtime URLs are expected to be branch-addressed:
 /projects/:projectId/branches/:branch/locales/:locale.json
 ```
 
-In remote mode, package-local `translate(messages, locale)` is not the canonical source for hosted Locale values. It remains the local-mode translation hook; hosted AI translation should run through the platform so Project-level model, tone, glossary, and billing settings are shared.
+In remote mode, package-local `translate(messages, locale)` is not the canonical source for hosted Locale values. It remains the local-mode translation hook; hosted AI translation should run through the platform so Better Translation owns the model and billing while Project guidance controls tone, glossary, and style.
 
 ## Server-Side Helpers
 

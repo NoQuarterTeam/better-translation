@@ -129,7 +129,6 @@ export const translateLocaleValueFn = createServerFn({ method: "POST" })
         placeholders: message.placeholders,
         sources: message.sources,
       },
-      model: project.translationModel,
       prompt: project.translationPrompt,
     })
 

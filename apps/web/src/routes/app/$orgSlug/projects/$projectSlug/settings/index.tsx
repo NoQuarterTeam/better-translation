@@ -91,22 +91,18 @@ function ProjectSettingsPage() {
 
   const translatorForm = useAppForm({
     defaultValues: {
-      translationModel: project.translationModel,
       translationPrompt: project.translationPrompt,
     },
     validators: {
       onSubmit: z.object({
-        translationModel: z.string().trim().min(1).max(120),
         translationPrompt: z.string().trim().min(1).max(4000),
       }),
     },
     onSubmit: ({ value }) => {
       updateTranslatorMutation.mutate({
         data: {
-          ...value,
           orgSlug,
           projectSlug,
-          translationModel: value.translationModel.trim(),
           translationPrompt: value.translationPrompt.trim(),
         },
       })
@@ -207,9 +203,6 @@ function ProjectSettingsPage() {
                 void translatorForm.handleSubmit()
               }}
             >
-              <translatorForm.AppField name="translationModel">
-                {(field) => <field.TextField label={t("Translation model")} placeholder="openai/gpt-5.5" />}
-              </translatorForm.AppField>
               <translatorForm.AppField name="translationPrompt">
                 {(field) => (
                   <field.TextareaField

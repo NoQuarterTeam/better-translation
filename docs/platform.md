@@ -278,7 +278,7 @@ In remote mode, the hosted platform owns Locale values. Package-local translatio
 
 Remote-mode AI translation should use the Platform translator, not duplicate per-repo AI settings.
 
-The Platform translator uses Project-level settings such as model, tone, glossary, and style guidance. Manifest sync and local dev platform translation should both use those settings.
+The Platform translator uses a Better Translation-owned model. Projects can configure the translation brief for tone, glossary, and style guidance. Manifest sync and local dev platform translation should both use that Project guidance.
 
 When local dev calls the Platform translator, the request should include enough information to identify and translate the value:
 

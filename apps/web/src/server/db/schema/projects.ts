@@ -25,7 +25,6 @@ export const projectsTable = pgTable(
     githubRepositoryId: text("github_repository_id"),
     githubInstallationId: text("github_installation_id"),
     githubBranchCleanupEnabled: boolean("github_branch_cleanup_enabled").notNull().default(false),
-    translationModel: text("translation_model").notNull().default("openai/gpt-5.5"),
     translationPrompt: text("translation_prompt")
       .notNull()
       .default("Translate the provided UI messages as concise, natural application UI copy."),
@@ -46,7 +45,6 @@ const customFields = {
     .min(1)
     .max(64)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  translationModel: z.string().trim().min(1).max(120),
   translationPrompt: z.string().trim().min(1).max(4000),
   githubRepositoryOwner: z
     .string()
