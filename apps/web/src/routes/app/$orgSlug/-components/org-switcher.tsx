@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { Link, useNavigate, useRouter } from "@tanstack/react-router"
-import { CheckIcon, ChevronsUpDownIcon, PlusIcon } from "lucide-react"
+import { Link, useNavigate, useParams, useRouter } from "@tanstack/react-router"
+import { ArrowLeftIcon, CheckIcon, ChevronsUpDownIcon, PlusIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -17,6 +17,22 @@ import { setSelectedOrganizationFn, useCurrentOrganization, userOrganizationsQue
 import { ResourceMark } from "./resource-mark"
 
 export function OrgSwitcher() {
+  const params = useParams({ strict: false })
+  const orgSlug = typeof params.orgSlug === "string" ? params.orgSlug : null
+
+  if (!orgSlug) {
+    return (
+      <Button variant="ghost" render={<Link to="/app" />}>
+        <ArrowLeftIcon />
+        <span className="hidden sm:inline">Back</span>
+      </Button>
+    )
+  }
+
+  return <OrgSwitcherMenu />
+}
+
+function OrgSwitcherMenu() {
   const navigate = useNavigate()
   const router = useRouter()
   const { organization } = useCurrentOrganization()

@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start"
 
 import { authMiddleware } from "@/lib/functions/middleware"
 import { db } from "@/server/db"
+import { getSession } from "@/server/sessions"
 
 export const listLinkedAccountsFn = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -23,3 +24,7 @@ export const linkedAccountsQueryOptions = () =>
     queryKey: ["linked-accounts"],
     queryFn: listLinkedAccountsFn,
   })
+
+export const getAuthSessionFn = createServerFn({ method: "GET" }).handler(() => {
+  return getSession()
+})

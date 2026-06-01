@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppLayoutRouteImport } from './routes/app/layout'
 import { Route as AuthLayoutRouteImport } from './routes/_auth/layout'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
@@ -18,13 +19,15 @@ import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password'
+import { Route as AppProfileLayoutRouteImport } from './routes/app/profile/layout'
 import { Route as AppOrgSlugLayoutRouteImport } from './routes/app/$orgSlug/layout'
+import { Route as AppProfileIndexRouteImport } from './routes/app/profile/index'
 import { Route as AppCreateOrgIndexRouteImport } from './routes/app/create-org/index'
+import { Route as AppProfileAuthenticationRouteImport } from './routes/app/profile/authentication'
 import { Route as ApiGithubWebhooksRouteImport } from './routes/api/github/webhooks'
 import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
 import { Route as AppOrgSlugOrgLayoutRouteImport } from './routes/app/$orgSlug/_org/layout'
-import { Route as AppOrgSlugProfileIndexRouteImport } from './routes/app/$orgSlug/profile/index'
 import { Route as AppOrgSlugOrgIndexRouteImport } from './routes/app/$orgSlug/_org/index'
 import { Route as AppOrgSlugOrgUsersRouteImport } from './routes/app/$orgSlug/_org/users'
 import { Route as AppOrgSlugProjectsProjectSlugLayoutRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/layout'
@@ -39,6 +42,11 @@ import { Route as ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125
 import { Route as ApiProjectsProjectIdBranchesBranchNameManifestRouteImport } from './routes/api/projects/$projectId/branches/$branchName/manifest'
 import { Route as AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/branches/$branchName/index'
 
+const AppLayoutRoute = AppLayoutRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthLayoutRoute = AuthLayoutRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
@@ -84,16 +92,32 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => AuthLayoutRoute,
 } as any)
+const AppProfileLayoutRoute = AppProfileLayoutRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppLayoutRoute,
+} as any)
 const AppOrgSlugLayoutRoute = AppOrgSlugLayoutRouteImport.update({
-  id: '/app/$orgSlug',
-  path: '/app/$orgSlug',
-  getParentRoute: () => rootRouteImport,
+  id: '/$orgSlug',
+  path: '/$orgSlug',
+  getParentRoute: () => AppLayoutRoute,
+} as any)
+const AppProfileIndexRoute = AppProfileIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppProfileLayoutRoute,
 } as any)
 const AppCreateOrgIndexRoute = AppCreateOrgIndexRouteImport.update({
   id: '/create-org/',
   path: '/create-org/',
   getParentRoute: () => AppLayoutRoute,
 } as any)
+const AppProfileAuthenticationRoute =
+  AppProfileAuthenticationRouteImport.update({
+    id: '/authentication',
+    path: '/authentication',
+    getParentRoute: () => AppProfileLayoutRoute,
+  } as any)
 const ApiGithubWebhooksRoute = ApiGithubWebhooksRouteImport.update({
   id: '/api/github/webhooks',
   path: '/api/github/webhooks',
@@ -111,11 +135,6 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 } as any)
 const AppOrgSlugOrgLayoutRoute = AppOrgSlugOrgLayoutRouteImport.update({
   id: '/_org',
-  getParentRoute: () => AppOrgSlugLayoutRoute,
-} as any)
-const AppOrgSlugProfileIndexRoute = AppOrgSlugProfileIndexRouteImport.update({
-  id: '/profile/',
-  path: '/profile/',
   getParentRoute: () => AppOrgSlugLayoutRoute,
 } as any)
 const AppOrgSlugOrgIndexRoute = AppOrgSlugOrgIndexRouteImport.update({
@@ -199,7 +218,9 @@ const AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppLayoutRouteWithChildren
   '/app/$orgSlug': typeof AppOrgSlugLayoutRouteWithChildren
+  '/app/profile': typeof AppProfileLayoutRouteWithChildren
   '/forgot-password': typeof AuthForgotPasswordRoute
   '/reset-password': typeof AuthResetPasswordRoute
   '/sign-in': typeof AuthSignInRoute
@@ -210,11 +231,12 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhooks': typeof ApiGithubWebhooksRoute
+  '/app/profile/authentication': typeof AppProfileAuthenticationRoute
   '/app/create-org/': typeof AppCreateOrgIndexRoute
+  '/app/profile/': typeof AppProfileIndexRoute
   '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
   '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersRoute
   '/app/$orgSlug/': typeof AppOrgSlugOrgIndexRoute
-  '/app/$orgSlug/profile/': typeof AppOrgSlugProfileIndexRoute
   '/app/$orgSlug/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
   '/app/$orgSlug/projects/': typeof AppOrgSlugOrgProjectsIndexRoute
   '/app/$orgSlug/settings/': typeof AppOrgSlugOrgSettingsIndexRoute
@@ -239,9 +261,10 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhooks': typeof ApiGithubWebhooksRoute
+  '/app/profile/authentication': typeof AppProfileAuthenticationRoute
   '/app/create-org': typeof AppCreateOrgIndexRoute
+  '/app/profile': typeof AppProfileIndexRoute
   '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersRoute
-  '/app/$orgSlug/profile': typeof AppOrgSlugProfileIndexRoute
   '/app/$orgSlug/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
   '/app/$orgSlug/projects': typeof AppOrgSlugOrgProjectsIndexRoute
   '/app/$orgSlug/settings': typeof AppOrgSlugOrgSettingsIndexRoute
@@ -257,7 +280,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthLayoutRouteWithChildren
+  '/app': typeof AppLayoutRouteWithChildren
   '/app/$orgSlug': typeof AppOrgSlugLayoutRouteWithChildren
+  '/app/profile': typeof AppProfileLayoutRouteWithChildren
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute
   '/_auth/reset-password': typeof AuthResetPasswordRoute
   '/_auth/sign-in': typeof AuthSignInRoute
@@ -269,11 +294,12 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhooks': typeof ApiGithubWebhooksRoute
+  '/app/profile/authentication': typeof AppProfileAuthenticationRoute
   '/app/create-org/': typeof AppCreateOrgIndexRoute
+  '/app/profile/': typeof AppProfileIndexRoute
   '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
   '/app/$orgSlug/_org/users': typeof AppOrgSlugOrgUsersRoute
   '/app/$orgSlug/_org/': typeof AppOrgSlugOrgIndexRoute
-  '/app/$orgSlug/profile/': typeof AppOrgSlugProfileIndexRoute
   '/app/$orgSlug/_org/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
   '/app/$orgSlug/_org/projects/': typeof AppOrgSlugOrgProjectsIndexRoute
   '/app/$orgSlug/_org/settings/': typeof AppOrgSlugOrgSettingsIndexRoute
@@ -289,7 +315,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/app'
     | '/app/$orgSlug'
+    | '/app/profile'
     | '/forgot-password'
     | '/reset-password'
     | '/sign-in'
@@ -300,11 +328,12 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/github/setup'
     | '/api/github/webhooks'
+    | '/app/profile/authentication'
     | '/app/create-org/'
+    | '/app/profile/'
     | '/app/$orgSlug/projects/$projectSlug'
     | '/app/$orgSlug/users'
     | '/app/$orgSlug/'
-    | '/app/$orgSlug/profile/'
     | '/app/$orgSlug/projects/new'
     | '/app/$orgSlug/projects/'
     | '/app/$orgSlug/settings/'
@@ -329,9 +358,10 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/github/setup'
     | '/api/github/webhooks'
+    | '/app/profile/authentication'
     | '/app/create-org'
+    | '/app/profile'
     | '/app/$orgSlug/users'
-    | '/app/$orgSlug/profile'
     | '/app/$orgSlug/projects/new'
     | '/app/$orgSlug/projects'
     | '/app/$orgSlug/settings'
@@ -346,7 +376,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_auth'
+    | '/app'
     | '/app/$orgSlug'
+    | '/app/profile'
     | '/_auth/forgot-password'
     | '/_auth/reset-password'
     | '/_auth/sign-in'
@@ -358,11 +390,12 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/github/setup'
     | '/api/github/webhooks'
+    | '/app/profile/authentication'
     | '/app/create-org/'
+    | '/app/profile/'
     | '/app/$orgSlug/projects/$projectSlug'
     | '/app/$orgSlug/_org/users'
     | '/app/$orgSlug/_org/'
-    | '/app/$orgSlug/profile/'
     | '/app/$orgSlug/_org/projects/new'
     | '/app/$orgSlug/_org/projects/'
     | '/app/$orgSlug/_org/settings/'
@@ -378,7 +411,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthLayoutRoute: typeof AuthLayoutRouteWithChildren
-  AppOrgSlugLayoutRoute: typeof AppOrgSlugLayoutRouteWithChildren
+  AppLayoutRoute: typeof AppLayoutRouteWithChildren
   AcceptInvitationInvitationIdRoute: typeof AcceptInvitationInvitationIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiGithubSetupRoute: typeof ApiGithubSetupRoute
@@ -389,6 +422,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppLayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -452,12 +492,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof AuthLayoutRoute
     }
+    '/app/profile': {
+      id: '/app/profile'
+      path: '/profile'
+      fullPath: '/app/profile'
+      preLoaderRoute: typeof AppProfileLayoutRouteImport
+      parentRoute: typeof AppLayoutRoute
+    }
     '/app/$orgSlug': {
       id: '/app/$orgSlug'
-      path: '/app/$orgSlug'
+      path: '/$orgSlug'
       fullPath: '/app/$orgSlug'
       preLoaderRoute: typeof AppOrgSlugLayoutRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AppLayoutRoute
+    }
+    '/app/profile/': {
+      id: '/app/profile/'
+      path: '/'
+      fullPath: '/app/profile/'
+      preLoaderRoute: typeof AppProfileIndexRouteImport
+      parentRoute: typeof AppProfileLayoutRoute
     }
     '/app/create-org/': {
       id: '/app/create-org/'
@@ -465,6 +519,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/create-org/'
       preLoaderRoute: typeof AppCreateOrgIndexRouteImport
       parentRoute: typeof AppLayoutRoute
+    }
+    '/app/profile/authentication': {
+      id: '/app/profile/authentication'
+      path: '/authentication'
+      fullPath: '/app/profile/authentication'
+      preLoaderRoute: typeof AppProfileAuthenticationRouteImport
+      parentRoute: typeof AppProfileLayoutRoute
     }
     '/api/github/webhooks': {
       id: '/api/github/webhooks'
@@ -492,13 +553,6 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/app/$orgSlug'
       preLoaderRoute: typeof AppOrgSlugOrgLayoutRouteImport
-      parentRoute: typeof AppOrgSlugLayoutRoute
-    }
-    '/app/$orgSlug/profile/': {
-      id: '/app/$orgSlug/profile/'
-      path: '/profile'
-      fullPath: '/app/$orgSlug/profile/'
-      preLoaderRoute: typeof AppOrgSlugProfileIndexRouteImport
       parentRoute: typeof AppOrgSlugLayoutRoute
     }
     '/app/$orgSlug/_org/': {
@@ -664,23 +718,52 @@ const AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren =
 interface AppOrgSlugLayoutRouteChildren {
   AppOrgSlugOrgLayoutRoute: typeof AppOrgSlugOrgLayoutRouteWithChildren
   AppOrgSlugProjectsProjectSlugLayoutRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
-  AppOrgSlugProfileIndexRoute: typeof AppOrgSlugProfileIndexRoute
 }
 
 const AppOrgSlugLayoutRouteChildren: AppOrgSlugLayoutRouteChildren = {
   AppOrgSlugOrgLayoutRoute: AppOrgSlugOrgLayoutRouteWithChildren,
   AppOrgSlugProjectsProjectSlugLayoutRoute:
     AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren,
-  AppOrgSlugProfileIndexRoute: AppOrgSlugProfileIndexRoute,
 }
 
 const AppOrgSlugLayoutRouteWithChildren =
   AppOrgSlugLayoutRoute._addFileChildren(AppOrgSlugLayoutRouteChildren)
 
+interface AppProfileLayoutRouteChildren {
+  AppProfileAuthenticationRoute: typeof AppProfileAuthenticationRoute
+  AppProfileIndexRoute: typeof AppProfileIndexRoute
+}
+
+const AppProfileLayoutRouteChildren: AppProfileLayoutRouteChildren = {
+  AppProfileAuthenticationRoute: AppProfileAuthenticationRoute,
+  AppProfileIndexRoute: AppProfileIndexRoute,
+}
+
+const AppProfileLayoutRouteWithChildren =
+  AppProfileLayoutRoute._addFileChildren(AppProfileLayoutRouteChildren)
+
+interface AppLayoutRouteChildren {
+  AppOrgSlugLayoutRoute: typeof AppOrgSlugLayoutRouteWithChildren
+  AppProfileLayoutRoute: typeof AppProfileLayoutRouteWithChildren
+  AppIndexRoute: typeof AppIndexRoute
+  AppCreateOrgIndexRoute: typeof AppCreateOrgIndexRoute
+}
+
+const AppLayoutRouteChildren: AppLayoutRouteChildren = {
+  AppOrgSlugLayoutRoute: AppOrgSlugLayoutRouteWithChildren,
+  AppProfileLayoutRoute: AppProfileLayoutRouteWithChildren,
+  AppIndexRoute: AppIndexRoute,
+  AppCreateOrgIndexRoute: AppCreateOrgIndexRoute,
+}
+
+const AppLayoutRouteWithChildren = AppLayoutRoute._addFileChildren(
+  AppLayoutRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthLayoutRoute: AuthLayoutRouteWithChildren,
-  AppOrgSlugLayoutRoute: AppOrgSlugLayoutRouteWithChildren,
+  AppLayoutRoute: AppLayoutRouteWithChildren,
   AcceptInvitationInvitationIdRoute: AcceptInvitationInvitationIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiGithubSetupRoute: ApiGithubSetupRoute,

@@ -52,8 +52,9 @@ Read `CONTEXT.md` for product terminology and `docs/platform.md` for product dir
 
 - Make sure to install packages with Bun, especially if making changes to the workspace packages
 - We use vite-plus as the workspace tooling
-- Always run the format, lint, and check scripts in the root package.json to verify routine changes
-- Only run `bun --cwd apps/web build` when the change is deploy-sensitive, SSR/runtime-sensitive, touches route generation or build output, or when diagnosing a specific deployment/build issue
+- For routine code changes, verify with the root package scripts only: `bun run format`, `bun run lint`, and `bun run check`
+- Do not run `bun --cwd apps/web build` for ordinary app UI, route, layout, route-tree, type, or refactor changes. `bun run check` is enough for those.
+- Only run `bun --cwd apps/web build` when the user explicitly asks for a build, when changing build/deploy configuration, when changing `packages/better-translation` output consumed by the app, or when diagnosing a concrete production/build failure.
 
 ## Code Style
 
