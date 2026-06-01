@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "ai": "6.0.194",
-    "oxc-parser": "0.133.0"
+    "oxc-parser": "0.134.0"
   },
   "devDependencies": {
     "@better-translation/tsconfig": "workspace:*",
