@@ -24,6 +24,7 @@ import { Route as ApiGithubWebhooksRouteImport } from './routes/api/github/webho
 import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
 import { Route as AppOrgSlugOrgLayoutRouteImport } from './routes/app/$orgSlug/_org/layout'
+import { Route as AppOrgSlugProfileIndexRouteImport } from './routes/app/$orgSlug/profile/index'
 import { Route as AppOrgSlugOrgIndexRouteImport } from './routes/app/$orgSlug/_org/index'
 import { Route as AppOrgSlugOrgUsersRouteImport } from './routes/app/$orgSlug/_org/users'
 import { Route as AppOrgSlugProjectsProjectSlugLayoutRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/layout'
@@ -110,6 +111,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 } as any)
 const AppOrgSlugOrgLayoutRoute = AppOrgSlugOrgLayoutRouteImport.update({
   id: '/_org',
+  getParentRoute: () => AppOrgSlugLayoutRoute,
+} as any)
+const AppOrgSlugProfileIndexRoute = AppOrgSlugProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
   getParentRoute: () => AppOrgSlugLayoutRoute,
 } as any)
 const AppOrgSlugOrgIndexRoute = AppOrgSlugOrgIndexRouteImport.update({
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
   '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersRoute
   '/app/$orgSlug/': typeof AppOrgSlugOrgIndexRoute
+  '/app/$orgSlug/profile/': typeof AppOrgSlugProfileIndexRoute
   '/app/$orgSlug/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
   '/app/$orgSlug/projects/': typeof AppOrgSlugOrgProjectsIndexRoute
   '/app/$orgSlug/settings/': typeof AppOrgSlugOrgSettingsIndexRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/api/github/webhooks': typeof ApiGithubWebhooksRoute
   '/app/create-org': typeof AppCreateOrgIndexRoute
   '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersRoute
+  '/app/$orgSlug/profile': typeof AppOrgSlugProfileIndexRoute
   '/app/$orgSlug/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
   '/app/$orgSlug/projects': typeof AppOrgSlugOrgProjectsIndexRoute
   '/app/$orgSlug/settings': typeof AppOrgSlugOrgSettingsIndexRoute
@@ -265,6 +273,7 @@ export interface FileRoutesById {
   '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
   '/app/$orgSlug/_org/users': typeof AppOrgSlugOrgUsersRoute
   '/app/$orgSlug/_org/': typeof AppOrgSlugOrgIndexRoute
+  '/app/$orgSlug/profile/': typeof AppOrgSlugProfileIndexRoute
   '/app/$orgSlug/_org/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
   '/app/$orgSlug/_org/projects/': typeof AppOrgSlugOrgProjectsIndexRoute
   '/app/$orgSlug/_org/settings/': typeof AppOrgSlugOrgSettingsIndexRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | '/app/$orgSlug/projects/$projectSlug'
     | '/app/$orgSlug/users'
     | '/app/$orgSlug/'
+    | '/app/$orgSlug/profile/'
     | '/app/$orgSlug/projects/new'
     | '/app/$orgSlug/projects/'
     | '/app/$orgSlug/settings/'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/api/github/webhooks'
     | '/app/create-org'
     | '/app/$orgSlug/users'
+    | '/app/$orgSlug/profile'
     | '/app/$orgSlug/projects/new'
     | '/app/$orgSlug/projects'
     | '/app/$orgSlug/settings'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/app/$orgSlug/projects/$projectSlug'
     | '/app/$orgSlug/_org/users'
     | '/app/$orgSlug/_org/'
+    | '/app/$orgSlug/profile/'
     | '/app/$orgSlug/_org/projects/new'
     | '/app/$orgSlug/_org/projects/'
     | '/app/$orgSlug/_org/settings/'
@@ -482,6 +494,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/app/$orgSlug'
       preLoaderRoute: typeof AppOrgSlugOrgLayoutRouteImport
+      parentRoute: typeof AppOrgSlugLayoutRoute
+    }
+    '/app/$orgSlug/profile/': {
+      id: '/app/$orgSlug/profile/'
+      path: '/profile'
+      fullPath: '/app/$orgSlug/profile/'
+      preLoaderRoute: typeof AppOrgSlugProfileIndexRouteImport
       parentRoute: typeof AppOrgSlugLayoutRoute
     }
     '/app/$orgSlug/_org/': {
@@ -647,12 +666,14 @@ const AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren =
 interface AppOrgSlugLayoutRouteChildren {
   AppOrgSlugOrgLayoutRoute: typeof AppOrgSlugOrgLayoutRouteWithChildren
   AppOrgSlugProjectsProjectSlugLayoutRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
+  AppOrgSlugProfileIndexRoute: typeof AppOrgSlugProfileIndexRoute
 }
 
 const AppOrgSlugLayoutRouteChildren: AppOrgSlugLayoutRouteChildren = {
   AppOrgSlugOrgLayoutRoute: AppOrgSlugOrgLayoutRouteWithChildren,
   AppOrgSlugProjectsProjectSlugLayoutRoute:
     AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren,
+  AppOrgSlugProfileIndexRoute: AppOrgSlugProfileIndexRoute,
 }
 
 const AppOrgSlugLayoutRouteWithChildren =

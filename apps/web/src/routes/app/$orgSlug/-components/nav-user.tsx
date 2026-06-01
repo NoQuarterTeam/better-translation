@@ -1,5 +1,5 @@
-import { useNavigate } from "@tanstack/react-router"
-import { LogOutIcon } from "lucide-react"
+import { useNavigate, useParams } from "@tanstack/react-router"
+import { LogOutIcon, UserIcon } from "lucide-react"
 
 import { useT } from "better-translation/react"
 
@@ -28,6 +28,8 @@ function createInitials(user: Pick<User, "name">) {
 
 export function NavUser() {
   const navigate = useNavigate()
+  const params = useParams({ strict: false })
+  const orgSlug = typeof params.orgSlug === "string" ? params.orgSlug : null
   const t = useT()
   const { data: session, isPending } = authClient.useSession()
   const user = session?.user
@@ -58,6 +60,15 @@ export function NavUser() {
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        {orgSlug && (
+          <>
+            <DropdownMenuItem onClick={() => void navigate({ to: "/app/$orgSlug/profile", params: { orgSlug } })}>
+              <UserIcon />
+              {t("Profile")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <div className="px-1 py-1.5" onClick={(e) => e.stopPropagation()}>
           <LocaleSwitcher className="w-full" />
         </div>
