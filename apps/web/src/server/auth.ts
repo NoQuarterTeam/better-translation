@@ -45,6 +45,11 @@ export const auth = betterAuth({
       isAdmin: { type: "boolean", input: false, required: false },
     },
   },
+  account: {
+    accountLinking: {
+      trustedProviders: ["github", "google"],
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
