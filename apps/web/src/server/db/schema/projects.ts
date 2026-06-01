@@ -27,7 +27,7 @@ export const projectsTable = pgTable(
     githubInstallationRecordId: text("github_installation_record_id").references(() => githubInstallationsTable.id, {
       onDelete: "set null",
     }),
-    githubBranchCleanupEnabled: boolean("github_branch_cleanup_enabled").notNull().default(false),
+    githubBranchCleanupEnabled: boolean("github_branch_cleanup_enabled").notNull().default(true),
     translationPrompt: text("translation_prompt")
       .notNull()
       .default("Translate the provided UI messages as concise, natural application UI copy."),

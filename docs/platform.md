@@ -178,7 +178,7 @@ A Project can optionally connect to one GitHub repository through a GitHub App. 
 
 Repository connection is separate from user sign-in. A user may authenticate with GitHub without connecting a repository to a Project, and a Project repository connection only applies to that Project.
 
-Branch cleanup is a Project setting. When enabled, the hosted service archives non-production Branches whose matching upstream branch no longer exists. The Production Branch is always protected from automatic cleanup.
+Branch cleanup is a Project setting. It is enabled by default and only takes effect when the Project has a Repository connection. When enabled, the hosted service archives non-production Branches whose matching upstream branch no longer exists. The Production Branch is always protected from automatic cleanup.
 
 Branch cleanup should be webhook-driven. GitHub branch deletion events are the signal for archiving a matching non-production Branch. Pull request close or merge events should not archive Branches by themselves.
 

@@ -1,7 +1,7 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import type { ColumnDef } from "@tanstack/react-table"
-import { BotIcon, CheckIcon, PencilIcon, SearchIcon } from "lucide-react"
+import { BotIcon, CheckIcon, KeyRoundIcon, LanguagesIcon, PencilIcon, SearchIcon, TerminalIcon } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { formatLocale } from "@/lib/locales"
 
@@ -59,6 +60,7 @@ function BranchPage() {
   const editableLocales = branchQuery.data.branch.locales.filter(
     (branchLocale) => branchLocale !== branchQuery.data.branch.defaultLocale,
   )
+  const hasMessages = branchQuery.data.messages.length > 0
 
   const filteredMessages = useMemo(() => {
     const messages = branchQuery.data.messages
@@ -101,21 +103,76 @@ function BranchPage() {
         </div>
       </div>
 
-      <Card className="overflow-hidden">
-        <CardHeader>
-          <InputGroup>
-            <InputGroupInput
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={t("Search messages")}
-            />
-            <InputGroupAddon align="inline-start">
-              <SearchIcon className="text-muted-foreground" />
-            </InputGroupAddon>
-          </InputGroup>
-        </CardHeader>
+      <Card>
+        {hasMessages && (
+          <CardHeader>
+            <InputGroup>
+              <InputGroupInput
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={t("Search messages")}
+              />
+              <InputGroupAddon align="inline-start">
+                <SearchIcon className="text-muted-foreground" />
+              </InputGroupAddon>
+            </InputGroup>
+          </CardHeader>
+        )}
         <CardContent>
-          <DataTable columns={columns} data={filteredMessages} />
+          {hasMessages ? (
+            <DataTable columns={columns} data={filteredMessages} />
+          ) : (
+            <Empty className="border-0">
+              <EmptyHeader className="max-w-2xl">
+                <EmptyMedia variant="icon">
+                  <LanguagesIcon />
+                </EmptyMedia>
+                <EmptyTitle>
+                  <T>No Messages on this Branch yet</T>
+                </EmptyTitle>
+                <EmptyDescription className="max-w-xl">
+                  <T>
+                    Start the dev server with the Better Translation Vite plugin enabled. Plugin sync will upload the Manifest for
+                    this Branch, then Messages and Locale values will appear here.
+                  </T>
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent className="max-w-3xl">
+                <div className="grid w-full gap-3 text-left sm:grid-cols-2">
+                  <div className="flex gap-3 rounded-md border bg-muted/30 p-4">
+                    <TerminalIcon className="mt-0.5 size-3 shrink-0 text-muted-foreground" />
+                    <div>
+                      <div className="font-medium">
+                        <T>Run your dev server</T>
+                      </div>
+                      <p className="text-muted-foreground">
+                        <T>Use the command your app already uses, usually bun run dev.</T>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 rounded-md border bg-muted/30 p-4">
+                    <KeyRoundIcon className="mt-0.5 size-3 shrink-0 text-muted-foreground" />
+                    <div>
+                      <div className="font-medium">
+                        <T>Check Project credentials</T>
+                      </div>
+                      <p className="text-muted-foreground">
+                        <T>Remote sync needs this Project id and a Project API key in the plugin config.</T>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="mt-1 w-fit"
+                  render={<Link to="/app/$orgSlug/projects/$projectSlug/api-keys" params={{ orgSlug, projectSlug }} />}
+                >
+                  <KeyRoundIcon />
+                  <T>Manage API keys</T>
+                </Button>
+              </EmptyContent>
+            </Empty>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -32,7 +32,7 @@ export function createGitHubInstallUrl(state: GitHubSetupState) {
   if (!env.GITHUB_APP_SLUG) return null
 
   const signedState = signGitHubSetupState(state)
-  const url = new URL(`https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/select_target`)
+  const url = new URL(`https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`)
   url.searchParams.set("state", signedState)
   return url.toString()
 }
@@ -71,6 +71,36 @@ export function readGitHubSetupState(state: string) {
 }
 
 export async function listGitHubInstallationRepositories(installationId: string) {
+  return fetchGitHubInstallationRepositories(installationId)
+}
+
+export async function searchGitHubInstallationRepositories({
+  installationId,
+  page = 1,
+  perPage = 5,
+  search,
+}: {
+  installationId: string
+  page?: number
+  perPage?: number
+  search?: string
+}) {
+  const query = search?.trim().toLowerCase()
+  const repositories = await fetchGitHubInstallationRepositories(installationId)
+  const filteredRepositories = query
+    ? repositories.filter((repository) => repository.fullName.toLowerCase().includes(query))
+    : repositories
+  const start = (page - 1) * perPage
+
+  return {
+    hasMore: start + perPage < filteredRepositories.length,
+    page,
+    repositories: filteredRepositories.slice(start, start + perPage),
+    totalCount: filteredRepositories.length,
+  }
+}
+
+async function fetchGitHubInstallationRepositories(installationId: string) {
   const token = await createGitHubInstallationToken(installationId)
   const repositories: z.infer<typeof githubInstallationRepositoriesResponseSchema>["repositories"] = []
 

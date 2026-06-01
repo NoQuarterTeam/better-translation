@@ -4,7 +4,6 @@ import { CheckIcon, ChevronsUpDownIcon, GitBranchIcon, StarIcon } from "lucide-r
 
 import { T } from "better-translation/react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -83,10 +82,9 @@ export function BranchSwitcher() {
                   })
                 }}
               >
-                <GitBranchIcon className="text-muted-foreground" />
+                <BranchRoleIcon isProduction={branch.isDefault} />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{branch.name}</div>
-                  <BranchRoleBadge isProduction={branch.isDefault} />
+                  <span className="truncate font-medium">{branch.name}</span>
                 </div>
                 <CheckIcon className={isActive ? "opacity-100" : "opacity-0"} />
               </DropdownMenuItem>
@@ -103,16 +101,20 @@ export function BranchSwitcher() {
   )
 }
 
-function BranchRoleBadge({ isProduction }: { isProduction: boolean }) {
+function BranchRoleIcon({ isProduction }: { isProduction: boolean }) {
   return isProduction ? (
-    <Badge className="mt-1">
-      <StarIcon data-icon="inline-start" />
-      <T>Production</T>
-    </Badge>
+    <span className="text-muted-foreground">
+      <StarIcon />
+      <span className="sr-only">
+        <T>Production</T>
+      </span>
+    </span>
   ) : (
-    <Badge variant="secondary" className="mt-1">
-      <GitBranchIcon data-icon="inline-start" />
-      <T>Feature</T>
-    </Badge>
+    <span className="text-muted-foreground">
+      <GitBranchIcon />
+      <span className="sr-only">
+        <T>Feature</T>
+      </span>
+    </span>
   )
 }

@@ -1,7 +1,9 @@
-import { PlusIcon } from "lucide-react"
+import { ChevronsUpDownIcon, PlusIcon } from "lucide-react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Command, CommandGroup, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 import { ResourceMark } from "./resource-mark"
 
@@ -27,48 +29,95 @@ export function GitHubAccountSelect({
   onSelectInstallation: (installationId: string) => void
   selectedInstallationId: string
 }) {
+  const [open, setOpen] = useState(false)
+  const selectedInstallation = installations.find((installation) => installation.installationId === selectedInstallationId)
+
   return (
     <div className={className}>
-      <Select
-        value={selectedInstallationId}
-        onValueChange={(value) => {
-          if (value) onSelectInstallation(value)
-        }}
-        disabled={installations.length === 0}
-      >
-        <SelectTrigger className="max-w-full min-w-56">
-          <SelectValue placeholder="No GitHub accounts connected" />
-        </SelectTrigger>
-        <SelectContent align="start">
-          {installations.map((installation) => (
-            <SelectItem key={installation.id} value={installation.installationId}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <Button type="button" variant="outline" className="max-w-full min-w-56 justify-between gap-3 px-2.5 font-normal" />
+          }
+        >
+          {selectedInstallation ? (
+            <span className="flex min-w-0 items-center gap-2">
               <ResourceMark
-                label={installation.accountLogin}
-                imageUrl={installation.accountAvatarUrl}
+                label={selectedInstallation.accountLogin}
+                imageUrl={selectedInstallation.accountAvatarUrl}
                 className="size-5 rounded-md"
               />
-              <span className="truncate">{installation.accountLogin}</span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        disabled={!githubInstallUrl}
-        onClick={() => openGitHubSetup(githubInstallUrl, onAddAccountComplete)}
-      >
-        <PlusIcon />
-        <span className="sr-only">Add GitHub Account</span>
-      </Button>
+              <span className="truncate">{selectedInstallation.accountLogin}</span>
+            </span>
+          ) : (
+            <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
+              <PlusIcon />
+              Add GitHub Account
+            </span>
+          )}
+          <ChevronsUpDownIcon data-icon="inline-end" className="text-muted-foreground" />
+        </PopoverTrigger>
+        <PopoverContent className="w-(--anchor-width) min-w-72 p-0" align="start">
+          <Command shouldFilter={false}>
+            <CommandList>
+              {installations.length > 0 && (
+                <>
+                  <CommandGroup>
+                    {installations.map((installation) => {
+                      const selected = installation.installationId === selectedInstallationId
+
+                      return (
+                        <CommandItem
+                          key={installation.id}
+                          value={installation.accountLogin}
+                          data-checked={selected || undefined}
+                          data-selected={selected || undefined}
+                          onSelect={() => {
+                            onSelectInstallation(installation.installationId)
+                            setOpen(false)
+                          }}
+                        >
+                          <ResourceMark
+                            label={installation.accountLogin}
+                            imageUrl={installation.accountAvatarUrl}
+                            className="size-5 rounded-md"
+                          />
+                          <span className="truncate">{installation.accountLogin}</span>
+                        </CommandItem>
+                      )
+                    })}
+                  </CommandGroup>
+                  <CommandSeparator />
+                </>
+              )}
+              <CommandGroup>
+                <CommandItem
+                  value="add-github-account"
+                  disabled={!githubInstallUrl}
+                  onSelect={() => {
+                    setOpen(false)
+                    openGitHubSetup(githubInstallUrl, onAddAccountComplete)
+                  }}
+                >
+                  <PlusIcon />
+                  Add GitHub Account
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   )
 }
 
-function openGitHubSetup(url: string | null, onClose?: () => void) {
+export function openGitHubSetup(url: string | null, onClose?: () => void) {
   if (!url) return
-  const popup = window.open(url, "better-translation-github", "width=1040,height=760")
+  const width = 1040
+  const height = 760
+  const left = Math.max(0, window.screenX + (window.outerWidth - width) / 2)
+  const top = Math.max(0, window.screenY + (window.outerHeight - height) / 2)
+  const popup = window.open(url, "better-translation-github", `width=${width},height=${height},left=${left},top=${top}`)
   if (!popup) {
     window.location.href = url
     return

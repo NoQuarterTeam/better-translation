@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { CopyIcon, GitBranchIcon, UnplugIcon } from "lucide-react"
+import { CopyIcon, GitBranchIcon, PlusIcon, UnplugIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -14,8 +14,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
+import { Skeleton } from "@/components/ui/skeleton"
 
-import { GitHubAccountSelect } from "../../../-components/github-account-select"
+import { GitHubAccountSelect, openGitHubSetup } from "../../../-components/github-account-select"
 import { organizationProjectsQueryOptions } from "../../../-data"
 import {
   connectProjectGitHubRepositoryFn,
@@ -61,7 +62,8 @@ function ProjectSettingsPage() {
   const search = Route.useSearch()
   const { queryClient } = Route.useRouteContext()
   const t = useT()
-  const project = useSuspenseQuery(projectSettingsQueryOptions(orgSlug, projectSlug)).data
+  const projectQuery = useSuspenseQuery(projectSettingsQueryOptions(orgSlug, projectSlug))
+  const project = projectQuery.data
   const projectSettingsQueryKey = projectSettingsQueryOptions(orgSlug, projectSlug).queryKey
 
   const updateProjectSettings = (updatedProject: ProjectSettings) => {
@@ -194,6 +196,7 @@ function ProjectSettingsPage() {
         githubInstallationId={search.githubInstallationId}
         githubSetupError={search.githubSetupError}
         githubSetupState={search.githubSetupState}
+        isProjectSettingsFetching={projectQuery.isFetching}
         project={project}
         updateProjectSettings={updateProjectSettings}
       />
@@ -243,12 +246,14 @@ function GitHubSettingsCard({
   githubInstallationId,
   githubSetupError,
   githubSetupState,
+  isProjectSettingsFetching,
   project,
   updateProjectSettings,
 }: {
   githubInstallationId?: string
   githubSetupError?: "missing_installation_id"
   githubSetupState?: string
+  isProjectSettingsFetching: boolean
   project: ProjectSettings
   updateProjectSettings: (project: ProjectSettings) => void
 }) {
@@ -259,6 +264,8 @@ function GitHubSettingsCard({
   const [selectedRepositoryId, setSelectedRepositoryId] = useState("")
   const [selectedInstallationId, setSelectedInstallationId] = useState(githubInstallationId ?? project.githubInstallationId ?? "")
   const activeGitHubInstallationId = project.githubInstallationId ?? selectedInstallationId
+  const hasGitHubAccounts = project.githubInstallations.length > 0
+  const isLoadingGitHubAccounts = isProjectSettingsFetching && !project.githubRepositoryId && !hasGitHubAccounts
   const repositoryQuery = useQuery(
     githubInstallationRepositoriesQueryOptions({
       installationId: activeGitHubInstallationId,
@@ -381,83 +388,122 @@ function GitHubSettingsCard({
                 </T>
               </FieldError>
             )}
-            <form
-              className="flex flex-col gap-4"
-              onSubmit={(event) => {
-                event.preventDefault()
-                if (!selectedRepository || !activeGitHubInstallationId) return
-                connectRepository.mutate({
-                  data: {
-                    githubBranchCleanupEnabled: false,
-                    installationId: activeGitHubInstallationId,
-                    orgSlug,
-                    projectSlug,
-                    repositoryId: selectedRepository.id,
-                    repositoryName: selectedRepository.name,
-                    repositoryOwner: selectedRepository.owner,
-                    setupState: githubSetupState,
-                  },
-                })
-              }}
-            >
-              <Field>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <GitHubAccountSelect
-                    className="flex shrink-0 gap-2"
-                    githubInstallUrl={project.githubInstallUrl}
-                    installations={project.githubInstallations}
-                    onAddAccountComplete={() =>
-                      void queryClient.invalidateQueries(projectSettingsQueryOptions(orgSlug, projectSlug))
-                    }
-                    onSelectInstallation={(installationId) => {
-                      setSelectedInstallationId(installationId)
-                      setSelectedRepositoryId("")
-                    }}
-                    selectedInstallationId={selectedInstallationId}
-                  />
-                  <NativeSelect
-                    id="githubRepository"
-                    className="min-w-0 flex-1"
-                    value={selectedRepositoryId}
-                    disabled={!activeGitHubInstallationId || repositoryQuery.isLoading || repositories.length === 0}
-                    onChange={(event) => setSelectedRepositoryId(event.target.value)}
-                  >
-                    {!activeGitHubInstallationId && (
-                      <NativeSelectOption value="">{t("Choose a GitHub account")}</NativeSelectOption>
-                    )}
-                    {activeGitHubInstallationId && repositoryQuery.isLoading && (
-                      <NativeSelectOption value="">{t("Loading repositories...")}</NativeSelectOption>
-                    )}
-                    {activeGitHubInstallationId && !repositoryQuery.isLoading && repositories.length === 0 && (
-                      <NativeSelectOption value="">{t("No repositories available")}</NativeSelectOption>
-                    )}
-                    {activeGitHubInstallationId && !repositoryQuery.isLoading && repositories.length > 0 && (
-                      <NativeSelectOption value="" disabled>
-                        {t("Select repository...")}
-                      </NativeSelectOption>
-                    )}
-                    {repositories.map((repository) => (
-                      <NativeSelectOption key={repository.id} value={repository.id}>
-                        {repository.fullName}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                  <Button
-                    type="submit"
-                    className="shrink-0"
-                    disabled={!selectedRepository || connectRepository.isPending || repositoryQuery.isLoading}
-                  >
-                    <GitBranchIcon />
-                    {connectRepository.isPending ? <T>Connecting...</T> : <T>Connect</T>}
-                  </Button>
+            {isLoadingGitHubAccounts ? (
+              <GitHubSettingsSkeleton />
+            ) : !hasGitHubAccounts ? (
+              <div className="flex flex-col gap-3 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="font-medium">
+                    <T>No GitHub accounts connected</T>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    <T>Connect GitHub before choosing a repository for this Project.</T>
+                  </p>
                 </div>
-                {repositoryQuery.error && <FieldError>{repositoryQuery.error.message}</FieldError>}
-              </Field>
-              <FieldError>{repositoryQuery.error?.message ?? connectRepository.error?.message}</FieldError>
-            </form>
+                <Button
+                  type="button"
+                  disabled={!project.githubInstallUrl}
+                  onClick={() =>
+                    openGitHubSetup(project.githubInstallUrl, () => {
+                      void queryClient.invalidateQueries(projectSettingsQueryOptions(orgSlug, projectSlug))
+                    })
+                  }
+                >
+                  <PlusIcon />
+                  <T>Connect GitHub</T>
+                </Button>
+              </div>
+            ) : (
+              <form
+                className="flex flex-col gap-4"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  if (!selectedRepository || !activeGitHubInstallationId) return
+                  connectRepository.mutate({
+                    data: {
+                      installationId: activeGitHubInstallationId,
+                      orgSlug,
+                      projectSlug,
+                      repositoryId: selectedRepository.id,
+                      repositoryName: selectedRepository.name,
+                      repositoryOwner: selectedRepository.owner,
+                      setupState: githubSetupState,
+                    },
+                  })
+                }}
+              >
+                <Field>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <GitHubAccountSelect
+                      className="flex shrink-0 gap-2"
+                      githubInstallUrl={project.githubInstallUrl}
+                      installations={project.githubInstallations}
+                      onAddAccountComplete={() =>
+                        void queryClient.invalidateQueries(projectSettingsQueryOptions(orgSlug, projectSlug))
+                      }
+                      onSelectInstallation={(installationId) => {
+                        setSelectedInstallationId(installationId)
+                        setSelectedRepositoryId("")
+                      }}
+                      selectedInstallationId={selectedInstallationId}
+                    />
+                    {activeGitHubInstallationId && (
+                      <>
+                        <NativeSelect
+                          id="githubRepository"
+                          className="min-w-0 flex-1"
+                          value={selectedRepositoryId}
+                          disabled={repositoryQuery.isLoading || repositories.length === 0}
+                          onChange={(event) => setSelectedRepositoryId(event.target.value)}
+                        >
+                          {repositoryQuery.isLoading && (
+                            <NativeSelectOption value="">{t("Loading repositories...")}</NativeSelectOption>
+                          )}
+                          {!repositoryQuery.isLoading && repositories.length === 0 && (
+                            <NativeSelectOption value="">{t("No repositories available")}</NativeSelectOption>
+                          )}
+                          {!repositoryQuery.isLoading && repositories.length > 0 && (
+                            <NativeSelectOption value="" disabled>
+                              {t("Select repository...")}
+                            </NativeSelectOption>
+                          )}
+                          {repositories.map((repository) => (
+                            <NativeSelectOption key={repository.id} value={repository.id}>
+                              {repository.fullName}
+                            </NativeSelectOption>
+                          ))}
+                        </NativeSelect>
+                        <Button
+                          type="submit"
+                          className="shrink-0"
+                          disabled={!selectedRepository || connectRepository.isPending || repositoryQuery.isLoading}
+                        >
+                          <GitBranchIcon />
+                          {connectRepository.isPending ? <T>Connecting...</T> : <T>Connect</T>}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                  {repositoryQuery.error && <FieldError>{repositoryQuery.error.message}</FieldError>}
+                </Field>
+                <FieldError>{repositoryQuery.error?.message ?? connectRepository.error?.message}</FieldError>
+              </form>
+            )}
           </>
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function GitHubSettingsSkeleton() {
+  return (
+    <div className="flex flex-col gap-3 rounded-md border p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Skeleton className="h-8 w-56" />
+        <Skeleton className="h-8 min-w-0 flex-1" />
+        <Skeleton className="h-8 w-24" />
+      </div>
+    </div>
   )
 }

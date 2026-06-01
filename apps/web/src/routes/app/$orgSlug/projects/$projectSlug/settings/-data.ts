@@ -88,7 +88,7 @@ export const connectProjectGitHubRepositoryFn = createServerFn({ method: "POST" 
   .inputValidator(
     parseZod(
       githubSetupSchema.extend({
-        githubBranchCleanupEnabled: z.boolean(),
+        githubBranchCleanupEnabled: z.boolean().optional().default(true),
         repositoryId: z.string().trim().min(1),
         repositoryName: z.string().trim().min(1),
         repositoryOwner: z.string().trim().min(1),
@@ -212,6 +212,7 @@ export const githubInstallationRepositoriesQueryOptions = ({
       listGitHubInstallationRepositoriesFn({
         data: { installationId, orgSlug, projectSlug, setupState },
       }),
+    staleTime: 5 * 60 * 1000,
   })
 
 async function canUseGitHubInstallation(

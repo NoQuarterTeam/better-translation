@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FieldError } from "@/components/ui/field"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { GitHubAccountSelect } from "../../-components/github-account-select"
@@ -101,14 +102,19 @@ function GitHubImportCard() {
   const t = useT()
   const setupQuery = useSuspenseQuery(newProjectGitHubSetupQueryOptions(orgSlug))
   const setup = setupQuery.data
+  const isLoadingGitHubAccounts = setupQuery.isFetching && setup.githubInstallations.length === 0
   const [selectedInstallationId, setSelectedInstallationId] = useState(search.githubInstallationId ?? "")
+  const [repositoryPage, setRepositoryPage] = useState(1)
   const [repositorySearch, setRepositorySearch] = useState("")
-  const repositoriesQuery = useQuery(newProjectGitHubRepositoriesQueryOptions(orgSlug, selectedInstallationId))
-  const query = repositorySearch.trim().toLowerCase()
-  const repositories = repositoriesQuery.data ?? []
-  const filteredRepositories = query
-    ? repositories.filter((repository) => repository.fullName.toLowerCase().includes(query))
-    : repositories
+  const repositoriesQuery = useQuery(
+    newProjectGitHubRepositoriesQueryOptions({
+      installationId: selectedInstallationId,
+      orgSlug,
+      page: repositoryPage,
+      search: repositorySearch,
+    }),
+  )
+  const repositories = repositoriesQuery.data?.repositories ?? []
 
   useEffect(() => {
     if (selectedInstallationId || setup.githubInstallations.length === 0) return
@@ -142,7 +148,10 @@ function GitHubImportCard() {
             githubInstallUrl={setup.githubInstallUrl}
             installations={setup.githubInstallations}
             onAddAccountComplete={() => void setupQuery.refetch()}
-            onSelectInstallation={(installationId) => setSelectedInstallationId(installationId)}
+            onSelectInstallation={(installationId) => {
+              setSelectedInstallationId(installationId)
+              setRepositoryPage(1)
+            }}
             selectedInstallationId={selectedInstallationId}
           />
           <div>
@@ -153,7 +162,10 @@ function GitHubImportCard() {
               <InputGroupInput
                 placeholder={t("Search repositories...")}
                 value={repositorySearch}
-                onChange={(event) => setRepositorySearch(event.target.value)}
+                onChange={(event) => {
+                  setRepositorySearch(event.target.value)
+                  setRepositoryPage(1)
+                }}
               />
             </InputGroup>
           </div>
@@ -161,65 +173,111 @@ function GitHubImportCard() {
 
         {githubSetupErrorMessage(search.githubSetupError)}
 
-        <div className="overflow-hidden rounded-md border">
-          {setup.githubInstallations.length === 0 ? (
-            <div className="flex flex-col gap-3 p-6 text-center">
-              <GitBranchIcon className="mx-auto text-muted-foreground" />
-              <div className="font-medium">
-                <T>No GitHub accounts connected</T>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                <T>Add a GitHub account to import a repository into this organization.</T>
-              </p>
-            </div>
-          ) : repositoriesQuery.isLoading ? (
-            <div className="p-6 text-center text-sm text-muted-foreground">
-              <T>Loading repositories...</T>
-            </div>
-          ) : filteredRepositories.length === 0 ? (
-            <div className="p-6 text-center text-sm text-muted-foreground">
-              <T>No repositories found.</T>
-            </div>
-          ) : (
-            filteredRepositories.map((repository) => (
-              <div
-                key={repository.id}
-                className="flex flex-col gap-3 border-b p-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <div className="truncate font-medium">{repository.name}</div>
-                  <div className="mt-1 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-                    <span>{repository.owner}</span>
-                    <span>/</span>
-                    <span>{repository.defaultBranch}</span>
-                  </div>
+        {isLoadingGitHubAccounts ? (
+          <GitHubRepositoryListSkeleton />
+        ) : (
+          <div className="overflow-hidden rounded-md border">
+            {setup.githubInstallations.length === 0 ? (
+              <div className="flex flex-col gap-3 p-6 text-center">
+                <GitBranchIcon className="mx-auto text-muted-foreground" />
+                <div className="font-medium">
+                  <T>No GitHub accounts connected</T>
                 </div>
-                <Button
-                  type="button"
-                  disabled={createFromRepository.isPending}
-                  onClick={() =>
-                    createFromRepository.mutate({
-                      data: {
-                        installationId: selectedInstallationId,
-                        name: repository.name,
-                        orgSlug,
-                        repositoryId: repository.id,
-                        repositoryName: repository.name,
-                        repositoryOwner: repository.owner,
-                        slug: slugify(repository.name),
-                      },
-                    })
-                  }
-                >
-                  <T>Import</T>
-                </Button>
+                <p className="text-sm text-muted-foreground">
+                  <T>Add a GitHub account to import a repository into this organization.</T>
+                </p>
               </div>
-            ))
-          )}
-        </div>
+            ) : repositoriesQuery.isLoading ? (
+              <GitHubRepositoryRowsSkeleton />
+            ) : repositories.length === 0 ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                <T>No repositories found.</T>
+              </div>
+            ) : (
+              repositories.map((repository) => (
+                <div
+                  key={repository.id}
+                  className="flex flex-col gap-3 border-b p-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{repository.name}</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+                      <span>{repository.owner}</span>
+                      <span>/</span>
+                      <span>{repository.defaultBranch}</span>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    disabled={createFromRepository.isPending}
+                    onClick={() =>
+                      createFromRepository.mutate({
+                        data: {
+                          installationId: selectedInstallationId,
+                          name: repository.name,
+                          orgSlug,
+                          repositoryId: repository.id,
+                          repositoryName: repository.name,
+                          repositoryOwner: repository.owner,
+                          slug: slugify(repository.name),
+                        },
+                      })
+                    }
+                  >
+                    <T>Import</T>
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+        {repositoriesQuery.data && (repositoriesQuery.data.page > 1 || repositoriesQuery.data.hasMore) && (
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={repositoriesQuery.data.page <= 1 || repositoriesQuery.isFetching}
+              onClick={() => setRepositoryPage((page) => Math.max(1, page - 1))}
+            >
+              <T>Previous</T>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!repositoriesQuery.data.hasMore || repositoriesQuery.isFetching}
+              onClick={() => setRepositoryPage((page) => page + 1)}
+            >
+              <T>Next</T>
+            </Button>
+          </div>
+        )}
         <FieldError>{repositoriesQuery.error?.message ?? createFromRepository.error?.message}</FieldError>
       </CardContent>
     </Card>
+  )
+}
+
+function GitHubRepositoryListSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-md border">
+      <GitHubRepositoryRowsSkeleton />
+    </div>
+  )
+}
+
+function GitHubRepositoryRowsSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4 border-b p-4 last:border-b-0">
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <Skeleton className="h-4 w-48 max-w-full" />
+            <Skeleton className="h-3 w-28 max-w-full" />
+          </div>
+          <Skeleton className="h-8 w-20" />
+        </div>
+      ))}
+    </>
   )
 }
 

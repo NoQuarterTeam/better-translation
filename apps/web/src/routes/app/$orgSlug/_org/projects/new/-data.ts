@@ -7,7 +7,7 @@ import { organizationMiddleware } from "@/lib/functions/middleware"
 import { parseZod } from "@/lib/functions/zod"
 import { db } from "@/server/db"
 import { branchesTable, projectInsertSchema, projectsTable } from "@/server/db/schema"
-import { createGitHubInstallUrl, ensureGitHubInstallationRepository, listGitHubInstallationRepositories } from "@/server/github"
+import { createGitHubInstallUrl, ensureGitHubInstallationRepository, searchGitHubInstallationRepositories } from "@/server/github"
 import {
   getOrganizationGitHubInstallation,
   listOrganizationGitHubInstallations,
@@ -113,7 +113,6 @@ export const createProjectFromGitHubRepositoryFn = createServerFn({ method: "POS
       const [project] = await tx
         .insert(projectsTable)
         .values({
-          githubBranchCleanupEnabled: false,
           githubInstallationRecordId: githubInstallation.id,
           githubRepositoryId: repository.id,
           githubRepositoryName: repository.name,
@@ -156,7 +155,15 @@ export const getNewProjectGitHubSetupFn = createServerFn({ method: "GET" })
 
 export const listNewProjectGitHubRepositoriesFn = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
-  .inputValidator(parseZod(z.object({ installationId: z.string().trim().min(1) })))
+  .inputValidator(
+    parseZod(
+      z.object({
+        installationId: z.string().trim().min(1),
+        page: z.number().int().min(1).optional().default(1),
+        search: z.string().trim().optional(),
+      }),
+    ),
+  )
   .handler(async ({ context, data }) => {
     const canUseInstallation = await organizationCanUseGitHubInstallation({
       installationId: data.installationId,
@@ -165,7 +172,12 @@ export const listNewProjectGitHubRepositoriesFn = createServerFn({ method: "GET"
 
     if (!canUseInstallation) throw new Error("Connect this GitHub account before listing repositories.")
 
-    return listGitHubInstallationRepositories(data.installationId)
+    return searchGitHubInstallationRepositories({
+      installationId: data.installationId,
+      page: data.page,
+      perPage: 5,
+      search: data.search,
+    })
   })
 
 export const newProjectGitHubSetupQueryOptions = (orgSlug: string) =>
@@ -174,9 +186,20 @@ export const newProjectGitHubSetupQueryOptions = (orgSlug: string) =>
     queryFn: () => getNewProjectGitHubSetupFn({ data: { orgSlug } }),
   })
 
-export const newProjectGitHubRepositoriesQueryOptions = (orgSlug: string, installationId: string) =>
+export const newProjectGitHubRepositoriesQueryOptions = ({
+  installationId,
+  orgSlug,
+  page,
+  search,
+}: {
+  installationId: string
+  orgSlug: string
+  page: number
+  search: string
+}) =>
   queryOptions({
     enabled: Boolean(installationId),
-    queryKey: ["new-project-github-repositories", orgSlug, installationId],
-    queryFn: () => listNewProjectGitHubRepositoriesFn({ data: { orgSlug, installationId } }),
+    queryKey: ["new-project-github-repositories", orgSlug, installationId, search, page],
+    queryFn: () => listNewProjectGitHubRepositoriesFn({ data: { orgSlug, installationId, page, search } }),
+    staleTime: 5 * 60 * 1000,
   })
