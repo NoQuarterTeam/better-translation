@@ -308,6 +308,7 @@ function BranchActions({ branch }: { branch: BranchRow }) {
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={branch.isDefault || archiveBranch.isPending}
+              variant="destructive"
               onClick={() => archiveBranch.mutate({ data: { orgSlug, projectSlug, branchId: branch.id } })}
             >
               <ArchiveIcon />

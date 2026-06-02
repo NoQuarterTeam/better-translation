@@ -25,7 +25,7 @@ import { useAppForm } from "@/components/react-form"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover"
@@ -593,12 +593,19 @@ function TranslationValueEditor({ locale, message, onSaved }: { locale: string; 
 
   return (
     <div className="flex flex-col gap-4 pt-2">
+      <DialogHeader className="pr-8">
+        <DialogTitle>
+          <T>Edit Locale value</T>
+        </DialogTitle>
+        <DialogDescription>{formatLocale(locale, [locale])}</DialogDescription>
+      </DialogHeader>
       <div className="rounded-md border bg-muted/30 p-3">
         <p className="mb-1 text-xs font-medium text-muted-foreground">
           <T>Default Message</T>
         </p>
         <MessageText value={message.defaultMessage} placeholders={message.placeholders} className="leading-6" />
       </div>
+      <TranslationValueEditorGuidance message={message} />
       <form.AppForm>
         <form
           className="flex flex-col gap-4"
@@ -633,6 +640,45 @@ function TranslationValueEditor({ locale, message, onSaved }: { locale: string; 
           </div>
         </form>
       </form.AppForm>
+    </div>
+  )
+}
+
+function TranslationValueEditorGuidance({ message }: { message: MessageRow }) {
+  if (!message.context && message.placeholders.length === 0) return null
+
+  return (
+    <div className="grid gap-3 rounded-md border bg-muted/30 p-3 text-sm">
+      {message.context && (
+        <div className="flex min-w-0 gap-2">
+          <MessageSquareTextIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">
+              <T>Context</T>
+            </p>
+            <p className="mt-1 text-pretty">{message.context}</p>
+          </div>
+        </div>
+      )}
+
+      {message.placeholders.length > 0 && (
+        <div className="flex min-w-0 gap-2">
+          <BracesIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">
+              <T>Placeholders</T>
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              <T>Include these placeholders in the Locale value.</T>
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {message.placeholders.map((placeholder) => (
+                <PlaceholderLiteral key={placeholder} placeholder={placeholder} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -705,7 +751,7 @@ function MessageText({ value, placeholders, className }: { value: string; placeh
   const nodes = getMessageTextNodes(value, placeholderSet)
 
   return (
-    <p className={cn("break-words", className)}>
+    <p className={cn("wrap-break-word", className)}>
       {nodes.map((node, index) =>
         typeof node === "string" ? (
           node
@@ -729,24 +775,30 @@ function getMessageTextNodes(value: string, placeholders: Set<string>): Array<st
     const placeholder = match[1]
     if (!placeholder || !placeholders.has(placeholder)) continue
 
-    if (match.index > lastIndex) nodes.push(value.slice(lastIndex, match.index))
+    if (match.index > lastIndex) pushMessageTextNode(nodes, value.slice(lastIndex, match.index))
     nodes.push({ placeholder })
     lastIndex = regex.lastIndex
   }
 
-  if (lastIndex < value.length) nodes.push(value.slice(lastIndex))
+  if (lastIndex < value.length) pushMessageTextNode(nodes, value.slice(lastIndex))
   return nodes.length > 0 ? nodes : [value]
+}
+
+function pushMessageTextNode(nodes: Array<string | { placeholder: string }>, text: string) {
+  const previousNode = nodes.at(-1)
+  nodes.push(typeof previousNode === "object" ? text.replace(/^\s+([,.;:!?])/, "$1") : text)
 }
 
 function PlaceholderBadge({ placeholder }: { placeholder: string }) {
   return (
-    <Badge
-      variant="secondary"
-      className="mx-0.5 inline-flex h-5 translate-y-[-1px] rounded-md border border-border bg-background px-1.5 font-mono text-[0.7rem] font-medium text-foreground"
-    >
+    <span className="inline align-baseline font-mono text-sm leading-[inherit] font-semibold text-olive-500 underline decoration-olive-300 decoration-1 underline-offset-3 dark:text-olive-400 dark:decoration-olive-600">
       {formatPlaceholderLabel(placeholder)}
-    </Badge>
+    </span>
   )
+}
+
+function PlaceholderLiteral({ placeholder }: { placeholder: string }) {
+  return <code className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-xs">{`{${placeholder}}`}</code>
 }
 
 function formatPlaceholderLabel(placeholder: string) {

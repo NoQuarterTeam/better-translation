@@ -256,6 +256,7 @@ function GlossaryTermActions({ term }: { term: GlossaryTerm }) {
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={deleteMutation.isPending}
+              variant="destructive"
               onClick={() => deleteMutation.mutate({ data: { orgSlug, projectSlug, termId: term.id } })}
             >
               <Trash2Icon />

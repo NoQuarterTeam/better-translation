@@ -26,11 +26,13 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const name = "Jack"
+  const date = new Date().toLocaleDateString()
+
   return (
     <div className="flex flex-col gap-4 p-8">
       <p>
-        <T context="A welcome getting to the user, be super friendly.">
-          Hello <Var name={name} />
+        <T context="A welcome greeting to the user, be super friendly.">
+          Hello <Var name={name} />, the date is <Var date={date} />!
         </T>
       </p>
       <LocaleSwitcher />
