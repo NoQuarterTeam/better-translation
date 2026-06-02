@@ -40,12 +40,11 @@ import {
   branchMessagesQueryOptions,
   branchWorkspaceQueryOptions,
   currentBranchSwitcherQueryOptions,
-  messageViewSchema,
   saveLocaleValueFn,
   translateLocaleValueFn,
   type getBranchMessageDetailFn,
-  type MessageView,
 } from "./-data"
+import { messageViewSchema, type MessageView } from "./-schema"
 
 export const Route = createFileRoute("/app/$orgSlug/_projects/$projectSlug/$branchName/")({
   staticData: {

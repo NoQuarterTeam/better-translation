@@ -18,13 +18,11 @@ import {
   projectBranchRedirectNameQueryOptions,
   projectSwitcherProjectsQueryOptions,
 } from "../-data"
+import { messageViewSchema, type MessageView } from "./-schema"
 
 const branchInputSchema = z.object({
   branchName: z.string().trim().min(1),
 })
-
-export const messageViewSchema = z.enum(["all", "needs-value", "manual", "ai"]).catch("all")
-export type MessageView = z.infer<typeof messageViewSchema>
 
 const branchMessagesInputSchema = branchInputSchema.extend({
   q: z.string().trim().optional().catch(undefined),
