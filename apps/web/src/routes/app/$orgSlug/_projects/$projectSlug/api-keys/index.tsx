@@ -1,7 +1,7 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import type { ColumnDef } from "@tanstack/react-table"
-import { CopyIcon, KeyRoundIcon, ShieldOffIcon } from "lucide-react"
+import { CopyIcon, KeyRoundIcon, MoreHorizontalIcon, ShieldOffIcon } from "lucide-react"
 import { useMemo } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -24,6 +24,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 import { createProjectApiKeyFn, projectApiKeysQueryOptions, revokeProjectApiKeyFn, type listProjectApiKeysFn } from "./-data"
 
@@ -132,15 +139,24 @@ function ApiKeyActions({ apiKey }: { apiKey: ApiKeyRow }) {
   })
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      disabled={Boolean(apiKey.revokedAt) || revokeApiKeyMutation.isPending}
-      onClick={() => revokeApiKeyMutation.mutate({ data: { orgSlug, projectSlug, apiKeyId: apiKey.id } })}
-    >
-      <ShieldOffIcon />
-      <T>Revoke</T>
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+        <MoreHorizontalIcon />
+        <span className="sr-only">API key actions</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-40">
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            disabled={Boolean(apiKey.revokedAt) || revokeApiKeyMutation.isPending}
+            variant="destructive"
+            onClick={() => revokeApiKeyMutation.mutate({ data: { orgSlug, projectSlug, apiKeyId: apiKey.id } })}
+          >
+            <ShieldOffIcon />
+            <T>Revoke</T>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
