@@ -28,7 +28,7 @@
     "@fontsource-variable/inter": "^5.2.8",
     "@neondatabase/serverless": "catalog:",
     "@paralleldrive/cuid2": "^3.3.0",
-    "@posthog/react": "1.9.1",
+    "@posthog/react": "1.10.0",
     "@react-email/render": "^2.0.8",
     "@sentry/tanstackstart-react": "10.55.0",
     "@t3-oss/env-core": "0.13.11",
