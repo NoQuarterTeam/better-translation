@@ -1,0 +1,29 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "---Getting started---",
+    "index",
+    "how-it-works",
+    "installation",
+    "configure",
+    "---Marking copy---",
+    "t-component",
+    "variables",
+    "use-t",
+    "server",
+    "ids",
+    "---Runtime---",
+    "loading",
+    "provider",
+    "---Modes---",
+    "local-mode",
+    "ai",
+    "remote-mode",
+    "platform",
+    "repository",
+    "glossary",
+    "builds",
+    "---Reference---",
+    "reference"
+  ]
+}

@@ -1,0 +1,35 @@
+---
+title: Plugin options
+description: The full set of options accepted by betterTranslation in your Vite config.
+---
+
+The full set of options accepted by `betterTranslation` in your Vite config.
+
+<TypeTable
+  type={{
+    locales: {
+      type: "string[]",
+      description: "All Locale codes to emit. Required.",
+    },
+    defaultLocale: {
+      type: "string",
+      description: "The source language. Defaults to the first locale.",
+    },
+    rootDir: {
+      type: "string | string[]",
+      description: 'Source directory or directories to scan. Defaults to "src".',
+    },
+    cacheFile: {
+      type: "string",
+      description: "Translation cache path, relative to the Vite root.",
+    },
+    logging: {
+      type: "boolean",
+      description: "Enables or disables plugin logging. Defaults to true.",
+    },
+    runtime: {
+      type: "Local | Remote",
+      description: "Runtime backend. Defaults to local mode with module target.",
+    },
+  }}
+/>

@@ -1,0 +1,22 @@
+---
+title: Glossary terms
+description: Steer the Platform translator so product names and jargon stay consistent across Locales.
+---
+
+A Project glossary steers the Platform translator so product names, jargon, and banned wording
+stay consistent across every Locale. Each term pairs a source term with an action.
+
+| Action         | Description                                                                        |
+| -------------- | ---------------------------------------------------------------------------------- |
+| `preserve`     | Keep the source term unchanged wherever it appears, instead of translating it.     |
+| `translate as` | Always render a specific target term for the source term in translations.          |
+| `avoid`        | Never use a given term when translating, steering the model toward better wording. |
+
+Terms can be scoped to a single Locale or apply everywhere, carry a note for translators, and
+be toggled on or off. Together with the Project translation brief for tone and style, the
+glossary shapes every AI-generated Locale value.
+
+<Callout title="Brief plus glossary">
+  The translation brief sets the overall voice; the glossary enforces exact terms. Both are applied during Manifest sync and local
+  dev platform translation, so generated copy follows your guidance from the first run.
+</Callout>

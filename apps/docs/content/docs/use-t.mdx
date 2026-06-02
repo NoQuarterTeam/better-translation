@@ -1,0 +1,27 @@
+---
+title: The useT hook
+description: Translate plain strings for attributes like aria-label, placeholder, and title.
+---
+
+Some copy lives in places that are not JSX children, like an `aria-label`, a `placeholder`, or
+a `title`. Use the `useT` hook to translate plain strings in those positions.
+
+```tsx title="SearchBar.tsx"
+import { useT } from "better-translation/react"
+
+export function SearchBar() {
+  const t = useT()
+  return <input aria-label={t("Search products")} placeholder={t("Search...")} />
+}
+```
+
+## Values and context
+
+You can pass values for interpolation and disambiguating options as a second argument. Both
+`T` and `useT` share the same lookup ids, so the same sentence resolves to the same Message
+wherever it appears.
+
+```ts title="usage.ts"
+t("Welcome back, {name}", { name: user.name })
+t("Archive", { context: "Verb on a button" })
+```

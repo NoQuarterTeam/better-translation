@@ -1,0 +1,33 @@
+---
+title: Installation
+description: Add Better Translation to any Vite app running React 19 and Vite 8 or later.
+---
+
+Add the package to any Vite app running React 19 or later and Vite 8 or later.
+
+## Install the package
+
+```bash title="terminal"
+# bun
+bun add better-translation
+
+# npm
+npm i better-translation
+
+# pnpm
+pnpm add better-translation
+```
+
+## Entry points
+
+The package ships several entry points. Import the plugin from the vite entry, the React
+helpers from the react entry, and the server helper from the server entry. The messages entry
+is a virtual module created by the plugin.
+
+| Entry point                   | Description                                                             |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `better-translation/vite`     | The Vite plugin and its configuration types.                            |
+| `better-translation/react`    | The `T` and `Var` components, the `useT` hook, and `TranslateProvider`. |
+| `better-translation/server`   | `createTranslator` for server-side rendering and metadata.              |
+| `better-translation/ai`       | `createAiTranslate`, the optional AI Gateway translation helper.        |
+| `better-translation/messages` | Virtual module the plugin fills with `loadMessages` and your locales.   |

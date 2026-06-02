@@ -1,0 +1,19 @@
+---
+title: Server translator
+description: Build a translator from a loaded message map for SSR, titles, and metadata.
+---
+
+For server-side rendering, document titles, or metadata you can build a translator from a
+loaded message map with `createTranslator`. It has the same call signature as `useT` but takes
+the messages directly.
+
+```tsx title="route.tsx"
+import { createTranslator } from "better-translation/server"
+
+const t = createTranslator(messages)
+
+export const meta = {
+  title: t("Better Translation"),
+  description: t("Welcome back, {name}", { name }),
+}
+```

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppLayoutRouteImport } from './routes/app/layout'
 import { Route as AuthLayoutRouteImport } from './routes/_auth/layout'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DocsIndexRouteImport } from './routes/docs/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as ApiUploadRouteImport } from './routes/api/upload'
 import { Route as AcceptInvitationInvitationIdRouteImport } from './routes/accept-invitation/$invitationId'
@@ -55,6 +56,11 @@ const AuthLayoutRoute = AuthLayoutRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsIndexRoute = DocsIndexRouteImport.update({
+  id: '/docs/',
+  path: '/docs/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -234,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
   '/api/upload': typeof ApiUploadRoute
   '/app/': typeof AppIndexRoute
+  '/docs/': typeof DocsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhooks': typeof ApiGithubWebhooksRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByTo {
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
   '/api/upload': typeof ApiUploadRoute
   '/app': typeof AppIndexRoute
+  '/docs': typeof DocsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhooks': typeof ApiGithubWebhooksRoute
@@ -298,6 +306,7 @@ export interface FileRoutesById {
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
   '/api/upload': typeof ApiUploadRoute
   '/app/': typeof AppIndexRoute
+  '/docs/': typeof DocsIndexRoute
   '/app/$orgSlug/_org': typeof AppOrgSlugOrgLayoutRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
@@ -334,6 +343,7 @@ export interface FileRouteTypes {
     | '/accept-invitation/$invitationId'
     | '/api/upload'
     | '/app/'
+    | '/docs/'
     | '/api/auth/$'
     | '/api/github/setup'
     | '/api/github/webhooks'
@@ -365,6 +375,7 @@ export interface FileRouteTypes {
     | '/accept-invitation/$invitationId'
     | '/api/upload'
     | '/app'
+    | '/docs'
     | '/api/auth/$'
     | '/api/github/setup'
     | '/api/github/webhooks'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/accept-invitation/$invitationId'
     | '/api/upload'
     | '/app/'
+    | '/docs/'
     | '/app/$orgSlug/_org'
     | '/api/auth/$'
     | '/api/github/setup'
@@ -425,6 +437,7 @@ export interface RootRouteChildren {
   AppLayoutRoute: typeof AppLayoutRouteWithChildren
   AcceptInvitationInvitationIdRoute: typeof AcceptInvitationInvitationIdRoute
   ApiUploadRoute: typeof ApiUploadRoute
+  DocsIndexRoute: typeof DocsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiGithubSetupRoute: typeof ApiGithubSetupRoute
   ApiGithubWebhooksRoute: typeof ApiGithubWebhooksRoute
@@ -453,6 +466,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/': {
+      id: '/docs/'
+      path: '/docs'
+      fullPath: '/docs/'
+      preLoaderRoute: typeof DocsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -786,6 +806,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppLayoutRoute: AppLayoutRouteWithChildren,
   AcceptInvitationInvitationIdRoute: AcceptInvitationInvitationIdRoute,
   ApiUploadRoute: ApiUploadRoute,
+  DocsIndexRoute: DocsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiGithubSetupRoute: ApiGithubSetupRoute,
   ApiGithubWebhooksRoute: ApiGithubWebhooksRoute,

@@ -1,0 +1,36 @@
+{
+  "name": "@better-translation/docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --host",
+    "build": "vite build",
+    "start": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "catalog:",
+    "@tanstack/react-start": "catalog:",
+    "@vercel/functions": "3.6.1",
+    "fumadocs-core": "16.9.3",
+    "fumadocs-mdx": "15.0.10",
+    "fumadocs-ui": "16.9.3",
+    "lucide-react": "catalog:",
+    "nitro": "3.0.260522-beta",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tailwindcss": "catalog:"
+  },
+  "devDependencies": {
+    "@better-translation/tsconfig": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@tanstack/router-plugin": "catalog:",
+    "@types/mdx": "2.0.13",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  },
+  "portless": "docs.bt"
+}

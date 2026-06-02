@@ -1,0 +1,22 @@
+---
+title: Provider setup
+description: Load the active Locale's messages and pass them to TranslateProvider near your app root.
+---
+
+Load the messages for the active Locale and pass them to `TranslateProvider` near the root of
+your app. Everything below it can use `T`, `Var`, and `useT`.
+
+```tsx title="root.tsx"
+import { loadMessages } from "better-translation/messages"
+import { TranslateProvider } from "better-translation/react"
+
+const messages = await loadMessages(locale)
+
+export function App({ children }) {
+  return <TranslateProvider messages={messages}>{children}</TranslateProvider>
+}
+```
+
+Resolve the Locale however you like, for example from a cookie or the request URL, then load
+and provide its messages. Switching Locale is just loading a different bundle and re-rendering
+the provider.

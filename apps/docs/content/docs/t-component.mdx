@@ -1,0 +1,23 @@
+---
+title: The T component
+description: Wrap JSX copy in T and the plugin gives it a stable lookup id at build time.
+---
+
+Wrap any JSX copy in `T`. At build time the plugin hashes the rendered text into a stable
+lookup id, so there is nothing to name and nothing to keep in sync by hand.
+
+```tsx title="Checkout.tsx"
+import { T } from "better-translation/react"
+
+export function Checkout() {
+  return (
+    <button>
+      <T>Pay now</T>
+    </button>
+  )
+}
+```
+
+At runtime `T` looks up the translated value for the active Locale and renders it. If no value
+exists yet it falls back to the original source copy, so your UI is never blank while
+translations catch up.

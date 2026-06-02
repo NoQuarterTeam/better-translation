@@ -1,0 +1,23 @@
+---
+title: Variables
+description: Interpolate runtime values inside a translatable sentence with Var.
+---
+
+Use `Var` inside `T` to interpolate runtime values without breaking the translatable sentence.
+The placeholder name is part of the Message, so translators can move it wherever the target
+language needs it.
+
+```tsx title="Greeting.tsx"
+import { T, Var } from "better-translation/react"
+
+export function Greeting({ name, date }: { name: string; date: string }) {
+  return (
+    <T>
+      Hello <Var name={name} />, the date is <Var date={date} />!
+    </T>
+  )
+}
+```
+
+The prop key becomes the placeholder name. The example above extracts the Message with `name`
+and `date` placeholders and fills the values at render time.

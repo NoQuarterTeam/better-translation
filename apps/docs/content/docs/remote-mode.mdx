@@ -1,0 +1,39 @@
+---
+title: Remote mode
+description: Connect your app to the hosted platform and load branch-aware Runtime bundles.
+---
+
+Remote mode connects your app to the hosted platform. The plugin syncs your Manifest to a
+Project on each dev run and build, and your app loads branch-aware Runtime bundles at runtime.
+
+```ts title="vite.config.ts"
+betterTranslation({
+  locales: ["en", "es", "fr"],
+  defaultLocale: "en",
+  runtime: {
+    type: "remote",
+    projectId: "prj_xxxxxxxxxxxxxxxx",
+    // apiKey falls back to BETTER_TRANSLATION_API_KEY
+    branch: "auto",
+  },
+})
+```
+
+## Options
+
+The Project API key is a plugin-only write credential used to sync Manifests. It never reaches
+the browser and is stripped from generated runtime artifacts. Runtime bundle reads are public
+and read-only.
+
+| Option        | Description                                                                                        |
+| ------------- | -------------------------------------------------------------------------------------------------- |
+| `projectId`   | The hosted Project to sync to. Required in remote mode.                                            |
+| `apiKey`      | Write credential for Manifest sync. Falls back to the `BETTER_TRANSLATION_API_KEY` env var.        |
+| `endpoint`    | Override the platform URL, for self-hosting or a preview environment.                              |
+| `branch`      | Branch to read and sync, or `"auto"` to infer it from the environment and Git.                     |
+| `dev.offline` | Set true to skip platform reads and writes during local dev and use local cache fallbacks instead. |
+
+<Callout title="Branch resolution">
+  With branch set to `auto` the plugin resolves, in order: explicit config, `BETTER_TRANSLATION_BRANCH`, the provider branch such
+  as `VERCEL_GIT_COMMIT_REF`, the current Git branch, then the Project Production Branch.
+</Callout>

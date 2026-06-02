@@ -1,0 +1,33 @@
+---
+title: How it works
+description: How the Vite plugin extracts your copy at build time and loads translations at runtime.
+---
+
+import { Cards, Card } from "fumadocs-ui/components/card"
+import { ScanIcon, PackageIcon, SparklesIcon, LanguagesIcon } from "lucide-react"
+
+The Vite plugin scans your source for Translation markers at build time, gives each Message a
+stable lookup id, and keeps your Locale values in sync. Your app never imports a key by hand.
+
+<Cards>
+  <Card
+    icon={<ScanIcon />}
+    title="1. Mark"
+    description="Wrap copy in a Translation marker where you author it. No keys to invent."
+  />
+  <Card
+    icon={<PackageIcon />}
+    title="2. Extract"
+    description="The plugin discovers Messages and builds a Manifest keyed by stable lookup id."
+  />
+  <Card
+    icon={<SparklesIcon />}
+    title="3. Translate"
+    description="Fill missing Locale values locally with AI, or sync them to the platform."
+  />
+  <Card
+    icon={<LanguagesIcon />}
+    title="4. Load"
+    description="Your app loads flat Runtime bundles by Locale. No metadata reaches the browser."
+  />
+</Cards>

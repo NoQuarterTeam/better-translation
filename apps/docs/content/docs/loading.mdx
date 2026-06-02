@@ -1,0 +1,18 @@
+---
+title: Loading messages
+description: Import loadMessages from the virtual module to fetch a flat lookup id map per Locale.
+---
+
+The plugin generates the virtual `better-translation/messages` module. Import `loadMessages` to
+fetch a flat lookup id map for a Locale, and `locales` for the list of codes you configured.
+
+```ts title="messages.ts"
+import { loadMessages, locales, type Locale } from "better-translation/messages"
+
+const messages = await loadMessages("es")
+// { "m_abc123": "Pagar ahora", ... }
+```
+
+The shape of `loadMessages` is identical across modes. The plugin bakes the right loader into
+the virtual module, whether that reads local files, fetches from your public directory, or
+calls the hosted Runtime bundle endpoint.

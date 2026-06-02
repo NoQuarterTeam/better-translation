@@ -1,0 +1,21 @@
+---
+title: Lookup ids and context
+description: Stable lookup ids are derived from your copy. Disambiguate identical strings with context.
+---
+
+Every Message has a stable lookup id. By default it is derived from the source copy and
+metadata, so identical copy shares one Message. When two identical strings need different
+translations, disambiguate them with context.
+
+```tsx title="ambiguous.tsx"
+<T context="Verb, archives the item">Archive</T>
+<T context="Noun, the archive page title">Archive</T>
+```
+
+You can also pin an explicit id when you want full control. The context is also passed to the
+translator, so it improves AI translations even when you do not need it for disambiguation.
+
+<Callout title="Collisions are caught early">
+  If the same lookup id is produced for two Messages with different text, placeholders, or context, the plugin throws with both
+  source locations so you can fix it before it ships.
+</Callout>

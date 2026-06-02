@@ -1,0 +1,50 @@
+---
+title: Local mode
+description: The default, account-free mode. The plugin writes Locale files into your repo.
+---
+
+Local mode is the default and needs no account. The plugin writes Locale files into your repo
+and the runtime loads them. You commit the generated artifacts alongside your code.
+
+## Generated artifacts
+
+By default everything lands under `src/lib/bt` in your app. Here is what the plugin generates
+and where, so you know exactly what is in your tree.
+
+```text title="generated artifacts"
+src/lib/bt/
+├─ runtime.json        # runtime config: mode, locales, defaultLocale
+├─ locales/
+│  ├─ en.json          # flat lookup id -> string per Locale
+│  ├─ es.json
+│  └─ fr.json
+├─ manifest.json       # source metadata catalog (gitignored)
+└─ .gitignore          # generated, ignores manifest.json
+
+.cache/better-translation/
+└─ cache.json          # translation cache, avoids re-translating
+```
+
+| Artifact                    | Description                                                                                           |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `locales/*.json`            | Flat Runtime bundles, one per Locale, keyed by lookup id. These are what your app loads. Commit them. |
+| `runtime.json`              | Tells server loaders the mode, locales, and default locale. Commit it.                                |
+| `manifest.json`             | Source metadata with file locations, used during dev. Gitignored automatically.                       |
+| `.cache/better-translation` | Plugin-owned translation cache so unchanged Messages are not re-translated.                           |
+
+## Serve as static assets
+
+Prefer fetching Locale files as static assets instead of bundling them? Set the local runtime
+target to `public`. The plugin writes the files under your Vite public directory and the loader
+fetches them at runtime.
+
+```ts title="vite.config.ts"
+betterTranslation({
+  locales: ["en", "es", "fr"],
+  defaultLocale: "en",
+  runtime: {
+    type: "local",
+    target: "public", // default is "module"
+  },
+})
+```

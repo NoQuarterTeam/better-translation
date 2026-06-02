@@ -1,0 +1,16 @@
+---
+title: Production builds
+description: Builds are deterministic. Local mode is check-only; remote mode pushes Manifest changes.
+---
+
+Production builds are deterministic. In local mode the build is check-only: it never
+regenerates or re-translates, it verifies that the committed artifacts match your current
+source.
+
+<Callout type="warn" title="The build fails if artifacts are stale">
+  If committed Locale files are missing, incomplete, out of date, or contain orphaned ids, the build throws and tells you to run
+  the dev workflow and commit the result. This keeps shipped translations honest.
+</Callout>
+
+In remote mode the build pushes Manifest changes to the resolved Branch. Sync is idempotent and
+fails clearly if the Project does not exist or the credentials are invalid.

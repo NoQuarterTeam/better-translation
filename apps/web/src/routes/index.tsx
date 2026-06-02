@@ -12,7 +12,7 @@ import {
   SparklesIcon,
   ZapIcon,
 } from "lucide-react"
-import type { ReactNode } from "react"
+import { type ReactNode, useEffect, useState } from "react"
 
 import { T } from "better-translation/react"
 
@@ -63,6 +63,14 @@ function HomePage() {
   )
 }
 
+function GitHubMark() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className="size-4">
+      <path d="M12 .5C5.37.5 0 5.78 0 12.29c0 5.21 3.44 9.63 8.21 11.19.6.11.82-.25.82-.56 0-.28-.01-1.02-.02-2-3.34.71-4.04-1.58-4.04-1.58-.55-1.37-1.34-1.74-1.34-1.74-1.09-.73.08-.72.08-.72 1.21.08 1.84 1.22 1.84 1.22 1.07 1.8 2.81 1.28 3.5.98.11-.76.42-1.28.76-1.57-2.67-.3-5.47-1.31-5.47-5.83 0-1.29.47-2.34 1.24-3.17-.12-.3-.54-1.52.12-3.16 0 0 1.01-.32 3.3 1.21a11.6 11.6 0 0 1 3-.4c1.02 0 2.05.13 3 .4 2.29-1.53 3.3-1.21 3.3-1.21.66 1.64.24 2.86.12 3.16.77.83 1.24 1.88 1.24 3.17 0 4.53-2.81 5.53-5.49 5.82.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.28 0 .31.21.68.83.56A12.02 12.02 0 0 0 24 12.29C24 5.78 18.63.5 12 .5z" />
+    </svg>
+  )
+}
+
 function LandingHeader() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
@@ -74,6 +82,15 @@ function LandingHeader() {
           <T>Better Translation</T>
         </Link>
         <nav className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            nativeButton={false}
+            render={<a href="https://github.com/NoQuarterTeam/better-translation" target="_blank" rel="noreferrer" />}
+          >
+            <GitHubMark />
+            <span className="sr-only">GitHub</span>
+          </Button>
           <Button variant="ghost" nativeButton={false} render={<Link to="/sign-in" />}>
             <T>Sign in</T>
           </Button>
@@ -108,7 +125,7 @@ function Hero() {
             </T>
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" nativeButton={false} render={<a href="/docs" />}>
+            <Button size="lg" nativeButton={false} render={<Link to="/docs" />}>
               <T>Read the docs</T>
               <ArrowRightIcon />
             </Button>
@@ -127,7 +144,22 @@ function Hero() {
   )
 }
 
+const heroPhrases = [
+  { locale: "es", value: "Pagar ahora" },
+  { locale: "fr", value: "Payer maintenant" },
+  { locale: "de", value: "Jetzt bezahlen" },
+]
+
 function HeroVisual() {
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => setIndex((i) => (i + 1) % heroPhrases.length), 1800)
+    return () => clearInterval(interval)
+  }, [])
+
+  const current = heroPhrases[index]!
+
   return (
     <div className="relative rounded-xl border bg-card shadow-sm">
       <div className="flex items-center gap-2 border-b px-4 py-3">
@@ -145,7 +177,11 @@ function HeroVisual() {
           {"    <button>"}
           {"\n"}
           {"      "}
-          <span className="rounded bg-primary/15 px-1 text-primary">{"<T>Pay now</T>"}</span>
+          <span className="rounded bg-primary/15 px-1 text-primary dark:text-emerald-400">{"<T>Pay now</T>"}</span>
+          {"  "}
+          <span key={current.locale} className="animate-in text-muted-foreground/70 duration-300 fade-in slide-in-from-left-1">
+            {`// ${current.value}`}
+          </span>
           {"\n"}
           {"    </button>"}
           {"\n"}
@@ -154,29 +190,6 @@ function HeroVisual() {
           <span className="text-muted-foreground">{"}"}</span>
         </code>
       </pre>
-      <div className="border-t bg-muted/20 px-4 py-3">
-        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-          <LanguagesIcon className="size-3.5" />
-          <T>Runtime bundle</T>
-        </div>
-        <div className="space-y-2 font-mono text-xs">
-          <BundleRow id="m_payment_cta" locale="es" value="Pagar ahora" />
-          <BundleRow id="m_payment_cta" locale="fr" value="Payer maintenant" />
-          <BundleRow id="m_payment_cta" locale="de" value="Jetzt bezahlen" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function BundleRow({ id, locale, value }: { id: string; locale: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-muted-foreground">{id}</span>
-      <span className="flex items-center gap-2">
-        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] tracking-wide text-muted-foreground uppercase">{locale}</span>
-        <span className="text-foreground">{value}</span>
-      </span>
     </div>
   )
 }
@@ -468,7 +481,7 @@ function FinalCta() {
               <T>Wrap your first Message, run the plugin, and watch translations follow your code.</T>
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button size="lg" nativeButton={false} render={<a href="/docs" />}>
+              <Button size="lg" nativeButton={false} render={<Link to="/docs" />}>
                 <T>Read the docs</T>
                 <ArrowRightIcon />
               </Button>

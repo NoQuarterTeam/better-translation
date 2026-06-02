@@ -1,0 +1,27 @@
+---
+title: Configure the plugin
+description: List your Locales, pick a default, and you're set up for local mode.
+---
+
+Add the plugin to your Vite config, list your Locales, and pick a default. That is the whole
+required setup. With no runtime option you get local mode, which writes Locale files into your
+app.
+
+```ts title="vite.config.ts"
+import { defineConfig } from "vite"
+import { betterTranslation } from "better-translation/vite"
+
+export default defineConfig({
+  plugins: [
+    betterTranslation({
+      locales: ["en", "es", "fr"],
+      defaultLocale: "en",
+    }),
+  ],
+})
+```
+
+<Callout title="Plugin order">
+  Place `betterTranslation` before your React plugin. It runs with enforce set to pre so it can rewrite markers and inject stable
+  lookup ids before other transforms see your code.
+</Callout>

@@ -1,0 +1,38 @@
+---
+title: The platform
+description: Optional hosted service for non-developers, branch-aware translations, and a visual editor.
+---
+
+import { Cards, Card } from "fumadocs-ui/components/card"
+import { PackageIcon, GitBranchIcon, SparklesIcon, LanguagesIcon } from "lucide-react"
+
+The hosted platform is optional. It becomes useful when you want non-developers editing copy,
+branch-aware translations, AI generation in context, and a visual editor, without giving anyone
+code access.
+
+<Cards>
+  <Card
+    icon={<PackageIcon />}
+    title="Projects and Manifests"
+    description="A Project holds one app's Messages and Locale values. Plugin sync uploads the Manifest to it."
+  />
+  <Card
+    icon={<GitBranchIcon />}
+    title="Branches"
+    description="Each Branch isolates work. Feature branches seed from the Production Branch and never touch it automatically."
+  />
+  <Card
+    icon={<SparklesIcon />}
+    title="Platform translator"
+    description="The platform fills missing Locale values with a hosted model, guided by your Project translation brief."
+  />
+  <Card
+    icon={<LanguagesIcon />}
+    title="Runtime bundles"
+    description="Apps fetch flat per-Locale bundles by Project and Branch. No editor metadata is ever exposed."
+  />
+</Cards>
+
+Editing a Branch is live for apps reading that Branch. Editing the Production Branch affects
+production; editing a feature branch affects only that preview. The whole platform is open
+source and self-hostable.
