@@ -11,6 +11,7 @@ import { db } from "@/server/db"
 import { localeValueInsertSchema, localeValuesTable, type LocaleValue, messagesTable } from "@/server/db/schema"
 import { createStableHash } from "@/server/platform"
 import { translateMessageWithPlatform } from "@/server/platform-translator"
+import { listEnabledTranslationGlossaryTerms } from "@/server/translation-glossary"
 
 import {
   currentProjectSwitcherQueryOptions,
@@ -139,6 +140,7 @@ export const listBranchMessagesFn = createServerFn({ method: "GET" })
       messages: filteredMessages.map((message) => ({
         defaultMessage: message.defaultMessage,
         id: message.id,
+        placeholders: message.placeholders,
         ...getMessageCompleteness({
           branchValueByMessageAndLocale,
           editableLocales,
@@ -335,6 +337,7 @@ export const translateLocaleValueFn = createServerFn({ method: "POST" })
     if (!branch.locales.includes(data.locale)) throw new Error("Locale is not configured for this Branch.")
 
     const value = await translateMessageWithPlatform({
+      glossaryTerms: await listEnabledTranslationGlossaryTerms(project.id, data.locale),
       locale: data.locale,
       message: {
         context: typeof message.meta.context === "string" ? message.meta.context : undefined,

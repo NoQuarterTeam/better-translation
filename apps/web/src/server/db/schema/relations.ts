@@ -68,6 +68,7 @@ export const relations = defineRelations(schema, (r) => ({
     messages: r.many.messagesTable(),
     apiKeys: r.many.apiKeysTable(),
     localeValues: r.many.localeValuesTable(),
+    translationGlossaryTerms: r.many.translationGlossaryTermsTable(),
   },
   branchesTable: {
     project: r.one.projectsTable({ from: r.branchesTable.projectId, to: r.projectsTable.id }),
@@ -92,5 +93,8 @@ export const relations = defineRelations(schema, (r) => ({
   apiKeysTable: {
     project: r.one.projectsTable({ from: r.apiKeysTable.projectId, to: r.projectsTable.id }),
     createdBy: r.one.usersTable({ from: r.apiKeysTable.createdById, to: r.usersTable.id, optional: true }),
+  },
+  translationGlossaryTermsTable: {
+    project: r.one.projectsTable({ from: r.translationGlossaryTermsTable.projectId, to: r.projectsTable.id }),
   },
 }))

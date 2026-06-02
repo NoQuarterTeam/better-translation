@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 
-import { T } from "better-translation/react"
+import { T, Var } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
 import { LocaleSwitcher } from "@/components/locale-switcher"
@@ -25,10 +25,13 @@ export const Route = createFileRoute("/")({
 })
 
 function HomePage() {
+  const name = "Jack"
   return (
     <div className="flex flex-col gap-4 p-8">
       <p>
-        <T>Hello</T>
+        <T context="A welcome getting to the user, be super friendly.">
+          Hello <Var name={name} />
+        </T>
       </p>
       <LocaleSwitcher />
       <p>Wow this is something</p>

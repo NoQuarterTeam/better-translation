@@ -6,6 +6,7 @@ import { db } from "@/server/db"
 import { apiKeysTable, branchesTable, localeValuesTable, messagesTable, projectsTable } from "@/server/db/schema"
 import { createProjectApiKeyHash, createStableHash, readBearerToken } from "@/server/platform"
 import { translateMessagesWithPlatform } from "@/server/platform-translator"
+import { listEnabledTranslationGlossaryTerms } from "@/server/translation-glossary"
 
 const manifestSourceSchema = z.object({
   column: z.number().int().optional(),
@@ -408,6 +409,7 @@ async function translateLocaleValues({
   project: typeof projectsTable.$inferSelect
 }) {
   const translations = await translateMessagesWithPlatform({
+    glossaryTerms: await listEnabledTranslationGlossaryTerms(project.id, locale),
     locale,
     prompt: project.translationPrompt,
     messages: messages.map((message) => ({

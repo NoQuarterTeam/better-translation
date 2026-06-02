@@ -1,7 +1,19 @@
 import { useDebouncer } from "@tanstack/react-pacer"
 import { keepPreviousData, useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { BotIcon, CheckIcon, KeyRoundIcon, LanguagesIcon, PencilIcon, SearchIcon, TerminalIcon } from "lucide-react"
+import {
+  BotIcon,
+  BracesIcon,
+  CheckIcon,
+  FileCodeIcon,
+  InfoIcon,
+  KeyRoundIcon,
+  LanguagesIcon,
+  MessageSquareTextIcon,
+  PencilIcon,
+  SearchIcon,
+  TerminalIcon,
+} from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -160,7 +172,11 @@ function MessagesInbox() {
                     isActive && "bg-muted",
                   )}
                 >
-                  <span className="line-clamp-2 text-sm leading-5">{message.defaultMessage}</span>
+                  <MessageText
+                    value={message.defaultMessage}
+                    placeholders={message.placeholders}
+                    className="line-clamp-2 text-sm leading-5"
+                  />
                   {message.done < message.total && (
                     <span className="text-xs text-amber-600 dark:text-amber-400">
                       {t("{done} of {total} Locale values", { done: String(message.done), total: String(message.total) })}
@@ -278,9 +294,13 @@ function MessageDetailSkeleton() {
 }
 
 function MessageLocaleDetailLoader({ appLocale, isProduction }: { appLocale: string; isProduction: boolean }) {
+  const t = useT()
   const { orgSlug, projectSlug, branchName } = Route.useParams()
   const searchParams = Route.useSearch()
   const detailQuery = useQuery(branchMessageDetailQueryOptions(orgSlug, projectSlug, branchName, searchParams?.messageId || ""))
+  const [detailsOpen, setDetailsOpen] = useState(false)
+
+  useEffect(() => setDetailsOpen(false), [searchParams?.messageId])
 
   if (detailQuery.isPending) return <MessageDetailSkeleton />
 
@@ -293,18 +313,37 @@ function MessageLocaleDetailLoader({ appLocale, isProduction }: { appLocale: str
   }
 
   const editableLocales = detailQuery.data.branch.locales.filter((locale) => locale !== detailQuery.data.branch.defaultLocale)
+  const hasDetails = hasMessageDetails(detailQuery.data.message)
 
   return (
     <div className="flex flex-col gap-4 p-5">
       <div className="rounded-md border bg-muted/30">
-        <div className="flex h-10 items-center border-b px-3">
-          <p className="text-sm text-muted-foreground">
+        <div className="flex h-10 items-center justify-between gap-2 border-b px-3">
+          <p className="min-w-0 truncate text-sm text-muted-foreground">
             {formatLocale(detailQuery.data.branch.defaultLocale, [appLocale])} ({<T>Original</T>})
           </p>
+          {hasDetails && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              aria-label={detailsOpen ? t("Hide Message details") : t("Show Message details")}
+              aria-expanded={detailsOpen}
+              aria-pressed={detailsOpen}
+              onClick={() => setDetailsOpen((open) => !open)}
+            >
+              <InfoIcon />
+            </Button>
+          )}
         </div>
         <div className="p-3">
-          <p className="leading-6">{detailQuery.data.message.defaultMessage}</p>
+          <MessageText
+            value={detailQuery.data.message.defaultMessage}
+            placeholders={detailQuery.data.message.placeholders}
+            className="leading-6"
+          />
         </div>
+        {hasDetails && detailsOpen && <MessageSourceDetails message={detailQuery.data.message} />}
       </div>
       <div className="flex flex-col gap-4">
         {editableLocales.map((locale) => (
@@ -460,9 +499,13 @@ function MessageLocaleRow({
         </div>
       </div>
       <div className="p-3">
-        <p className={cn("leading-6", isMissing && "text-muted-foreground italic")}>
-          {isMissing ? <T>No value yet</T> : currentValue}
-        </p>
+        {isMissing ? (
+          <p className="leading-6 text-muted-foreground italic">
+            <T>No value yet</T>
+          </p>
+        ) : (
+          <MessageText value={currentValue} placeholders={message.placeholders} className="leading-6" />
+        )}
       </div>
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
@@ -550,6 +593,12 @@ function TranslationValueEditor({ locale, message, onSaved }: { locale: string; 
 
   return (
     <div className="flex flex-col gap-4 pt-2">
+      <div className="rounded-md border bg-muted/30 p-3">
+        <p className="mb-1 text-xs font-medium text-muted-foreground">
+          <T>Default Message</T>
+        </p>
+        <MessageText value={message.defaultMessage} placeholders={message.placeholders} className="leading-6" />
+      </div>
       <form.AppForm>
         <form
           className="flex flex-col gap-4"
@@ -586,6 +635,131 @@ function TranslationValueEditor({ locale, message, onSaved }: { locale: string; 
       </form.AppForm>
     </div>
   )
+}
+
+function MessageSourceDetails({ message }: { message: MessageRow }) {
+  const t = useT()
+
+  return (
+    <div className="grid gap-3 rounded-b-md border-t bg-background p-3 text-sm md:grid-cols-2">
+      {message.context && (
+        <div className="flex min-w-0 gap-2">
+          <MessageSquareTextIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">
+              <T>Context</T>
+            </p>
+            <p className="mt-1 text-pretty">{message.context}</p>
+          </div>
+        </div>
+      )}
+
+      {message.placeholders.length > 0 && (
+        <div className="flex min-w-0 gap-2">
+          <BracesIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">
+              <T>Placeholders</T>
+            </p>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {message.placeholders.map((placeholder) => (
+                <PlaceholderBadge key={placeholder} placeholder={placeholder} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {message.sources.length > 0 && (
+        <div className="flex min-w-0 gap-2">
+          <FileCodeIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">
+              <T>Sources</T>
+            </p>
+            <div className="mt-1 flex flex-col gap-1">
+              {message.sources.slice(0, 3).map((source, index) => (
+                <div key={`${source.file}:${source.line ?? ""}:${source.column ?? ""}:${index}`} className="min-w-0">
+                  <p className="font-mono text-xs break-all">{formatSourceLocation(source)}</p>
+                </div>
+              ))}
+              {message.sources.length > 3 && (
+                <p className="text-xs text-muted-foreground">
+                  {t("+{count} more", { count: String(message.sources.length - 3) })}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function hasMessageDetails(message: MessageRow) {
+  return Boolean(message.context || message.placeholders.length > 0 || message.sources.length > 0)
+}
+
+function MessageText({ value, placeholders, className }: { value: string; placeholders: string[]; className?: string }) {
+  const placeholderSet = new Set(placeholders)
+  const nodes = getMessageTextNodes(value, placeholderSet)
+
+  return (
+    <p className={cn("break-words", className)}>
+      {nodes.map((node, index) =>
+        typeof node === "string" ? (
+          node
+        ) : (
+          <PlaceholderBadge key={`${node.placeholder}:${index}`} placeholder={node.placeholder} />
+        ),
+      )}
+    </p>
+  )
+}
+
+function getMessageTextNodes(value: string, placeholders: Set<string>): Array<string | { placeholder: string }> {
+  if (placeholders.size === 0) return [value]
+
+  const nodes: Array<string | { placeholder: string }> = []
+  const regex = /\{([^{}]+)\}/g
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = regex.exec(value))) {
+    const placeholder = match[1]
+    if (!placeholder || !placeholders.has(placeholder)) continue
+
+    if (match.index > lastIndex) nodes.push(value.slice(lastIndex, match.index))
+    nodes.push({ placeholder })
+    lastIndex = regex.lastIndex
+  }
+
+  if (lastIndex < value.length) nodes.push(value.slice(lastIndex))
+  return nodes.length > 0 ? nodes : [value]
+}
+
+function PlaceholderBadge({ placeholder }: { placeholder: string }) {
+  return (
+    <Badge
+      variant="secondary"
+      className="mx-0.5 inline-flex h-5 translate-y-[-1px] rounded-md border border-border bg-background px-1.5 font-mono text-[0.7rem] font-medium text-foreground"
+    >
+      {formatPlaceholderLabel(placeholder)}
+    </Badge>
+  )
+}
+
+function formatPlaceholderLabel(placeholder: string) {
+  return placeholder
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/^./, (letter) => letter.toUpperCase())
+}
+
+function formatSourceLocation(source: MessageRow["sources"][number]) {
+  if (source.line && source.column) return `${source.file}:${source.line}:${source.column}`
+  if (source.line) return `${source.file}:${source.line}`
+  return source.file
 }
 
 function BranchNotFound() {
