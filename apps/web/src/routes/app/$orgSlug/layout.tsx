@@ -1,13 +1,16 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router"
 
-import { currentOrganizationQueryOptions, organizationProjectsQueryOptions } from "./-data"
+import { OrgSwitcherSlot } from "./-components/org-switcher"
+import { currentOrganizationQueryOptions } from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug")({
-  beforeLoad: async ({ context, params }) => {
-    await Promise.all([
-      context.queryClient.ensureQueryData(currentOrganizationQueryOptions(params.orgSlug)),
-      context.queryClient.ensureQueryData(organizationProjectsQueryOptions(params.orgSlug)),
-    ])
+  staticData: {
+    appShell: {
+      topBar: { Leading: OrgSwitcherSlot },
+    },
+  },
+  loader: ({ context, params }) => {
+    void context.queryClient.prefetchQuery(currentOrganizationQueryOptions(params.orgSlug))
   },
   component: Outlet,
 })

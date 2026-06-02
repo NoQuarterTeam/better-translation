@@ -19,8 +19,8 @@ export const Route = createFileRoute("/api/github/setup")({
         if (!parsedState) return Response.redirect(new URL("/app", requestUrl), 302)
 
         const redirectPath = parsedState.projectSlug
-          ? `/app/${parsedState.orgSlug}/projects/${parsedState.projectSlug}/settings`
-          : `/app/${parsedState.orgSlug}/projects/new`
+          ? `/app/${parsedState.orgSlug}/${parsedState.projectSlug}/settings`
+          : `/app/${parsedState.orgSlug}/new`
         const redirectUrl = new URL(redirectPath, requestUrl)
 
         if (installationId) {

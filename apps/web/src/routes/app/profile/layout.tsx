@@ -1,22 +1,14 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router"
 
-import { SidebarInset } from "@/components/ui/sidebar"
-
-import { ProfileSidebar } from "./-components/profile-sidebar"
+import { ProfileBackSlot } from "./-components/profile-back"
+import { ProfileSidebarSlot } from "./-components/profile-sidebar"
 
 export const Route = createFileRoute("/app/profile")({
-  component: ProfileLayout,
+  staticData: {
+    appShell: {
+      sidebar: { Content: ProfileSidebarSlot },
+      topBar: { Leading: ProfileBackSlot },
+    },
+  },
+  component: Outlet,
 })
-
-function ProfileLayout() {
-  return (
-    <>
-      <ProfileSidebar />
-      <SidebarInset className="flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-auto overscroll-contain">
-          <Outlet />
-        </div>
-      </SidebarInset>
-    </>
-  )
-}

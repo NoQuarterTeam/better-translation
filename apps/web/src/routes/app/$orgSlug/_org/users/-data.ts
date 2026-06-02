@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query"
+import { notFound } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { getRequestHeaders } from "@tanstack/react-start/server"
 import { and, desc, eq, inArray, not } from "drizzle-orm"
@@ -63,6 +64,19 @@ export const listOrganizationInvitationsFn = createServerFn({ method: "GET" })
     }))
   })
 
+export const getOrganizationUsersPageContextFn = createServerFn({ method: "GET" })
+  .middleware([organizationMiddleware])
+  .handler(({ context }) => {
+    const memberRole = context.member.role as OrganizationRole
+
+    return {
+      canInviteMembers: hasOrganizationAccess(memberRole, { permissions: { invitation: ["create"] } }),
+      canManageMembers: hasOrganizationAccess(memberRole, { permissions: { member: ["update"] } }),
+      currentMemberRole: memberRole,
+      currentUserId: context.user.id,
+    }
+  })
+
 export const inviteOrganizationMembersFn = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
   .inputValidator(
@@ -115,7 +129,7 @@ export const removeOrganizationMemberFn = createServerFn({ method: "POST" })
       where: { id: data.memberId, organizationId: context.organization.id },
     })
 
-    if (!member) throw new Error("Member not found.")
+    if (!member) throw notFound()
 
     return auth.api.removeMember({
       headers: getRequestHeaders(),
@@ -137,7 +151,7 @@ export const cancelOrganizationInvitationFn = createServerFn({ method: "POST" })
       where: { id: data.invitationId, organizationId: context.organization.id },
     })
 
-    if (!invitation) throw new Error("Invitation not found.")
+    if (!invitation) throw notFound()
 
     return auth.api.cancelInvitation({ headers: getRequestHeaders(), body: { invitationId: data.invitationId } })
   })
@@ -152,6 +166,12 @@ export const organizationInvitationsQueryOptions = (orgSlug: string) =>
   queryOptions({
     queryKey: ["organization-invitations", orgSlug],
     queryFn: () => listOrganizationInvitationsFn({ data: { orgSlug } }),
+  })
+
+export const organizationUsersPageContextQueryOptions = (orgSlug: string) =>
+  queryOptions({
+    queryKey: ["organization-users-page-context", orgSlug],
+    queryFn: () => getOrganizationUsersPageContextFn({ data: { orgSlug } }),
   })
 
 function ensureOrganizationAccess(role: string, options: OrganizationAccessOptions) {

@@ -6,10 +6,19 @@ import { T, useT } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
 import { useAppForm } from "@/components/react-form"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { authClient } from "@/lib/auth/client"
 
+import { CreateOrgLeadingSlot } from "./-components/create-org-leading"
+import { userOrganizationsQueryOptions } from "./-data"
+
 export const Route = createFileRoute("/app/create-org/")({
+  staticData: {
+    appShell: { topBar: { Leading: CreateOrgLeadingSlot } },
+  },
+  loader: ({ context }) => {
+    void context.queryClient.prefetchQuery(userOrganizationsQueryOptions())
+  },
   component: CreateOrgPage,
   head: ({ match }) => {
     const t = createTranslator(match.context.messages)
@@ -79,7 +88,7 @@ function CreateOrgPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>
-            <T>Create your organization</T>
+            <T>Create an organization</T>
           </CardTitle>
           <CardDescription>
             <T>This workspace is shared with your team. You can invite people after you finish.</T>
@@ -130,11 +139,6 @@ function CreateOrgPage() {
             </form>
           </form.AppForm>
         </CardContent>
-        <CardFooter className="border-t pt-4">
-          <p className="text-center text-sm text-muted-foreground">
-            <T>You’re signed in. After this step you’ll land in the new organization.</T>
-          </p>
-        </CardFooter>
       </Card>
     </main>
   )

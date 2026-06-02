@@ -66,6 +66,7 @@ Read `CONTEXT.md` for product terminology and `docs/platform.md` for product dir
 - Use snake_case for database columns
 - When using database schemas prefer using the root schema and adding omit/pick to choose or omit fields, rather than creating custom schema variables that extend.
 - Lucide icons rarely need size or margin props if used in a button or icon button as that button provides this.
+- When using Base UI components that render buttons by default, such as buttons or dropdown items, but overriding them with `render={...}` to render a link or another non-button element, add `nativeButton={false}`.
 
 ## Architecture
 

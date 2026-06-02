@@ -1,11 +1,10 @@
 import { ChevronsUpDownIcon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 
+import { ResourceMark } from "@/components/resource-mark"
 import { Button } from "@/components/ui/button"
 import { Command, CommandGroup, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-
-import { ResourceMark } from "./resource-mark"
 
 export type GitHubAccountOption = {
   accountAvatarUrl: string | null

@@ -1,14 +1,11 @@
-import { createFileRoute, Outlet, useParams } from "@tanstack/react-router"
+import { createFileRoute, Outlet, useMatches } from "@tanstack/react-router"
 
 import { DefaultError } from "@/components/default-error"
 import { Separator } from "@/components/ui/separator"
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { Sidebar, SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
-import { BranchSwitcher } from "./$orgSlug/-components/branch-switcher"
-import { NavUser } from "./$orgSlug/-components/nav-user"
-import { OrgSwitcher } from "./$orgSlug/-components/org-switcher"
-import { ProjectSwitcher } from "./$orgSlug/-components/project-switcher"
+import { NavUser } from "./-components/nav-user"
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -20,28 +17,44 @@ export const Route = createFileRoute("/app")({
 })
 
 function AppLayout() {
-  const params = useParams({ strict: false })
+  const shell = useMatches({
+    select: (matches) => {
+      const nearestMatches = [...matches].reverse()
 
-  const projectSlug = typeof params.projectSlug === "string" ? params.projectSlug : null
-  const branchName = typeof params.branchName === "string" ? params.branchName : null
+      return {
+        BranchSwitcher: nearestMatches.find((match) => match.staticData.appShell?.topBar?.BranchSwitcher)?.staticData.appShell
+          ?.topBar?.BranchSwitcher,
+        Leading: nearestMatches.find((match) => match.staticData.appShell?.topBar?.Leading)?.staticData.appShell?.topBar?.Leading,
+        ProjectSwitcher: nearestMatches.find((match) => match.staticData.appShell?.topBar?.ProjectSwitcher)?.staticData.appShell
+          ?.topBar?.ProjectSwitcher,
+        SidebarContent: nearestMatches.find((match) => match.staticData.appShell?.sidebar?.Content)?.staticData.appShell?.sidebar
+          ?.Content,
+      }
+    },
+  })
+
+  const ProjectSwitcher = shell.ProjectSwitcher
+  const BranchSwitcher = shell.BranchSwitcher
+  const Leading = shell.Leading
+  const SidebarContent = shell.SidebarContent
 
   return (
     <TooltipProvider delay={0}>
       <SidebarProvider className="flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-background">
         <header className="flex h-14 w-full shrink-0 items-center justify-between gap-3 border-b bg-background px-4">
-          <div className="flex h-full min-w-0 items-center gap-1">
-            <SidebarTrigger className="-ml-2 md:hidden" />
-            <OrgSwitcher />
-            {projectSlug && (
+          <div className="flex h-full min-w-0 items-center gap-0.5 sm:gap-1">
+            {SidebarContent && <SidebarTrigger className="-ml-2 md:hidden" />}
+            {Leading && <Leading />}
+            {ProjectSwitcher && (
               <>
                 <SwitcherSeparator />
                 <ProjectSwitcher />
-                {branchName && (
-                  <>
-                    <SwitcherSeparator />
-                    <BranchSwitcher />
-                  </>
-                )}
+              </>
+            )}
+            {BranchSwitcher && (
+              <>
+                <SwitcherSeparator />
+                <BranchSwitcher />
               </>
             )}
           </div>
@@ -50,7 +63,22 @@ function AppLayout() {
           </div>
         </header>
         <div className="flex min-h-0 flex-1">
-          <Outlet />
+          {SidebarContent ? (
+            <>
+              <Sidebar collapsible="icon" variant="sidebar" className="top-14! h-[calc(100svh-3.5rem)]!">
+                <SidebarContent />
+              </Sidebar>
+              <SidebarInset className="flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-auto overscroll-contain">
+                  <Outlet />
+                </div>
+              </SidebarInset>
+            </>
+          ) : (
+            <main className="min-h-0 flex-1 overflow-auto overscroll-contain">
+              <Outlet />
+            </main>
+          )}
         </div>
       </SidebarProvider>
     </TooltipProvider>
@@ -61,7 +89,7 @@ function SwitcherSeparator() {
   return (
     <Separator
       orientation="vertical"
-      className="mx-1 origin-center rotate-12 data-[orientation=vertical]:h-7 data-[orientation=vertical]:self-center"
+      className="mx-1 hidden origin-center rotate-12 data-[orientation=vertical]:h-7 data-[orientation=vertical]:self-center sm:block"
     />
   )
 }

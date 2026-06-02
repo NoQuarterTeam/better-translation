@@ -20,6 +20,7 @@ export const projectsTable = pgTable(
       .$defaultFn(() => `prj_${createId()}`),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
+    icon: text("icon"),
     defaultBranchId: text("default_branch_id"),
     githubRepositoryOwner: text("github_repository_owner"),
     githubRepositoryName: text("github_repository_name"),

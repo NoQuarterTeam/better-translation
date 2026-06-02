@@ -13,6 +13,7 @@ import { Route as AppLayoutRouteImport } from './routes/app/layout'
 import { Route as AuthLayoutRouteImport } from './routes/_auth/layout'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as ApiUploadRouteImport } from './routes/api/upload'
 import { Route as AcceptInvitationInvitationIdRouteImport } from './routes/accept-invitation/$invitationId'
 import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
 import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
@@ -23,24 +24,23 @@ import { Route as AppProfileLayoutRouteImport } from './routes/app/profile/layou
 import { Route as AppOrgSlugLayoutRouteImport } from './routes/app/$orgSlug/layout'
 import { Route as AppProfileIndexRouteImport } from './routes/app/profile/index'
 import { Route as AppCreateOrgIndexRouteImport } from './routes/app/create-org/index'
-import { Route as AppProfileAuthenticationRouteImport } from './routes/app/profile/authentication'
 import { Route as ApiGithubWebhooksRouteImport } from './routes/api/github/webhooks'
 import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
 import { Route as AppOrgSlugOrgLayoutRouteImport } from './routes/app/$orgSlug/_org/layout'
+import { Route as AppProfileAuthenticationIndexRouteImport } from './routes/app/profile/authentication/index'
 import { Route as AppOrgSlugOrgIndexRouteImport } from './routes/app/$orgSlug/_org/index'
-import { Route as AppOrgSlugProjectsProjectSlugLayoutRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/layout'
-import { Route as AppOrgSlugProjectsProjectSlugIndexRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/index'
+import { Route as AppOrgSlugProjectsProjectSlugLayoutRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/layout'
+import { Route as AppOrgSlugProjectsProjectSlugIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/index'
 import { Route as AppOrgSlugOrgUsersIndexRouteImport } from './routes/app/$orgSlug/_org/users/index'
 import { Route as AppOrgSlugOrgSettingsIndexRouteImport } from './routes/app/$orgSlug/_org/settings/index'
-import { Route as AppOrgSlugOrgProjectsIndexRouteImport } from './routes/app/$orgSlug/_org/projects/index'
-import { Route as AppOrgSlugProjectsProjectSlugSettingsIndexRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/settings/index'
-import { Route as AppOrgSlugProjectsProjectSlugBranchesIndexRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/branches/index'
-import { Route as AppOrgSlugProjectsProjectSlugApiKeysIndexRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/api-keys/index'
-import { Route as AppOrgSlugOrgProjectsNewIndexRouteImport } from './routes/app/$orgSlug/_org/projects/new/index'
+import { Route as AppOrgSlugOrgNewIndexRouteImport } from './routes/app/$orgSlug/_org/new/index'
+import { Route as AppOrgSlugProjectsProjectSlugSettingsIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/settings/index'
+import { Route as AppOrgSlugProjectsProjectSlugBranchesIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/branches/index'
+import { Route as AppOrgSlugProjectsProjectSlugApiKeysIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/api-keys/index'
+import { Route as AppOrgSlugProjectsProjectSlugBranchNameIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/$branchName/index'
 import { Route as ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRouteImport } from './routes/projects/$projectId/branches/$branchName/locales/{$locale}[.]json'
 import { Route as ApiProjectsProjectIdBranchesBranchNameManifestRouteImport } from './routes/api/projects/$projectId/branches/$branchName/manifest'
-import { Route as AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/branches/$branchName/index'
 
 const AppLayoutRoute = AppLayoutRouteImport.update({
   id: '/app',
@@ -60,6 +60,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppLayoutRoute,
+} as any)
+const ApiUploadRoute = ApiUploadRouteImport.update({
+  id: '/api/upload',
+  path: '/api/upload',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AcceptInvitationInvitationIdRoute =
   AcceptInvitationInvitationIdRouteImport.update({
@@ -112,12 +117,6 @@ const AppCreateOrgIndexRoute = AppCreateOrgIndexRouteImport.update({
   path: '/create-org/',
   getParentRoute: () => AppLayoutRoute,
 } as any)
-const AppProfileAuthenticationRoute =
-  AppProfileAuthenticationRouteImport.update({
-    id: '/authentication',
-    path: '/authentication',
-    getParentRoute: () => AppProfileLayoutRoute,
-  } as any)
 const ApiGithubWebhooksRoute = ApiGithubWebhooksRouteImport.update({
   id: '/api/github/webhooks',
   path: '/api/github/webhooks',
@@ -137,6 +136,12 @@ const AppOrgSlugOrgLayoutRoute = AppOrgSlugOrgLayoutRouteImport.update({
   id: '/_org',
   getParentRoute: () => AppOrgSlugLayoutRoute,
 } as any)
+const AppProfileAuthenticationIndexRoute =
+  AppProfileAuthenticationIndexRouteImport.update({
+    id: '/authentication/',
+    path: '/authentication/',
+    getParentRoute: () => AppProfileLayoutRoute,
+  } as any)
 const AppOrgSlugOrgIndexRoute = AppOrgSlugOrgIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -144,8 +149,8 @@ const AppOrgSlugOrgIndexRoute = AppOrgSlugOrgIndexRouteImport.update({
 } as any)
 const AppOrgSlugProjectsProjectSlugLayoutRoute =
   AppOrgSlugProjectsProjectSlugLayoutRouteImport.update({
-    id: '/projects/$projectSlug',
-    path: '/projects/$projectSlug',
+    id: '/_projects/$projectSlug',
+    path: '/$projectSlug',
     getParentRoute: () => AppOrgSlugLayoutRoute,
   } as any)
 const AppOrgSlugProjectsProjectSlugIndexRoute =
@@ -165,12 +170,11 @@ const AppOrgSlugOrgSettingsIndexRoute =
     path: '/settings/',
     getParentRoute: () => AppOrgSlugOrgLayoutRoute,
   } as any)
-const AppOrgSlugOrgProjectsIndexRoute =
-  AppOrgSlugOrgProjectsIndexRouteImport.update({
-    id: '/projects/',
-    path: '/projects/',
-    getParentRoute: () => AppOrgSlugOrgLayoutRoute,
-  } as any)
+const AppOrgSlugOrgNewIndexRoute = AppOrgSlugOrgNewIndexRouteImport.update({
+  id: '/new/',
+  path: '/new/',
+  getParentRoute: () => AppOrgSlugOrgLayoutRoute,
+} as any)
 const AppOrgSlugProjectsProjectSlugSettingsIndexRoute =
   AppOrgSlugProjectsProjectSlugSettingsIndexRouteImport.update({
     id: '/settings/',
@@ -189,11 +193,11 @@ const AppOrgSlugProjectsProjectSlugApiKeysIndexRoute =
     path: '/api-keys/',
     getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
   } as any)
-const AppOrgSlugOrgProjectsNewIndexRoute =
-  AppOrgSlugOrgProjectsNewIndexRouteImport.update({
-    id: '/projects/new/',
-    path: '/projects/new/',
-    getParentRoute: () => AppOrgSlugOrgLayoutRoute,
+const AppOrgSlugProjectsProjectSlugBranchNameIndexRoute =
+  AppOrgSlugProjectsProjectSlugBranchNameIndexRouteImport.update({
+    id: '/$branchName/',
+    path: '/$branchName/',
+    getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
   } as any)
 const ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute =
   ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRouteImport.update(
@@ -209,12 +213,6 @@ const ApiProjectsProjectIdBranchesBranchNameManifestRoute =
     path: '/api/projects/$projectId/branches/$branchName/manifest',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRoute =
-  AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRouteImport.update({
-    id: '/branches/$branchName/',
-    path: '/branches/$branchName/',
-    getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -227,26 +225,26 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof AuthSignUpRoute
   '/verify-email': typeof AuthVerifyEmailRoute
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
+  '/api/upload': typeof ApiUploadRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhooks': typeof ApiGithubWebhooksRoute
-  '/app/profile/authentication': typeof AppProfileAuthenticationRoute
   '/app/create-org/': typeof AppCreateOrgIndexRoute
   '/app/profile/': typeof AppProfileIndexRoute
-  '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
+  '/app/$orgSlug/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
   '/app/$orgSlug/': typeof AppOrgSlugOrgIndexRoute
-  '/app/$orgSlug/projects/': typeof AppOrgSlugOrgProjectsIndexRoute
+  '/app/profile/authentication/': typeof AppProfileAuthenticationIndexRoute
+  '/app/$orgSlug/new/': typeof AppOrgSlugOrgNewIndexRoute
   '/app/$orgSlug/settings/': typeof AppOrgSlugOrgSettingsIndexRoute
   '/app/$orgSlug/users/': typeof AppOrgSlugOrgUsersIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/': typeof AppOrgSlugProjectsProjectSlugIndexRoute
+  '/app/$orgSlug/$projectSlug/': typeof AppOrgSlugProjectsProjectSlugIndexRoute
   '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
   '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
-  '/app/$orgSlug/projects/new/': typeof AppOrgSlugOrgProjectsNewIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/api-keys/': typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/branches/': typeof AppOrgSlugProjectsProjectSlugBranchesIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/settings/': typeof AppOrgSlugProjectsProjectSlugSettingsIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/branches/$branchName/': typeof AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRoute
+  '/app/$orgSlug/$projectSlug/$branchName/': typeof AppOrgSlugProjectsProjectSlugBranchNameIndexRoute
+  '/app/$orgSlug/$projectSlug/api-keys/': typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRoute
+  '/app/$orgSlug/$projectSlug/branches/': typeof AppOrgSlugProjectsProjectSlugBranchesIndexRoute
+  '/app/$orgSlug/$projectSlug/settings/': typeof AppOrgSlugProjectsProjectSlugSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -257,24 +255,24 @@ export interface FileRoutesByTo {
   '/sign-up': typeof AuthSignUpRoute
   '/verify-email': typeof AuthVerifyEmailRoute
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
+  '/api/upload': typeof ApiUploadRoute
   '/app': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhooks': typeof ApiGithubWebhooksRoute
-  '/app/profile/authentication': typeof AppProfileAuthenticationRoute
   '/app/create-org': typeof AppCreateOrgIndexRoute
   '/app/profile': typeof AppProfileIndexRoute
-  '/app/$orgSlug/projects': typeof AppOrgSlugOrgProjectsIndexRoute
+  '/app/profile/authentication': typeof AppProfileAuthenticationIndexRoute
+  '/app/$orgSlug/new': typeof AppOrgSlugOrgNewIndexRoute
   '/app/$orgSlug/settings': typeof AppOrgSlugOrgSettingsIndexRoute
   '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersIndexRoute
-  '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugIndexRoute
+  '/app/$orgSlug/$projectSlug': typeof AppOrgSlugProjectsProjectSlugIndexRoute
   '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
   '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
-  '/app/$orgSlug/projects/new': typeof AppOrgSlugOrgProjectsNewIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/api-keys': typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/branches': typeof AppOrgSlugProjectsProjectSlugBranchesIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/settings': typeof AppOrgSlugProjectsProjectSlugSettingsIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/branches/$branchName': typeof AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRoute
+  '/app/$orgSlug/$projectSlug/$branchName': typeof AppOrgSlugProjectsProjectSlugBranchNameIndexRoute
+  '/app/$orgSlug/$projectSlug/api-keys': typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRoute
+  '/app/$orgSlug/$projectSlug/branches': typeof AppOrgSlugProjectsProjectSlugBranchesIndexRoute
+  '/app/$orgSlug/$projectSlug/settings': typeof AppOrgSlugProjectsProjectSlugSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -289,27 +287,27 @@ export interface FileRoutesById {
   '/_auth/sign-up': typeof AuthSignUpRoute
   '/_auth/verify-email': typeof AuthVerifyEmailRoute
   '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
+  '/api/upload': typeof ApiUploadRoute
   '/app/': typeof AppIndexRoute
   '/app/$orgSlug/_org': typeof AppOrgSlugOrgLayoutRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/setup': typeof ApiGithubSetupRoute
   '/api/github/webhooks': typeof ApiGithubWebhooksRoute
-  '/app/profile/authentication': typeof AppProfileAuthenticationRoute
   '/app/create-org/': typeof AppCreateOrgIndexRoute
   '/app/profile/': typeof AppProfileIndexRoute
-  '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
+  '/app/$orgSlug/_projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
   '/app/$orgSlug/_org/': typeof AppOrgSlugOrgIndexRoute
-  '/app/$orgSlug/_org/projects/': typeof AppOrgSlugOrgProjectsIndexRoute
+  '/app/profile/authentication/': typeof AppProfileAuthenticationIndexRoute
+  '/app/$orgSlug/_org/new/': typeof AppOrgSlugOrgNewIndexRoute
   '/app/$orgSlug/_org/settings/': typeof AppOrgSlugOrgSettingsIndexRoute
   '/app/$orgSlug/_org/users/': typeof AppOrgSlugOrgUsersIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/': typeof AppOrgSlugProjectsProjectSlugIndexRoute
+  '/app/$orgSlug/_projects/$projectSlug/': typeof AppOrgSlugProjectsProjectSlugIndexRoute
   '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
   '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
-  '/app/$orgSlug/_org/projects/new/': typeof AppOrgSlugOrgProjectsNewIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/api-keys/': typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/branches/': typeof AppOrgSlugProjectsProjectSlugBranchesIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/settings/': typeof AppOrgSlugProjectsProjectSlugSettingsIndexRoute
-  '/app/$orgSlug/projects/$projectSlug/branches/$branchName/': typeof AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRoute
+  '/app/$orgSlug/_projects/$projectSlug/$branchName/': typeof AppOrgSlugProjectsProjectSlugBranchNameIndexRoute
+  '/app/$orgSlug/_projects/$projectSlug/api-keys/': typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRoute
+  '/app/$orgSlug/_projects/$projectSlug/branches/': typeof AppOrgSlugProjectsProjectSlugBranchesIndexRoute
+  '/app/$orgSlug/_projects/$projectSlug/settings/': typeof AppOrgSlugProjectsProjectSlugSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -324,26 +322,26 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/verify-email'
     | '/accept-invitation/$invitationId'
+    | '/api/upload'
     | '/app/'
     | '/api/auth/$'
     | '/api/github/setup'
     | '/api/github/webhooks'
-    | '/app/profile/authentication'
     | '/app/create-org/'
     | '/app/profile/'
-    | '/app/$orgSlug/projects/$projectSlug'
+    | '/app/$orgSlug/$projectSlug'
     | '/app/$orgSlug/'
-    | '/app/$orgSlug/projects/'
+    | '/app/profile/authentication/'
+    | '/app/$orgSlug/new/'
     | '/app/$orgSlug/settings/'
     | '/app/$orgSlug/users/'
-    | '/app/$orgSlug/projects/$projectSlug/'
+    | '/app/$orgSlug/$projectSlug/'
     | '/api/projects/$projectId/branches/$branchName/manifest'
     | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
-    | '/app/$orgSlug/projects/new/'
-    | '/app/$orgSlug/projects/$projectSlug/api-keys/'
-    | '/app/$orgSlug/projects/$projectSlug/branches/'
-    | '/app/$orgSlug/projects/$projectSlug/settings/'
-    | '/app/$orgSlug/projects/$projectSlug/branches/$branchName/'
+    | '/app/$orgSlug/$projectSlug/$branchName/'
+    | '/app/$orgSlug/$projectSlug/api-keys/'
+    | '/app/$orgSlug/$projectSlug/branches/'
+    | '/app/$orgSlug/$projectSlug/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -354,24 +352,24 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/verify-email'
     | '/accept-invitation/$invitationId'
+    | '/api/upload'
     | '/app'
     | '/api/auth/$'
     | '/api/github/setup'
     | '/api/github/webhooks'
-    | '/app/profile/authentication'
     | '/app/create-org'
     | '/app/profile'
-    | '/app/$orgSlug/projects'
+    | '/app/profile/authentication'
+    | '/app/$orgSlug/new'
     | '/app/$orgSlug/settings'
     | '/app/$orgSlug/users'
-    | '/app/$orgSlug/projects/$projectSlug'
+    | '/app/$orgSlug/$projectSlug'
     | '/api/projects/$projectId/branches/$branchName/manifest'
     | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
-    | '/app/$orgSlug/projects/new'
-    | '/app/$orgSlug/projects/$projectSlug/api-keys'
-    | '/app/$orgSlug/projects/$projectSlug/branches'
-    | '/app/$orgSlug/projects/$projectSlug/settings'
-    | '/app/$orgSlug/projects/$projectSlug/branches/$branchName'
+    | '/app/$orgSlug/$projectSlug/$branchName'
+    | '/app/$orgSlug/$projectSlug/api-keys'
+    | '/app/$orgSlug/$projectSlug/branches'
+    | '/app/$orgSlug/$projectSlug/settings'
   id:
     | '__root__'
     | '/'
@@ -385,27 +383,27 @@ export interface FileRouteTypes {
     | '/_auth/sign-up'
     | '/_auth/verify-email'
     | '/accept-invitation/$invitationId'
+    | '/api/upload'
     | '/app/'
     | '/app/$orgSlug/_org'
     | '/api/auth/$'
     | '/api/github/setup'
     | '/api/github/webhooks'
-    | '/app/profile/authentication'
     | '/app/create-org/'
     | '/app/profile/'
-    | '/app/$orgSlug/projects/$projectSlug'
+    | '/app/$orgSlug/_projects/$projectSlug'
     | '/app/$orgSlug/_org/'
-    | '/app/$orgSlug/_org/projects/'
+    | '/app/profile/authentication/'
+    | '/app/$orgSlug/_org/new/'
     | '/app/$orgSlug/_org/settings/'
     | '/app/$orgSlug/_org/users/'
-    | '/app/$orgSlug/projects/$projectSlug/'
+    | '/app/$orgSlug/_projects/$projectSlug/'
     | '/api/projects/$projectId/branches/$branchName/manifest'
     | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
-    | '/app/$orgSlug/_org/projects/new/'
-    | '/app/$orgSlug/projects/$projectSlug/api-keys/'
-    | '/app/$orgSlug/projects/$projectSlug/branches/'
-    | '/app/$orgSlug/projects/$projectSlug/settings/'
-    | '/app/$orgSlug/projects/$projectSlug/branches/$branchName/'
+    | '/app/$orgSlug/_projects/$projectSlug/$branchName/'
+    | '/app/$orgSlug/_projects/$projectSlug/api-keys/'
+    | '/app/$orgSlug/_projects/$projectSlug/branches/'
+    | '/app/$orgSlug/_projects/$projectSlug/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -413,6 +411,7 @@ export interface RootRouteChildren {
   AuthLayoutRoute: typeof AuthLayoutRouteWithChildren
   AppLayoutRoute: typeof AppLayoutRouteWithChildren
   AcceptInvitationInvitationIdRoute: typeof AcceptInvitationInvitationIdRoute
+  ApiUploadRoute: typeof ApiUploadRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiGithubSetupRoute: typeof ApiGithubSetupRoute
   ApiGithubWebhooksRoute: typeof ApiGithubWebhooksRoute
@@ -449,6 +448,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppLayoutRoute
+    }
+    '/api/upload': {
+      id: '/api/upload'
+      path: '/api/upload'
+      fullPath: '/api/upload'
+      preLoaderRoute: typeof ApiUploadRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/accept-invitation/$invitationId': {
       id: '/accept-invitation/$invitationId'
@@ -520,13 +526,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCreateOrgIndexRouteImport
       parentRoute: typeof AppLayoutRoute
     }
-    '/app/profile/authentication': {
-      id: '/app/profile/authentication'
-      path: '/authentication'
-      fullPath: '/app/profile/authentication'
-      preLoaderRoute: typeof AppProfileAuthenticationRouteImport
-      parentRoute: typeof AppProfileLayoutRoute
-    }
     '/api/github/webhooks': {
       id: '/api/github/webhooks'
       path: '/api/github/webhooks'
@@ -555,6 +554,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSlugOrgLayoutRouteImport
       parentRoute: typeof AppOrgSlugLayoutRoute
     }
+    '/app/profile/authentication/': {
+      id: '/app/profile/authentication/'
+      path: '/authentication'
+      fullPath: '/app/profile/authentication/'
+      preLoaderRoute: typeof AppProfileAuthenticationIndexRouteImport
+      parentRoute: typeof AppProfileLayoutRoute
+    }
     '/app/$orgSlug/_org/': {
       id: '/app/$orgSlug/_org/'
       path: '/'
@@ -562,17 +568,17 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSlugOrgIndexRouteImport
       parentRoute: typeof AppOrgSlugOrgLayoutRoute
     }
-    '/app/$orgSlug/projects/$projectSlug': {
-      id: '/app/$orgSlug/projects/$projectSlug'
-      path: '/projects/$projectSlug'
-      fullPath: '/app/$orgSlug/projects/$projectSlug'
+    '/app/$orgSlug/_projects/$projectSlug': {
+      id: '/app/$orgSlug/_projects/$projectSlug'
+      path: '/$projectSlug'
+      fullPath: '/app/$orgSlug/$projectSlug'
       preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRouteImport
       parentRoute: typeof AppOrgSlugLayoutRoute
     }
-    '/app/$orgSlug/projects/$projectSlug/': {
-      id: '/app/$orgSlug/projects/$projectSlug/'
+    '/app/$orgSlug/_projects/$projectSlug/': {
+      id: '/app/$orgSlug/_projects/$projectSlug/'
       path: '/'
-      fullPath: '/app/$orgSlug/projects/$projectSlug/'
+      fullPath: '/app/$orgSlug/$projectSlug/'
       preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugIndexRouteImport
       parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
     }
@@ -590,40 +596,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSlugOrgSettingsIndexRouteImport
       parentRoute: typeof AppOrgSlugOrgLayoutRoute
     }
-    '/app/$orgSlug/_org/projects/': {
-      id: '/app/$orgSlug/_org/projects/'
-      path: '/projects'
-      fullPath: '/app/$orgSlug/projects/'
-      preLoaderRoute: typeof AppOrgSlugOrgProjectsIndexRouteImport
+    '/app/$orgSlug/_org/new/': {
+      id: '/app/$orgSlug/_org/new/'
+      path: '/new'
+      fullPath: '/app/$orgSlug/new/'
+      preLoaderRoute: typeof AppOrgSlugOrgNewIndexRouteImport
       parentRoute: typeof AppOrgSlugOrgLayoutRoute
     }
-    '/app/$orgSlug/projects/$projectSlug/settings/': {
-      id: '/app/$orgSlug/projects/$projectSlug/settings/'
+    '/app/$orgSlug/_projects/$projectSlug/settings/': {
+      id: '/app/$orgSlug/_projects/$projectSlug/settings/'
       path: '/settings'
-      fullPath: '/app/$orgSlug/projects/$projectSlug/settings/'
+      fullPath: '/app/$orgSlug/$projectSlug/settings/'
       preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugSettingsIndexRouteImport
       parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
     }
-    '/app/$orgSlug/projects/$projectSlug/branches/': {
-      id: '/app/$orgSlug/projects/$projectSlug/branches/'
+    '/app/$orgSlug/_projects/$projectSlug/branches/': {
+      id: '/app/$orgSlug/_projects/$projectSlug/branches/'
       path: '/branches'
-      fullPath: '/app/$orgSlug/projects/$projectSlug/branches/'
+      fullPath: '/app/$orgSlug/$projectSlug/branches/'
       preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugBranchesIndexRouteImport
       parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
     }
-    '/app/$orgSlug/projects/$projectSlug/api-keys/': {
-      id: '/app/$orgSlug/projects/$projectSlug/api-keys/'
+    '/app/$orgSlug/_projects/$projectSlug/api-keys/': {
+      id: '/app/$orgSlug/_projects/$projectSlug/api-keys/'
       path: '/api-keys'
-      fullPath: '/app/$orgSlug/projects/$projectSlug/api-keys/'
+      fullPath: '/app/$orgSlug/$projectSlug/api-keys/'
       preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRouteImport
       parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
     }
-    '/app/$orgSlug/_org/projects/new/': {
-      id: '/app/$orgSlug/_org/projects/new/'
-      path: '/projects/new'
-      fullPath: '/app/$orgSlug/projects/new/'
-      preLoaderRoute: typeof AppOrgSlugOrgProjectsNewIndexRouteImport
-      parentRoute: typeof AppOrgSlugOrgLayoutRoute
+    '/app/$orgSlug/_projects/$projectSlug/$branchName/': {
+      id: '/app/$orgSlug/_projects/$projectSlug/$branchName/'
+      path: '/$branchName'
+      fullPath: '/app/$orgSlug/$projectSlug/$branchName/'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugBranchNameIndexRouteImport
+      parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
     }
     '/projects/$projectId/branches/$branchName/locales/{$locale}.json': {
       id: '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
@@ -638,13 +644,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/projects/$projectId/branches/$branchName/manifest'
       preLoaderRoute: typeof ApiProjectsProjectIdBranchesBranchNameManifestRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/app/$orgSlug/projects/$projectSlug/branches/$branchName/': {
-      id: '/app/$orgSlug/projects/$projectSlug/branches/$branchName/'
-      path: '/branches/$branchName'
-      fullPath: '/app/$orgSlug/projects/$projectSlug/branches/$branchName/'
-      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRouteImport
-      parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
     }
   }
 }
@@ -671,18 +670,16 @@ const AuthLayoutRouteWithChildren = AuthLayoutRoute._addFileChildren(
 
 interface AppOrgSlugOrgLayoutRouteChildren {
   AppOrgSlugOrgIndexRoute: typeof AppOrgSlugOrgIndexRoute
-  AppOrgSlugOrgProjectsIndexRoute: typeof AppOrgSlugOrgProjectsIndexRoute
+  AppOrgSlugOrgNewIndexRoute: typeof AppOrgSlugOrgNewIndexRoute
   AppOrgSlugOrgSettingsIndexRoute: typeof AppOrgSlugOrgSettingsIndexRoute
   AppOrgSlugOrgUsersIndexRoute: typeof AppOrgSlugOrgUsersIndexRoute
-  AppOrgSlugOrgProjectsNewIndexRoute: typeof AppOrgSlugOrgProjectsNewIndexRoute
 }
 
 const AppOrgSlugOrgLayoutRouteChildren: AppOrgSlugOrgLayoutRouteChildren = {
   AppOrgSlugOrgIndexRoute: AppOrgSlugOrgIndexRoute,
-  AppOrgSlugOrgProjectsIndexRoute: AppOrgSlugOrgProjectsIndexRoute,
+  AppOrgSlugOrgNewIndexRoute: AppOrgSlugOrgNewIndexRoute,
   AppOrgSlugOrgSettingsIndexRoute: AppOrgSlugOrgSettingsIndexRoute,
   AppOrgSlugOrgUsersIndexRoute: AppOrgSlugOrgUsersIndexRoute,
-  AppOrgSlugOrgProjectsNewIndexRoute: AppOrgSlugOrgProjectsNewIndexRoute,
 }
 
 const AppOrgSlugOrgLayoutRouteWithChildren =
@@ -690,24 +687,24 @@ const AppOrgSlugOrgLayoutRouteWithChildren =
 
 interface AppOrgSlugProjectsProjectSlugLayoutRouteChildren {
   AppOrgSlugProjectsProjectSlugIndexRoute: typeof AppOrgSlugProjectsProjectSlugIndexRoute
+  AppOrgSlugProjectsProjectSlugBranchNameIndexRoute: typeof AppOrgSlugProjectsProjectSlugBranchNameIndexRoute
   AppOrgSlugProjectsProjectSlugApiKeysIndexRoute: typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRoute
   AppOrgSlugProjectsProjectSlugBranchesIndexRoute: typeof AppOrgSlugProjectsProjectSlugBranchesIndexRoute
   AppOrgSlugProjectsProjectSlugSettingsIndexRoute: typeof AppOrgSlugProjectsProjectSlugSettingsIndexRoute
-  AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRoute: typeof AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRoute
 }
 
 const AppOrgSlugProjectsProjectSlugLayoutRouteChildren: AppOrgSlugProjectsProjectSlugLayoutRouteChildren =
   {
     AppOrgSlugProjectsProjectSlugIndexRoute:
       AppOrgSlugProjectsProjectSlugIndexRoute,
+    AppOrgSlugProjectsProjectSlugBranchNameIndexRoute:
+      AppOrgSlugProjectsProjectSlugBranchNameIndexRoute,
     AppOrgSlugProjectsProjectSlugApiKeysIndexRoute:
       AppOrgSlugProjectsProjectSlugApiKeysIndexRoute,
     AppOrgSlugProjectsProjectSlugBranchesIndexRoute:
       AppOrgSlugProjectsProjectSlugBranchesIndexRoute,
     AppOrgSlugProjectsProjectSlugSettingsIndexRoute:
       AppOrgSlugProjectsProjectSlugSettingsIndexRoute,
-    AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRoute:
-      AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRoute,
   }
 
 const AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren =
@@ -730,13 +727,13 @@ const AppOrgSlugLayoutRouteWithChildren =
   AppOrgSlugLayoutRoute._addFileChildren(AppOrgSlugLayoutRouteChildren)
 
 interface AppProfileLayoutRouteChildren {
-  AppProfileAuthenticationRoute: typeof AppProfileAuthenticationRoute
   AppProfileIndexRoute: typeof AppProfileIndexRoute
+  AppProfileAuthenticationIndexRoute: typeof AppProfileAuthenticationIndexRoute
 }
 
 const AppProfileLayoutRouteChildren: AppProfileLayoutRouteChildren = {
-  AppProfileAuthenticationRoute: AppProfileAuthenticationRoute,
   AppProfileIndexRoute: AppProfileIndexRoute,
+  AppProfileAuthenticationIndexRoute: AppProfileAuthenticationIndexRoute,
 }
 
 const AppProfileLayoutRouteWithChildren =
@@ -765,6 +762,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLayoutRoute: AuthLayoutRouteWithChildren,
   AppLayoutRoute: AppLayoutRouteWithChildren,
   AcceptInvitationInvitationIdRoute: AcceptInvitationInvitationIdRoute,
+  ApiUploadRoute: ApiUploadRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiGithubSetupRoute: ApiGithubSetupRoute,
   ApiGithubWebhooksRoute: ApiGithubWebhooksRoute,

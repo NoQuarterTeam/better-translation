@@ -1,4 +1,4 @@
-import { redirect } from "@tanstack/react-router"
+import { notFound, redirect } from "@tanstack/react-router"
 import { createMiddleware } from "@tanstack/react-start"
 import * as z from "zod"
 
@@ -12,7 +12,7 @@ export const authMiddleware = createMiddleware({ type: "function" }).server(asyn
   const session = await ensureSession()
   const user = await db.query.usersTable.findFirst({ where: { id: session.user.id } })
 
-  if (!user) throw redirect({ to: "/" })
+  if (!user) throw redirect({ to: "/sign-in" })
 
   return next({ context: { ...session, user } })
 })
@@ -42,7 +42,7 @@ export const projectMiddleware = createMiddleware({ type: "function" })
       where: { slug: data.projectSlug, organizationId: context.organization.id },
     })
 
-    if (!project) throw new Error("Project not found.")
+    if (!project) throw notFound()
 
     return next({ context: { ...context, project } })
   })

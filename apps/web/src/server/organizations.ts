@@ -3,6 +3,7 @@ import { and, asc, desc, eq } from "drizzle-orm"
 
 import { db } from "@/server/db"
 import { membersTable, organizationsTable, type User } from "@/server/db/schema"
+import { withOrganizationLogoUrl } from "@/server/profile-images"
 
 export const selectedOrganizationCookieName = "bt_selected_organization_id"
 export const selectedProjectCookieName = "bt_selected_project_id"
@@ -33,7 +34,7 @@ export async function getDefaultOrganizationForUser(user: Pick<User, "id">) {
 }
 
 export async function listUserOrganizations(user: Pick<User, "id">) {
-  return db
+  const organizations = await db
     .select({
       id: organizationsTable.id,
       logo: organizationsTable.logo,
@@ -44,47 +45,6 @@ export async function listUserOrganizations(user: Pick<User, "id">) {
     .innerJoin(organizationsTable, eq(organizationsTable.id, membersTable.organizationId))
     .where(eq(membersTable.userId, user.id))
     .orderBy(asc(organizationsTable.name))
-}
 
-export async function listOrganizationProjects(organizationId: string) {
-  const projects = await db.query.projectsTable.findMany({
-    columns: {
-      defaultBranchId: true,
-      id: true,
-      name: true,
-      publicId: true,
-      slug: true,
-      updatedAt: true,
-    },
-    orderBy: { name: "asc" },
-    where: { organizationId },
-    with: {
-      branches: {
-        columns: {
-          id: true,
-          name: true,
-          updatedAt: true,
-        },
-        orderBy: { updatedAt: "desc" },
-        where: { archivedAt: { isNull: true } },
-      },
-      defaultBranch: { columns: { name: true } },
-    },
-  })
-
-  return projects.map(({ defaultBranch, ...project }) => ({
-    ...project,
-    branches: project.branches
-      .map((branch) => ({
-        ...branch,
-        isDefault: branch.id === project.defaultBranchId,
-      }))
-      .sort((left, right) => Number(right.isDefault) - Number(left.isDefault)),
-    defaultBranchName: defaultBranch?.name ?? null,
-    selectedBranchName: getCookie(getSelectedBranchCookieName(project.publicId)) ?? null,
-  }))
-}
-
-export function getSelectedBranchCookieName(projectPublicId: string) {
-  return `bt_selected_branch_${projectPublicId}`
+  return Promise.all(organizations.map((organization) => withOrganizationLogoUrl(organization)))
 }

@@ -1,75 +1,69 @@
 import { queryOptions } from "@tanstack/react-query"
 import { createServerFn } from "@tanstack/react-start"
-import { and, count, eq, isNull } from "drizzle-orm"
+import { and, count, desc, eq, inArray, isNull } from "drizzle-orm"
 
 import { organizationMiddleware } from "@/lib/functions/middleware"
 import { db } from "@/server/db"
-import { apiKeysTable, branchesTable, localeValuesTable, messagesTable, projectsTable } from "@/server/db/schema"
+import { branchesTable, messagesTable } from "@/server/db/schema"
+import { withProjectIconUrl } from "@/server/profile-images"
 
-export const getOrganizationOverviewFn = createServerFn({ method: "GET" })
+export const listProjectsFn = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .handler(async ({ context }) => {
-    const organizationId = context.organization.id
-
-    const [projectCount] = await db
-      .select({ count: count() })
-      .from(projectsTable)
-      .where(eq(projectsTable.organizationId, organizationId))
-    const [branchCount] = await db
-      .select({ count: count() })
-      .from(branchesTable)
-      .innerJoin(projectsTable, eq(branchesTable.projectId, projectsTable.id))
-      .where(eq(projectsTable.organizationId, organizationId))
-    const [messageCount] = await db
-      .select({ count: count() })
-      .from(messagesTable)
-      .innerJoin(projectsTable, eq(messagesTable.projectId, projectsTable.id))
-      .where(and(eq(projectsTable.organizationId, organizationId), eq(messagesTable.active, true)))
-    const [activeApiKeyCount] = await db
-      .select({ count: count() })
-      .from(apiKeysTable)
-      .innerJoin(projectsTable, eq(apiKeysTable.projectId, projectsTable.id))
-      .where(and(eq(projectsTable.organizationId, organizationId), isNull(apiKeysTable.revokedAt)))
-
-    const recentProjects = await db.query.projectsTable.findMany({
-      columns: {
-        id: true,
-        name: true,
-        publicId: true,
-        slug: true,
-        updatedAt: true,
-      },
-      limit: 5,
+    const projects = await db.query.projectsTable.findMany({
       orderBy: { updatedAt: "desc" },
-      where: { organizationId },
+      where: { organizationId: context.organization.id },
     })
 
-    const overrideCounts = await Promise.all(
-      recentProjects.map(async (project) => {
-        const [valueCount] = await db
-          .select({ count: count() })
-          .from(localeValuesTable)
-          .where(eq(localeValuesTable.projectId, project.id))
+    return Promise.all(
+      projects.map(async (project) => {
+        const activeBranches = await db
+          .select({
+            id: branchesTable.id,
+            lastSyncedAt: branchesTable.lastSyncedAt,
+            locales: branchesTable.locales,
+          })
+          .from(branchesTable)
+          .where(and(eq(branchesTable.projectId, project.id), isNull(branchesTable.archivedAt)))
+          .orderBy(desc(branchesTable.updatedAt))
 
-        return [project.id, Number(valueCount?.count ?? 0)] as const
+        const [messageCount] =
+          activeBranches.length === 0
+            ? [{ count: 0 }]
+            : await db
+                .select({ count: count() })
+                .from(messagesTable)
+                .where(
+                  and(
+                    eq(messagesTable.projectId, project.id),
+                    eq(messagesTable.active, true),
+                    inArray(
+                      messagesTable.branchId,
+                      activeBranches.map((branch) => branch.id),
+                    ),
+                  ),
+                )
+
+        const locales = [...new Set(activeBranches.flatMap((branch) => branch.locales))].sort()
+
+        return {
+          ...project,
+          activeBranchCount: activeBranches.length,
+          lastSyncedAt:
+            activeBranches
+              .map((branch) => branch.lastSyncedAt)
+              .filter((lastSyncedAt) => lastSyncedAt !== null)
+              .sort((first, second) => second.getTime() - first.getTime())[0] ?? null,
+          locales,
+          messageCount: Number(messageCount?.count ?? 0),
+          ...(await withProjectIconUrl(project)),
+        }
       }),
     )
-
-    return {
-      activeApiKeyCount: Number(activeApiKeyCount?.count ?? 0),
-      branchCount: Number(branchCount?.count ?? 0),
-      messageCount: Number(messageCount?.count ?? 0),
-      organization: context.organization,
-      projectCount: Number(projectCount?.count ?? 0),
-      recentProjects: recentProjects.map((project) => ({
-        ...project,
-        overrideCount: new Map(overrideCounts).get(project.id) ?? 0,
-      })),
-    }
   })
 
-export const organizationOverviewQueryOptions = (orgSlug: string) =>
+export const projectsQueryOptions = (orgSlug: string) =>
   queryOptions({
-    queryKey: ["organization-overview", orgSlug],
-    queryFn: () => getOrganizationOverviewFn({ data: { orgSlug } }),
+    queryKey: ["projects", orgSlug],
+    queryFn: () => listProjectsFn({ data: { orgSlug } }),
   })

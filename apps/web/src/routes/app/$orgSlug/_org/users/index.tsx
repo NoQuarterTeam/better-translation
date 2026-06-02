@@ -46,7 +46,6 @@ import {
   type ManageableOrganizationRole,
 } from "@/lib/static/organization"
 
-import { useCurrentOrganization, useHasCurrentOrganizationAccess } from "../-data"
 import {
   cancelOrganizationInvitationFn,
   inviteOrganizationMembersFn,
@@ -54,14 +53,18 @@ import {
   type listOrganizationMembersFn,
   organizationInvitationsQueryOptions,
   organizationMembersQueryOptions,
+  organizationUsersPageContextQueryOptions,
   removeOrganizationMemberFn,
   updateOrganizationMemberRoleFn,
-} from "./users/-data"
+} from "./-data"
 
 export const Route = createFileRoute("/app/$orgSlug/_org/users/")({
   component: UsersPage,
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(organizationMembersQueryOptions(params.orgSlug))
+    await Promise.all([
+      context.queryClient.ensureQueryData(organizationMembersQueryOptions(params.orgSlug)),
+      context.queryClient.ensureQueryData(organizationUsersPageContextQueryOptions(params.orgSlug)),
+    ])
   },
   head: ({ match }) => {
     const t = createTranslator(match.context.messages)
@@ -78,8 +81,7 @@ function formatDate(value: Date | string) {
 
 function UsersPage() {
   const { orgSlug } = Route.useParams()
-  const canManageMembers = useHasCurrentOrganizationAccess({ permissions: { member: ["update"] } })
-  const canInviteMembers = useHasCurrentOrganizationAccess({ permissions: { invitation: ["create"] } })
+  const pageContext = useSuspenseQuery(organizationUsersPageContextQueryOptions(orgSlug)).data
   const members = useSuspenseQuery(organizationMembersQueryOptions(orgSlug)).data
 
   const memberColumns: ColumnDef<MemberRow>[] = useMemo(
@@ -111,10 +113,17 @@ function UsersPage() {
       {
         id: "actions",
         header: "",
-        cell: ({ row }) => canManageMembers && <MemberActions member={row.original} />,
+        cell: ({ row }) =>
+          pageContext.canManageMembers && (
+            <MemberActions
+              currentMemberRole={pageContext.currentMemberRole}
+              currentUserId={pageContext.currentUserId}
+              member={row.original}
+            />
+          ),
       },
     ],
-    [canManageMembers],
+    [pageContext],
   )
 
   return (
@@ -140,14 +149,14 @@ function UsersPage() {
                 </TabsTrigger>
               </TabsList>
 
-              {canInviteMembers && <InviteUsersDialog />}
+              {pageContext.canInviteMembers && <InviteUsersDialog />}
             </div>
 
             <TabsContent value="members">
               <DataTable columns={memberColumns} data={members} />
             </TabsContent>
             <TabsContent value="invites">
-              <InvitesList canInviteMembers={canInviteMembers} />
+              <InvitesList canInviteMembers={pageContext.canInviteMembers} />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -305,10 +314,17 @@ function InviteUsersDialog() {
   )
 }
 
-function MemberActions({ member }: { member: MemberRow }) {
+function MemberActions({
+  currentMemberRole,
+  currentUserId,
+  member,
+}: {
+  currentMemberRole: OrganizationRole
+  currentUserId: string
+  member: MemberRow
+}) {
   const { orgSlug } = Route.useParams()
   const { queryClient } = Route.useRouteContext()
-  const { user, member: currentMember } = useCurrentOrganization()
   const [isChangeRoleDialogOpen, setIsChangeRoleDialogOpen] = useState(false)
   const [isChangeRoleConfirmOpen, setIsChangeRoleConfirmOpen] = useState(false)
   const [isMakeOwnerConfirmOpen, setIsMakeOwnerConfirmOpen] = useState(false)
@@ -344,9 +360,8 @@ function MemberActions({ member }: { member: MemberRow }) {
     },
   })
 
-  const currentUserRole = currentMember.role as OrganizationRole
-  const canMakeOwner = currentUserRole === "owner" && member.role !== "owner"
-  const canRemove = member.userId !== user.id && member.role !== "owner"
+  const canMakeOwner = currentMemberRole === "owner" && member.role !== "owner"
+  const canRemove = member.userId !== currentUserId && member.role !== "owner"
   const canChangeRole = member.role !== "owner"
   const isSavingSelectedRole = updateRole.isPending && isChangeRoleConfirmOpen
   const isMakingOwner = updateRole.isPending && isMakeOwnerConfirmOpen

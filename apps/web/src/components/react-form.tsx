@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect } from "@/components/ui/native-select"
+import { NativeSelect, type NativeSelectProps } from "@/components/ui/native-select"
 import type { Select as BaseSelect } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { SerializedZodIssues } from "@/lib/functions/zod"
@@ -73,7 +73,7 @@ function TextField({
   fieldProps,
   ...rest
 }: {
-  label: string
+  label?: string
   placeholder?: string
   description?: React.ReactNode
   fieldProps?: React.ComponentProps<typeof Field>
@@ -82,10 +82,12 @@ function TextField({
   const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
   return (
     <Field {...fieldProps} data-invalid={isInvalid || undefined} className={cn("gap-1", fieldProps?.className)}>
-      <FieldContent className="gap-0">
-        <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
-        {description && <FieldDescription>{description}</FieldDescription>}
-      </FieldContent>
+      {(label || description) && (
+        <FieldContent className="gap-0">
+          {label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
+          {description && <FieldDescription>{description}</FieldDescription>}
+        </FieldContent>
+      )}
       <FieldContent>
         <Input
           id={field.name}
@@ -110,7 +112,7 @@ function TextareaField({
   fieldProps,
   ...rest
 }: {
-  label: string
+  label?: string
   placeholder: string
   description?: React.ReactNode
   fieldProps?: React.ComponentProps<typeof Field>
@@ -119,7 +121,7 @@ function TextareaField({
   const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
   return (
     <Field {...fieldProps} data-invalid={isInvalid || undefined} className={cn("gap-1", fieldProps?.className)}>
-      <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+      {label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
       <Textarea
         id={field.name}
         placeholder={placeholder}
@@ -130,10 +132,12 @@ function TextareaField({
         onChange={(e) => field.handleChange(e.target.value)}
         {...rest}
       />
-      <FieldContent className="gap-0">
-        {description && <FieldDescription>{description}</FieldDescription>}
-        {isInvalid && <FieldError errors={field.state.meta.errors} />}
-      </FieldContent>
+      {(description || isInvalid) && (
+        <FieldContent className="gap-0">
+          {description && <FieldDescription>{description}</FieldDescription>}
+          {isInvalid && <FieldError errors={field.state.meta.errors} />}
+        </FieldContent>
+      )}
     </Field>
   )
 }
@@ -145,19 +149,21 @@ function NativeSelectField({
   fieldProps,
   ...rest
 }: {
-  label: string
+  label?: string
   description?: React.ReactNode
   children: React.ReactNode
   fieldProps?: React.ComponentProps<typeof Field>
-} & React.ComponentProps<typeof NativeSelect>) {
+} & NativeSelectProps) {
   const field = useFieldContext<string>()
   const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
   return (
     <Field {...fieldProps} data-invalid={isInvalid || undefined} className={cn("gap-1", fieldProps?.className)}>
-      <FieldContent className="gap-0">
-        <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
-        {description && <FieldDescription>{description}</FieldDescription>}
-      </FieldContent>
+      {(label || description) && (
+        <FieldContent className="gap-0">
+          {label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
+          {description && <FieldDescription>{description}</FieldDescription>}
+        </FieldContent>
+      )}
       <FieldContent>
         <NativeSelect
           id={field.name}
@@ -182,7 +188,7 @@ function CheckboxField({
   description,
   fieldProps,
   ...rest
-}: { label: string; description?: React.ReactNode; fieldProps?: React.ComponentProps<typeof Field> } & Omit<
+}: { label?: string; description?: React.ReactNode; fieldProps?: React.ComponentProps<typeof Field> } & Omit<
   React.ComponentProps<typeof Checkbox>,
   "checked" | "onCheckedChange"
 >) {
@@ -198,13 +204,17 @@ function CheckboxField({
         onCheckedChange={(checked) => field.handleChange(checked === true)}
         {...rest}
       />
-      <FieldContent>
-        <FieldLabel htmlFor={field.name} className="cursor-pointer">
-          {label}
-        </FieldLabel>
-        {description && <FieldDescription>{description}</FieldDescription>}
-        {isInvalid && <FieldError errors={field.state.meta.errors} />}
-      </FieldContent>
+      {(label || description) && (
+        <FieldContent>
+          {label && (
+            <FieldLabel htmlFor={field.name} className="cursor-pointer">
+              {label}
+            </FieldLabel>
+          )}
+          {description && <FieldDescription>{description}</FieldDescription>}
+          {isInvalid && <FieldError errors={field.state.meta.errors} />}
+        </FieldContent>
+      )}
     </Field>
   )
 }
@@ -351,11 +361,13 @@ function SubmitButton({
   const form = useFormContext()
   return (
     <form.Subscribe selector={(s) => [s.canSubmit, s.isSubmitting]}>
-      {([canSubmit, isSubmitting]) => (
-        <Button type="submit" {...rest} disabled={!canSubmit || isSubmitting || rest.disabled}>
-          {typeof children === "function" ? children(isSubmitting ?? false) : children}
-        </Button>
-      )}
+      {([canSubmit, isSubmitting]) => {
+        return (
+          <Button type="submit" {...rest} disabled={!canSubmit || isSubmitting || rest.disabled}>
+            {typeof children === "function" ? children(isSubmitting ?? false) : children}
+          </Button>
+        )
+      }}
     </form.Subscribe>
   )
 }

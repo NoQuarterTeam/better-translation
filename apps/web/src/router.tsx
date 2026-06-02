@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/react-query"
 import { createRouter as createTanStackRouter } from "@tanstack/react-router"
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query"
+import type { ComponentType } from "react"
 import SuperJSON from "superjson"
 
 import { DefaultError } from "./components/default-error"
@@ -34,5 +35,18 @@ export function getRouter() {
 declare module "@tanstack/react-router" {
   interface Register {
     router: ReturnType<typeof getRouter>
+  }
+
+  interface StaticDataRouteOption {
+    appShell?: {
+      sidebar?: {
+        Content: ComponentType
+      }
+      topBar?: {
+        BranchSwitcher?: ComponentType
+        Leading?: ComponentType
+        ProjectSwitcher?: ComponentType
+      }
+    }
   }
 }
