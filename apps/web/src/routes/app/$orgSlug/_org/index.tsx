@@ -83,7 +83,7 @@ function ProjectCard({ appLocale, orgSlug, project }: { appLocale: string; orgSl
   return (
     <div
       className={cn(
-        "group/project-card relative flex h-full flex-col gap-4 overflow-hidden rounded-lg border border-border p-4 text-sm transition-colors hover:border-foreground/20 hover:bg-muted/40",
+        "group/project-card relative flex h-full flex-col justify-between gap-3 overflow-hidden rounded-lg border border-border p-4 text-sm transition-colors hover:border-foreground/20 hover:bg-muted/40",
         isSetup && "border-dashed bg-muted/20 opacity-90",
       )}
     >
@@ -104,10 +104,10 @@ function ProjectCard({ appLocale, orgSlug, project }: { appLocale: string; orgSl
 
       {!isSetup && <ProjectSyncTooltip appLocale={appLocale} lastSyncedAt={lastSyncedAt} />}
 
-      <div className="pointer-events-none relative z-20 mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <div className="pointer-events-none relative z-20 flex min-h-8 flex-wrap items-center justify-between gap-2">
         {isSetup ? (
           <>
-            <p className="min-w-0 text-xs text-muted-foreground">
+            <p className="min-w-0 text-sm text-muted-foreground">
               <T>Not synced yet</T>
             </p>
             <Button
@@ -123,7 +123,8 @@ function ProjectCard({ appLocale, orgSlug, project }: { appLocale: string; orgSl
           </>
         ) : (
           <>
-            <span className="text-sm leading-none font-medium">{formatMessageSummary(project.messageCount, appLocale, t)}</span>
+            <span className="text-sm font-medium">{formatMessageSummary(project.messageCount, appLocale, t)}</span>
+
             <ProjectLocaleBadges appLocale={appLocale} locales={project.locales} />
           </>
         )}
@@ -177,18 +178,29 @@ function ProjectLocaleBadges({ appLocale, locales }: { appLocale: string; locale
 
   const visibleLocales = locales.slice(0, 3)
   const extraCount = locales.length - visibleLocales.length
+  const localeNames = locales.map((locale) => formatLocale(locale, [appLocale]))
 
   return (
     <span className="flex min-w-0 flex-wrap items-center gap-1">
       {visibleLocales.map((locale) => (
-        <Badge key={locale} variant="secondary" title={formatLocale(locale, [appLocale])} className="h-4 px-1.5 text-[0.65rem]">
-          {formatLocaleCode(locale)}
+        <Badge
+          key={locale}
+          variant="secondary"
+          title={formatLocale(locale, [appLocale])}
+          className="h-5 max-w-24 px-2 text-xs font-medium"
+        >
+          <span className="truncate">{formatLocale(locale, [appLocale])}</span>
         </Badge>
       ))}
       {extraCount > 0 && (
-        <Badge variant="outline" className="h-4 px-1.5 text-[0.65rem]">
-          +{extraCount}
-        </Badge>
+        <Tooltip>
+          <TooltipTrigger render={<span className="pointer-events-auto relative z-30 inline-flex rounded-full outline-none" />}>
+            <Badge variant="outline" className="h-5 px-2 text-xs font-medium">
+              +{extraCount}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent align="end">{localeNames.join(", ")}</TooltipContent>
+        </Tooltip>
       )}
     </span>
   )
@@ -206,10 +218,6 @@ function GitHubLogoIcon() {
       <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.52 2.87 8.35 6.84 9.71.5.1.68-.22.68-.49v-1.9c-2.78.62-3.37-1.21-3.37-1.21-.45-1.19-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.86.09-.67.35-1.12.64-1.38-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.35 9.35 0 0 1 12 6.95c.85 0 1.7.12 2.5.34 1.9-1.33 2.74-1.05 2.74-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.8-4.57 5.06.36.32.68.95.68 1.92v2.79c0 .27.18.59.69.49A10.1 10.1 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z" />
     </svg>
   )
-}
-
-function formatLocaleCode(locale: string) {
-  return locale.toUpperCase()
 }
 
 function formatMessageSummary(count: number, appLocale: string, t: ReturnType<typeof useT>) {
