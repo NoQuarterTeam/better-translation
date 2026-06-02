@@ -131,12 +131,14 @@ export const projectTranslatorQueryOptions = (orgSlug: string, projectSlug: stri
 
 async function getProjectTranslator(project: typeof projectsTable.$inferSelect) {
   const branches = await db.query.branchesTable.findMany({
-    columns: { locales: true },
+    columns: { defaultLocale: true, locales: true },
     where: { archivedAt: { isNull: true }, projectId: project.id },
   })
 
   return {
-    projectLocales: [...new Set(branches.flatMap((branch) => branch.locales))].sort(),
+    translationLocales: [
+      ...new Set(branches.flatMap((branch) => branch.locales.filter((locale) => locale !== branch.defaultLocale))),
+    ].sort(),
     translationPrompt: project.translationPrompt,
     translationGlossaryTerms: await db.query.translationGlossaryTermsTable.findMany({
       orderBy: { sourceTerm: "asc" },

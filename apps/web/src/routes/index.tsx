@@ -1,252 +1,76 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, GitBranchIcon, LanguagesIcon, PackageIcon, WorkflowIcon } from "lucide-react"
+import { createFileRoute, Link } from "@tanstack/react-router"
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  CodeIcon,
+  EyeIcon,
+  GitPullRequestIcon,
+  LanguagesIcon,
+  PackageIcon,
+  ScanIcon,
+  ServerIcon,
+  SparklesIcon,
+  ZapIcon,
+} from "lucide-react"
 import type { ReactNode } from "react"
-import { useEffect } from "react"
-import * as z from "zod"
 
 import { T } from "better-translation/react"
-import { createTranslator } from "better-translation/server"
 
+import { DefaultError } from "@/components/default-error"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
-// PROTOTYPE: Three variants of the homepage, switchable via `?variant=`, on the existing `/` route.
-const variantSearchSchema = z.object({
-  variant: z.enum(["A", "B", "C"]).optional().catch(undefined),
-})
-
-const variantLabels = {
-  A: "Direct",
-  B: "Workflow",
-  C: "Product",
-} as const
-
-type VariantKey = keyof typeof variantLabels
-
 export const Route = createFileRoute("/")({
-  validateSearch: variantSearchSchema,
   component: HomePage,
-  head: ({ match }) => {
-    const t = createTranslator(match.context.messages)
+  errorComponent: (props) => (
+    <div className="h-screen w-screen">
+      <DefaultError {...props} />
+    </div>
+  ),
+  head: () => {
+    const title = "Better Translation · Ship every language without leaving your code"
+    const description =
+      "Stop dancing between source and locale files. Wrap copy in one component and translations sync themselves, with no keys and no file-hopping. Open source, self-hostable, with an optional cloud platform."
 
     return {
       meta: [
-        { title: `${t("Better Translation")} · ${t("Developer-first localization that stays in your stack")}` },
-        {
-          name: "description",
-          content: t(
-            "Wrap text in T, generate local locale files today, and manage branch-local translations in the hosted platform next.",
-          ),
-        },
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
       ],
     }
   },
 })
 
 function HomePage() {
-  const { variant = "A" } = Route.useSearch()
-
-  return (
-    <>
-      {variant === "A" && <VariantA />}
-      {variant === "B" && <VariantB />}
-      {variant === "C" && <VariantC />}
-      <PrototypeSwitcher current={variant} />
-    </>
-  )
-}
-
-function VariantA() {
   return (
     <main className="min-h-dvh bg-background">
       <LandingHeader />
-      <section className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-6xl flex-col justify-center px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_26rem] lg:items-center">
-          <div className="max-w-2xl">
-            <p className="mb-5 text-sm font-medium text-primary">
-              <T>For Vite applications</T>
-            </p>
-            <h1 className="text-4xl font-semibold text-balance sm:text-5xl">
-              <T>Better Translation</T>
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-balance text-muted-foreground">
-              <T>Mark copy in code, sync Messages from the Vite plugin, and edit branch-local Locale values before they ship.</T>
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button nativeButton={false} render={<Link to="/sign-up" />}>
-                <T>Start translating</T>
-                <ArrowRightIcon />
-              </Button>
-              <Button variant="outline" nativeButton={false} render={<Link to="/sign-in" />}>
-                <T>Sign in</T>
-              </Button>
-            </div>
-          </div>
-
-          <div className="rounded-lg border bg-muted/20 p-4">
-            <div className="rounded-md border bg-background">
-              <div className="border-b px-4 py-3 text-sm font-medium">
-                <T>Runtime bundle</T>
-              </div>
-              <div className="space-y-3 p-4 text-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="font-mono text-xs text-muted-foreground">m_checkout_title</span>
-                  <span>
-                    <T>Checkout</T>
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="font-mono text-xs text-muted-foreground">m_payment_cta</span>
-                  <span>
-                    <T>Pay now</T>
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="font-mono text-xs text-muted-foreground">m_receipt_email</span>
-                  <span>
-                    <T>Email receipt</T>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              <T>Runtime bundles stay flat: lookup id to translated string. No Manifest metadata reaches the browser.</T>
-            </p>
-          </div>
-        </div>
-      </section>
-    </main>
-  )
-}
-
-function VariantB() {
-  return (
-    <main className="min-h-dvh bg-background">
-      <LandingHeader />
-      <section className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:px-8">
-        <aside className="flex flex-col justify-between border-b pb-8 lg:border-r lg:border-b-0 lg:pr-8 lg:pb-0">
-          <div>
-            <p className="text-sm font-medium text-primary">
-              <T>Local first, hosted when ready</T>
-            </p>
-            <h1 className="mt-5 text-3xl font-semibold text-balance">
-              <T>Better Translation</T>
-            </h1>
-          </div>
-          <div className="mt-8 flex gap-3 lg:flex-col">
-            <Button className="w-fit" nativeButton={false} render={<Link to="/sign-up" />}>
-              <T>Create account</T>
-            </Button>
-            <Button variant="outline" className="w-fit" nativeButton={false} render={<Link to="/sign-in" />}>
-              <T>Sign in</T>
-            </Button>
-          </div>
-        </aside>
-
-        <div className="flex flex-col justify-center gap-10">
-          <div className="max-w-3xl">
-            <h2 className="text-4xl font-semibold text-balance sm:text-5xl">
-              <T>A translation workflow that follows your code.</T>
-            </h2>
-            <p className="mt-5 text-lg leading-8 text-balance text-muted-foreground">
-              <T>
-                Start with generated local Locale values, then move the same Messages into Projects and Branches when the hosted
-                workflow becomes useful.
-              </T>
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <Step number="01" title={<T>Mark</T>} text={<T>Use Translation markers where copy is authored.</T>} />
-            <Step number="02" title={<T>Sync</T>} text={<T>The Vite plugin uploads the Manifest for the current Branch.</T>} />
-            <Step number="03" title={<T>Load</T>} text={<T>Consumer apps read flat Runtime bundles by Locale.</T>} />
-          </div>
-        </div>
-      </section>
-    </main>
-  )
-}
-
-function VariantC() {
-  return (
-    <main className="min-h-dvh bg-background">
-      <LandingHeader />
-      <section className="mx-auto flex max-w-6xl flex-col gap-12 px-4 py-14 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-end">
-          <div>
-            <p className="text-sm font-medium text-primary">
-              <T>Hosted translation platform for Vite apps</T>
-            </p>
-            <h1 className="mt-5 text-4xl font-semibold text-balance sm:text-5xl">
-              <T>Better Translation</T>
-            </h1>
-          </div>
-          <div>
-            <p className="text-lg leading-8 text-muted-foreground">
-              <T>
-                Keep source copy in your app, give each Git Branch its own Locale values, and serve complete Runtime bundles
-                without shipping editor metadata.
-              </T>
-            </p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Button nativeButton={false} render={<Link to="/sign-up" />}>
-                <T>Start translating</T>
-                <ArrowRightIcon />
-              </Button>
-              <Button variant="outline" nativeButton={false} render={<Link to="/sign-in" />}>
-                <T>Open dashboard</T>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <div className="overflow-hidden rounded-lg border">
-            <div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b bg-muted/30 px-4 py-3 text-xs font-medium text-muted-foreground">
-              <span>
-                <T>Message</T>
-              </span>
-              <span>
-                <T>Branch</T>
-              </span>
-              <span>
-                <T>Status</T>
-              </span>
-            </div>
-            <div className="divide-y">
-              <MessageRow message={<T>Start free trial</T>} branch="feature/pricing" status={<T>Manual</T>} />
-              <MessageRow message={<T>Invite your team</T>} branch="main" status={<T>AI</T>} />
-              <MessageRow message={<T>Usage this month</T>} branch="feature/billing" status={<T>Synced</T>} />
-            </div>
-          </div>
-
-          <div className="grid gap-4">
-            <Benefit
-              icon={<PackageIcon />}
-              title={<T>Vite plugin</T>}
-              text={<T>Discovers Messages from source code and writes local artifacts.</T>}
-            />
-            <Benefit
-              icon={<GitBranchIcon />}
-              title={<T>Branches</T>}
-              text={<T>Keep feature work separate from Production Branch Locale values.</T>}
-            />
-            <Benefit
-              icon={<LanguagesIcon />}
-              title={<T>Runtime bundles</T>}
-              text={<T>Serve flat lookup id maps that are ready for the Consumer app.</T>}
-            />
-          </div>
-        </div>
-      </section>
+      <Hero />
+      <LogoStrip />
+      <QuickStart />
+      <Workflow />
+      <Features />
+      <CloudPlatform />
+      <FinalCta />
+      <LandingFooter />
     </main>
   )
 }
 
 function LandingHeader() {
   return (
-    <header className="border-b bg-background/95">
+    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="font-semibold">
+        <Link to="/" className="flex items-center gap-2 font-semibold">
+          <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <LanguagesIcon className="size-4" />
+          </span>
           <T>Better Translation</T>
         </Link>
         <nav className="flex items-center gap-2">
@@ -262,12 +86,233 @@ function LandingHeader() {
   )
 }
 
-function Step({ number, title, text }: { number: string; title: ReactNode; text: ReactNode }) {
+function Hero() {
   return (
-    <div className="rounded-lg border p-5">
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-muted-foreground">{number}</span>
-        <WorkflowIcon className="text-primary" />
+    <section className="relative overflow-hidden border-b">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 -top-40 mx-auto h-80 max-w-4xl rounded-full bg-primary/20 blur-3xl"
+      />
+      <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,1fr)_30rem] lg:items-center lg:px-8 lg:py-28">
+        <div className="max-w-2xl">
+          <Badge variant="outline" className="mb-6 gap-1.5 font-mono">
+            npm i better-translation
+          </Badge>
+          <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
+            <T>Ship every language without leaving your code.</T>
+          </h1>
+          <p className="mt-6 text-lg leading-8 text-balance text-muted-foreground">
+            <T>
+              No more dancing between source and locale files. Most tools make you invent a key, then jump to a JSON file to fill
+              it in. Wrap your copy in a single component and the translations sync themselves, with no keys and no file-hopping.
+            </T>
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Button size="lg" nativeButton={false} render={<a href="/docs" />}>
+              <T>Read the docs</T>
+              <ArrowRightIcon />
+            </Button>
+            <Button size="lg" variant="outline" nativeButton={false} render={<a href="#cloud" />}>
+              <T>Explore the platform</T>
+            </Button>
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground">
+            <T>Open source and self-hostable. The hosted platform is optional.</T>
+          </p>
+        </div>
+
+        <HeroVisual />
+      </div>
+    </section>
+  )
+}
+
+function HeroVisual() {
+  return (
+    <div className="relative rounded-xl border bg-card shadow-sm">
+      <div className="flex items-center gap-2 border-b px-4 py-3">
+        <span className="size-2.5 rounded-full bg-muted-foreground/30" />
+        <span className="size-2.5 rounded-full bg-muted-foreground/30" />
+        <span className="size-2.5 rounded-full bg-muted-foreground/30" />
+        <span className="ml-2 font-mono text-xs text-muted-foreground">Checkout.tsx</span>
+      </div>
+      <pre className="overflow-x-auto px-4 py-4 font-mono text-xs leading-6 text-foreground">
+        <code>
+          <span className="text-muted-foreground">{"export function Checkout() {"}</span>
+          {"\n"}
+          {"  return ("}
+          {"\n"}
+          {"    <button>"}
+          {"\n"}
+          {"      "}
+          <span className="rounded bg-primary/15 px-1 text-primary">{"<T>Pay now</T>"}</span>
+          {"\n"}
+          {"    </button>"}
+          {"\n"}
+          {"  )"}
+          {"\n"}
+          <span className="text-muted-foreground">{"}"}</span>
+        </code>
+      </pre>
+      <div className="border-t bg-muted/20 px-4 py-3">
+        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+          <LanguagesIcon className="size-3.5" />
+          <T>Runtime bundle</T>
+        </div>
+        <div className="space-y-2 font-mono text-xs">
+          <BundleRow id="m_payment_cta" locale="es" value="Pagar ahora" />
+          <BundleRow id="m_payment_cta" locale="fr" value="Payer maintenant" />
+          <BundleRow id="m_payment_cta" locale="de" value="Jetzt bezahlen" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BundleRow({ id, locale, value }: { id: string; locale: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span className="text-muted-foreground">{id}</span>
+      <span className="flex items-center gap-2">
+        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] tracking-wide text-muted-foreground uppercase">{locale}</span>
+        <span className="text-foreground">{value}</span>
+      </span>
+    </div>
+  )
+}
+
+function LogoStrip() {
+  return (
+    <section className="border-b">
+      <div className="mx-auto max-w-6xl px-4 py-10 text-center sm:px-6 lg:px-8">
+        <p className="text-sm text-muted-foreground">
+          <T>Built for the modern Vite and React stack</T>
+        </p>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-medium text-muted-foreground">
+          <span>Vite</span>
+          <span>React</span>
+          <span>TanStack Start</span>
+          <span>TypeScript</span>
+          <span>Vercel</span>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function QuickStart() {
+  return (
+    <section className="border-b">
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-center">
+          <div>
+            <Badge variant="outline" className="mb-5 gap-1.5">
+              <PackageIcon />
+              <T>Drop-in setup</T>
+            </Badge>
+            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+              <T>One plugin. That is the whole config.</T>
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-muted-foreground">
+              <T>
+                Add the plugin, list your Locales, and you get local locale files out of the box. The runtime is optional: point
+                it at the hosted platform, your own self-hosted server, or any custom endpoint URL.
+              </T>
+            </p>
+          </div>
+
+          <div className="rounded-xl border bg-card shadow-sm">
+            <div className="flex items-center gap-2 border-b px-4 py-3">
+              <span className="size-2.5 rounded-full bg-muted-foreground/30" />
+              <span className="size-2.5 rounded-full bg-muted-foreground/30" />
+              <span className="size-2.5 rounded-full bg-muted-foreground/30" />
+              <span className="ml-2 font-mono text-xs text-muted-foreground">vite.config.ts</span>
+            </div>
+            <pre className="overflow-x-auto px-4 py-4 font-mono text-xs leading-6">
+              <code>
+                <span className="text-muted-foreground">{'import { defineConfig } from "vite"'}</span>
+                {"\n"}
+                <span className="text-primary">{'import { betterTranslation } from "better-translation/vite"'}</span>
+                {"\n\n"}
+                {"export default defineConfig({"}
+                {"\n"}
+                {"  plugins: ["}
+                {"\n"}
+                {"    "}
+                <span className="text-primary">betterTranslation</span>
+                {"({"}
+                {"\n"}
+                {"      locales: ["}
+                <span className="text-foreground">{'"en", "es", "fr"'}</span>
+                {"],"}
+                {"\n"}
+                {"      defaultLocale: "}
+                <span className="text-foreground">{'"en"'}</span>
+                {","}
+                {"\n"}
+                {"    }),"}
+                {"\n"}
+                {"  ],"}
+                {"\n"}
+                {"})"}
+              </code>
+            </pre>
+            <div className="border-t bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
+              <T>Self-host or use the hosted platform: set runtime to a custom endpoint URL.</T>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Workflow() {
+  return (
+    <section className="border-b">
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+        <SectionHeading
+          eyebrow={<T>End-to-end localization</T>}
+          title={<T>From source copy to shipped translations</T>}
+          description={<T>The Vite plugin does the heavy lifting so translations follow your code, branch by branch.</T>}
+        />
+        <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <WorkflowStep
+            step="01"
+            icon={<ScanIcon />}
+            title={<T>Mark</T>}
+            text={<T>Wrap copy in a Translation marker where it is authored. No keys to invent or maintain.</T>}
+          />
+          <WorkflowStep
+            step="02"
+            icon={<PackageIcon />}
+            title={<T>Sync</T>}
+            text={<T>The Vite plugin discovers Messages and uploads the Manifest for the current Branch.</T>}
+          />
+          <WorkflowStep
+            step="03"
+            icon={<SparklesIcon />}
+            title={<T>Translate</T>}
+            text={<T>Generate Locale values locally, or with your own translator, ready for review.</T>}
+          />
+          <WorkflowStep
+            step="04"
+            icon={<GitPullRequestIcon />}
+            title={<T>Ship</T>}
+            text={<T>Consumer apps load flat Runtime bundles by Locale. No editor metadata reaches the browser.</T>}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function WorkflowStep({ step, icon, title, text }: { step: string; icon: ReactNode; title: ReactNode; text: ReactNode }) {
+  return (
+    <div className="relative rounded-xl border bg-card p-6">
+      <div className="flex items-center justify-between">
+        <span className="flex size-9 items-center justify-center rounded-md bg-primary/10 text-primary">{icon}</span>
+        <span className="font-mono text-sm text-muted-foreground">{step}</span>
       </div>
       <h3 className="mt-5 font-semibold">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
@@ -275,82 +320,193 @@ function Step({ number, title, text }: { number: string; title: ReactNode; text:
   )
 }
 
-function MessageRow({ message, branch, status }: { message: ReactNode; branch: string; status: ReactNode }) {
+function CloudPlatform() {
   return (
-    <div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-4 py-4 text-sm">
-      <span className="font-medium">{message}</span>
-      <span className="font-mono text-xs text-muted-foreground">{branch}</span>
-      <span className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs">
-        <CheckIcon />
-        {status}
-      </span>
-    </div>
+    <section id="cloud" className="scroll-mt-16 border-b bg-muted/20">
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-center">
+          <div>
+            <Badge variant="secondary" className="mb-5 gap-1.5">
+              <SparklesIcon />
+              <T>Cloud platform · Optional</T>
+            </Badge>
+            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+              <T>Add the hosted platform when you want it</T>
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-muted-foreground">
+              <T>
+                Everything above works without an account. When you want branch-aware translations, AI generation, and a visual
+                editor, connect the cloud platform, or self-host the same thing.
+              </T>
+            </p>
+            <ul className="mt-8 space-y-3">
+              <EditorPoint>
+                <T>Let non-developers update translations in real time, no code access required</T>
+              </EditorPoint>
+              <EditorPoint>
+                <T>Branch overrides that never touch Production</T>
+              </EditorPoint>
+              <EditorPoint>
+                <T>AI translations generated in context</T>
+              </EditorPoint>
+              <EditorPoint>
+                <T>A visual editor built for clarity first</T>
+              </EditorPoint>
+            </ul>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button nativeButton={false} render={<Link to="/sign-up" />}>
+                <T>Get started free</T>
+                <ArrowRightIcon />
+              </Button>
+              <Button variant="outline" nativeButton={false} render={<Link to="/sign-in" />}>
+                <T>Open dashboard</T>
+              </Button>
+            </div>
+          </div>
+
+          {/* Placeholder for visual editor screenshots */}
+          <div className="relative aspect-16/10 overflow-hidden rounded-xl border bg-card">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-brand-secondary/10"
+            />
+            <div className="relative flex h-full flex-col items-center justify-center gap-2 text-center">
+              <EyeIcon className="size-8 text-muted-foreground" />
+              <p className="text-sm font-medium text-muted-foreground">
+                <T>Visual editor screenshot</T>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                <T>Placeholder: drop the editor screenshots here</T>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }
 
-function Benefit({ icon, title, text }: { icon: ReactNode; title: ReactNode; text: ReactNode }) {
+function EditorPoint({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-lg border p-4">
-      <div className="text-primary">{icon}</div>
-      <h3 className="mt-4 font-semibold">{title}</h3>
+    <li className="flex items-start gap-3 text-sm">
+      <CheckIcon className="mt-0.5 size-4 shrink-0 text-primary" />
+      <span className="text-muted-foreground">{children}</span>
+    </li>
+  )
+}
+
+function Features() {
+  return (
+    <section className="border-b">
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+        <SectionHeading
+          eyebrow={<T>The open-source library</T>}
+          title={<T>Localization that lives with your codebase</T>}
+          description={<T>Developer-first primitives that work entirely local, with no account and no platform required.</T>}
+        />
+        <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Feature
+            icon={<PackageIcon />}
+            title={<T>Vite plugin</T>}
+            text={<T>Discovers Messages from source code and writes local artifacts on every build.</T>}
+          />
+          <Feature
+            icon={<CodeIcon />}
+            title={<T>React and server helpers</T>}
+            text={<T>Render Messages in React components and translate on the server with the same lookup ids.</T>}
+          />
+          <Feature
+            icon={<ScanIcon />}
+            title={<T>Automatic lookup ids</T>}
+            text={<T>Wrap copy in a Translation marker. There are no keys to invent or maintain by hand.</T>}
+          />
+          <Feature
+            icon={<LanguagesIcon />}
+            title={<T>Runtime bundles</T>}
+            text={<T>Serve flat lookup id maps that are ready for the Consumer app, with zero metadata.</T>}
+          />
+          <Feature
+            icon={<ZapIcon />}
+            title={<T>Local locale files</T>}
+            text={<T>Generated snapshot fallbacks keep your app working with no network at runtime.</T>}
+          />
+          <Feature
+            icon={<ServerIcon />}
+            title={<T>Open source and self-hostable</T>}
+            text={<T>Run entirely local, self-host the platform, or point the runtime at any custom endpoint URL.</T>}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Feature({ icon, title, text }: { icon: ReactNode; title: ReactNode; text: ReactNode }) {
+  return (
+    <div className="rounded-xl border bg-card p-6">
+      <span className="flex size-9 items-center justify-center rounded-md bg-primary/10 text-primary">{icon}</span>
+      <h3 className="mt-5 font-semibold">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
     </div>
   )
 }
 
-function PrototypeSwitcher({ current }: { current: VariantKey }) {
-  const navigate = useNavigate()
-  const variants = Object.keys(variantLabels) as VariantKey[]
-  const currentIndex = variants.indexOf(current)
-  const previous = variants[(currentIndex + variants.length - 1) % variants.length]
-  const next = variants[(currentIndex + 1) % variants.length]
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return
-      const target = event.target
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        (target instanceof HTMLElement && target.isContentEditable)
-      ) {
-        return
-      }
-      event.preventDefault()
-      void navigate({ to: "/", search: { variant: event.key === "ArrowLeft" ? previous : next }, replace: true })
-    }
-
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [navigate, next, previous])
-
-  if (import.meta.env.PROD) return null
-
+function FinalCta() {
   return (
-    <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border bg-foreground px-2 py-1 text-background shadow-lg">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        className="text-background hover:bg-background/10 hover:text-background"
-        aria-label="Previous prototype variant"
-        onClick={() => void navigate({ to: "/", search: { variant: previous }, replace: true })}
-      >
-        <ArrowLeftIcon />
-      </Button>
-      <div className="min-w-32 px-2 text-center text-sm font-medium">
-        {current} - {variantLabels[current]}
+    <section className="border-b">
+      <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-2xl border bg-card px-6 py-16 text-center sm:px-12">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 -bottom-32 mx-auto h-72 max-w-2xl rounded-full bg-primary/20 blur-3xl"
+          />
+          <div className="relative mx-auto max-w-2xl">
+            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+              <T>Translate your Vite app today</T>
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-muted-foreground">
+              <T>Wrap your first Message, run the plugin, and watch translations follow your code.</T>
+            </p>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <Button size="lg" nativeButton={false} render={<a href="/docs" />}>
+                <T>Read the docs</T>
+                <ArrowRightIcon />
+              </Button>
+              <Button size="lg" variant="outline" nativeButton={false} render={<a href="#cloud" />}>
+                <T>Explore the cloud platform</T>
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        className="text-background hover:bg-background/10 hover:text-background"
-        aria-label="Next prototype variant"
-        onClick={() => void navigate({ to: "/", search: { variant: next }, replace: true })}
-      >
-        <ArrowRightIcon />
-      </Button>
+    </section>
+  )
+}
+
+function LandingFooter() {
+  return (
+    <footer>
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-10 sm:flex-row sm:px-6 lg:px-8">
+        <Link to="/" className="flex items-center gap-2 text-sm font-medium">
+          <span className="flex size-6 items-center justify-center rounded bg-primary text-primary-foreground">
+            <LanguagesIcon className="size-3.5" />
+          </span>
+          <T>Better Translation</T>
+        </Link>
+        <p className="text-sm text-muted-foreground">
+          <T>Developer-first localization that stays in your stack.</T>
+        </p>
+      </div>
+    </footer>
+  )
+}
+
+function SectionHeading({ eyebrow, title, description }: { eyebrow: ReactNode; title: ReactNode; description: ReactNode }) {
+  return (
+    <div className="mx-auto max-w-2xl text-center">
+      <p className="text-sm font-medium text-primary">{eyebrow}</p>
+      <h2 className="mt-3 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">{title}</h2>
+      <p className="mt-4 text-lg leading-8 text-balance text-muted-foreground">{description}</p>
     </div>
   )
 }

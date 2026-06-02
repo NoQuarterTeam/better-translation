@@ -1,8 +1,8 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import type { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontalIcon, PencilIcon, PlusIcon, PowerIcon, PowerOffIcon, Trash2Icon } from "lucide-react"
-import { useMemo, useState } from "react"
+import { InfoIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, PowerIcon, PowerOffIcon, Trash2Icon } from "lucide-react"
+import { type ReactNode, useMemo, useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
 
@@ -11,7 +11,6 @@ import { createTranslator } from "better-translation/server"
 
 import { DataTable } from "@/components/data-table"
 import { useAppForm } from "@/components/react-form"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -31,7 +30,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { NativeSelectOption } from "@/components/ui/native-select"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { formatLocale } from "@/lib/locales"
+import { cn } from "@/lib/utils"
 
 import {
   createTranslationGlossaryTermFn,
@@ -61,7 +62,7 @@ type GlossaryTermAction = GlossaryTerm["action"]
 
 function ProjectTranslatorPage() {
   const { orgSlug, projectSlug } = Route.useParams()
-  const { queryClient } = Route.useRouteContext()
+  const { locale: appLocale, queryClient } = Route.useRouteContext()
   const t = useT()
   const translatorQuery = useSuspenseQuery(projectTranslatorQueryOptions(orgSlug, projectSlug))
   const project = translatorQuery.data
@@ -100,29 +101,13 @@ function ProjectTranslatorPage() {
     () => [
       {
         accessorKey: "sourceTerm",
-        header: t("Source term"),
-        cell: ({ row }) => <span className="font-medium">{row.original.sourceTerm}</span>,
-      },
-      {
-        accessorKey: "action",
-        header: t("Rule"),
-        cell: ({ row }) => formatGlossaryAction(row.original.action, t),
+        header: t("Instruction"),
+        cell: ({ row }) => <GlossaryInstruction term={row.original} />,
       },
       {
         accessorKey: "targetLocale",
-        header: t("Locale"),
-        cell: ({ row }) => row.original.targetLocale ?? t("All Locales"),
-      },
-      {
-        accessorKey: "targetTerm",
-        header: t("Target term"),
-        cell: ({ row }) => row.original.targetTerm ?? <span className="text-muted-foreground">{t("None")}</span>,
-      },
-      {
-        accessorKey: "enabled",
-        header: t("Status"),
-        cell: ({ row }) =>
-          row.original.enabled ? <Badge>{t("Enabled")}</Badge> : <Badge variant="secondary">{t("Disabled")}</Badge>,
+        header: t("Applies to"),
+        cell: ({ row }) => <GlossaryAppliesTo term={row.original} appLocale={appLocale} />,
       },
       {
         id: "actions",
@@ -130,7 +115,7 @@ function ProjectTranslatorPage() {
         cell: ({ row }) => <GlossaryTermActions term={row.original} />,
       },
     ],
-    [t],
+    [appLocale, t],
   )
 
   return (
@@ -196,7 +181,11 @@ function ProjectTranslatorPage() {
                 <PlusIcon />
                 <T>Add term</T>
               </DialogTrigger>
-              <GlossaryTermDialog projectLocales={project.projectLocales} term={null} onOpenChange={setCreateGlossaryTermOpen} />
+              <GlossaryTermDialog
+                onOpenChange={setCreateGlossaryTermOpen}
+                term={null}
+                translationLocales={project.translationLocales}
+              />
             </Dialog>
           </CardAction>
         </CardHeader>
@@ -204,6 +193,84 @@ function ProjectTranslatorPage() {
           <DataTable columns={glossaryColumns} data={project.translationGlossaryTerms} />
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function GlossaryInstruction({ term }: { term: GlossaryTerm }) {
+  const disabled = !term.enabled
+
+  if (term.action === "translate_as") {
+    return (
+      <div className={cn("flex min-w-0", disabled && "opacity-45")}>
+        <GlossaryInstructionFields>
+          <GlossaryInstructionField label={<T>Source</T>} value={term.sourceTerm} />
+          <GlossaryInstructionField label={<T>Use</T>} value={term.targetTerm} />
+          <GlossaryNoteTooltip note={term.note} />
+        </GlossaryInstructionFields>
+      </div>
+    )
+  }
+
+  if (term.action === "avoid") {
+    return (
+      <div className={cn("flex min-w-0", disabled && "opacity-45")}>
+        <GlossaryInstructionFields>
+          <GlossaryInstructionField label={<T>Source</T>} value={term.sourceTerm} />
+          <GlossaryInstructionField label={<T>Avoid</T>} value={term.targetTerm} />
+          <GlossaryNoteTooltip note={term.note} />
+        </GlossaryInstructionFields>
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn("flex min-w-0", disabled && "opacity-45")}>
+      <GlossaryInstructionFields>
+        <GlossaryInstructionField label={<T>Preserve</T>} value={term.sourceTerm} />
+        <GlossaryNoteTooltip note={term.note} />
+      </GlossaryInstructionFields>
+    </div>
+  )
+}
+
+function GlossaryInstructionFields({ children }: { children: ReactNode }) {
+  return <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm">{children}</div>
+}
+
+function GlossaryInstructionField({ label, value }: { label: ReactNode; value: string | null }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="min-w-0 font-semibold text-foreground">{value}</span>
+    </span>
+  )
+}
+
+function GlossaryNoteTooltip({ note }: { note: string | null }) {
+  if (!note) return null
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={<span />}>
+        <span className="ml-1 inline-flex align-[-2px] text-muted-foreground hover:text-foreground">
+          <InfoIcon className="size-3.5" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{note}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+function GlossaryAppliesTo({ term, appLocale }: { term: GlossaryTerm; appLocale: string }) {
+  return (
+    <div className={cn("flex items-center gap-2", !term.enabled && "opacity-45")}>
+      <span>{term.targetLocale ? formatLocale(term.targetLocale, [appLocale]) : <T>All Locales</T>}</span>
+      {!term.enabled && (
+        <span className="text-xs text-muted-foreground">
+          (<T>Disabled</T>)
+        </span>
+      )}
     </div>
   )
 }
@@ -267,9 +334,9 @@ function GlossaryTermActions({ term }: { term: GlossaryTerm }) {
       </DropdownMenu>
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <GlossaryTermDialog
-          projectLocales={queryClient.getQueryData<ProjectTranslator>(queryOptions.queryKey)?.projectLocales ?? []}
           term={term}
           onOpenChange={setEditOpen}
+          translationLocales={queryClient.getQueryData<ProjectTranslator>(queryOptions.queryKey)?.translationLocales ?? []}
         />
       </Dialog>
     </>
@@ -278,15 +345,15 @@ function GlossaryTermActions({ term }: { term: GlossaryTerm }) {
 
 function GlossaryTermDialog({
   onOpenChange,
-  projectLocales,
   term,
+  translationLocales,
 }: {
   onOpenChange: (open: boolean) => void
-  projectLocales: string[]
   term: GlossaryTerm | null
+  translationLocales: string[]
 }) {
   const { orgSlug, projectSlug } = Route.useParams()
-  const { queryClient } = Route.useRouteContext()
+  const { locale: appLocale, queryClient } = Route.useRouteContext()
   const t = useT()
   const queryOptions = projectTranslatorQueryOptions(orgSlug, projectSlug)
   const createMutation = useMutation({
@@ -367,9 +434,9 @@ function GlossaryTermDialog({
             {(field) => (
               <field.NativeSelectField label={t("Target Locale")}>
                 <NativeSelectOption value="">{t("All Locales")}</NativeSelectOption>
-                {projectLocales.map((locale) => (
+                {translationLocales.map((locale) => (
                   <NativeSelectOption key={locale} value={locale}>
-                    {formatLocale(locale, [locale])} ({locale})
+                    {formatLocale(locale, [appLocale])} ({locale})
                   </NativeSelectOption>
                 ))}
               </field.NativeSelectField>
@@ -413,10 +480,4 @@ function GlossaryTermDialog({
       </form.AppForm>
     </DialogContent>
   )
-}
-
-function formatGlossaryAction(action: GlossaryTermAction, t: ReturnType<typeof useT>) {
-  if (action === "translate_as") return t("Translate as")
-  if (action === "avoid") return t("Avoid term")
-  return t("Do not translate")
 }
