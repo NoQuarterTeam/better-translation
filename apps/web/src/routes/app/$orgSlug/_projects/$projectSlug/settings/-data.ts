@@ -78,29 +78,6 @@ export const removeProjectIconFn = createServerFn({ method: "POST" })
     return getProjectSettings(project, context.organization)
   })
 
-export const updateProjectTranslatorFn = createServerFn({ method: "POST" })
-  .middleware([projectMiddleware])
-  .inputValidator(
-    parseZod(
-      z.object({
-        translationPrompt: projectInsertSchema.shape.translationPrompt,
-      }),
-    ),
-  )
-  .handler(async ({ context, data }) => {
-    const [updatedProject] = await db
-      .update(projectsTable)
-      .set({
-        translationPrompt: data.translationPrompt,
-        updatedAt: new Date(),
-      })
-      .where(eq(projectsTable.id, context.project.id))
-      .returning()
-
-    if (!updatedProject) throw new Error("Could not update Project.")
-    return getProjectSettings(updatedProject, context.organization)
-  })
-
 export const listGitHubInstallationRepositoriesFn = createServerFn({ method: "GET" })
   .middleware([projectMiddleware])
   .inputValidator(parseZod(githubSetupSchema))
@@ -289,6 +266,5 @@ async function getProjectSettings(project: typeof projectsTable.$inferSelect, or
     githubRepositoryName: project.githubRepositoryName,
     githubRepositoryOwner: project.githubRepositoryOwner,
     hasProductionBranch: Boolean(project.defaultBranchId),
-    translationPrompt: project.translationPrompt,
   }
 }

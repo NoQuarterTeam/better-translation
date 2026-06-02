@@ -5,7 +5,7 @@ import { T } from "better-translation/react"
 
 import { Button } from "@/components/ui/button"
 
-export function ProfileBackSlot() {
+export function AccountBackSlot() {
   const canGoBack = useCanGoBack()
   const navigate = useNavigate()
 

@@ -22,7 +22,7 @@ const authProviders = [
 
 type AuthProvider = (typeof authProviders)[number]["id"]
 
-export const Route = createFileRoute("/app/profile/authentication/")({
+export const Route = createFileRoute("/app/account/authentication/")({
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(linkedAccountsQueryOptions())
   },
@@ -40,7 +40,7 @@ function AuthenticationPage() {
 
   const linkProvider = useMutation({
     mutationFn: async (provider: AuthProvider) => {
-      const result = await authClient.linkSocial({ provider, callbackURL: "/app/profile/authentication" })
+      const result = await authClient.linkSocial({ provider, callbackURL: "/app/account/authentication" })
       if (result.error) throw new Error(result.error.message ?? t("Could not connect account"))
     },
     onError: (error) => {

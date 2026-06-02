@@ -18,7 +18,7 @@ import { imageUploadAccept, imageUploadMaxBytes, imageUploadMimeTypes } from "@/
 
 import { confirmUserAvatarUploadFn, removeUserAvatarFn, updateProfileNameFn, userProfileQueryOptions } from "./-data"
 
-export const Route = createFileRoute("/app/profile/")({
+export const Route = createFileRoute("/app/account/")({
   component: ProfilePage,
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(userProfileQueryOptions())

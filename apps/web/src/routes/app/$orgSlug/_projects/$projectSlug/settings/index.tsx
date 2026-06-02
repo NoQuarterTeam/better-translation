@@ -30,7 +30,6 @@ import {
   removeProjectIconFn,
   updateProjectGitHubCleanupFn,
   updateProjectNameFn,
-  updateProjectTranslatorFn,
   type getProjectSettingsFn,
 } from "./-data"
 
@@ -86,14 +85,6 @@ function ProjectSettingsPage() {
     },
   })
 
-  const updateTranslatorMutation = useMutation({
-    mutationFn: updateProjectTranslatorFn,
-    onSuccess: (updatedProject) => {
-      toast.success(t("Project translator updated"))
-      updateProjectSettings(updatedProject)
-    },
-  })
-
   const uploadIcon = useMutation({
     mutationFn: async (file: File) => {
       const result = await uploadFile({
@@ -143,26 +134,6 @@ function ProjectSettingsPage() {
     },
   })
 
-  const translatorForm = useAppForm({
-    defaultValues: {
-      translationPrompt: project.translationPrompt,
-    },
-    validators: {
-      onSubmit: z.object({
-        translationPrompt: z.string().trim().min(1).max(4000),
-      }),
-    },
-    onSubmit: ({ value }) => {
-      updateTranslatorMutation.mutate({
-        data: {
-          orgSlug,
-          projectSlug,
-          translationPrompt: value.translationPrompt.trim(),
-        },
-      })
-    },
-  })
-
   return (
     <div className="flex max-w-3xl flex-col gap-6 p-4 md:p-6">
       <div>
@@ -170,7 +141,7 @@ function ProjectSettingsPage() {
           <T>Project settings</T>
         </h1>
         <p className="text-sm text-muted-foreground">
-          <T>Manage Project profile, GitHub connection, and Platform translator settings.</T>
+          <T>Manage Project profile and repository settings.</T>
         </p>
       </div>
 
@@ -201,6 +172,43 @@ function ProjectSettingsPage() {
               <profileForm.FormError>{updateNameMutation.error?.message}</profileForm.FormError>
             </form>
           </profileForm.AppForm>
+        </CardContent>
+      </Card>
+
+      <GitHubSettingsCard
+        githubInstallationId={search.githubInstallationId}
+        githubSetupError={search.githubSetupError}
+        githubSetupState={search.githubSetupState}
+        isProjectSettingsFetching={projectQuery.isFetching}
+        project={project}
+        updateProjectSettings={updateProjectSettings}
+      />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <T>Project id</T>
+          </CardTitle>
+          <CardDescription>
+            <T>The public Project id stays unchanged.</T>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex w-fit max-w-full items-center gap-2 rounded-md border bg-muted/30 p-1">
+            <code className="min-w-0 truncate px-2 font-mono text-sm text-muted-foreground">{project.publicId}</code>
+            <Button
+              type="button"
+              variant="ghost"
+              className="shrink-0"
+              onClick={() => {
+                void navigator.clipboard.writeText(project.publicId)
+                toast.success(t("Copied"))
+              }}
+            >
+              <CopyIcon />
+              <T>Copy</T>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -272,81 +280,6 @@ function ProjectSettingsPage() {
               <T>Project icon</T>
             </FieldLabel>
           </Field>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <T>Project id</T>
-          </CardTitle>
-          <CardDescription>
-            <T>The public Project id stays unchanged.</T>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex w-fit max-w-full items-center gap-2 rounded-md border bg-muted/30 p-1">
-            <code className="min-w-0 truncate px-2 font-mono text-sm text-muted-foreground">{project.publicId}</code>
-            <Button
-              type="button"
-              variant="ghost"
-              className="shrink-0"
-              onClick={() => {
-                void navigator.clipboard.writeText(project.publicId)
-                toast.success(t("Copied"))
-              }}
-            >
-              <CopyIcon />
-              <T>Copy</T>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <GitHubSettingsCard
-        githubInstallationId={search.githubInstallationId}
-        githubSetupError={search.githubSetupError}
-        githubSetupState={search.githubSetupState}
-        isProjectSettingsFetching={projectQuery.isFetching}
-        project={project}
-        updateProjectSettings={updateProjectSettings}
-      />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <T>Platform translator</T>
-          </CardTitle>
-          <CardDescription>
-            <T>Configure the Platform translator for blank Locale values.</T>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <translatorForm.AppForm>
-            <form
-              className="flex flex-col gap-4"
-              onSubmit={(event) => {
-                event.preventDefault()
-                void translatorForm.handleSubmit()
-              }}
-            >
-              <translatorForm.AppField name="translationPrompt">
-                {(field) => (
-                  <field.TextareaField
-                    label={t("Translator guidance")}
-                    placeholder={t("Tone, glossary, and style guidance")}
-                    rows={5}
-                  />
-                )}
-              </translatorForm.AppField>
-              <translatorForm.SubmitButton className="w-fit">
-                {(isSubmitting) =>
-                  isSubmitting || updateTranslatorMutation.isPending ? <T>Saving...</T> : <T>Save translator</T>
-                }
-              </translatorForm.SubmitButton>
-              <translatorForm.FormError>{updateTranslatorMutation.error?.message}</translatorForm.FormError>
-            </form>
-          </translatorForm.AppForm>
         </CardContent>
       </Card>
     </div>

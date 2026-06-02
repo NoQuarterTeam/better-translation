@@ -14,11 +14,11 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-export function ProfileSidebarSlot() {
-  return <ProfileSidebarContent />
+export function AccountSidebarSlot() {
+  return <AccountSidebarContent />
 }
 
-function ProfileSidebarContent() {
+function AccountSidebarContent() {
   const { isMobile, setOpenMobile } = useSidebar()
   const closeMobile = () => {
     if (isMobile) setOpenMobile(false)
@@ -36,7 +36,7 @@ function ProfileSidebarContent() {
               <SidebarMenuButton
                 render={
                   <Link
-                    to="/app/profile"
+                    to="/app/account"
                     onClick={closeMobile}
                     className="opacity-50 data-[status=active]:bg-muted data-[status=active]:opacity-100"
                     activeOptions={{ exact: true, includeSearch: false }}
@@ -53,7 +53,7 @@ function ProfileSidebarContent() {
               <SidebarMenuButton
                 render={
                   <Link
-                    to="/app/profile/authentication"
+                    to="/app/account/authentication"
                     onClick={closeMobile}
                     className="opacity-50 data-[status=active]:bg-muted data-[status=active]:opacity-100"
                   />

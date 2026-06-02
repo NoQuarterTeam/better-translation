@@ -18,7 +18,7 @@ import {
 import { authClient } from "@/lib/auth/client"
 import type { User } from "@/server/db/schema"
 
-import { userProfileQueryOptions } from "../profile/-data"
+import { userProfileQueryOptions } from "../account/-data"
 
 function createInitials(user: Pick<User, "name">) {
   return (
@@ -60,9 +60,9 @@ export function NavUser() {
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => void navigate({ to: "/app/profile" })}>
+        <DropdownMenuItem onClick={() => void navigate({ to: "/app/account" })}>
           <UserIcon />
-          {t("Profile")}
+          {t("Account")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <div className="px-1 py-1.5" onClick={(e) => e.stopPropagation()}>

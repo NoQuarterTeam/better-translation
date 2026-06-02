@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, useParams } from "@tanstack/react-router"
-import { GitBranchIcon, KeyRoundIcon, LanguagesIcon, SettingsIcon } from "lucide-react"
+import { BotIcon, GitBranchIcon, KeyRoundIcon, LanguagesIcon, SettingsIcon } from "lucide-react"
 import { Suspense } from "react"
 
 import { T } from "better-translation/react"
@@ -112,6 +112,23 @@ function ProjectSidebarContent() {
               <SidebarMenuButton
                 render={
                   <Link
+                    to="/app/$orgSlug/$projectSlug/translator"
+                    params={{ orgSlug, projectSlug }}
+                    onClick={closeMobile}
+                    className="opacity-50 data-[status=active]:bg-muted data-[status=active]:opacity-100"
+                  />
+                }
+              >
+                <BotIcon />
+                <span>
+                  <T>Translator</T>
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={
+                  <Link
                     to="/app/$orgSlug/$projectSlug/settings"
                     params={{ orgSlug, projectSlug }}
                     onClick={closeMobile}
@@ -141,7 +158,7 @@ function ProjectSidebarFallback() {
         </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {Array.from({ length: 4 }).map((_, index) => (
+            {Array.from({ length: 5 }).map((_, index) => (
               <SidebarMenuItem key={index}>
                 <div className="flex h-8 items-center gap-2 rounded-md px-2">
                   <Skeleton className="size-4 rounded-sm" />
