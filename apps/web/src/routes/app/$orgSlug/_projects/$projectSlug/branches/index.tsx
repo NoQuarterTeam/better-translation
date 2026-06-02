@@ -75,9 +75,13 @@ function ProjectBranchesPage() {
         accessorKey: "name",
         header: t("Branch"),
         cell: ({ row }) => (
-          <div>
-            <div className="font-medium">{row.original.name}</div>
-          </div>
+          <Link
+            to="/app/$orgSlug/$projectSlug/$branchName"
+            params={{ orgSlug, projectSlug, branchName: row.original.name }}
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            {row.original.name}
+          </Link>
         ),
       },
       {
@@ -110,7 +114,7 @@ function ProjectBranchesPage() {
         cell: ({ row }) => <BranchActions branch={row.original} />,
       },
     ],
-    [t],
+    [orgSlug, projectSlug, t],
   )
 
   return (
