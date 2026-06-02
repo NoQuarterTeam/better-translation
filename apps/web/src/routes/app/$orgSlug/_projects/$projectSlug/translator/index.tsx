@@ -36,13 +36,13 @@ import { formatLocale } from "@/lib/locales"
 import {
   createTranslationGlossaryTermFn,
   deleteTranslationGlossaryTermFn,
-  glossaryTermInputSchema,
   projectTranslatorQueryOptions,
   setTranslationGlossaryTermEnabledFn,
   updateProjectTranslatorFn,
   updateTranslationGlossaryTermFn,
   type getProjectTranslatorFn,
 } from "./-data"
+import { glossaryTermInputSchema } from "./-schema"
 
 export const Route = createFileRoute("/app/$orgSlug/_projects/$projectSlug/translator/")({
   component: ProjectTranslatorPage,
