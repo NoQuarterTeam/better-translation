@@ -2,12 +2,13 @@ import { queryOptions, type QueryClient } from "@tanstack/react-query"
 import { notFound } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { setCookie } from "@tanstack/react-start/server"
+import { and, count, eq } from "drizzle-orm"
 import * as z from "zod"
 
 import { projectMiddleware } from "@/lib/functions/middleware"
 import { parseZod } from "@/lib/functions/zod"
 import { db } from "@/server/db"
-import { localeValueInsertSchema, localeValuesTable, type LocaleValue, type messagesTable } from "@/server/db/schema"
+import { localeValueInsertSchema, localeValuesTable, type LocaleValue, messagesTable } from "@/server/db/schema"
 import { createStableHash } from "@/server/platform"
 import { translateMessageWithPlatform } from "@/server/platform-translator"
 
@@ -32,6 +33,30 @@ const branchMessagesInputSchema = branchInputSchema.extend({
 const branchMessageDetailInputSchema = branchInputSchema.extend({
   messageId: z.string().trim().min(1),
 })
+
+export const getBranchWorkspaceFn = createServerFn({ method: "GET" })
+  .middleware([projectMiddleware])
+  .inputValidator(parseZod(branchInputSchema))
+  .handler(async ({ context, data }) => {
+    const branch = await getProjectBranch(context.project.id, data.branchName)
+    const [messageCount] = await db
+      .select({ count: count() })
+      .from(messagesTable)
+      .where(
+        and(
+          eq(messagesTable.active, true),
+          eq(messagesTable.branchId, branch.id),
+          eq(messagesTable.projectId, context.project.id),
+        ),
+      )
+
+    return {
+      branch,
+      isProduction: branch.id === context.project.defaultBranchId,
+      messageCount: messageCount?.count ?? 0,
+      project: context.project,
+    }
+  })
 
 export const listBranchMessagesFn = createServerFn({ method: "GET" })
   .middleware([projectMiddleware])
@@ -110,21 +135,16 @@ export const listBranchMessagesFn = createServerFn({ method: "GET" })
     }).length
 
     return {
-      project,
-      branch,
       incompleteCount,
       messages: filteredMessages.map((message) => ({
         defaultMessage: message.defaultMessage,
         id: message.id,
-        lookupId: message.lookupId,
         ...getMessageCompleteness({
           branchValueByMessageAndLocale,
           editableLocales,
           messageId: message.id,
         }),
-        updatedAt: message.updatedAt,
       })),
-      totalMessageCount: messages.length,
     }
   })
 
@@ -173,6 +193,12 @@ export const branchMessagesQueryOptions = (
   queryOptions({
     queryKey: ["branch-messages", orgSlug, projectSlug, branchName, options],
     queryFn: () => listBranchMessagesFn({ data: { orgSlug, projectSlug, branchName, ...options } }),
+  })
+
+export const branchWorkspaceQueryOptions = (orgSlug: string, projectSlug: string, branchName: string) =>
+  queryOptions({
+    queryKey: ["branch-workspace", orgSlug, projectSlug, branchName],
+    queryFn: () => getBranchWorkspaceFn({ data: { orgSlug, projectSlug, branchName } }),
   })
 
 export const branchMessageDetailQueryOptions = (orgSlug: string, projectSlug: string, branchName: string, messageId: string) =>

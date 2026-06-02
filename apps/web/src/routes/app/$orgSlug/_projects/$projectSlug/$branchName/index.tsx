@@ -1,7 +1,7 @@
 import { useDebouncer } from "@tanstack/react-pacer"
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { BotIcon, CheckIcon, KeyRoundIcon, LanguagesIcon, PencilIcon, SearchIcon, StarIcon, TerminalIcon } from "lucide-react"
+import { BotIcon, CheckIcon, KeyRoundIcon, LanguagesIcon, PencilIcon, SearchIcon, TerminalIcon } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -12,9 +12,8 @@ import { createTranslator } from "better-translation/server"
 import { useAppForm } from "@/components/react-form"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ButtonGroup } from "@/components/ui/button-group"
 import { Card, CardContent } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover"
@@ -27,12 +26,12 @@ import { BranchSwitcherSlot } from "./-components/branch-switcher"
 import {
   branchMessageDetailQueryOptions,
   branchMessagesQueryOptions,
+  branchWorkspaceQueryOptions,
   currentBranchSwitcherQueryOptions,
   messageViewSchema,
   saveLocaleValueFn,
   translateLocaleValueFn,
   type getBranchMessageDetailFn,
-  type listBranchMessagesFn,
   type MessageView,
 } from "./-data"
 
@@ -53,6 +52,9 @@ export const Route = createFileRoute("/app/$orgSlug/_projects/$projectSlug/$bran
     void context.queryClient.prefetchQuery(
       currentBranchSwitcherQueryOptions(params.orgSlug, params.projectSlug, params.branchName),
     )
+    return await context.queryClient.ensureQueryData(
+      branchWorkspaceQueryOptions(params.orgSlug, params.projectSlug, params.branchName),
+    )
   },
   head: ({ match }) => {
     const t = createTranslator(match.context.messages)
@@ -60,9 +62,7 @@ export const Route = createFileRoute("/app/$orgSlug/_projects/$projectSlug/$bran
   },
 })
 
-type BranchMessages = Awaited<ReturnType<typeof listBranchMessagesFn>>
 type BranchMessageDetail = Awaited<ReturnType<typeof getBranchMessageDetailFn>>
-type MessageListRow = BranchMessages["messages"][number]
 type MessageRow = BranchMessageDetail["message"]
 type LocaleValueSource = "default" | "imported" | "ai" | "manual"
 
@@ -72,49 +72,30 @@ function getLocaleValue(message: MessageRow, locale: string) {
 
 function BranchPage() {
   const { orgSlug, projectSlug, branchName } = Route.useParams()
-  const { locale: appLocale } = Route.useRouteContext()
-  const search = Route.useSearch()
-  const view = search.view ?? "all"
-  const branchMessagesQuery = useQuery({
-    ...branchMessagesQueryOptions(orgSlug, projectSlug, branchName, { q: search.q, view }),
-    placeholderData: keepPreviousData,
-  })
-  const branchMessages = branchMessagesQuery.data
-  const isProduction = branchMessages ? branchMessages.branch.id === branchMessages.project.defaultBranchId : false
+  const branchWorkspaceQuery = useSuspenseQuery(branchWorkspaceQueryOptions(orgSlug, projectSlug, branchName))
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
-      {branchMessages?.totalMessageCount === 0 ? (
-        <MessagesEmptyState />
-      ) : (
-        <MessagesInbox
-          data={branchMessages}
-          isLoading={branchMessagesQuery.isPending}
-          appLocale={appLocale}
-          isProduction={isProduction}
-        />
-      )}
+      {branchWorkspaceQuery.data.messageCount === 0 ? <MessagesEmptyState /> : <MessagesInbox />}
     </div>
   )
 }
 
-function MessagesInbox({
-  data,
-  isLoading,
-  appLocale,
-  isProduction,
-}: {
-  data?: BranchMessages
-  isLoading: boolean
-  appLocale: string
-  isProduction: boolean
-}) {
+function MessagesInbox() {
   const t = useT()
   const navigate = Route.useNavigate()
   const searchParams = Route.useSearch()
-  const queryClient = Route.useRouteContext().queryClient
+  const { locale: appLocale, queryClient } = Route.useRouteContext()
 
   const { orgSlug, projectSlug, branchName } = Route.useParams()
+  const branchWorkspaceQuery = useSuspenseQuery(branchWorkspaceQueryOptions(orgSlug, projectSlug, branchName))
+  const view = searchParams.view ?? "all"
+  const branchMessagesQuery = useQuery({
+    ...branchMessagesQueryOptions(orgSlug, projectSlug, branchName, { q: searchParams.q, view }),
+    placeholderData: keepPreviousData,
+  })
+  const data = branchMessagesQuery.data
+  const isLoading = branchMessagesQuery.isPending
   const [searchTerm, setSearchTerm] = useState(searchParams.q ?? "")
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchParams.q ?? "")
   const debouncer = useDebouncer((value: string) => setDebouncedSearchTerm(value), { wait: 300 })
@@ -167,7 +148,7 @@ function MessagesInbox({
               const isActive = searchParams?.messageId === message.id
               return (
                 <button
-                  key={message.lookupId}
+                  key={message.id}
                   type="button"
                   onClick={() => void navigate({ search: (current) => ({ ...current, messageId: message.id }) })}
                   onMouseOver={() =>
@@ -199,7 +180,7 @@ function MessagesInbox({
           {isLoading ? (
             <MessageDetailSkeleton />
           ) : searchParams?.messageId ? (
-            <MessageLocaleDetailLoader appLocale={appLocale} isProduction={isProduction} />
+            <MessageLocaleDetailLoader appLocale={appLocale} isProduction={branchWorkspaceQuery.data.isProduction} />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
               <T>Select a message</T>
@@ -436,7 +417,7 @@ function MessageLocaleRow({
             aria-label={t("Edit Locale value")}
             onClick={() => setEditOpen(true)}
           >
-            <PencilIcon />
+            <PencilIcon className="size-3" />
           </Button>
           <Popover open={translateOpen} onOpenChange={setTranslateOpen}>
             <PopoverTrigger
