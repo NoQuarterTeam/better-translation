@@ -21,9 +21,21 @@ const branchInputSchema = z.object({
   branchName: z.string().trim().min(1),
 })
 
-export const getBranchWorkspaceFn = createServerFn({ method: "GET" })
+export const messageViewSchema = z.enum(["all", "needs-value", "manual", "ai"]).catch("all")
+export type MessageView = z.infer<typeof messageViewSchema>
+
+const branchMessagesInputSchema = branchInputSchema.extend({
+  q: z.string().trim().optional().catch(undefined),
+  view: messageViewSchema,
+})
+
+const branchMessageDetailInputSchema = branchInputSchema.extend({
+  messageId: z.string().trim().min(1),
+})
+
+export const listBranchMessagesFn = createServerFn({ method: "GET" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(branchInputSchema))
+  .inputValidator(parseZod(branchMessagesInputSchema))
   .handler(async ({ context, data }) => {
     const { project } = context
     const branch = await getProjectBranch(project.id, data.branchName)
@@ -43,11 +55,95 @@ export const getBranchWorkspaceFn = createServerFn({ method: "GET" })
             },
           })
     const branchValueByMessageAndLocale = new Map(branchValues.map((value) => [`${value.messageId}:${value.locale}`, value]))
+    const valuesByMessageId = new Map<string, LocaleValue[]>()
+
+    for (const value of branchValues) {
+      const messageValues = valuesByMessageId.get(value.messageId) ?? []
+      messageValues.push(value)
+      valuesByMessageId.set(value.messageId, messageValues)
+    }
+
+    const editableLocales = branch.locales.filter((locale) => locale !== branch.defaultLocale)
+    const query = data.q?.toLowerCase()
+    const filteredMessages = messages
+      .filter((message) => {
+        const messageValues = valuesByMessageId.get(message.id) ?? []
+
+        if (query) {
+          const searchableValues = [message.defaultMessage, ...messageValues.map((value) => value.value)]
+          if (!searchableValues.some((value) => value.toLowerCase().includes(query))) return false
+        }
+
+        if (data.view === "all") return true
+
+        const completeness = getMessageCompleteness({
+          branchValueByMessageAndLocale,
+          editableLocales,
+          messageId: message.id,
+        })
+
+        if (data.view === "needs-value") return completeness.done < completeness.total
+        return messageValues.some((value) => value.source === data.view)
+      })
+      .sort((left, right) => {
+        const leftComplete = getMessageCompleteness({
+          branchValueByMessageAndLocale,
+          editableLocales,
+          messageId: left.id,
+        })
+        const rightComplete = getMessageCompleteness({
+          branchValueByMessageAndLocale,
+          editableLocales,
+          messageId: right.id,
+        })
+
+        return Number(leftComplete.done === leftComplete.total) - Number(rightComplete.done === rightComplete.total)
+      })
+
+    const incompleteCount = messages.filter((message) => {
+      const completeness = getMessageCompleteness({
+        branchValueByMessageAndLocale,
+        editableLocales,
+        messageId: message.id,
+      })
+      return completeness.done < completeness.total
+    }).length
 
     return {
       project,
       branch,
-      messages: messages.map((message) => ({
+      incompleteCount,
+      messages: filteredMessages.map((message) => ({
+        defaultMessage: message.defaultMessage,
+        id: message.id,
+        lookupId: message.lookupId,
+        ...getMessageCompleteness({
+          branchValueByMessageAndLocale,
+          editableLocales,
+          messageId: message.id,
+        }),
+        updatedAt: message.updatedAt,
+      })),
+      totalMessageCount: messages.length,
+    }
+  })
+
+export const getBranchMessageDetailFn = createServerFn({ method: "GET" })
+  .middleware([projectMiddleware])
+  .inputValidator(parseZod(branchMessageDetailInputSchema))
+  .handler(async ({ context, data }) => {
+    const { project } = context
+    const branch = await getProjectBranch(project.id, data.branchName)
+    const message = await getProjectMessageById(project.id, branch.id, data.messageId)
+    const branchValues = await db.query.localeValuesTable.findMany({
+      where: { branchId: branch.id, messageId: message.id, projectId: project.id },
+    })
+    const branchValueByMessageAndLocale = new Map(branchValues.map((value) => [`${value.messageId}:${value.locale}`, value]))
+
+    return {
+      project,
+      branch,
+      message: {
         context: typeof message.meta.context === "string" ? message.meta.context : null,
         createdAt: message.createdAt,
         defaultMessage: message.defaultMessage,
@@ -64,14 +160,25 @@ export const getBranchWorkspaceFn = createServerFn({ method: "GET" })
         projectId: message.projectId,
         sources: message.sources,
         updatedAt: message.updatedAt,
-      })),
+      },
     }
   })
 
-export const branchWorkspaceQueryOptions = (orgSlug: string, projectSlug: string, branchName: string) =>
+export const branchMessagesQueryOptions = (
+  orgSlug: string,
+  projectSlug: string,
+  branchName: string,
+  options: { q?: string; view: MessageView },
+) =>
   queryOptions({
-    queryKey: ["branch-workspace", orgSlug, projectSlug, branchName],
-    queryFn: () => getBranchWorkspaceFn({ data: { orgSlug, projectSlug, branchName } }),
+    queryKey: ["branch-messages", orgSlug, projectSlug, branchName, options],
+    queryFn: () => listBranchMessagesFn({ data: { orgSlug, projectSlug, branchName, ...options } }),
+  })
+
+export const branchMessageDetailQueryOptions = (orgSlug: string, projectSlug: string, branchName: string, messageId: string) =>
+  queryOptions({
+    queryKey: ["branch-message-detail", orgSlug, projectSlug, branchName, messageId],
+    queryFn: () => getBranchMessageDetailFn({ data: { orgSlug, projectSlug, branchName, messageId } }),
   })
 
 export const getCurrentBranchSwitcherFn = createServerFn({ method: "GET" })
@@ -249,6 +356,19 @@ function getMessageLocaleValues({
   return localeValues
 }
 
+function getMessageCompleteness({
+  branchValueByMessageAndLocale,
+  editableLocales,
+  messageId,
+}: {
+  branchValueByMessageAndLocale: Map<string, LocaleValue>
+  editableLocales: string[]
+  messageId: string
+}) {
+  const done = editableLocales.filter((locale) => branchValueByMessageAndLocale.has(`${messageId}:${locale}`)).length
+  return { done, total: editableLocales.length }
+}
+
 function getMessageLocaleValue({
   branchValue,
   isDefaultLocale,
@@ -294,6 +414,13 @@ function getSelectedBranchCookieName(projectPublicId: string) {
 
 async function getProjectMessage(projectId: string, branchId: string, lookupId: string) {
   const message = await db.query.messagesTable.findFirst({ where: { active: true, branchId, lookupId, projectId } })
+
+  if (!message) throw notFound()
+  return message
+}
+
+async function getProjectMessageById(projectId: string, branchId: string, messageId: string) {
+  const message = await db.query.messagesTable.findFirst({ where: { active: true, branchId, id: messageId, projectId } })
 
   if (!message) throw notFound()
   return message

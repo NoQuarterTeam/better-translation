@@ -37,6 +37,7 @@
     "@tanstack/react-db": "catalog:",
     "@tanstack/react-devtools": "catalog:",
     "@tanstack/react-form": "catalog:",
+    "@tanstack/react-pacer": "^0.22.1",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-router-devtools": "catalog:",

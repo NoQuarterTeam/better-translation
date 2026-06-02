@@ -48,4 +48,5 @@ const customFields = {
 export const localeValueSchema = createSelectSchema(localeValuesTable).extend(customFields)
 export const localeValueInsertSchema = createInsertSchema(localeValuesTable).extend(customFields)
 
+export type LocaleValueSource = (typeof localeValueSourceEnum.enumValues)[number]
 export type LocaleValue = typeof localeValuesTable.$inferSelect
