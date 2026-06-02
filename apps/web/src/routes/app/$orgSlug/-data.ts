@@ -4,6 +4,8 @@ import { createServerFn } from "@tanstack/react-start"
 import { getRequestHeaders, setCookie } from "@tanstack/react-start/server"
 import * as z from "zod"
 
+import type { OrganizationAccessOptions, OrganizationRole } from "@/lib/auth/permissions"
+import { hasOrganizationAccess } from "@/lib/auth/permissions"
 import { authMiddleware, organizationMiddleware } from "@/lib/functions/middleware"
 import { parseZod } from "@/lib/functions/zod"
 import { auth } from "@/server/auth"
@@ -137,4 +139,17 @@ export const organizationProjectsQueryOptions = (orgSlug: string) =>
 export function useCurrentOrganization() {
   const { orgSlug } = useParams({ from: "/app/$orgSlug" })
   return useSuspenseQuery(currentOrganizationQueryOptions(orgSlug)).data
+}
+
+type CurrentOrganizationAccess = ReturnType<typeof useCurrentOrganization>
+
+export function hasCurrentOrganizationAccess(
+  organizationAccess: CurrentOrganizationAccess,
+  options: OrganizationAccessOptions = {},
+) {
+  return hasOrganizationAccess(organizationAccess.member.role as OrganizationRole, options)
+}
+
+export function useHasCurrentOrganizationAccess(options: OrganizationAccessOptions = {}) {
+  return hasCurrentOrganizationAccess(useCurrentOrganization(), options)
 }

@@ -29,15 +29,15 @@ import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
 import { Route as AppOrgSlugOrgLayoutRouteImport } from './routes/app/$orgSlug/_org/layout'
 import { Route as AppOrgSlugOrgIndexRouteImport } from './routes/app/$orgSlug/_org/index'
-import { Route as AppOrgSlugOrgUsersRouteImport } from './routes/app/$orgSlug/_org/users'
 import { Route as AppOrgSlugProjectsProjectSlugLayoutRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/layout'
 import { Route as AppOrgSlugProjectsProjectSlugIndexRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/index'
+import { Route as AppOrgSlugOrgUsersIndexRouteImport } from './routes/app/$orgSlug/_org/users/index'
 import { Route as AppOrgSlugOrgSettingsIndexRouteImport } from './routes/app/$orgSlug/_org/settings/index'
 import { Route as AppOrgSlugOrgProjectsIndexRouteImport } from './routes/app/$orgSlug/_org/projects/index'
-import { Route as AppOrgSlugOrgProjectsNewRouteImport } from './routes/app/$orgSlug/_org/projects/new'
 import { Route as AppOrgSlugProjectsProjectSlugSettingsIndexRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/settings/index'
 import { Route as AppOrgSlugProjectsProjectSlugBranchesIndexRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/branches/index'
 import { Route as AppOrgSlugProjectsProjectSlugApiKeysIndexRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/api-keys/index'
+import { Route as AppOrgSlugOrgProjectsNewIndexRouteImport } from './routes/app/$orgSlug/_org/projects/new/index'
 import { Route as ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRouteImport } from './routes/projects/$projectId/branches/$branchName/locales/{$locale}[.]json'
 import { Route as ApiProjectsProjectIdBranchesBranchNameManifestRouteImport } from './routes/api/projects/$projectId/branches/$branchName/manifest'
 import { Route as AppOrgSlugProjectsProjectSlugBranchesBranchNameIndexRouteImport } from './routes/app/$orgSlug/projects/$projectSlug/branches/$branchName/index'
@@ -142,11 +142,6 @@ const AppOrgSlugOrgIndexRoute = AppOrgSlugOrgIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppOrgSlugOrgLayoutRoute,
 } as any)
-const AppOrgSlugOrgUsersRoute = AppOrgSlugOrgUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AppOrgSlugOrgLayoutRoute,
-} as any)
 const AppOrgSlugProjectsProjectSlugLayoutRoute =
   AppOrgSlugProjectsProjectSlugLayoutRouteImport.update({
     id: '/projects/$projectSlug',
@@ -159,6 +154,11 @@ const AppOrgSlugProjectsProjectSlugIndexRoute =
     path: '/',
     getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
   } as any)
+const AppOrgSlugOrgUsersIndexRoute = AppOrgSlugOrgUsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => AppOrgSlugOrgLayoutRoute,
+} as any)
 const AppOrgSlugOrgSettingsIndexRoute =
   AppOrgSlugOrgSettingsIndexRouteImport.update({
     id: '/settings/',
@@ -169,12 +169,6 @@ const AppOrgSlugOrgProjectsIndexRoute =
   AppOrgSlugOrgProjectsIndexRouteImport.update({
     id: '/projects/',
     path: '/projects/',
-    getParentRoute: () => AppOrgSlugOrgLayoutRoute,
-  } as any)
-const AppOrgSlugOrgProjectsNewRoute =
-  AppOrgSlugOrgProjectsNewRouteImport.update({
-    id: '/projects/new',
-    path: '/projects/new',
     getParentRoute: () => AppOrgSlugOrgLayoutRoute,
   } as any)
 const AppOrgSlugProjectsProjectSlugSettingsIndexRoute =
@@ -194,6 +188,12 @@ const AppOrgSlugProjectsProjectSlugApiKeysIndexRoute =
     id: '/api-keys/',
     path: '/api-keys/',
     getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
+  } as any)
+const AppOrgSlugOrgProjectsNewIndexRoute =
+  AppOrgSlugOrgProjectsNewIndexRouteImport.update({
+    id: '/projects/new/',
+    path: '/projects/new/',
+    getParentRoute: () => AppOrgSlugOrgLayoutRoute,
   } as any)
 const ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute =
   ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRouteImport.update(
@@ -235,14 +235,14 @@ export interface FileRoutesByFullPath {
   '/app/create-org/': typeof AppCreateOrgIndexRoute
   '/app/profile/': typeof AppProfileIndexRoute
   '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
-  '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersRoute
   '/app/$orgSlug/': typeof AppOrgSlugOrgIndexRoute
-  '/app/$orgSlug/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
   '/app/$orgSlug/projects/': typeof AppOrgSlugOrgProjectsIndexRoute
   '/app/$orgSlug/settings/': typeof AppOrgSlugOrgSettingsIndexRoute
+  '/app/$orgSlug/users/': typeof AppOrgSlugOrgUsersIndexRoute
   '/app/$orgSlug/projects/$projectSlug/': typeof AppOrgSlugProjectsProjectSlugIndexRoute
   '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
   '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
+  '/app/$orgSlug/projects/new/': typeof AppOrgSlugOrgProjectsNewIndexRoute
   '/app/$orgSlug/projects/$projectSlug/api-keys/': typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRoute
   '/app/$orgSlug/projects/$projectSlug/branches/': typeof AppOrgSlugProjectsProjectSlugBranchesIndexRoute
   '/app/$orgSlug/projects/$projectSlug/settings/': typeof AppOrgSlugProjectsProjectSlugSettingsIndexRoute
@@ -264,13 +264,13 @@ export interface FileRoutesByTo {
   '/app/profile/authentication': typeof AppProfileAuthenticationRoute
   '/app/create-org': typeof AppCreateOrgIndexRoute
   '/app/profile': typeof AppProfileIndexRoute
-  '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersRoute
-  '/app/$orgSlug/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
   '/app/$orgSlug/projects': typeof AppOrgSlugOrgProjectsIndexRoute
   '/app/$orgSlug/settings': typeof AppOrgSlugOrgSettingsIndexRoute
+  '/app/$orgSlug/users': typeof AppOrgSlugOrgUsersIndexRoute
   '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugIndexRoute
   '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
   '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
+  '/app/$orgSlug/projects/new': typeof AppOrgSlugOrgProjectsNewIndexRoute
   '/app/$orgSlug/projects/$projectSlug/api-keys': typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRoute
   '/app/$orgSlug/projects/$projectSlug/branches': typeof AppOrgSlugProjectsProjectSlugBranchesIndexRoute
   '/app/$orgSlug/projects/$projectSlug/settings': typeof AppOrgSlugProjectsProjectSlugSettingsIndexRoute
@@ -298,14 +298,14 @@ export interface FileRoutesById {
   '/app/create-org/': typeof AppCreateOrgIndexRoute
   '/app/profile/': typeof AppProfileIndexRoute
   '/app/$orgSlug/projects/$projectSlug': typeof AppOrgSlugProjectsProjectSlugLayoutRouteWithChildren
-  '/app/$orgSlug/_org/users': typeof AppOrgSlugOrgUsersRoute
   '/app/$orgSlug/_org/': typeof AppOrgSlugOrgIndexRoute
-  '/app/$orgSlug/_org/projects/new': typeof AppOrgSlugOrgProjectsNewRoute
   '/app/$orgSlug/_org/projects/': typeof AppOrgSlugOrgProjectsIndexRoute
   '/app/$orgSlug/_org/settings/': typeof AppOrgSlugOrgSettingsIndexRoute
+  '/app/$orgSlug/_org/users/': typeof AppOrgSlugOrgUsersIndexRoute
   '/app/$orgSlug/projects/$projectSlug/': typeof AppOrgSlugProjectsProjectSlugIndexRoute
   '/api/projects/$projectId/branches/$branchName/manifest': typeof ApiProjectsProjectIdBranchesBranchNameManifestRoute
   '/projects/$projectId/branches/$branchName/locales/{$locale}.json': typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
+  '/app/$orgSlug/_org/projects/new/': typeof AppOrgSlugOrgProjectsNewIndexRoute
   '/app/$orgSlug/projects/$projectSlug/api-keys/': typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRoute
   '/app/$orgSlug/projects/$projectSlug/branches/': typeof AppOrgSlugProjectsProjectSlugBranchesIndexRoute
   '/app/$orgSlug/projects/$projectSlug/settings/': typeof AppOrgSlugProjectsProjectSlugSettingsIndexRoute
@@ -332,14 +332,14 @@ export interface FileRouteTypes {
     | '/app/create-org/'
     | '/app/profile/'
     | '/app/$orgSlug/projects/$projectSlug'
-    | '/app/$orgSlug/users'
     | '/app/$orgSlug/'
-    | '/app/$orgSlug/projects/new'
     | '/app/$orgSlug/projects/'
     | '/app/$orgSlug/settings/'
+    | '/app/$orgSlug/users/'
     | '/app/$orgSlug/projects/$projectSlug/'
     | '/api/projects/$projectId/branches/$branchName/manifest'
     | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
+    | '/app/$orgSlug/projects/new/'
     | '/app/$orgSlug/projects/$projectSlug/api-keys/'
     | '/app/$orgSlug/projects/$projectSlug/branches/'
     | '/app/$orgSlug/projects/$projectSlug/settings/'
@@ -361,13 +361,13 @@ export interface FileRouteTypes {
     | '/app/profile/authentication'
     | '/app/create-org'
     | '/app/profile'
-    | '/app/$orgSlug/users'
-    | '/app/$orgSlug/projects/new'
     | '/app/$orgSlug/projects'
     | '/app/$orgSlug/settings'
+    | '/app/$orgSlug/users'
     | '/app/$orgSlug/projects/$projectSlug'
     | '/api/projects/$projectId/branches/$branchName/manifest'
     | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
+    | '/app/$orgSlug/projects/new'
     | '/app/$orgSlug/projects/$projectSlug/api-keys'
     | '/app/$orgSlug/projects/$projectSlug/branches'
     | '/app/$orgSlug/projects/$projectSlug/settings'
@@ -394,14 +394,14 @@ export interface FileRouteTypes {
     | '/app/create-org/'
     | '/app/profile/'
     | '/app/$orgSlug/projects/$projectSlug'
-    | '/app/$orgSlug/_org/users'
     | '/app/$orgSlug/_org/'
-    | '/app/$orgSlug/_org/projects/new'
     | '/app/$orgSlug/_org/projects/'
     | '/app/$orgSlug/_org/settings/'
+    | '/app/$orgSlug/_org/users/'
     | '/app/$orgSlug/projects/$projectSlug/'
     | '/api/projects/$projectId/branches/$branchName/manifest'
     | '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
+    | '/app/$orgSlug/_org/projects/new/'
     | '/app/$orgSlug/projects/$projectSlug/api-keys/'
     | '/app/$orgSlug/projects/$projectSlug/branches/'
     | '/app/$orgSlug/projects/$projectSlug/settings/'
@@ -562,13 +562,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSlugOrgIndexRouteImport
       parentRoute: typeof AppOrgSlugOrgLayoutRoute
     }
-    '/app/$orgSlug/_org/users': {
-      id: '/app/$orgSlug/_org/users'
-      path: '/users'
-      fullPath: '/app/$orgSlug/users'
-      preLoaderRoute: typeof AppOrgSlugOrgUsersRouteImport
-      parentRoute: typeof AppOrgSlugOrgLayoutRoute
-    }
     '/app/$orgSlug/projects/$projectSlug': {
       id: '/app/$orgSlug/projects/$projectSlug'
       path: '/projects/$projectSlug'
@@ -583,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugIndexRouteImport
       parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
     }
+    '/app/$orgSlug/_org/users/': {
+      id: '/app/$orgSlug/_org/users/'
+      path: '/users'
+      fullPath: '/app/$orgSlug/users/'
+      preLoaderRoute: typeof AppOrgSlugOrgUsersIndexRouteImport
+      parentRoute: typeof AppOrgSlugOrgLayoutRoute
+    }
     '/app/$orgSlug/_org/settings/': {
       id: '/app/$orgSlug/_org/settings/'
       path: '/settings'
@@ -595,13 +595,6 @@ declare module '@tanstack/react-router' {
       path: '/projects'
       fullPath: '/app/$orgSlug/projects/'
       preLoaderRoute: typeof AppOrgSlugOrgProjectsIndexRouteImport
-      parentRoute: typeof AppOrgSlugOrgLayoutRoute
-    }
-    '/app/$orgSlug/_org/projects/new': {
-      id: '/app/$orgSlug/_org/projects/new'
-      path: '/projects/new'
-      fullPath: '/app/$orgSlug/projects/new'
-      preLoaderRoute: typeof AppOrgSlugOrgProjectsNewRouteImport
       parentRoute: typeof AppOrgSlugOrgLayoutRoute
     }
     '/app/$orgSlug/projects/$projectSlug/settings/': {
@@ -624,6 +617,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/$orgSlug/projects/$projectSlug/api-keys/'
       preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRouteImport
       parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
+    }
+    '/app/$orgSlug/_org/projects/new/': {
+      id: '/app/$orgSlug/_org/projects/new/'
+      path: '/projects/new'
+      fullPath: '/app/$orgSlug/projects/new/'
+      preLoaderRoute: typeof AppOrgSlugOrgProjectsNewIndexRouteImport
+      parentRoute: typeof AppOrgSlugOrgLayoutRoute
     }
     '/projects/$projectId/branches/$branchName/locales/{$locale}.json': {
       id: '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
@@ -670,19 +670,19 @@ const AuthLayoutRouteWithChildren = AuthLayoutRoute._addFileChildren(
 )
 
 interface AppOrgSlugOrgLayoutRouteChildren {
-  AppOrgSlugOrgUsersRoute: typeof AppOrgSlugOrgUsersRoute
   AppOrgSlugOrgIndexRoute: typeof AppOrgSlugOrgIndexRoute
-  AppOrgSlugOrgProjectsNewRoute: typeof AppOrgSlugOrgProjectsNewRoute
   AppOrgSlugOrgProjectsIndexRoute: typeof AppOrgSlugOrgProjectsIndexRoute
   AppOrgSlugOrgSettingsIndexRoute: typeof AppOrgSlugOrgSettingsIndexRoute
+  AppOrgSlugOrgUsersIndexRoute: typeof AppOrgSlugOrgUsersIndexRoute
+  AppOrgSlugOrgProjectsNewIndexRoute: typeof AppOrgSlugOrgProjectsNewIndexRoute
 }
 
 const AppOrgSlugOrgLayoutRouteChildren: AppOrgSlugOrgLayoutRouteChildren = {
-  AppOrgSlugOrgUsersRoute: AppOrgSlugOrgUsersRoute,
   AppOrgSlugOrgIndexRoute: AppOrgSlugOrgIndexRoute,
-  AppOrgSlugOrgProjectsNewRoute: AppOrgSlugOrgProjectsNewRoute,
   AppOrgSlugOrgProjectsIndexRoute: AppOrgSlugOrgProjectsIndexRoute,
   AppOrgSlugOrgSettingsIndexRoute: AppOrgSlugOrgSettingsIndexRoute,
+  AppOrgSlugOrgUsersIndexRoute: AppOrgSlugOrgUsersIndexRoute,
+  AppOrgSlugOrgProjectsNewIndexRoute: AppOrgSlugOrgProjectsNewIndexRoute,
 }
 
 const AppOrgSlugOrgLayoutRouteWithChildren =

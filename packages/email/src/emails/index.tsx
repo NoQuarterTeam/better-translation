@@ -14,7 +14,7 @@ export function Layout({ children, preview }: { children: React.ReactNode; previ
 
 export function Button({ children, href }: { children: React.ReactNode; href: string }) {
   return (
-    <EButton href={href} className="bg-brand rounded-md px-5 py-3 text-center text-lg font-semibold text-white no-underline">
+    <EButton href={href} className="bg-brand rounded-xl px-4 py-2 text-center text-lg font-medium text-white no-underline">
       {children}
     </EButton>
   )

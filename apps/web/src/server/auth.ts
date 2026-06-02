@@ -6,6 +6,7 @@ import { organization } from "better-auth/plugins"
 import { tanstackStartCookies } from "better-auth/tanstack-start"
 
 import { env } from "@/env"
+import { organizationAc, organizationRoles } from "@/lib/auth/permissions"
 import { getBaseUrl } from "@/lib/config"
 import { db } from "@/server/db"
 import {
@@ -99,6 +100,8 @@ export const auth = betterAuth({
     //     "The password you have entered is too common or has been compromised. Please choose a different password.",
     // }),
     organization({
+      ac: organizationAc,
+      roles: organizationRoles,
       sendInvitationEmail: async (data) => {
         const inviteUrl = `${getBaseUrl()}/accept-invitation/${data.id}`
         const inviterName = data.inviter.user.name?.trim() || data.inviter.user.email

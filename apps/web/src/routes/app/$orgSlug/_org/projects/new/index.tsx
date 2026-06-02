@@ -27,7 +27,7 @@ import {
 
 const githubInstallationIdSearchSchema = z.union([z.string(), z.number()]).transform(String).optional().catch(undefined)
 
-export const Route = createFileRoute("/app/$orgSlug/_org/projects/new")({
+export const Route = createFileRoute("/app/$orgSlug/_org/projects/new/")({
   component: NewProjectPage,
   validateSearch: z
     .object({
