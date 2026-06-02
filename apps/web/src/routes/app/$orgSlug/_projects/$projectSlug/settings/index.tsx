@@ -163,9 +163,7 @@ function ProjectSettingsPage() {
                 void profileForm.handleSubmit()
               }}
             >
-              <profileForm.AppField name="name">
-                {(field) => <field.TextField label={t("Project name")} placeholder="Acme Web" />}
-              </profileForm.AppField>
+              <profileForm.AppField name="name">{(field) => <field.TextField placeholder="Acme Web" />}</profileForm.AppField>
               <profileForm.SubmitButton className="w-fit">
                 {(isSubmitting) => (isSubmitting || updateNameMutation.isPending ? <T>Saving...</T> : <T>Save profile</T>)}
               </profileForm.SubmitButton>
