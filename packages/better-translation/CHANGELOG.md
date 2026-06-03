@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.2.6
+
+### Patch Changes
+
+- [`d3c833c`](https://github.com/NoQuarterTeam/better-translation/commit/d3c833c3081d8252f40896e8df1a5c9cb65c92e6) Thanks [@JClackett](https://github.com/JClackett)! - Add a dev-only local editor for local runtime Locale values, with shared UI and Locale editor packages.
+
 ## 0.2.5
 
 ### Patch Changes
