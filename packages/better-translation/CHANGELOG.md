@@ -1,5 +1,13 @@
 # better-translation
 
+## 0.2.4
+
+### Patch Changes
+
+- [`b70978b`](https://github.com/NoQuarterTeam/better-translation/commit/b70978bda55164de911b5da9ac98e69681acb53b) Thanks [@JClackett](https://github.com/JClackett)! - Sort generated local translation artifacts deterministically
+
+- Keep local runtime output to committed Locale bundles and move the private Manifest to `.cache/better-translation`.
+
 ## 0.2.3
 
 ### Patch Changes
