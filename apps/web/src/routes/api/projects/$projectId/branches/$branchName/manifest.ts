@@ -8,15 +8,13 @@ import { createProjectApiKeyHash, createStableHash, readBearerToken } from "@/se
 import { translateMessagesWithPlatform } from "@/server/platform-translator"
 import { listEnabledTranslationGlossaryTerms } from "@/server/translation-glossary"
 
-const manifestSourceSchema = z.object({
-  column: z.number().int().optional(),
-  endColumn: z.number().int().optional(),
-  endLine: z.number().int().optional(),
-  file: z.string().trim().min(1),
-  kind: z.string().optional(),
-  line: z.number().int().optional(),
-  marker: z.string().optional(),
-})
+const manifestSourceSchema = z
+  .object({
+    file: z.string().trim().min(1),
+    kind: z.string().optional(),
+    marker: z.string().optional(),
+  })
+  .strict()
 
 const manifestEntrySchema = z.object({
   defaultMessage: z.string().min(1),
@@ -70,7 +68,7 @@ export const Route = createFileRoute("/api/projects/$projectId/branches/$branchN
 
         await updateProjectManifestState({ defaultBranchId, projectId: projectAuth.project.id })
 
-        const syncedMessages = await syncBranchMessages({
+        const messageSync = await syncBranchMessages({
           branchId: branch.id,
           messages: parsed.data.messages,
           projectId: projectAuth.project.id,
@@ -79,7 +77,7 @@ export const Route = createFileRoute("/api/projects/$projectId/branches/$branchN
         const filledValueCount = await fillMissingLocaleValues({
           branch,
           defaultBranchId,
-          messages: syncedMessages,
+          messages: messageSync.messages,
           project: projectAuth.project,
         })
 
@@ -90,8 +88,8 @@ export const Route = createFileRoute("/api/projects/$projectId/branches/$branchN
           branch: params.branchName,
           defaultLocale: parsed.data.defaultLocale,
           locales: parsed.data.locales,
-          filledValueCount,
-          messageCount: syncedMessages.length,
+          changed: messageSync.changed || filledValueCount > 0,
+          messageCount: messageSync.messages.length,
         })
       },
     },
@@ -139,70 +137,135 @@ async function syncBranchMessages({
   messages: ManifestMessages
   projectId: string
 }) {
+  const existingMessages = await db.query.messagesTable.findMany({
+    where: { branchId, projectId },
+  })
+  const existingMessageByLookupId = new Map(existingMessages.map((message) => [message.lookupId, message]))
   const syncedMessages = []
+  let changed = false
 
   for (const [lookupId, message] of Object.entries(messages)) {
-    const syncedMessage = await upsertBranchMessage({ branchId, lookupId, message, projectId })
+    const syncResult = await syncBranchMessage({
+      branchId,
+      existingMessage: existingMessageByLookupId.get(lookupId),
+      lookupId,
+      message,
+      projectId,
+    })
+    if (syncResult.action !== "unchanged") changed = true
+    const syncedMessage = syncResult.message
     syncedMessages.push(syncedMessage)
   }
 
-  await deactivateMissingBranchMessages({ branchId, messageIds: syncedMessages.map((message) => message.id) })
+  const deactivatedMessageCount = await deactivateMissingBranchMessages({
+    branchId,
+    existingMessages,
+    syncedLookupIds: new Set(Object.keys(messages)),
+  })
 
-  return syncedMessages
+  return {
+    changed: changed || deactivatedMessageCount > 0,
+    messages: syncedMessages,
+  }
 }
 
-async function upsertBranchMessage({
+async function syncBranchMessage({
   branchId,
+  existingMessage,
   lookupId,
   message,
   projectId,
 }: {
   branchId: string
+  existingMessage: Message | undefined
   lookupId: string
   message: ManifestMessages[string]
   projectId: string
 }) {
   const defaultMessageHash = createStableHash(message.defaultMessage)
+  const values = {
+    active: true,
+    branchId,
+    defaultMessage: message.defaultMessage,
+    defaultMessageHash,
+    lookupId,
+    meta: message.meta,
+    placeholders: message.placeholders,
+    projectId,
+    sources: message.sources,
+  }
+
+  if (!existingMessage) {
+    const [syncedMessage] = await db.insert(messagesTable).values(values).returning()
+    if (!syncedMessage) throw new Error(`Could not sync Message ${lookupId}.`)
+    return { action: "created" as const, message: syncedMessage }
+  }
+
+  if (isSameBranchMessage(existingMessage, values)) return { action: "unchanged" as const, message: existingMessage }
+
   const [syncedMessage] = await db
-    .insert(messagesTable)
-    .values({
+    .update(messagesTable)
+    .set({
       active: true,
-      branchId,
       defaultMessage: message.defaultMessage,
       defaultMessageHash,
-      lookupId,
       meta: message.meta,
       placeholders: message.placeholders,
-      projectId,
       sources: message.sources,
+      updatedAt: new Date(),
     })
-    .onConflictDoUpdate({
-      target: [messagesTable.branchId, messagesTable.lookupId],
-      set: {
-        active: true,
-        defaultMessage: message.defaultMessage,
-        defaultMessageHash,
-        meta: message.meta,
-        placeholders: message.placeholders,
-        sources: message.sources,
-        updatedAt: new Date(),
-      },
-    })
+    .where(eq(messagesTable.id, existingMessage.id))
     .returning()
 
   if (!syncedMessage) throw new Error(`Could not sync Message ${lookupId}.`)
-  return syncedMessage
+  return { action: "updated" as const, message: syncedMessage }
 }
 
-async function deactivateMissingBranchMessages({ branchId, messageIds }: { branchId: string; messageIds: string[] }) {
+function isSameBranchMessage(
+  existingMessage: Message,
+  incomingMessage: Pick<
+    typeof messagesTable.$inferInsert,
+    "active" | "defaultMessage" | "defaultMessageHash" | "lookupId" | "meta" | "placeholders" | "sources"
+  >,
+) {
+  return (
+    existingMessage.active === incomingMessage.active &&
+    existingMessage.defaultMessage === incomingMessage.defaultMessage &&
+    existingMessage.defaultMessageHash === incomingMessage.defaultMessageHash &&
+    existingMessage.lookupId === incomingMessage.lookupId &&
+    JSON.stringify(existingMessage.meta) === JSON.stringify(incomingMessage.meta) &&
+    JSON.stringify(existingMessage.placeholders) === JSON.stringify(incomingMessage.placeholders) &&
+    JSON.stringify(existingMessage.sources) === JSON.stringify(incomingMessage.sources)
+  )
+}
+
+async function deactivateMissingBranchMessages({
+  branchId,
+  existingMessages,
+  syncedLookupIds,
+}: {
+  branchId: string
+  existingMessages: Message[]
+  syncedLookupIds: Set<string>
+}) {
+  const missingActiveMessages = existingMessages.filter((message) => message.active && !syncedLookupIds.has(message.lookupId))
+  if (missingActiveMessages.length === 0) return 0
+
   const query = db.update(messagesTable).set({ active: false, updatedAt: new Date() })
 
-  if (messageIds.length === 0) {
-    await query.where(eq(messagesTable.branchId, branchId))
-    return
+  if (syncedLookupIds.size === 0) {
+    await query.where(and(eq(messagesTable.branchId, branchId), eq(messagesTable.active, true)))
+  } else {
+    await query.where(
+      and(
+        eq(messagesTable.branchId, branchId),
+        eq(messagesTable.active, true),
+        notInArray(messagesTable.lookupId, [...syncedLookupIds]),
+      ),
+    )
   }
 
-  await query.where(and(eq(messagesTable.branchId, branchId), notInArray(messagesTable.id, messageIds)))
+  return missingActiveMessages.length
 }
 
 async function markBranchSynced(branchId: string) {

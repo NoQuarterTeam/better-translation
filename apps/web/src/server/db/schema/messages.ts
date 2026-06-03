@@ -12,12 +12,8 @@ export type MessageMeta = {
 } & Record<string, unknown>
 
 export type MessageSourceSnapshot = {
-  column?: number
-  endColumn?: number
-  endLine?: number
   file: string
   kind?: string
-  line?: number
   marker?: string
 }
 
@@ -54,15 +50,13 @@ const messageMetaSchema = z.record(z.string(), z.unknown()).and(
   }),
 )
 
-const messageSourceSnapshotSchema = z.object({
-  column: z.number().int().optional(),
-  endColumn: z.number().int().optional(),
-  endLine: z.number().int().optional(),
-  file: z.string().trim().min(1),
-  kind: z.string().optional(),
-  line: z.number().int().optional(),
-  marker: z.string().optional(),
-})
+const messageSourceSnapshotSchema = z
+  .object({
+    file: z.string().trim().min(1),
+    kind: z.string().optional(),
+    marker: z.string().optional(),
+  })
+  .strict()
 
 const customFields = {
   lookupId: z.string().trim().min(1).max(240),

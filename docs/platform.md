@@ -120,6 +120,10 @@ The target remote flow is:
 
 Plugin sync should fail clearly if the configured Project does not exist.
 
+Manifest source snapshots should identify durable source ownership only: file path, marker kind, and marker name. Exact line, column, and character offsets are compile-time details and should not be synced, because unrelated source edits can move them without changing any Message.
+
+Manifest sync responses should report whether anything changed. Successful no-op syncs should be quiet in plugin logs, and changed syncs should use a generic "Synced Messages" log instead of exposing storage-level create, update, and deactivate counts.
+
 Remote runtime options should use this shape:
 
 ```ts

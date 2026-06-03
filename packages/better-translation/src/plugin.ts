@@ -136,10 +136,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     }
 
     const result = parseRemoteSyncResult(body)
-    const messageCount = result?.messageCount ?? Object.keys(payload.messages).length
-    log(
-      `${PREFIX} ${BOLD}Synced${RESET} ${CYAN}${messageCount}${RESET} ${messageCount === 1 ? "Message" : "Messages"} -> ${CYAN}${formatRuntime(resolvedRuntime)}${RESET}`,
-    )
+    if (result?.changed) log(`${PREFIX} ${BOLD}Synced${RESET} Messages -> ${CYAN}${formatRuntime(resolvedRuntime)}${RESET}`)
     lastSyncedRemoteManifestSignature = signature
   }
 
@@ -726,8 +723,9 @@ function parseRemoteSyncResult(body: string) {
   try {
     const parsed = JSON.parse(body) as unknown
     if (typeof parsed !== "object" || parsed === null) return null
-    const messageCount = "messageCount" in parsed && typeof parsed.messageCount === "number" ? parsed.messageCount : undefined
-    return { messageCount }
+    return {
+      changed: "changed" in parsed && parsed.changed === true,
+    }
   } catch {
     return null
   }
@@ -917,13 +915,7 @@ function hasSameMessageShape(
 }
 
 function isSameSource(left: MessageSource, right: MessageSource) {
-  return (
-    left.file === right.file &&
-    left.kind === right.kind &&
-    left.marker === right.marker &&
-    left.start === right.start &&
-    left.end === right.end
-  )
+  return left.file === right.file && left.kind === right.kind && left.marker === right.marker
 }
 
 function compareManifestEntryIds([left]: [string, ManifestEntry], [right]: [string, ManifestEntry]) {
@@ -931,13 +923,7 @@ function compareManifestEntryIds([left]: [string, ManifestEntry], [right]: [stri
 }
 
 function compareMessageSources(left: MessageSource, right: MessageSource) {
-  return (
-    left.file.localeCompare(right.file) ||
-    left.start - right.start ||
-    left.end - right.end ||
-    left.kind.localeCompare(right.kind) ||
-    left.marker.localeCompare(right.marker)
-  )
+  return left.file.localeCompare(right.file) || left.kind.localeCompare(right.kind) || left.marker.localeCompare(right.marker)
 }
 
 function isSameExtractedMessage(left: ExtractedMessage, right?: ExtractedMessage) {
@@ -962,5 +948,5 @@ function formatCollisionError(
 }
 
 function formatSources(sources: MessageSource[]) {
-  return sources.map((source) => `${source.file}:${source.line}:${source.column}`).join(", ")
+  return sources.map((source) => `${source.file} (${source.kind}:${source.marker})`).join(", ")
 }

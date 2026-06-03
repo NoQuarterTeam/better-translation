@@ -724,7 +724,7 @@ function MessageSourceDetails({ message }: { message: MessageRow }) {
             </p>
             <div className="mt-1 flex flex-col gap-1">
               {message.sources.slice(0, 3).map((source, index) => (
-                <div key={`${source.file}:${source.line ?? ""}:${source.column ?? ""}:${index}`} className="min-w-0">
+                <div key={`${source.file}:${source.kind ?? ""}:${source.marker ?? ""}:${index}`} className="min-w-0">
                   <p className="font-mono text-xs break-all">{formatSourceLocation(source)}</p>
                 </div>
               ))}
@@ -808,8 +808,7 @@ function formatPlaceholderLabel(placeholder: string) {
 }
 
 function formatSourceLocation(source: MessageRow["sources"][number]) {
-  if (source.line && source.column) return `${source.file}:${source.line}:${source.column}`
-  if (source.line) return `${source.file}:${source.line}`
+  if (source.kind && source.marker) return `${source.file} (${source.kind}:${source.marker})`
   return source.file
 }
 

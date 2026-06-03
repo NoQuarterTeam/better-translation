@@ -29,7 +29,6 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
   const edits: SourceEdit[] = []
   const result = parseSync(filename, code)
   if (result.errors.length > 0) return { parsed: false, messages, edits }
-  const lineStarts = getLineStarts(code)
 
   const visitor = new Visitor({
     CallExpression(node) {
@@ -49,11 +48,8 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
           placeholders: extractPlaceholdersFromMessage(value),
           source: createSource({
             filename,
-            lineStarts,
             marker: node.callee.name,
             kind: "call",
-            start: node.start,
-            end: node.end,
           }),
         })
 
@@ -100,11 +96,8 @@ export function analyzeSourceFile(code: string, filename: string, markers: Marke
         placeholders: extraction.placeholders,
         source: createSource({
           filename,
-          lineStarts,
           marker: opening.name.name,
           kind: "component",
-          start: node.start,
-          end: node.end,
         }),
       })
 
@@ -274,68 +267,18 @@ function extractPlaceholdersFromMessage(message: string) {
 
 function createSource({
   filename,
-  lineStarts,
   marker,
   kind,
-  start,
-  end,
 }: {
   filename: string
-  lineStarts: number[]
   marker: string
   kind: MessageSource["kind"]
-  start: number
-  end: number
 }): MessageSource {
-  const startPosition = getPosition(start, lineStarts)
-  const endPosition = getPosition(end, lineStarts)
-
   return {
     file: filename,
     kind,
     marker,
-    line: startPosition.line,
-    column: startPosition.column,
-    endLine: endPosition.line,
-    endColumn: endPosition.column,
-    start,
-    end,
   }
-}
-
-function getLineStarts(code: string) {
-  const starts = [0]
-  for (let i = 0; i < code.length; i++) {
-    if (code[i] === "\n") starts.push(i + 1)
-  }
-  return starts
-}
-
-function getPosition(offset: number, lineStarts: number[]) {
-  let low = 0
-  let high = lineStarts.length - 1
-
-  while (low <= high) {
-    const mid = Math.floor((low + high) / 2)
-    const lineStart = lineStarts[mid]!
-    const nextLineStart = lineStarts[mid + 1] ?? Number.POSITIVE_INFINITY
-
-    if (offset < lineStart) {
-      high = mid - 1
-      continue
-    }
-
-    if (offset >= nextLineStart) {
-      low = mid + 1
-      continue
-    }
-
-    return { line: mid + 1, column: offset - lineStart + 1 }
-  }
-
-  const lastLine = lineStarts.length - 1
-  const lastStart = lineStarts[lastLine] ?? 0
-  return { line: lastLine + 1, column: offset - lastStart + 1 }
 }
 
 interface ExtractionResult {

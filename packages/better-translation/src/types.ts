@@ -20,18 +20,6 @@ export interface MessageSource {
   kind: "call" | "component"
   /** Concrete marker name encountered in source, such as `t` or `T`. */
   marker: string
-  /** 1-based starting line number of the extracted node. */
-  line: number
-  /** 1-based starting column number of the extracted node. */
-  column: number
-  /** 1-based ending line number of the extracted node. */
-  endLine: number
-  /** 1-based ending column number of the extracted node. */
-  endColumn: number
-  /** Zero-based starting byte offset in the source file. */
-  start: number
-  /** Zero-based ending byte offset in the source file. */
-  end: number
 }
 
 /** Internal manifest entry used while aggregating extracted messages. */
