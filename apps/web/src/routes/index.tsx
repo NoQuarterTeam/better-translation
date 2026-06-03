@@ -3,7 +3,6 @@ import {
   ArrowRightIcon,
   CheckIcon,
   CodeIcon,
-  EyeIcon,
   GitPullRequestIcon,
   LanguagesIcon,
   PackageIcon,
@@ -125,7 +124,7 @@ function Hero() {
             </T>
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" nativeButton={false} render={<Link to="/docs" />}>
+            <Button size="lg" nativeButton={false} render={<a href="/docs" />}>
               <T>Read the docs</T>
               <ArrowRightIcon />
             </Button>
@@ -377,21 +376,12 @@ function CloudPlatform() {
             </div>
           </div>
 
-          {/* Placeholder for visual editor screenshots */}
-          <div className="relative aspect-16/10 overflow-hidden rounded-xl border bg-card">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-brand-secondary/10"
+          <div className="relative overflow-hidden rounded-xl border bg-card shadow-sm">
+            <img
+              src="/platform-messages.png"
+              alt="Better Translation platform showing branch-local Message editing"
+              className="block aspect-[2126/1132] h-full w-full object-cover object-left-top"
             />
-            <div className="relative flex h-full flex-col items-center justify-center gap-2 text-center">
-              <EyeIcon className="size-8 text-muted-foreground" />
-              <p className="text-sm font-medium text-muted-foreground">
-                <T>Visual editor screenshot</T>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                <T>Placeholder: drop the editor screenshots here</T>
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -481,7 +471,7 @@ function FinalCta() {
               <T>Wrap your first Message, run the plugin, and watch translations follow your code.</T>
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button size="lg" nativeButton={false} render={<Link to="/docs" />}>
+              <Button size="lg" nativeButton={false} render={<a href="/docs" />}>
                 <T>Read the docs</T>
                 <ArrowRightIcon />
               </Button>
