@@ -118,6 +118,8 @@ The local editor is served by the plugin during `vite dev` only. It reads the pr
 
 The local editor is split across package boundaries. `packages/better-translation` owns the Vite dev middleware and local Locale value file writes. `packages/locale-editor` owns the reusable Message and Locale value editor React surface. `packages/ui` owns the shared shadcn/Base UI primitives and theme CSS used by the hosted app and editor.
 
+Future editor surface ideas, including a mounted local editor, remote embedded editor adapters, and iframe embeds, are captured in `docs/editor-surfaces.md`. The broader open Manifest, Locale values, and provider protocol idea is captured separately in `docs/open-translation-protocol.md`.
+
 ## Remote Mode
 
 Remote mode means the plugin syncs source metadata to the hosted service and the Consumer app reads branch-local Locale values at runtime.
