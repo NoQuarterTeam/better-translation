@@ -3,7 +3,6 @@ export type {
   BetterTranslateLocalRuntimeOptions,
   BetterTranslatePluginOptions,
   BetterTranslateRemoteRuntimeOptions,
-  BetterTranslateRuntimeConfig,
   BetterTranslateRuntimeOptions,
   MessageManifestFile,
   RuntimeMessages,

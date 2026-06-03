@@ -688,29 +688,21 @@ function LocalMode() {
       </p>
       <CodeWindow filename="generated artifacts" icon={FolderTreeIcon}>
         {`src/lib/bt/
-├─ runtime.json        # runtime config: mode, locales, defaultLocale
-├─ locales/
+└─ locales/
 │  ├─ en.json          # flat lookup id -> string per Locale
 │  ├─ es.json
 │  └─ fr.json
-├─ manifest.json       # source metadata catalog (gitignored)
-└─ .gitignore          # generated, ignores manifest.json
 
 .cache/better-translation/
-└─ cache.json          # translation cache, avoids re-translating`}
+├─ cache.json          # translation cache, avoids re-translating
+└─ manifest.json       # private source metadata catalog`}
       </CodeWindow>
       <ApiList>
         <ApiRow term="locales/*.json">
           <T>Flat Runtime bundles, one per Locale, keyed by lookup id. These are what your app loads. Commit them.</T>
         </ApiRow>
-        <ApiRow term="runtime.json">
-          <T>Tells server loaders the mode, locales, and default locale. Commit it.</T>
-        </ApiRow>
-        <ApiRow term="manifest.json">
-          <T>Source metadata with file locations, used during dev. Gitignored automatically.</T>
-        </ApiRow>
         <ApiRow term=".cache/better-translation">
-          <T>Plugin-owned translation cache so unchanged Messages are not re-translated.</T>
+          <T>Plugin-owned cache and private Manifest state. Do not commit it.</T>
         </ApiRow>
       </ApiList>
       <p className="mt-8 text-sm leading-7 text-muted-foreground">

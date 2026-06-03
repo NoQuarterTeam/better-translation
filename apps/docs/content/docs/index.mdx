@@ -1,21 +1,70 @@
 ---
-title: Introduction
-description: AI-assisted translations for your Vite app, without keys, JSON file-hopping, or a build step you have to babysit.
+title: Getting started
+description: Install Better Translation and configure the Vite plugin for local or platform-backed translations.
 ---
+
+import { Cards, Card } from "fumadocs-ui/components/card"
 
 Better Translation adds AI-assisted translations to your Vite app without keys, JSON
 file-hopping, or a build step you have to babysit. Wrap your copy in one component and the
 plugin does the rest, locally or through the hosted platform.
 
-```bash title="Install"
+## Installation
+
+Add the package to any Vite app running React 19 or later and Vite 8 or later.
+
+```bash title="terminal"
+# bun
 bun add better-translation
+
+# npm
+npm i better-translation
+
+# pnpm
+pnpm add better-translation
 ```
 
-Then add the plugin to your Vite config, mark your copy with the `T` component, and you're
-translating. The rest of these docs walk through each step in detail.
+### Entry points
+
+The package ships several entry points. Import the plugin from the vite entry, the React
+helpers from the react entry, and the server helper from the server entry. The messages entry
+is a virtual module created by the plugin.
+
+| Entry point                   | Description                                                             |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `better-translation/vite`     | The Vite plugin and its configuration types.                            |
+| `better-translation/react`    | The `T` and `Var` components, the `useT` hook, and `TranslateProvider`. |
+| `better-translation/server`   | `createTranslator` for server-side rendering and metadata.              |
+| `better-translation/ai`       | `createAiTranslate`, the optional AI Gateway translation helper.        |
+| `better-translation/messages` | Virtual module the plugin fills with `loadMessages` and your locales.   |
+
+## Configure the plugin
+
+Add the plugin to your Vite config, list your Locales, and pick a default. That is the whole
+required setup. With no runtime option you get local mode, which writes Locale files into your
+app.
+
+```ts title="vite.config.ts"
+import { defineConfig } from "vite"
+import { betterTranslation } from "better-translation/vite"
+
+export default defineConfig({
+  plugins: [
+    betterTranslation({
+      locales: ["en", "es", "fr"],
+      defaultLocale: "en",
+    }),
+  ],
+})
+```
+
+<Callout title="Plugin order">
+  Place `betterTranslation` before your React plugin. It runs with enforce set to pre so it can rewrite markers and inject stable
+  lookup ids before other transforms see your code.
+</Callout>
 
 <Cards>
   <Card title="How it works" href="/docs/how-it-works" description="The extraction and runtime model behind the plugin." />
-  <Card title="Installation" href="/docs/installation" description="Add the package and its entry points." />
-  <Card title="The platform" href="/docs/platform" description="Branch-aware translations and a visual editor." />
+  <Card title="The T component" href="/docs/t-component" description="Mark UI copy where you author it." />
+  <Card title="Local mode" href="/docs/local-mode" description="Locale files in your repo, no account required." />
 </Cards>

@@ -5,16 +5,9 @@ import mdx from "fumadocs-mdx/vite"
 import { nitro } from "nitro/vite"
 import { defineConfig } from "vite-plus"
 
+const isBuild = process.argv.includes("build")
+
 export default defineConfig({
   resolve: { tsconfigPaths: true, alias: { tslib: "tslib/tslib.es6.mjs" } },
-  plugins: [
-    mdx(),
-    nitro(),
-    tailwindcss(),
-    tanstackStart({
-      importProtection: { client: { files: ["**/*.server.*", "**/server/**"] } },
-      router: { routeToken: "layout" },
-    }),
-    viteReact(),
-  ],
+  plugins: [mdx(), isBuild && nitro(), tailwindcss(), tanstackStart(), viteReact()],
 })

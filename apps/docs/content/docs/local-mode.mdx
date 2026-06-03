@@ -13,24 +13,20 @@ and where, so you know exactly what is in your tree.
 
 ```text title="generated artifacts"
 src/lib/bt/
-├─ runtime.json        # runtime config: mode, locales, defaultLocale
-├─ locales/
+└─ locales/
 │  ├─ en.json          # flat lookup id -> string per Locale
 │  ├─ es.json
 │  └─ fr.json
-├─ manifest.json       # source metadata catalog (gitignored)
-└─ .gitignore          # generated, ignores manifest.json
 
 .cache/better-translation/
-└─ cache.json          # translation cache, avoids re-translating
+├─ cache.json          # translation cache, avoids re-translating
+└─ manifest.json       # private source metadata catalog
 ```
 
 | Artifact                    | Description                                                                                           |
 | --------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `locales/*.json`            | Flat Runtime bundles, one per Locale, keyed by lookup id. These are what your app loads. Commit them. |
-| `runtime.json`              | Tells server loaders the mode, locales, and default locale. Commit it.                                |
-| `manifest.json`             | Source metadata with file locations, used during dev. Gitignored automatically.                       |
-| `.cache/better-translation` | Plugin-owned translation cache so unchanged Messages are not re-translated.                           |
+| `.cache/better-translation` | Plugin-owned cache and private Manifest state. Do not commit it.                                      |
 
 ## Serve as static assets
 

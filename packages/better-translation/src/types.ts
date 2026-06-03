@@ -162,16 +162,6 @@ export interface BetterTranslateRemoteRuntimeOptions {
 /** Controls where locale artifacts live and how the virtual runtime loader reads them. */
 export type BetterTranslateRuntimeOptions = BetterTranslateLocalRuntimeOptions | BetterTranslateRemoteRuntimeOptions
 
-/** Runtime metadata emitted by the plugin for server-side loaders. */
-export interface BetterTranslateRuntimeConfig {
-  /** Runtime backend configured for locale artifacts. */
-  runtime: BetterTranslateLocalRuntimeOptions | Omit<BetterTranslateRemoteRuntimeOptions, "apiKey">
-  /** Locale code treated as the source language. */
-  defaultLocale: string
-  /** All locale codes emitted by the plugin. */
-  locales: string[]
-}
-
 /** Public configuration for the Better Translation Vite plugin. */
 export interface BetterTranslatePluginOptions {
   /** All locale codes that should be emitted. */

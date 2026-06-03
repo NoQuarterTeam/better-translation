@@ -87,7 +87,7 @@ Local mode means the plugin writes Locale values into the Consumer app and the r
 
 This is the working mode today. In local production builds, generated artifacts are check-only: the build should fail if committed local artifacts are missing, stale, incomplete, or contain orphaned ids.
 
-Local runtime config should keep the current shape:
+Local runtime options should keep the current shape:
 
 ```ts
 type BetterTranslateLocalRuntimeOptions = {
@@ -103,7 +103,7 @@ type BetterTranslateLocalRuntimeOptions = {
 
 For public local runtime, the default output is Vite `publicDir` plus `bt`, and the default public base path is `/bt`. `basePath` exists for deployments where the public URL does not directly match the output path.
 
-`translate?: TranslateFn` belongs to local runtime config. It fills missing non-default Locale values during dev and writes those values into local artifacts/cache. Production local builds do not call `translate`.
+`translate?: TranslateFn` belongs to local runtime options. It fills missing non-default Locale values during dev and writes those values into local artifacts/cache. Production local builds do not call `translate`.
 
 ## Remote Mode
 
@@ -120,7 +120,7 @@ The target remote flow is:
 
 Plugin sync should fail clearly if the configured Project does not exist.
 
-Remote runtime config should use this shape:
+Remote runtime options should use this shape:
 
 ```ts
 type BetterTranslateRemoteRuntimeOptions = {

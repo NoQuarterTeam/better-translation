@@ -84,7 +84,6 @@ src/lib/bt/locales/en.json
 src/lib/bt/locales/nl.json
 src/lib/bt/locales/fr.json
 src/lib/bt/locales/es.json
-src/lib/bt/manifest.json
 ```
 
 ## Basic Configuration
@@ -186,7 +185,7 @@ With `offline: false`, local dev reads hosted branch Runtime bundles and uses th
 
 #### `translate`
 
-Async callback for filling missing local-mode translations. This belongs under local runtime config:
+Async callback for filling missing local-mode translations. This belongs under local runtime options:
 
 ```ts
 runtime: {
@@ -674,7 +673,7 @@ With local runtime, each runtime locale file is a flat message map:
 }
 ```
 
-It also keeps a private metadata manifest at `locales/manifest.json`:
+It also keeps a private metadata Manifest at `.cache/better-translation/manifest.json`:
 
 ```json
 {
@@ -700,8 +699,6 @@ It also keeps a private metadata manifest at `locales/manifest.json`:
   }
 }
 ```
-
-For local runtime, the plugin also writes runtime metadata at `src/lib/bt/runtime.json`.
 
 ## Important Notes
 
@@ -780,15 +777,11 @@ Each manifest entry stores the canonical shape of that message:
 
 If two different messages collide onto the same id but do not have the same shape, the plugin throws an error instead of silently picking one.
 
-### 5. It writes generated metadata files
+### 5. It writes a private Manifest
 
-In local mode, the plugin writes a few generated metadata files alongside your locales:
+In local mode, the plugin writes private source metadata under `.cache/better-translation/manifest.json`.
 
-- `manifest.json`: private metadata manifest
-- `runtime.json`: runtime config for locale loading
-- `.gitignore`: ignores the private manifest
-
-These files are only rewritten when their contents actually change.
+This Manifest is only rewritten when its contents actually change and is not part of the committed runtime output.
 
 ### 6. It writes locale JSON files
 
@@ -862,12 +855,11 @@ For `runtime: { type: "local" }`, production builds do not call `translate()` an
 Instead, the plugin:
 
 1. rebuilds the manifest from source
-2. checks that committed generated metadata such as `runtime.json` is present and up to date
-3. checks that every committed locale file exists
-4. checks that every locale file has the expected ids
-5. checks that the default locale still matches the current source text
-6. fails the build if anything is missing, stale, or orphaned
+2. checks that every committed locale file exists
+3. checks that every locale file has the expected ids
+4. checks that the default locale still matches the current source text
+5. fails the build if anything is missing, stale, or orphaned
 
-The private `manifest.json` is still generated for dev/debugging, but it is not required to be committed for production builds.
+The private `.cache/better-translation/manifest.json` is still generated for dev/debugging, but it is not required to be committed for production builds.
 
 That keeps production behavior predictable: either the committed locale artifacts are correct, or the build stops. During dev regeneration, orphaned ids are pruned from local locale files automatically so stale keys do not accumulate between builds.
