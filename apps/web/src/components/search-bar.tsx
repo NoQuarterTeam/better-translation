@@ -1,9 +1,8 @@
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@better-translation/ui/components/input-group"
+import { cn } from "@better-translation/ui/lib/utils"
 import { useNavigate } from "@tanstack/react-router"
 import { SearchIcon } from "lucide-react"
 import { useState } from "react"
-
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
-import { cn } from "@/lib/utils"
 
 export function SearchBar({ placeholder, className }: { placeholder: string; className?: string }) {
   const navigate = useNavigate()

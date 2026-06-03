@@ -1,10 +1,16 @@
+import { Button } from "@better-translation/ui/components/button"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@better-translation/ui/components/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@better-translation/ui/components/popover"
+import { cn } from "@better-translation/ui/lib/utils"
 import { ChevronDownIcon } from "lucide-react"
 import * as React from "react"
-
-import { Button } from "@/components/ui/button"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
 
 export type AsyncSelectPrimitive = string | number
 

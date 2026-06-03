@@ -1,11 +1,4 @@
-import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
-import { Link, useParams, useRouteContext } from "@tanstack/react-router"
-import { CheckIcon, ChevronsUpDownIcon, GitBranchIcon, StarIcon } from "lucide-react"
-import { Suspense, useState } from "react"
-
-import { T } from "better-translation/react"
-
-import { Button } from "@/components/ui/button"
+import { Button } from "@better-translation/ui/components/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,9 +6,15 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Spinner } from "@/components/ui/spinner"
+} from "@better-translation/ui/components/dropdown-menu"
+import { Skeleton } from "@better-translation/ui/components/skeleton"
+import { Spinner } from "@better-translation/ui/components/spinner"
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import { Link, useParams, useRouteContext } from "@tanstack/react-router"
+import { CheckIcon, ChevronsUpDownIcon, GitBranchIcon, StarIcon } from "lucide-react"
+import { Suspense, useState } from "react"
+
+import { T } from "better-translation/react"
 
 import {
   branchSwitcherBranchesQueryOptions,

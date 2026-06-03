@@ -1,3 +1,6 @@
+import { Alert, AlertDescription, AlertTitle } from "@better-translation/ui/components/alert"
+import { Button } from "@better-translation/ui/components/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@better-translation/ui/components/card"
 import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { AlertCircleIcon, MailCheckIcon } from "lucide-react"
@@ -8,9 +11,6 @@ import * as z from "zod"
 import { T, useT, Var } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { authClient } from "@/lib/auth/client"
 
 export const Route = createFileRoute("/_auth/verify-email")({

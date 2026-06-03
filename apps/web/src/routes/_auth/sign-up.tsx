@@ -1,3 +1,4 @@
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@better-translation/ui/components/card"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -7,7 +8,6 @@ import { T, useT } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
 import { useAppForm } from "@/components/react-form"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { authClient } from "@/lib/auth/client"
 
 import { SocialAuthButtons } from "./-social-auth-buttons"

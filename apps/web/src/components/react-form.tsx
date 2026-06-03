@@ -1,3 +1,12 @@
+import { Alert, AlertTitle } from "@better-translation/ui/components/alert"
+import { Button } from "@better-translation/ui/components/button"
+import { Checkbox } from "@better-translation/ui/components/checkbox"
+import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "@better-translation/ui/components/field"
+import { Input } from "@better-translation/ui/components/input"
+import { NativeSelect, type NativeSelectProps } from "@better-translation/ui/components/native-select"
+import type { Select as BaseSelect } from "@better-translation/ui/components/select"
+import { Textarea } from "@better-translation/ui/components/textarea"
+import { cn } from "@better-translation/ui/lib/utils"
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
 import { AlertCircleIcon } from "lucide-react"
 import * as React from "react"
@@ -5,16 +14,7 @@ import { Suspense } from "react"
 
 import type { AsyncSelectComponent, AsyncSelectPrimitive, AsyncSelectProps } from "@/components/async-select"
 import type { MultiSelectComponent, MultiSelectPrimitive, MultiSelectProps } from "@/components/multi-select"
-import { Alert, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { NativeSelect, type NativeSelectProps } from "@/components/ui/native-select"
-import type { Select as BaseSelect } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { SerializedZodIssues } from "@/lib/functions/zod"
-import { cn } from "@/lib/utils"
 
 const AsyncSelect = React.lazy(async () => {
   const mod = await import("./async-select.tsx")
@@ -37,7 +37,7 @@ type SelectInputProps = {
 } & React.ComponentProps<typeof BaseSelect>
 
 const AppSelect = React.lazy(async () => {
-  const mod = await import("@/components/ui/select")
+  const mod = await import("@better-translation/ui/components/select")
 
   function LazySelect({ children, id, isInvalid = false, onBlur, onChange, placeholder, value, ...rest }: SelectInputProps) {
     return (

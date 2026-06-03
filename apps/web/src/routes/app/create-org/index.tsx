@@ -1,3 +1,4 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@better-translation/ui/components/card"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 import * as z from "zod"
@@ -6,7 +7,6 @@ import { T, useT } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
 import { useAppForm } from "@/components/react-form"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { authClient } from "@/lib/auth/client"
 
 import { CreateOrgLeadingSlot } from "./-components/create-org-leading"

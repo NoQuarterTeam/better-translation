@@ -15,6 +15,7 @@
       "@tanstack/devtools-vite": "0.7.0",
       "@tanstack/match-sorter-utils": "8.19.4",
       "@tanstack/query-db-collection": "1.0.38",
+      "@tanstack/react-pacer": "0.22.1",
       "@tanstack/react-db": "0.1.85",
       "@tanstack/react-devtools": "0.10.5",
       "@tanstack/react-form": "1.33.0",
@@ -63,6 +64,8 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.0",
+    "@tsdown/css": "^0.22.1",
+    "better-translation": "workspace:*",
     "oxlint": "1.68.0",
     "oxlint-tsgolint": "0.23.0",
     "typescript": "catalog:",

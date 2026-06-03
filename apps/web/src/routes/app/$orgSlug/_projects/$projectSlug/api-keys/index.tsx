@@ -1,3 +1,23 @@
+import { Badge } from "@better-translation/ui/components/badge"
+import { Button } from "@better-translation/ui/components/button"
+import { Card, CardContent } from "@better-translation/ui/components/card"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@better-translation/ui/components/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@better-translation/ui/components/dropdown-menu"
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -11,26 +31,6 @@ import { createTranslator } from "better-translation/server"
 
 import { DataTable } from "@/components/data-table"
 import { useAppForm } from "@/components/react-form"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 import { createProjectApiKeyFn, projectApiKeysQueryOptions, revokeProjectApiKeyFn, type listProjectApiKeysFn } from "./-data"
 

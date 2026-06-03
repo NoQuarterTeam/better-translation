@@ -1,8 +1,8 @@
+import { Button } from "@better-translation/ui/components/button"
 import { toast } from "sonner"
 
 import { T, useT } from "better-translation/react"
 
-import { Button } from "@/components/ui/button"
 import { authClient } from "@/lib/auth/client"
 
 type SocialProvider = "google" | "github"

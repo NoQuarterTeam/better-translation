@@ -1,11 +1,10 @@
+import { Button } from "@better-translation/ui/components/button"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { useCanGoBack, useNavigate } from "@tanstack/react-router"
 import { ArrowLeftIcon } from "lucide-react"
 import { Suspense } from "react"
 
 import { T } from "better-translation/react"
-
-import { Button } from "@/components/ui/button"
 
 import { userOrganizationsQueryOptions } from "../-data"
 

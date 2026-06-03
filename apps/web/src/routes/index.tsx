@@ -1,3 +1,5 @@
+import { Badge } from "@better-translation/ui/components/badge"
+import { Button } from "@better-translation/ui/components/button"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import {
   ArrowRightIcon,
@@ -16,8 +18,6 @@ import { type ReactNode, useEffect, useState } from "react"
 import { T } from "better-translation/react"
 
 import { DefaultError } from "@/components/default-error"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 
 export const Route = createFileRoute("/")({
   component: HomePage,

@@ -1,7 +1,6 @@
+import { Button } from "@better-translation/ui/components/button"
+import { Card, CardContent } from "@better-translation/ui/components/card"
 import type { NotFoundRouteProps } from "@tanstack/react-router"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 
 export function DefaultNotFound({ children }: NotFoundRouteProps & { children?: React.ReactNode }) {
   return (

@@ -1,3 +1,4 @@
+import { Toaster } from "@better-translation/ui/components/sonner"
 import type { QueryClient } from "@tanstack/react-query"
 import { createRootRouteWithContext, HeadContent, Outlet, ScriptOnce, Scripts } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
@@ -7,8 +8,6 @@ import { loadMessages } from "better-translation/messages"
 import { TranslateProvider } from "better-translation/react"
 
 import { DefaultError } from "@/components/default-error"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/sonner"
 
 import appCss from "../styles.css?url"
 import { getLocaleFn } from "./-locale"
@@ -62,19 +61,17 @@ function RootComponent() {
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { locale } = Route.useRouteContext()
   return (
-    <ThemeProvider>
-      <html lang={locale} suppressHydrationWarning>
-        <head>
-          <HeadContent />
-        </head>
-        <body>
-          <VitePreloadErrorHandler />
-          {children}
-          <Toaster />
-          <Scripts />
-        </body>
-      </html>
-    </ThemeProvider>
+    <html lang={locale} suppressHydrationWarning>
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <VitePreloadErrorHandler />
+        {children}
+        <Toaster />
+        <Scripts />
+      </body>
+    </html>
   )
 }
 

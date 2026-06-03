@@ -1,0 +1,23 @@
+{
+  "name": "@better-translation/locale-editor",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": "./src/index.tsx",
+    "./styles.css": "./src/styles.css"
+  },
+  "dependencies": {
+    "@better-translation/ui": "workspace:*",
+    "@tanstack/react-pacer": "catalog:",
+    "lucide-react": "^1.17.0",
+    "react": "catalog:"
+  },
+  "devDependencies": {
+    "@better-translation/tsconfig": "workspace:*",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:"
+  }
+}

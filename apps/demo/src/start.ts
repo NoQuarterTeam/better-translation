@@ -1,9 +1,5 @@
-import { createSerializationAdapter, isRedirect } from "@tanstack/react-router"
+import { isRedirect } from "@tanstack/react-router"
 import { createCsrfMiddleware, createMiddleware, createStart } from "@tanstack/react-start"
-import { type $ZodIssue } from "zod/v4/core"
-
-import { env } from "./env"
-import { SerializedZodIssues } from "./lib/functions/zod"
 
 const requestLogger = createMiddleware().server(async ({ request, next, pathname }) => {
   if (pathname.startsWith("/_serverFn")) return next()
@@ -44,22 +40,9 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 })
 
-export const serializedZodIssuesAdapter = createSerializationAdapter({
-  key: "serializedZodIssues",
-  test: (value: unknown) => {
-    return value instanceof SerializedZodIssues
-  },
-  toSerializable: (value) => JSON.stringify(value.issues),
-  fromSerializable: (value) => {
-    const issues = JSON.parse(value) as $ZodIssue[]
-    return new SerializedZodIssues(issues)
-  },
-})
-
 export const startInstance = createStart(() => {
   return {
-    serializationAdapters: [serializedZodIssuesAdapter],
-    requestMiddleware: env.NODE_ENV === "production" ? [csrfMiddleware, requestLogger] : [csrfMiddleware],
-    functionMiddleware: env.NODE_ENV === "production" ? [loggerMiddleware] : [],
+    requestMiddleware: process.env.NODE_ENV === "production" ? [csrfMiddleware, requestLogger] : [csrfMiddleware],
+    functionMiddleware: process.env.NODE_ENV === "production" ? [loggerMiddleware] : [],
   }
 })

@@ -1,3 +1,24 @@
+import { Button } from "@better-translation/ui/components/button"
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@better-translation/ui/components/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@better-translation/ui/components/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@better-translation/ui/components/dropdown-menu"
+import { NativeSelectOption } from "@better-translation/ui/components/native-select"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@better-translation/ui/components/tooltip"
+import { cn } from "@better-translation/ui/lib/utils"
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -11,28 +32,7 @@ import { createTranslator } from "better-translation/server"
 
 import { DataTable } from "@/components/data-table"
 import { useAppForm } from "@/components/react-form"
-import { Button } from "@/components/ui/button"
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { NativeSelectOption } from "@/components/ui/native-select"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { formatLocale } from "@/lib/locales"
-import { cn } from "@/lib/utils"
 
 import {
   createTranslationGlossaryTermFn,
