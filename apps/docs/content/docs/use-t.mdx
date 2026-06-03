@@ -3,6 +3,8 @@ title: The useT hook
 description: Translate plain strings for attributes like aria-label, placeholder, and title.
 ---
 
+## useT hook
+
 Use `useT` for copy that must be returned as a plain string, such as labels, placeholders,
 document titles, form errors, and toast messages.
 
@@ -18,14 +20,15 @@ export function SearchBar() {
 
 ## Context
 
-Pass `context` as the second argument when a plain string is short or ambiguous.
+Pass `context` as the second argument to give translation tools more information about a
+plain string. Use it for copy that is short, ambiguous, or needs a specific tone.
 
 ```ts title="usage.ts"
 t("Archive", { context: "Verb on a button" })
 ```
 
-`T` and `useT` share the same lookup id behavior, so the same source copy and options resolve
-to the same Message wherever they appear.
+Context also disambiguates lookup ids. `T` and `useT` share the same lookup id behavior, so
+the same source copy and options resolve to the same Message wherever they appear.
 
 For Messages with runtime values, see [Variables](/variables).
 
@@ -35,7 +38,7 @@ For Messages with runtime values, see [Variables](/variables).
   type={{
     context: {
       type: "string",
-      description: "Extra translator guidance and lookup id disambiguation.",
+      description: "Translator guidance that is also used to disambiguate the generated lookup id.",
     },
     id: {
       type: "string",

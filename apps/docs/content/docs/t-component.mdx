@@ -3,6 +3,8 @@ title: The T component
 description: Wrap JSX copy in T and the plugin gives it a stable lookup id at build time.
 ---
 
+## T component
+
 Use `T` for source copy that already lives as JSX children. At build time the Vite plugin
 turns the source copy into a stable lookup id, so there is usually nothing to name and
 nothing to keep in sync by hand.
@@ -43,7 +45,14 @@ export function ProjectEmptyState() {
 }
 ```
 
-When the same source copy needs different Locale values, add context.
+## Context
+
+Use `context` to tell translation tools what the Message means, where it appears, or what tone
+it needs. This is especially useful for short copy where the source words are not enough for a
+good translation.
+
+Context also disambiguates lookup ids. When the same source copy needs different Locale
+values, give each Message its own context.
 
 ```tsx title="ArchiveActions.tsx"
 import { T } from "better-translation/react"
@@ -62,9 +71,8 @@ export function ArchiveActions() {
 }
 ```
 
-Context is part of the generated lookup id, so the two `Archive` Messages above can have
-different Locale values. It is also passed to translation tools as guidance, which helps when
-copy is short or ambiguous.
+The two `Archive` Messages above can have different Locale values because context is part of
+the generated lookup id.
 
 ## Props
 
@@ -78,7 +86,7 @@ copy is short or ambiguous.
     },
     context: {
       type: "string",
-      description: "Extra translator guidance and lookup id disambiguation.",
+      description: "Translator guidance that is also used to disambiguate the generated lookup id.",
     },
     id: {
       type: "string",

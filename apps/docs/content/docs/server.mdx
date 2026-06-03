@@ -7,6 +7,8 @@ For server-side rendering, document titles, or metadata, build a translator from
 Runtime bundle with `createTranslator`. It has the same call signature as `useT` but takes the
 messages directly.
 
+## Loading messages
+
 In TanStack Start, load the active Locale's messages in route data, then translate metadata in
 the route `head` function.
 
@@ -43,6 +45,8 @@ function RootComponent() {
 }
 ```
 
+## createTranslator
+
 Once messages are in route context, child routes can translate metadata without rendering a
 React component.
 
@@ -76,13 +80,15 @@ export const Route = createFileRoute("/projects/$projectId")({
 
 ## Options
 
-The server translator accepts the same `id` and `context` options as `useT`.
+The server translator accepts the same `id` and `context` options as `useT`. Use `context` to
+give translation tools more information about server-rendered copy, metadata, and titles; it
+also disambiguates generated lookup ids.
 
 <TypeTable
   type={{
     context: {
       type: "string",
-      description: "Extra translator guidance and lookup id disambiguation.",
+      description: "Translator guidance that is also used to disambiguate the generated lookup id.",
     },
     id: {
       type: "string",
