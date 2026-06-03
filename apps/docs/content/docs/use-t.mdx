@@ -3,25 +3,49 @@ title: The useT hook
 description: Translate plain strings for attributes like aria-label, placeholder, and title.
 ---
 
-Some copy lives in places that are not JSX children, like an `aria-label`, a `placeholder`, or
-a `title`. Use the `useT` hook to translate plain strings in those positions.
+Use `useT` for copy that must be returned as a plain string, such as labels, placeholders,
+document titles, form errors, and toast messages.
 
 ```tsx title="SearchBar.tsx"
 import { useT } from "better-translation/react"
 
 export function SearchBar() {
   const t = useT()
-  return <input aria-label={t("Search products")} placeholder={t("Search...")} />
+
+  return <input aria-label={t("Search Projects")} placeholder={t("Search...")} />
 }
 ```
 
-## Values and context
+## Context
 
-You can pass values for interpolation and disambiguating options as a second argument. Both
-`T` and `useT` share the same lookup ids, so the same sentence resolves to the same Message
-wherever it appears.
+Pass `context` as the second argument when a plain string is short or ambiguous.
 
 ```ts title="usage.ts"
-t("Welcome back, {name}", { name: user.name })
 t("Archive", { context: "Verb on a button" })
+```
+
+`T` and `useT` share the same lookup id behavior, so the same source copy and options resolve
+to the same Message wherever they appear.
+
+For Messages with runtime values, see [Variables](/variables).
+
+## Options
+
+<TypeTable
+  type={{
+    context: {
+      type: "string",
+      description: "Extra translator guidance and lookup id disambiguation.",
+    },
+    id: {
+      type: "string",
+      description: "An explicit lookup id to use instead of the generated id.",
+    },
+  }}
+/>
+
+Use `id` when a non-JSX Message needs a lookup id owned by your code.
+
+```ts title="usage.ts"
+t("Pay now", { id: "billing.checkout.submit" })
 ```

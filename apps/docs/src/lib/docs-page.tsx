@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router"
+import { notFound } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import browserCollections from "collections/browser"
 import { useFumadocsLoader } from "fumadocs-core/source/client"
@@ -36,22 +36,18 @@ const clientLoader = browserCollections.docs.createClientLoader({
   },
 })
 
-export const Route = createFileRoute("/docs/$")({
-  component: Page,
-  loader: async ({ params }) => {
-    const slugs = params._splat?.split("/").filter(Boolean) ?? []
-    const data = await serverLoader({ data: slugs })
-    await clientLoader.preload(data.path)
-    return data
-  },
-})
+export async function loadDocsPage(slugs: string[]) {
+  const data = await serverLoader({ data: slugs })
+  await clientLoader.preload(data.path)
+  return data
+}
 
-function Page() {
-  const data = useFumadocsLoader(Route.useLoaderData())
+export function DocsRoutePage({ data }: { data: Awaited<ReturnType<typeof loadDocsPage>> }) {
+  const loaded = useFumadocsLoader(data)
 
   return (
-    <DocsLayout {...baseOptions()} tree={data.pageTree}>
-      <Suspense>{clientLoader.useContent(data.path)}</Suspense>
+    <DocsLayout {...baseOptions()} tree={loaded.pageTree}>
+      <Suspense>{clientLoader.useContent(loaded.path)}</Suspense>
     </DocsLayout>
   )
 }

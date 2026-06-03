@@ -1,14 +1,14 @@
 ---
 title: The platform
-description: Optional hosted service for non-developers, branch-aware translations, and a visual editor.
+description: Projects, Branches, repository connection, glossary terms, and hosted Runtime bundles.
 ---
 
 import { Cards, Card } from "fumadocs-ui/components/card"
-import { PackageIcon, GitBranchIcon, SparklesIcon, LanguagesIcon } from "lucide-react"
+import { ArchiveIcon, PackageIcon, GitBranchIcon, SparklesIcon, LanguagesIcon } from "lucide-react"
 
-The hosted platform is optional. It becomes useful when you want non-developers editing copy,
-branch-aware translations, AI generation in context, and a visual editor, without giving anyone
-code access.
+The hosted platform is optional in local mode and required in remote mode. It owns Projects,
+synced Manifests, branch-local Locale values, the Platform translator, and public Runtime
+bundle endpoints.
 
 <Cards>
   <Card
@@ -36,3 +36,51 @@ code access.
 Editing a Branch is live for apps reading that Branch. Editing the Production Branch affects
 production; editing a feature branch affects only that preview. The whole platform is open
 source and self-hostable.
+
+## Connect a repository
+
+A Project can optionally connect to one GitHub repository through the GitHub App. It is not
+required for remote mode, Manifest sync, or Runtime bundle loading. It exists to keep Branches
+in step with Git branches.
+
+<Cards>
+  <Card
+    icon={<GitBranchIcon />}
+    title="Branches are automatic"
+    description="Projects are explicit, but Branches are not. The first time the plugin syncs from a Git branch, the matching Branch is created for you and named after it."
+  />
+  <Card
+    icon={<ArchiveIcon />}
+    title="Cleanup follows the origin"
+    description="With a repository connected and Branch cleanup enabled, deleting an upstream branch on GitHub archives its matching Branch automatically. The Production Branch is never touched."
+  />
+</Cards>
+
+Cleanup is webhook-driven and listens for GitHub branch deletion events only. Closing or
+merging a pull request does not archive a Branch on its own. Branch cleanup is a Project
+setting, enabled by default, and only takes effect once a repository is connected.
+
+<Callout title="Archived, not deleted">
+  When an upstream branch disappears, the matching Branch is archived rather than hard-deleted, so preview deployments that
+  outlive the branch keep serving Runtime bundles. If a later sync targets an Archived Branch, it becomes active again.
+</Callout>
+
+## Glossary terms
+
+A Project glossary steers the Platform translator so product names, jargon, and banned wording
+stay consistent across every Locale. Each term pairs a source term with an action.
+
+| Action         | Description                                                                        |
+| -------------- | ---------------------------------------------------------------------------------- |
+| `preserve`     | Keep the source term unchanged wherever it appears, instead of translating it.     |
+| `translate as` | Always render a specific target term for the source term in translations.          |
+| `avoid`        | Never use a given term when translating, steering the model toward better wording. |
+
+Terms can be scoped to a single Locale or apply everywhere, carry a note for translators, and
+be toggled on or off. Together with the Project translation brief for tone and style, the
+glossary shapes every AI-generated Locale value.
+
+<Callout title="Brief plus glossary">
+  The translation brief sets the overall voice; the glossary enforces exact terms. Both are applied during Manifest sync and local
+  dev platform translation, so generated copy follows your guidance from the first run.
+</Callout>

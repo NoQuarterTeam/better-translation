@@ -1,19 +1,101 @@
 ---
-title: Server translator
+title: Server code
 description: Build a translator from a loaded message map for SSR, titles, and metadata.
 ---
 
-For server-side rendering, document titles, or metadata you can build a translator from a
-loaded message map with `createTranslator`. It has the same call signature as `useT` but takes
-the messages directly.
+For server-side rendering, document titles, or metadata, build a translator from the loaded
+Runtime bundle with `createTranslator`. It has the same call signature as `useT` but takes the
+messages directly.
 
-```tsx title="route.tsx"
+In TanStack Start, load the active Locale's messages in route data, then translate metadata in
+the route `head` function.
+
+```tsx title="src/routes/__root.tsx"
+import { createRootRoute } from "@tanstack/react-router"
+import { createServerFn } from "@tanstack/react-start"
+import z from "zod"
+
+import { loadMessages } from "better-translation/messages"
+import { TranslateProvider } from "better-translation/react"
+
+import { getLocale } from "./-locale"
+
+const getMessagesFn = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ locale: z.string() }))
+  .handler(async ({ data }) => {
+    return await loadMessages(data.locale)
+  })
+
+export const Route = createRootRoute({
+  beforeLoad: async () => {
+    const locale = await getLocale()
+    const messages = await getMessagesFn({ data: { locale } })
+
+    return { locale, messages }
+  },
+  component: RootComponent,
+})
+
+function RootComponent() {
+  const { messages } = Route.useRouteContext()
+
+  return <TranslateProvider messages={messages}>{/* app */}</TranslateProvider>
+}
+```
+
+Once messages are in route context, child routes can translate metadata without rendering a
+React component.
+
+```tsx title="src/routes/projects.$projectId.tsx"
+import { createFileRoute } from "@tanstack/react-router"
+
 import { createTranslator } from "better-translation/server"
 
-const t = createTranslator(messages)
+export const Route = createFileRoute("/projects/$projectId")({
+  loader: async ({ params }) => {
+    const project = await getProject(params.projectId)
 
-export const meta = {
-  title: t("Better Translation"),
-  description: t("Welcome back, {name}", { name }),
-}
+    return { project }
+  },
+  head: ({ match }) => {
+    const t = createTranslator(match.context.messages)
+    const { project } = match.loaderData
+
+    return {
+      meta: [
+        { title: t("{name} settings", { name: project.name }, { context: "Page title" }) },
+        {
+          name: "description",
+          content: t("Manage Locale values for {name}", { name: project.name }, { context: "Meta description" }),
+        },
+      ],
+    }
+  },
+})
+```
+
+## Options
+
+The server translator accepts the same `id` and `context` options as `useT`.
+
+<TypeTable
+  type={{
+    context: {
+      type: "string",
+      description: "Extra translator guidance and lookup id disambiguation.",
+    },
+    id: {
+      type: "string",
+      description: "An explicit lookup id to use instead of the generated id.",
+    },
+  }}
+/>
+
+Pass options as the second argument when there are no variables, or as the third argument when
+there are variables.
+
+```ts title="usage.ts"
+t("Archive", { context: "Verb, archives the current Branch" })
+t("{count} Messages need review", { count }, { context: "SEO description" })
+t("Pay now", { id: "billing.checkout.submit" })
 ```

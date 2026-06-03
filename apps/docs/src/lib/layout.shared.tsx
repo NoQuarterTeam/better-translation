@@ -12,7 +12,7 @@ export function baseOptions(): BaseLayoutProps {
           Better Translation
         </>
       ),
-      url: "/docs",
+      url: "/",
     },
     githubUrl: "https://github.com/NoQuarterTeam/better-translation",
   }

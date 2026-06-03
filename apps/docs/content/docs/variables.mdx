@@ -3,9 +3,13 @@ title: Variables
 description: Interpolate runtime values inside a translatable sentence with Var.
 ---
 
-Use `Var` inside `T` to interpolate runtime values without breaking the translatable sentence.
-The placeholder name is part of the Message, so translators can move it wherever the target
-language needs it.
+Runtime values should stay inside the Message so translators can move them wherever the target
+Locale needs them.
+
+## T component
+
+Use `Var` inside `T` to interpolate JSX values without breaking the translatable sentence. The
+placeholder name is part of the Message.
 
 ```tsx title="Greeting.tsx"
 import { T, Var } from "better-translation/react"
@@ -21,3 +25,39 @@ export function Greeting({ name, date }: { name: string; date: string }) {
 
 The prop key becomes the placeholder name. The example above extracts the Message with `name`
 and `date` placeholders and fills the values at render time.
+
+You can also pass the placeholder name explicitly when the value is easier to read as children.
+
+```tsx title="MessageList.tsx"
+import { T, Var } from "better-translation/react"
+
+export function MessageList({ count }: { count: number }) {
+  return (
+    <T>
+      <Var name="count">{count}</Var> Messages need review
+    </T>
+  )
+}
+```
+
+## useT hook
+
+For non-JSX strings, use `{name}` placeholders and pass values as the second argument.
+
+```tsx title="MessageCount.tsx"
+import { useT } from "better-translation/react"
+
+export function MessageCount({ count }: { count: number }) {
+  const t = useT()
+
+  return <p>{t("Found {count} Messages", { count })}</p>
+}
+```
+
+When a Message has both values and context, pass context as the third argument.
+
+```ts title="usage.ts"
+t("Moved {count} Messages", { count }, { context: "Bulk action toast" })
+```
+
+Use `Var` only with `T`. Use `{name}` placeholders with `useT` and the server translator.

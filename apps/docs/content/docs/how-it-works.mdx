@@ -1,13 +1,14 @@
 ---
 title: How it works
-description: How the Vite plugin extracts your copy at build time and loads translations at runtime.
+description: How the Vite plugin extracts Messages, keeps Locale values in sync, and generates runtime loaders.
 ---
 
 import { Cards, Card } from "fumadocs-ui/components/card"
 import { ScanIcon, PackageIcon, SparklesIcon, LanguagesIcon } from "lucide-react"
 
 The Vite plugin scans your source for Translation markers at build time, gives each Message a
-stable lookup id, and keeps your Locale values in sync. Your app never imports a key by hand.
+stable lookup id, and keeps your Locale values in sync. At runtime your app loads a flat map
+of translated strings for the active Locale, so your components keep rendering normal React.
 
 <Cards>
   <Card
@@ -22,12 +23,52 @@ stable lookup id, and keeps your Locale values in sync. Your app never imports a
   />
   <Card
     icon={<SparklesIcon />}
-    title="3. Translate"
-    description="Fill missing Locale values locally with AI, or sync them to the platform."
+    title="3. Fill Locale values"
+    description="Local mode writes Locale files in your repo. Remote mode syncs the Manifest to the platform."
   />
   <Card
     icon={<LanguagesIcon />}
     title="4. Load"
-    description="Your app loads flat Runtime bundles by Locale. No metadata reaches the browser."
+    description="Your app loads flat Runtime bundles by Locale. No Manifest metadata reaches the browser."
   />
 </Cards>
+
+## Extraction
+
+Better Translation looks for markers such as `T`, `useT`, and `t()` inside your configured
+source roots. Each discovered Message records the Default locale text, placeholders, optional
+context, and source locations in the private Manifest.
+
+The lookup id is stable, so moving a Message through the codebase does not create a new runtime
+key. If two Messages need different translations, add context or an explicit id to separate
+them.
+
+## Locale values
+
+The Manifest is source metadata. Locale values are the translated strings for each configured
+Locale. In local mode, the plugin writes those values into generated JSON files in the
+Consumer app. In remote mode, the plugin syncs the Manifest to a hosted Project and the
+platform stores branch-local Locale values.
+
+Local translation is an optional local-mode convenience. The `translate` function receives the
+missing Messages for a target Locale and returns a lookup id to translated string map. Remote
+mode does not use that package-local function; it uses the Platform translator.
+
+## Runtime loading
+
+Your app imports `loadMessages` from the virtual `better-translation/messages` module. The
+plugin generates that module from your runtime mode:
+
+| Runtime config             | Loader behavior                                                 |
+| -------------------------- | --------------------------------------------------------------- |
+| `local` + `target: module` | Imports generated Locale JSON through Vite.                     |
+| `local` + `target: public` | Fetches generated Locale JSON from Vite public assets.          |
+| `remote`                   | Fetches hosted Runtime bundles for the resolved Project Branch. |
+
+Every loader returns the same shape: a flat lookup id to translated string object. Runtime
+bundles do not contain Manifest metadata, source locations, editor state, or write credentials.
+
+<Callout title="One runtime API">
+  Your app still calls `loadMessages(locale)` in every mode. The Vite plugin owns the difference between local files, public
+  files, and hosted Runtime bundles.
+</Callout>

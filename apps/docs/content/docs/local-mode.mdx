@@ -1,6 +1,6 @@
 ---
 title: Local mode
-description: The default, account-free mode. The plugin writes Locale files into your repo.
+description: The default, account-free mode. The plugin writes Locale files into your repo and can fill missing values during dev.
 ---
 
 Local mode is the default and needs no account. The plugin writes Locale files into your repo
@@ -44,3 +44,41 @@ betterTranslation({
   },
 })
 ```
+
+## Local translation
+
+Local mode can fill missing non-default Locale values during dev with a `translate` function.
+You can provide your own function or use `createAiTranslate`, the package helper that routes
+through the Vercel AI Gateway.
+
+```ts title="vite.config.ts"
+import { betterTranslation } from "better-translation/vite"
+import { createAiTranslate } from "better-translation/ai"
+
+betterTranslation({
+  locales: ["en", "es", "fr"],
+  defaultLocale: "en",
+  runtime: {
+    type: "local",
+    translate: createAiTranslate({
+      prompt: "Friendly, concise product UI copy.",
+    }),
+  },
+})
+```
+
+During dev the plugin batches missing Messages, calls `translate`, and writes the results into
+your Locale files and cache. Production local builds never call `translate`, they only check
+that committed files are complete.
+
+| Option        | Description                                                        |
+| ------------- | ------------------------------------------------------------------ |
+| `model`       | AI SDK model value. Defaults to an AI Gateway model string.        |
+| `prompt`      | Translation brief for tone, glossary, and domain guidance.         |
+| `temperature` | Optional temperature forwarded to the model provider.              |
+| `concurrency` | Max number of per-message requests to run at once. Defaults to 10. |
+
+<Callout title="Write your own translator">
+  `translate` is just a function that receives the missing Messages and a target Locale and returns a map of lookup id to
+  translated string. Use any provider you like, `createAiTranslate` is only a convenience.
+</Callout>

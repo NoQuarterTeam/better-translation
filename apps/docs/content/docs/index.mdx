@@ -1,51 +1,64 @@
 ---
-title: Getting started
-description: Install Better Translation and configure the Vite plugin for local or platform-backed translations.
+title: Quick start
+description: Install Better Translation, configure local runtime loading, provide messages, and mark your first Message.
 ---
 
 import { Cards, Card } from "fumadocs-ui/components/card"
+import { Tabs, Tab } from "fumadocs-ui/components/tabs"
 
-Better Translation adds AI-assisted translations to your Vite app without keys, JSON
-file-hopping, or a build step you have to babysit. Wrap your copy in one component and the
-plugin does the rest, locally or through the hosted platform.
+This gets Better Translation running in local dev mode. Local mode is the default: the Vite
+plugin scans your app, writes generated Locale files, and generates the virtual
+`better-translation/messages` module your app uses at runtime.
 
-## Installation
+## 1. Install
 
-Add the package to any Vite app running React 19 or later and Vite 8 or later.
+Add the package to a Vite app running React 19 or later and Vite 8 or later.
+
+<Tabs items={[ "bun", "npm", "pnpm", "yarn"]} groupId="package-manager" persist>
+<Tab value="bun">
 
 ```bash title="terminal"
-# bun
 bun add better-translation
+```
 
-# npm
+</Tab>
+<Tab value="npm">
+
+```bash title="terminal"
 npm i better-translation
+```
 
-# pnpm
+</Tab>
+<Tab value="pnpm">
+
+```bash title="terminal"
 pnpm add better-translation
 ```
 
-### Entry points
+</Tab>
+<Tab value="yarn">
 
-The package ships several entry points. Import the plugin from the vite entry, the React
-helpers from the react entry, and the server helper from the server entry. The messages entry
-is a virtual module created by the plugin.
+```bash title="terminal"
+yarn add better-translation
+```
 
-| Entry point                   | Description                                                             |
-| ----------------------------- | ----------------------------------------------------------------------- |
-| `better-translation/vite`     | The Vite plugin and its configuration types.                            |
-| `better-translation/react`    | The `T` and `Var` components, the `useT` hook, and `TranslateProvider`. |
-| `better-translation/server`   | `createTranslator` for server-side rendering and metadata.              |
-| `better-translation/ai`       | `createAiTranslate`, the optional AI Gateway translation helper.        |
-| `better-translation/messages` | Virtual module the plugin fills with `loadMessages` and your locales.   |
+</Tab>
+</Tabs>
 
-## Configure the plugin
+## 2. Configure the Vite plugin
 
-Add the plugin to your Vite config, list your Locales, and pick a default. That is the whole
-required setup. With no runtime option you get local mode, which writes Locale files into your
-app.
+Choose the local runtime target that matches how your app loads data.
+
+<Tabs items={["TanStack Start", "Vite SPA"]} groupId="local-runtime-target" persist>
+<Tab value="TanStack Start">
+
+TanStack Start can import generated Locale JSON through Vite on the server side, so use the
+default `module` target.
 
 ```ts title="vite.config.ts"
 import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
+import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import { betterTranslation } from "better-translation/vite"
 
 export default defineConfig({
@@ -54,17 +67,189 @@ export default defineConfig({
       locales: ["en", "es", "fr"],
       defaultLocale: "en",
     }),
+    tanstackStart(),
+    react(),
   ],
 })
 ```
 
+</Tab>
+<Tab value="Vite SPA">
+
+A browser-only Vite app should fetch generated Locale JSON as public static assets, so use the
+`public` target.
+
+```ts title="vite.config.ts"
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
+import { betterTranslation } from "better-translation/vite"
+
+export default defineConfig({
+  plugins: [
+    betterTranslation({
+      locales: ["en", "es", "fr"],
+      defaultLocale: "en",
+      runtime: {
+        type: "local",
+        target: "public",
+      },
+    }),
+    react(),
+  ],
+})
+```
+
+</Tab>
+</Tabs>
+
 <Callout title="Plugin order">
-  Place `betterTranslation` before your React plugin. It runs with enforce set to pre so it can rewrite markers and inject stable
-  lookup ids before other transforms see your code.
+  Put `betterTranslation` before the React plugin. It rewrites Translation markers before other transforms see your code.
 </Callout>
 
+## 3. Load messages and provide them
+
+The plugin config above generates `better-translation/messages`. Load the active Locale from
+that virtual module, then wrap your app with `TranslateProvider`.
+
+<Tabs items={["TanStack Start", "Vite SPA"]} groupId="local-runtime-target" persist>
+<Tab value="TanStack Start">
+
+Load messages in a server function, call it from `beforeLoad`, then read the messages from
+route context and wrap the route outlet.
+
+```tsx title="src/routes/__root.tsx"
+import { createRootRoute, Outlet } from "@tanstack/react-router"
+import { createServerFn } from "@tanstack/react-start"
+import z from "zod"
+
+import { loadMessages } from "better-translation/messages"
+import { TranslateProvider } from "better-translation/react"
+
+import { getLocale } from "./-locale"
+
+const getMessagesFn = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ locale: z.string() }))
+  .handler(async ({ data }) => {
+    return await loadMessages(data.locale)
+  })
+
+export const Route = createRootRoute({
+  beforeLoad: async () => {
+    const locale = await getLocale()
+    const messages = await getMessagesFn({ data: { locale } })
+
+    return { locale, messages }
+  },
+  component: RootComponent,
+})
+
+function RootComponent() {
+  const { messages } = Route.useRouteContext()
+
+  return (
+    <TranslateProvider messages={messages}>
+      <Outlet />
+    </TranslateProvider>
+  )
+}
+```
+
+</Tab>
+<Tab value="Vite SPA">
+
+Because the public runtime target fetches Locale JSON in the browser, `loadMessages` is async.
+If the active Locale is known before boot, load messages before the first render and pass them
+into the provider around your app.
+
+```tsx title="src/main.tsx"
+import { createRoot } from "react-dom/client"
+
+import { loadMessages } from "better-translation/messages"
+import { TranslateProvider } from "better-translation/react"
+
+import { App } from "./App"
+
+async function bootstrap() {
+  const locale = "en"
+  const messages = await loadMessages(locale)
+
+  createRoot(document.getElementById("root")!).render(
+    <TranslateProvider messages={messages}>
+      <App />
+    </TranslateProvider>,
+  )
+}
+
+void bootstrap()
+```
+
+If users can switch Locale after mount, put the async load in a small provider component.
+
+```tsx title="src/TranslationRoot.tsx"
+import { useEffect, useState, type ReactNode } from "react"
+
+import { loadMessages } from "better-translation/messages"
+import { TranslateProvider } from "better-translation/react"
+
+export function TranslationRoot({ children, locale }: { children: ReactNode; locale: string }) {
+  const [messages, setMessages] = useState<Record<string, string>>()
+
+  useEffect(() => {
+    let ignore = false
+
+    setMessages(undefined)
+    loadMessages(locale).then((nextMessages) => {
+      if (!ignore) setMessages(nextMessages)
+    })
+
+    return () => {
+      ignore = true
+    }
+  }, [locale])
+
+  if (!messages) return null
+
+  return <TranslateProvider messages={messages}>{children}</TranslateProvider>
+}
+```
+
+</Tab>
+</Tabs>
+
+## 4. Mark copy with T
+
+Once the provider is in place, wrap UI copy where you author it. The plugin extracts this as a
+Message and gives it a stable lookup id.
+
+```tsx title="CheckoutButton.tsx"
+import { T } from "better-translation/react"
+
+export function CheckoutButton() {
+  return (
+    <button>
+      <T>Pay now</T>
+    </button>
+  )
+}
+```
+
+## 5. Start dev
+
+Run your Vite dev server. The plugin scans your source and writes local Runtime bundles.
+
+```bash title="terminal"
+bun run dev
+```
+
+The default `module` target writes files under `src/lib/bt`. The `public` target writes files
+under Vite's public directory, at `/bt` by default.
+
 <Cards>
-  <Card title="How it works" href="/docs/how-it-works" description="The extraction and runtime model behind the plugin." />
-  <Card title="The T component" href="/docs/t-component" description="Mark UI copy where you author it." />
-  <Card title="Local mode" href="/docs/local-mode" description="Locale files in your repo, no account required." />
+  <Card title="How it works" href="/how-it-works" description="The extraction and runtime model behind the plugin." />
+  <Card
+    title="Loading messages"
+    href="/loading"
+    description="How the virtual loader changes between module and public targets."
+  />
+  <Card title="Local mode" href="/local-mode" description="Locale files in your repo, no account required." />
 </Cards>

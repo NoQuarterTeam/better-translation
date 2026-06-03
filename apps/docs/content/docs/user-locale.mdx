@@ -1,0 +1,158 @@
+---
+title: User locale
+description: Resolve the active Locale from cookies, routes, accounts, or any app-owned source.
+---
+
+Better Translation does not decide the user's Locale for you. Your app resolves a Locale code,
+passes it to `loadMessages(locale)`, and provides the returned Runtime bundle to
+`TranslateProvider`.
+
+That Locale can come from any source your app already trusts:
+
+| Source          | Common shape                                     |
+| --------------- | ------------------------------------------------ |
+| Cookie          | `locale=en`, useful for anonymous visitors.      |
+| Route segment   | `/en/dashboard`, useful for localized URLs.      |
+| User account    | A saved profile preference for signed-in users.  |
+| Request headers | `Accept-Language`, useful as a first-visit hint. |
+
+Always validate the resolved value against `locales` from `better-translation/messages` before
+calling `loadMessages`.
+
+## Cookie-backed Locale
+
+In a TanStack Start app, a cookie is a good default because the server can resolve it before
+loading the Runtime bundle. This example mirrors the shape used by Better Translation's own
+web app: read the cookie in a server function, set it from a switcher, then invalidate the
+router so root route data reloads.
+
+```ts title="src/routes/-locale.ts"
+import { createServerFn } from "@tanstack/react-start"
+import { getCookie, setCookie } from "@tanstack/react-start/server"
+import z from "zod"
+
+import { locales, type Locale } from "better-translation/messages"
+
+const LOCALE_COOKIE = "locale"
+const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
+
+function resolveLocale(locale: unknown): Locale {
+  return typeof locale === "string" && (locales as readonly string[]).includes(locale) ? (locale as Locale) : "en"
+}
+
+export const getLocale = createServerFn({ method: "GET" }).handler(() => {
+  return resolveLocale(getCookie(LOCALE_COOKIE))
+})
+
+export const setLocale = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ locale: z.string() }))
+  .handler(({ data }) => {
+    setCookie(LOCALE_COOKIE, resolveLocale(data.locale), {
+      httpOnly: true,
+      maxAge: ONE_YEAR_SECONDS,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    })
+  })
+```
+
+## Route-backed Locale
+
+If your app uses localized URLs, put the Locale in the route and validate the route param.
+
+```ts title="src/routes/$locale/-locale.ts"
+import { locales, type Locale } from "better-translation/messages"
+
+export function resolveLocale(locale: string): Locale {
+  if ((locales as readonly string[]).includes(locale)) return locale as Locale
+
+  return "en"
+}
+```
+
+```tsx title="src/routes/$locale/__root.tsx"
+import { createFileRoute, Outlet } from "@tanstack/react-router"
+
+import { loadMessages } from "better-translation/messages"
+import { TranslateProvider } from "better-translation/react"
+
+import { resolveLocale } from "./-locale"
+
+export const Route = createFileRoute("/$locale")({
+  beforeLoad: async ({ params }) => {
+    const locale = resolveLocale(params.locale)
+    const messages = await loadMessages(locale)
+
+    return { locale, messages }
+  },
+  component: LocaleRoot,
+})
+
+function LocaleRoot() {
+  const { messages } = Route.useRouteContext()
+
+  return (
+    <TranslateProvider messages={messages}>
+      <Outlet />
+    </TranslateProvider>
+  )
+}
+```
+
+## Account-backed Locale
+
+For signed-in users, store the preferred Locale on the user profile. The root route can read
+that preference before loading messages. You can still fall back to a cookie or request header
+when there is no signed-in user.
+
+```ts title="src/routes/-locale.ts"
+import { locales, type Locale } from "better-translation/messages"
+
+export async function getLocale() {
+  const user = await getCurrentUser()
+  return resolveLocale(user?.preferredLocale)
+}
+
+function resolveLocale(locale: unknown): Locale {
+  return typeof locale === "string" && (locales as readonly string[]).includes(locale) ? (locale as Locale) : "en"
+}
+```
+
+## Locale switcher
+
+The switcher should update whatever source owns the Locale, then cause route data to reload.
+For the cookie-backed version, set the cookie and invalidate the router.
+
+```tsx title="src/components/locale-switcher.tsx"
+import { useRouteContext, useRouter } from "@tanstack/react-router"
+
+import { locales, type Locale } from "better-translation/messages"
+
+import { setLocale } from "@/routes/-locale"
+
+function formatLocale(locale: string) {
+  return new Intl.DisplayNames([locale], { type: "language" }).of(locale) ?? locale
+}
+
+export function LocaleSwitcher() {
+  const router = useRouter()
+  const { locale } = useRouteContext({ from: "__root__" })
+
+  return (
+    <select
+      aria-label="Select locale"
+      value={locale}
+      onChange={(event) => {
+        void setLocale({ data: { locale: event.target.value as Locale } }).then(() => router.invalidate())
+      }}
+    >
+      {locales.map((option) => (
+        <option key={option} value={option}>
+          {formatLocale(option)}
+        </option>
+      ))}
+    </select>
+  )
+}
+```
