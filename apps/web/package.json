@@ -47,7 +47,7 @@
     "@tanstack/react-table": "catalog:",
     "@tanstack/router-plugin": "catalog:",
     "@tanstack/store": "catalog:",
-    "@vercel/functions": "3.6.1",
+    "@vercel/functions": "3.6.2",
     "ai": "6.0.195",
     "better-auth": "catalog:",
     "better-translation": "workspace:*",
