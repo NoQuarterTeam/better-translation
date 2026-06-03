@@ -47,13 +47,7 @@ yarn add better-translation
 
 ## 2. Configure the Vite plugin
 
-Choose the local runtime target that matches how your app loads data.
-
-<Tabs items={["TanStack Start", "Vite SPA"]} groupId="local-runtime-target" persist>
-<Tab value="TanStack Start">
-
-TanStack Start can import generated Locale JSON through Vite on the server side, so use the
-default `module` target.
+Add the plugin to your Vite config, list your Locales, and choose the Default locale.
 
 ```ts title="vite.config.ts"
 import { defineConfig } from "vite"
@@ -73,34 +67,20 @@ export default defineConfig({
 })
 ```
 
-</Tab>
-<Tab value="Vite SPA">
-
-A browser-only Vite app should fetch generated Locale JSON as public static assets, so use the
-`public` target.
+The default local runtime target is `module`, which works well for TanStack Start. If you are
+using TanStack Router in a browser-only Vite app, use the `public` target so the generated
+loader fetches Locale JSON from public assets.
 
 ```ts title="vite.config.ts"
-import { defineConfig } from "vite"
-import react from "@vitejs/plugin-react"
-import { betterTranslation } from "better-translation/vite"
-
-export default defineConfig({
-  plugins: [
-    betterTranslation({
-      locales: ["en", "es", "fr"],
-      defaultLocale: "en",
-      runtime: {
-        type: "local",
-        target: "public",
-      },
-    }),
-    react(),
-  ],
+betterTranslation({
+  locales: ["en", "es", "fr"],
+  defaultLocale: "en",
+  runtime: {
+    type: "local",
+    target: "public",
+  },
 })
 ```
-
-</Tab>
-</Tabs>
 
 <Callout title="Plugin order">
   Put `betterTranslation` before the React plugin. It rewrites Translation markers before other transforms see your code.
@@ -111,32 +91,21 @@ export default defineConfig({
 The plugin config above generates `better-translation/messages`. Load the active Locale from
 that virtual module, then wrap your app with `TranslateProvider`.
 
-<Tabs items={["TanStack Start", "Vite SPA"]} groupId="local-runtime-target" persist>
-<Tab value="TanStack Start">
-
-Load messages in a server function, call it from `beforeLoad`, then read the messages from
-route context and wrap the route outlet.
+In TanStack Router, `beforeLoad` can be async. Load messages there, return them in route
+context, then wrap the route outlet.
 
 ```tsx title="src/routes/__root.tsx"
 import { createRootRoute, Outlet } from "@tanstack/react-router"
-import { createServerFn } from "@tanstack/react-start"
-import z from "zod"
 
 import { loadMessages } from "better-translation/messages"
 import { TranslateProvider } from "better-translation/react"
 
 import { getLocale } from "./-locale"
 
-const getMessagesFn = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ locale: z.string() }))
-  .handler(async ({ data }) => {
-    return await loadMessages(data.locale)
-  })
-
 export const Route = createRootRoute({
   beforeLoad: async () => {
     const locale = await getLocale()
-    const messages = await getMessagesFn({ data: { locale } })
+    const messages = await loadMessages(locale)
 
     return { locale, messages }
   },
@@ -154,67 +123,9 @@ function RootComponent() {
 }
 ```
 
-</Tab>
-<Tab value="Vite SPA">
-
-Because the public runtime target fetches Locale JSON in the browser, `loadMessages` is async.
-If the active Locale is known before boot, load messages before the first render and pass them
-into the provider around your app.
-
-```tsx title="src/main.tsx"
-import { createRoot } from "react-dom/client"
-
-import { loadMessages } from "better-translation/messages"
-import { TranslateProvider } from "better-translation/react"
-
-import { App } from "./App"
-
-async function bootstrap() {
-  const locale = "en"
-  const messages = await loadMessages(locale)
-
-  createRoot(document.getElementById("root")!).render(
-    <TranslateProvider messages={messages}>
-      <App />
-    </TranslateProvider>,
-  )
-}
-
-void bootstrap()
-```
-
-If users can switch Locale after mount, put the async load in a small provider component.
-
-```tsx title="src/TranslationRoot.tsx"
-import { useEffect, useState, type ReactNode } from "react"
-
-import { loadMessages } from "better-translation/messages"
-import { TranslateProvider } from "better-translation/react"
-
-export function TranslationRoot({ children, locale }: { children: ReactNode; locale: string }) {
-  const [messages, setMessages] = useState<Record<string, string>>()
-
-  useEffect(() => {
-    let ignore = false
-
-    setMessages(undefined)
-    loadMessages(locale).then((nextMessages) => {
-      if (!ignore) setMessages(nextMessages)
-    })
-
-    return () => {
-      ignore = true
-    }
-  }, [locale])
-
-  if (!messages) return null
-
-  return <TranslateProvider messages={messages}>{children}</TranslateProvider>
-}
-```
-
-</Tab>
-</Tabs>
+This same route pattern works for TanStack Start and browser-only TanStack Router apps. The
+runtime target only changes how the generated `loadMessages` implementation gets the Runtime
+bundle.
 
 ## 4. Mark copy with T
 

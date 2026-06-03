@@ -3,8 +3,6 @@ title: Loading messages
 description: Import loadMessages from the virtual module and pass its result to TranslateProvider.
 ---
 
-import { Tabs, Tab } from "fumadocs-ui/components/tabs"
-
 The Vite plugin generates the virtual `better-translation/messages` module from your plugin
 config. Import `loadMessages` from that module to load a flat lookup id map for a Locale, then
 pass that map to `TranslateProvider`.
@@ -29,19 +27,14 @@ virtual module by the plugin:
 
 ## App setup
 
-<Tabs items={["TanStack Start", "Vite SPA"]} groupId="local-runtime-target" persist>
-<Tab value="TanStack Start">
-
-Use `target: "module"` and load messages in route data before rendering the provider.
+Use TanStack Router route data to load messages before rendering the provider. `beforeLoad`
+can be async, so the active Locale and its Runtime bundle can be resolved before the route
+tree renders.
 
 ```ts title="vite.config.ts"
 betterTranslation({
   locales: ["en", "es", "fr"],
   defaultLocale: "en",
-  runtime: {
-    type: "local",
-    target: "module",
-  },
 })
 ```
 
@@ -74,86 +67,12 @@ function RootComponent() {
 }
 ```
 
-With the module target, generated Locale files live under `src/lib/bt` by default and the
-virtual module imports the matching JSON file through Vite.
+With the default `module` target, generated Locale files live under `src/lib/bt` by default
+and the virtual module imports the matching JSON file through Vite.
 
-</Tab>
-<Tab value="Vite SPA">
-
-Use `target: "public"` for browser-only apps. The generated loader fetches the Locale JSON
-from Vite's public assets.
-
-```ts title="vite.config.ts"
-betterTranslation({
-  locales: ["en", "es", "fr"],
-  defaultLocale: "en",
-  runtime: {
-    type: "local",
-    target: "public",
-  },
-})
-```
-
-If the active Locale is known before boot, load messages before the first client render.
-
-```tsx title="src/main.tsx"
-import { createRoot } from "react-dom/client"
-
-import { loadMessages } from "better-translation/messages"
-import { TranslateProvider } from "better-translation/react"
-
-import { App } from "./App"
-
-async function bootstrap() {
-  const locale = "en"
-  const messages = await loadMessages(locale)
-
-  createRoot(document.getElementById("root")!).render(
-    <TranslateProvider messages={messages}>
-      <App />
-    </TranslateProvider>,
-  )
-}
-
-void bootstrap()
-```
-
-With the public target, generated Locale files live under Vite's public directory. By default,
-the generated loader fetches `/bt/locales/${locale}.json`.
-
-If the active Locale can change after the app mounts, keep messages in component state and
-reload them when the Locale changes.
-
-```tsx title="src/TranslationRoot.tsx"
-import { useEffect, useState, type ReactNode } from "react"
-
-import { loadMessages } from "better-translation/messages"
-import { TranslateProvider } from "better-translation/react"
-
-export function TranslationRoot({ children, locale }: { children: ReactNode; locale: string }) {
-  const [messages, setMessages] = useState<Record<string, string>>()
-
-  useEffect(() => {
-    let ignore = false
-
-    setMessages(undefined)
-    loadMessages(locale).then((nextMessages) => {
-      if (!ignore) setMessages(nextMessages)
-    })
-
-    return () => {
-      ignore = true
-    }
-  }, [locale])
-
-  if (!messages) return null
-
-  return <TranslateProvider messages={messages}>{children}</TranslateProvider>
-}
-```
-
-</Tab>
-</Tabs>
+For a browser-only TanStack Router app, use `runtime: { type: "local", target: "public" }`.
+The route code above stays the same, but the generated loader fetches
+`/bt/locales/${locale}.json` from Vite's public directory.
 
 ## One config, one loader
 
