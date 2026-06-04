@@ -27,16 +27,17 @@ bun install
 
 ## Quick Start
 
-Install the package in a Vite app:
+Install the package in a TanStack Start app:
 
 ```bash
 bun add better-translation
 ```
 
-Add the Vite plugin before React:
+Add the Vite plugin before the TanStack Start and React plugins:
 
 ```ts
 // vite.config.ts
+import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
 import { betterTranslation } from "better-translation/vite"
@@ -47,12 +48,15 @@ export default defineConfig({
       locales: ["en", "es", "fr"],
       defaultLocale: "en",
     }),
+    tanstackStart(),
     react(),
   ],
 })
 ```
 
-The default local runtime writes generated Locale values under `src/lib/bt` and exposes them through the virtual `better-translation/messages` module.
+If your Start app also uses plugins such as Nitro, Tailwind, or tsconfig-path resolution, keep `betterTranslation()` before the plugins that transform React route code.
+
+The default local runtime works well for TanStack Start. It writes generated Locale values under `src/lib/bt` and exposes them through the virtual `better-translation/messages` module.
 
 Load messages for the active Locale and wrap your app:
 
