@@ -58,23 +58,38 @@ If your Start app also uses plugins such as Nitro, Tailwind, or tsconfig-path re
 
 The default local runtime works well for TanStack Start. It writes generated Locale values under `src/lib/bt` and exposes them through the virtual `better-translation/messages` module.
 
-Load messages for the active Locale and wrap your app:
+Load messages in your root route's `beforeLoad`, then wrap the route outlet:
 
 ```tsx
+// src/routes/__root.tsx
+import { createRootRoute, Outlet } from "@tanstack/react-router"
 import { loadMessages } from "better-translation/messages"
 import { TranslateProvider } from "better-translation/react"
 
-const locale = "en"
-const messages = await loadMessages(locale)
+import { getLocale } from "./-locale"
 
-export function App() {
+export const Route = createRootRoute({
+  beforeLoad: async () => {
+    const locale = await getLocale()
+    const messages = await loadMessages(locale)
+
+    return { locale, messages }
+  },
+  component: RootComponent,
+})
+
+function RootComponent() {
+  const { messages } = Route.useRouteContext()
+
   return (
     <TranslateProvider messages={messages}>
-      <Routes />
+      <Outlet />
     </TranslateProvider>
   )
 }
 ```
+
+`getLocale()` is whatever your app uses to resolve the active Locale, such as a cookie, route param, or request header.
 
 Mark UI copy where you author it:
 
