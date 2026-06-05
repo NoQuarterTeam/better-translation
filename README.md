@@ -180,6 +180,8 @@ betterTranslation({
 
 By default it is served during `vite dev` at `/__better-translation`.
 
+![Better Translation local editor showing Messages and Locale values](apps/docs/public/platform-messages.png)
+
 ## Hosted Platform Direction
 
 Better Translation is moving toward a hosted workflow where the Vite plugin syncs a Manifest to a Project, Branches isolate Locale value changes, and Consumer apps load flat Runtime bundles by Project, Branch, and Locale.
