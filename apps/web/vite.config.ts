@@ -9,9 +9,6 @@ import { betterTranslation } from "better-translation/vite"
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
-  ssr: {
-    noExternal: ["react", "react-dom", "@base-ui/react", "@base-ui/utils", "@floating-ui/react-dom"],
-  },
   plugins: [
     betterTranslation({
       locales: ["en", "nl"],
@@ -24,7 +21,7 @@ export default defineConfig({
       },
     }),
     // devtools(),
-    nitro(),
+    nitro({ traceDeps: ["react", "react-dom"] }),
     tailwindcss(),
     tanstackStart({
       importProtection: { client: { files: ["**/*.server.*", "**/server/**"] } },
