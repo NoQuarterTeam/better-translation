@@ -94,23 +94,6 @@ function ProjectSidebarContent() {
               <SidebarMenuButton
                 render={
                   <Link
-                    to="/app/$orgSlug/$projectSlug/api-keys"
-                    params={{ orgSlug, projectSlug }}
-                    onClick={closeMobile}
-                    className="opacity-50 data-[status=active]:bg-muted data-[status=active]:opacity-100"
-                  />
-                }
-              >
-                <KeyRoundIcon />
-                <span>
-                  <T>API keys</T>
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                render={
-                  <Link
                     to="/app/$orgSlug/$projectSlug/translator"
                     params={{ orgSlug, projectSlug }}
                     onClick={closeMobile}
@@ -121,6 +104,23 @@ function ProjectSidebarContent() {
                 <BotIcon />
                 <span>
                   <T>Translator</T>
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={
+                  <Link
+                    to="/app/$orgSlug/$projectSlug/api-keys"
+                    params={{ orgSlug, projectSlug }}
+                    onClick={closeMobile}
+                    className="opacity-50 data-[status=active]:bg-muted data-[status=active]:opacity-100"
+                  />
+                }
+              >
+                <KeyRoundIcon />
+                <span>
+                  <T>API keys</T>
                 </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
