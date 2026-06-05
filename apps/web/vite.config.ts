@@ -24,9 +24,7 @@ export default defineConfig({
       },
     }),
     // devtools(),
-    nitro({
-      noExternals: ["react", "react-dom", "@base-ui/react", "@base-ui/utils", "@floating-ui/react-dom"],
-    }),
+    nitro(),
     tailwindcss(),
     tanstackStart({
       importProtection: { client: { files: ["**/*.server.*", "**/server/**"] } },
