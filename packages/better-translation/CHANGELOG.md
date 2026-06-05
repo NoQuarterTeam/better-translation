@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.2.7
+
+### Patch Changes
+
+- [`05568bf`](https://github.com/NoQuarterTeam/better-translation/commit/05568bfb4875250947d1d86abe8f7e585930ac9b) Thanks [@JClackett](https://github.com/JClackett)! - Export the local editor options type from the Vite entry.
+
 ## 0.2.6
 
 ### Patch Changes
