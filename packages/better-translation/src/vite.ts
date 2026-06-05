@@ -1,5 +1,6 @@
 export { betterTranslation } from "./plugin.js"
 export type {
+  BetterTranslateLocalEditorOptions,
   BetterTranslateLocalRuntimeOptions,
   BetterTranslatePluginOptions,
   BetterTranslateRemoteRuntimeOptions,
