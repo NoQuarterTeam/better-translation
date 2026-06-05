@@ -1,3 +1,6 @@
+import { Button } from "@better-translation/ui/components/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@better-translation/ui/components/card"
+import { Field, FieldContent, FieldDescription, FieldLabel } from "@better-translation/ui/components/field"
 import { uploadFile } from "@better-upload/client"
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
@@ -11,9 +14,6 @@ import { createTranslator } from "better-translation/server"
 
 import { useAppForm } from "@/components/react-form"
 import { ResourceMark } from "@/components/resource-mark"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { imageUploadAccept, imageUploadMaxBytes, imageUploadMimeTypes } from "@/lib/image-upload"
 
 import { currentOrganizationQueryOptions } from "../../-data"

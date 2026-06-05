@@ -1,5 +1,3 @@
-import { useMemo } from "react"
-
 import {
   Pagination,
   PaginationContent,
@@ -8,7 +6,8 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from "@better-translation/ui/components/pagination"
+import { useMemo } from "react"
 
 interface TablePaginationProps {
   currentPage: number

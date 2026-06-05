@@ -1,8 +1,7 @@
+import { Button } from "@better-translation/ui/components/button"
+import { Card, CardContent } from "@better-translation/ui/components/card"
 import type { ErrorComponentProps } from "@tanstack/react-router"
 import { Link, rootRouteId, useMatch, useRouter } from "@tanstack/react-router"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 
 export function DefaultError({ error, reset }: ErrorComponentProps) {
   const router = useRouter()

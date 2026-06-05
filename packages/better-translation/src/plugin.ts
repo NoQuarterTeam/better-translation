@@ -19,6 +19,7 @@ import type {
 
 import { createEmptyCache, getCacheKey, loadCache, saveCache } from "./cache.js"
 import { analyzeSourceFile } from "./extractor.js"
+import { configureLocalEditor, getLocalEditorOptions } from "./local-editor/server.js"
 import { serializeMeta } from "./message-id.js"
 
 const PREFIX = "\x1b[36m[better-translation]\x1b[0m"
@@ -386,6 +387,27 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     }, 1000)
   }
 
+  function writeLocaleMessages(locale: string, localeMessages: RuntimeMessages) {
+    const dir = getLocalesDirPath()
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+
+    const messages: RuntimeMessages = {}
+    for (const [id, entry] of Object.entries(manifest).sort(compareManifestEntryIds)) {
+      if (locale === defaultLocale) {
+        messages[id] = entry.defaultMessage
+        continue
+      }
+
+      const existingMessage = localeMessages[id]
+      const cachedMessage = getFreshCachedMessage(id, locale)
+      if (existingMessage !== undefined) messages[id] = existingMessage
+      else if (cachedMessage !== undefined) messages[id] = cachedMessage
+      else if (shouldWriteDefaultLocaleFallback()) messages[id] = entry.defaultMessage
+    }
+
+    writeFileIfChanged(getLocalePath(locale), JSON.stringify(messages, null, 2) + "\n")
+  }
+
   function removeFileMessages(file: string) {
     const previous = fileMessages.get(file)
     if (!previous) return false
@@ -551,6 +573,14 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     },
 
     configureServer(server) {
+      const localEditorOptions = getLocalEditorOptions({ isDev, runtime: resolvedRuntime })
+      if (localEditorOptions) {
+        configureLocalEditor(
+          server,
+          { defaultLocale, isUntranslatedLocaleValue, locales, log, manifest, readLocaleMessages, writeLocaleMessages },
+          localEditorOptions,
+        )
+      }
       server.watcher.add(sourceRoots)
       server.httpServer?.once("listening", () => scheduleDevRemoteSync())
 

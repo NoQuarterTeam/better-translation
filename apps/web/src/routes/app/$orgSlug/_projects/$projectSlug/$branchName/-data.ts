@@ -138,6 +138,7 @@ export const listBranchMessagesFn = createServerFn({ method: "GET" })
       messages: filteredMessages.map((message) => ({
         defaultMessage: message.defaultMessage,
         id: message.id,
+        lookupId: message.lookupId,
         placeholders: message.placeholders,
         ...getMessageCompleteness({
           branchValueByMessageAndLocale,

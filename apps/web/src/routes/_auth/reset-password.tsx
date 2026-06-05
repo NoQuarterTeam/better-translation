@@ -1,3 +1,5 @@
+import { Alert, AlertDescription, AlertTitle } from "@better-translation/ui/components/alert"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@better-translation/ui/components/card"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { AlertCircleIcon } from "lucide-react"
 import { useState } from "react"
@@ -8,8 +10,6 @@ import { T, useT } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
 import { useAppForm } from "@/components/react-form"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { authClient } from "@/lib/auth/client"
 
 const MIN_PASSWORD = 8

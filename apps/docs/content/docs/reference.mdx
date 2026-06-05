@@ -1,9 +1,20 @@
 ---
-title: Plugin options
-description: The full set of options accepted by betterTranslation in your Vite config.
+title: API reference
+description: The configurable Better Translation API surface for the Vite plugin, runtime helpers, React markers, and local editor.
 ---
 
-The full set of options accepted by `betterTranslation` in your Vite config.
+This page lists the developer-facing APIs you configure or import from Better Translation.
+
+## Vite plugin
+
+Import `betterTranslation` from `better-translation/vite`.
+
+```ts title="vite.config.ts"
+betterTranslation({
+  locales: ["en", "es", "fr"],
+  defaultLocale: "en",
+})
+```
 
 <TypeTable
   type={{
@@ -13,7 +24,7 @@ The full set of options accepted by `betterTranslation` in your Vite config.
     },
     defaultLocale: {
       type: "string",
-      description: "The source language. Defaults to the first locale.",
+      description: "The source language. Defaults to the first Locale.",
     },
     rootDir: {
       type: "string | string[]",
@@ -21,15 +32,295 @@ The full set of options accepted by `betterTranslation` in your Vite config.
     },
     cacheFile: {
       type: "string",
-      description: "Translation cache path, relative to the Vite root.",
+      description: 'Translation cache path, relative to the Vite root. Defaults to ".cache/better-translation/cache.json".',
     },
     logging: {
       type: "boolean",
       description: "Enables or disables plugin logging. Defaults to true.",
     },
     runtime: {
-      type: "Local | Remote",
+      type: "LocalRuntime | RemoteRuntime",
       description: "Runtime backend. Defaults to local mode with module target.",
     },
   }}
 />
+
+## Local runtime
+
+Local mode writes flat Locale value files into your app and generates a local
+`better-translation/messages` loader.
+
+```ts
+type LocalRuntime = {
+  type: "local"
+  target?: "module" | "public"
+  output?: string
+  basePath?: string
+  translate?: TranslateFn
+  editor?: boolean | LocalEditorOptions
+}
+```
+
+<TypeTable
+  type={{
+    type: {
+      type: '"local"',
+      description: "Uses local Runtime bundles owned by your repo.",
+    },
+    target: {
+      type: '"module" | "public"',
+      description: 'Writes Locale files for Vite module imports or public static fetches. Defaults to "module".',
+    },
+    output: {
+      type: "string",
+      description: "Output directory for generated local Runtime bundles.",
+    },
+    basePath: {
+      type: "string",
+      description: 'Public URL prefix used when target is "public". Defaults to "/bt".',
+    },
+    translate: {
+      type: "TranslateFn",
+      description: "Optional local-mode function for filling missing non-default Locale values during dev.",
+    },
+    editor: {
+      type: "boolean | LocalEditorOptions",
+      description: "Enables the dev-only local Locale editor when true, or accepts editor options.",
+    },
+  }}
+/>
+
+## Local editor
+
+The local editor is only served during `vite dev` and only for `runtime.type: "local"`.
+
+```ts
+type LocalEditorOptions = {
+  enabled?: boolean
+  path?: string
+  open?: boolean
+}
+```
+
+<TypeTable
+  type={{
+    enabled: {
+      type: "boolean",
+      description: "Set to false to disable the editor while keeping an options object in place.",
+    },
+    path: {
+      type: "string",
+      description: 'URL path served by the Vite dev server. Defaults to "/__better-translation".',
+    },
+    open: {
+      type: "boolean",
+      description: "Opens the local editor in your browser when the dev server starts. Defaults to false.",
+    },
+  }}
+/>
+
+```ts title="vite.config.ts"
+betterTranslation({
+  locales: ["en", "es", "fr"],
+  defaultLocale: "en",
+  runtime: {
+    type: "local",
+    editor: {
+      path: "/translations",
+      open: true,
+    },
+  },
+})
+```
+
+## Remote runtime
+
+Remote mode syncs the Manifest to the hosted platform and generates a branch-aware runtime
+loader.
+
+```ts
+type RemoteRuntime = {
+  type: "remote"
+  endpoint?: string
+  projectId: string
+  apiKey?: string
+  branch?: "auto" | string
+  dev?: {
+    offline?: boolean
+  }
+}
+```
+
+<TypeTable
+  type={{
+    type: {
+      type: '"remote"',
+      description: "Uses the hosted platform for Manifest sync and Runtime bundle reads.",
+    },
+    endpoint: {
+      type: "string",
+      description: "Hosted service base URL. Defaults to the Better Translation platform endpoint.",
+    },
+    projectId: {
+      type: "string",
+      description: "Project identifier used to build public Runtime bundle URLs. Required.",
+    },
+    apiKey: {
+      type: "string",
+      description: "Project API key used by plugin sync. Falls back to BETTER_TRANSLATION_API_KEY.",
+    },
+    branch: {
+      type: '"auto" | string',
+      description: 'Branch to sync and read from. Defaults to "auto".',
+    },
+    "dev.offline": {
+      type: "boolean",
+      description: "Skips platform reads and writes during local dev and uses local cache fallbacks instead.",
+    },
+  }}
+/>
+
+## Translation options
+
+`T`, `useT`, and `createTranslator` accept the same message options.
+
+```ts
+type TranslateOptions = {
+  id?: string
+  context?: string
+}
+```
+
+<TypeTable
+  type={{
+    id: {
+      type: "string",
+      description: "Explicit stable lookup id to use instead of the generated id.",
+    },
+    context: {
+      type: "string",
+      description: "Extra disambiguating context for translation and lookup id generation.",
+    },
+  }}
+/>
+
+## React runtime
+
+Import these from `better-translation/react`.
+
+<TypeTable
+  type={{
+    TranslateProvider: {
+      type: "(props: { messages: Record<string, string>; children: ReactNode }) => ReactNode",
+      description: "Provides loaded Locale values to translated React content.",
+    },
+    T: {
+      type: "(props: { id?: string; context?: string; children?: ReactNode }) => ReactNode",
+      description: "Marks JSX children as a translatable Message and renders the active Locale value.",
+    },
+    Var: {
+      type: "(props: { children?: ReactNode } & Record<string, ReactNode>) => ReactNode",
+      description: "Marks a runtime value for placeholder interpolation inside T content.",
+    },
+    useT: {
+      type: "() => (message: string, valuesOrOptions?, options?) => string",
+      description: "Returns a translator function for props, labels, titles, and other non-JSX positions.",
+    },
+    useMessages: {
+      type: "() => Record<string, string>",
+      description: "Returns the raw Locale value map from the current TranslateProvider.",
+    },
+  }}
+/>
+
+```tsx
+<T context="billing button">
+  Pay <Var amount="$10" /> now
+</T>
+```
+
+```tsx
+const t = useT()
+
+t("Invite {email}", { email: user.email }, { context: "invitation title" })
+```
+
+## Server runtime
+
+Import `createTranslator` from `better-translation/server`.
+
+<TypeTable
+  type={{
+    createTranslator: {
+      type: "(messages: Record<string, string>) => ServerTranslator",
+      description: "Creates a server-side translator from a loaded Locale value map.",
+    },
+    ServerTranslator: {
+      type: "(message: string, valuesOrOptions?, options?) => string",
+      description: "Translates a source Message and interpolates string values.",
+    },
+  }}
+/>
+
+## Generated messages module
+
+Import these from `better-translation/messages`. The Vite plugin generates this module from
+your runtime config.
+
+<TypeTable
+  type={{
+    loadMessages: {
+      type: "(locale: string) => Promise<Record<string, string>>",
+      description: "Loads the Runtime bundle for a Locale.",
+    },
+    locales: {
+      type: "readonly string[]",
+      description: "Locale codes configured in the Vite plugin.",
+    },
+    Locale: {
+      type: "string",
+      description: "Type alias for values accepted by loadMessages.",
+    },
+  }}
+/>
+
+## AI translation helper
+
+Import `createAiTranslate` from `better-translation/ai`. Use it as local runtime
+`translate` in local mode.
+
+<TypeTable
+  type={{
+    model: {
+      type: "AI SDK model",
+      description: "Model value passed to AI SDK generateText. Defaults to a Vercel AI Gateway model string.",
+    },
+    prompt: {
+      type: "string",
+      description: "Translation brief for product, tone, glossary, or domain instructions.",
+    },
+    temperature: {
+      type: "number",
+      description: "Optional temperature forwarded to the selected model provider.",
+    },
+    concurrency: {
+      type: "number",
+      description: "Maximum number of per-message translation requests to run at once. Defaults to 10.",
+    },
+  }}
+/>
+
+```ts title="vite.config.ts"
+import { createAiTranslate } from "better-translation/ai"
+
+betterTranslation({
+  locales: ["en", "es", "fr"],
+  defaultLocale: "en",
+  runtime: {
+    type: "local",
+    translate: createAiTranslate({
+      prompt: "Friendly, concise product UI copy.",
+    }),
+  },
+})
+```

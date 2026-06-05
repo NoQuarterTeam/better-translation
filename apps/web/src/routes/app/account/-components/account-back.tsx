@@ -1,9 +1,8 @@
+import { Button } from "@better-translation/ui/components/button"
 import { useCanGoBack, useNavigate } from "@tanstack/react-router"
 import { ArrowLeftIcon } from "lucide-react"
 
 import { T } from "better-translation/react"
-
-import { Button } from "@/components/ui/button"
 
 export function AccountBackSlot() {
   const canGoBack = useCanGoBack()

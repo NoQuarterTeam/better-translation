@@ -1,8 +1,15 @@
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@better-translation/ui/components/select"
 import { useRouteContext, useRouter } from "@tanstack/react-router"
 
 import { locales, type Locale } from "better-translation/messages"
 
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatLocale } from "@/lib/locales"
 import { setLocaleFn } from "@/routes/-locale"
 

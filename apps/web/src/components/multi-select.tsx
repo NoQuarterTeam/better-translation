@@ -10,7 +10,7 @@ import {
   ComboboxTrigger,
   ComboboxValue,
   useComboboxAnchor,
-} from "@/components/ui/combobox"
+} from "@better-translation/ui/components/combobox"
 
 export type MultiSelectPrimitive = string | number
 

@@ -1,7 +1,6 @@
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-translation/ui/components/table"
+import { cn } from "@better-translation/ui/lib/utils"
 import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
-
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]

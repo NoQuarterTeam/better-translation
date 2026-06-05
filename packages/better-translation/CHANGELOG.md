@@ -1,5 +1,17 @@
 # better-translation
 
+## 0.2.6
+
+### Patch Changes
+
+- [`d3c833c`](https://github.com/NoQuarterTeam/better-translation/commit/d3c833c3081d8252f40896e8df1a5c9cb65c92e6) Thanks [@JClackett](https://github.com/JClackett)! - Add a dev-only local editor for local runtime Locale values, with shared UI and Locale editor packages.
+
+## 0.2.5
+
+### Patch Changes
+
+- [`1bb76b9`](https://github.com/NoQuarterTeam/better-translation/commit/1bb76b91a3a8cc3d68803e02fe0233c2d5fa4136) Thanks [@JClackett](https://github.com/JClackett)! - Trim synced Message source metadata to stable file, marker kind, and marker name fields, and keep successful no-op remote syncs quiet.
+
 ## 0.2.4
 
 ### Patch Changes

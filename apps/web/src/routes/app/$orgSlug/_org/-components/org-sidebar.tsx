@@ -1,8 +1,3 @@
-import { Link, useParams } from "@tanstack/react-router"
-import { BoxesIcon, SettingsIcon, UsersIcon } from "lucide-react"
-
-import { T } from "better-translation/react"
-
 import {
   SidebarContent,
   SidebarGroup,
@@ -12,7 +7,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@better-translation/ui/components/sidebar"
+import { Link, useParams } from "@tanstack/react-router"
+import { BoxesIcon, SettingsIcon, UsersIcon } from "lucide-react"
+
+import { T } from "better-translation/react"
 
 export function OrgSidebarSlot() {
   return <OrgSidebarContent />

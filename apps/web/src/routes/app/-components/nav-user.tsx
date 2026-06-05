@@ -1,11 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
-import { LogOutIcon, UserIcon } from "lucide-react"
-
-import { useT } from "better-translation/react"
-
-import { LocaleSwitcher } from "@/components/locale-switcher"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@better-translation/ui/components/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +7,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@better-translation/ui/components/dropdown-menu"
+import { useQuery } from "@tanstack/react-query"
+import { useNavigate } from "@tanstack/react-router"
+import { LogOutIcon, UserIcon } from "lucide-react"
+
+import { useT } from "better-translation/react"
+
+import { LocaleSwitcher } from "@/components/locale-switcher"
 import { authClient } from "@/lib/auth/client"
 import type { User } from "@/server/db/schema"
 

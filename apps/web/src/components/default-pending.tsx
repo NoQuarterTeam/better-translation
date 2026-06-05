@@ -1,4 +1,4 @@
-import { Spinner } from "@/components/ui/spinner"
+import { Spinner } from "@better-translation/ui/components/spinner"
 
 export function DefaultPending() {
   return (

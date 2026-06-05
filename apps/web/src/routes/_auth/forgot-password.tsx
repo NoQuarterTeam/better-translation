@@ -1,3 +1,6 @@
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@better-translation/ui/components/alert"
+import { Button } from "@better-translation/ui/components/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@better-translation/ui/components/card"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { CheckCircle2Icon } from "lucide-react"
 import { useState } from "react"
@@ -7,9 +10,6 @@ import { T, useT } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
 import { useAppForm } from "@/components/react-form"
-import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { authClient } from "@/lib/auth/client"
 
 export const Route = createFileRoute("/_auth/forgot-password")({

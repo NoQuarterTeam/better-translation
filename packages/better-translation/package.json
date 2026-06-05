@@ -1,6 +1,6 @@
 {
   "name": "better-translation",
-  "version": "0.2.4",
+  "version": "0.2.6",
   "description": "Vite plugin and runtime helpers for Better Translation.",
   "repository": {
     "type": "git",
@@ -10,7 +10,9 @@
     "dist"
   ],
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "exports": {
     "./vite": {
       "import": "./dist/vite.mjs",
@@ -37,7 +39,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "vp pack",
+    "build": "vp pack && vite build",
     "prepack": "bun run build"
   },
   "dependencies": {
@@ -45,17 +47,25 @@
     "oxc-parser": "0.134.0"
   },
   "devDependencies": {
+    "@better-translation/locale-editor": "workspace:*",
     "@better-translation/tsconfig": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@tanstack/react-query": "catalog:",
     "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:"
   },
   "peerDependencies": {
     "react": ">=19",
+    "react-dom": ">=19",
     "vite": ">=8"
   },
   "peerDependenciesMeta": {
     "react": {
+      "optional": true
+    },
+    "react-dom": {
       "optional": true
     }
   }

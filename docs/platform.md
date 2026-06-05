@@ -105,6 +105,21 @@ For public local runtime, the default output is Vite `publicDir` plus `bt`, and 
 
 `translate?: TranslateFn` belongs to local runtime options. It fills missing non-default Locale values during dev and writes those values into local artifacts/cache. Production local builds do not call `translate`.
 
+Local mode can optionally expose a dev-only local editor from the Vite plugin:
+
+```ts
+runtime: {
+  type: "local",
+  editor: true,
+}
+```
+
+The local editor is served by the plugin during `vite dev` only. It reads the private Manifest and local Locale values, lets developers search Messages and edit non-default Locale values, and writes those values back to the flat local Locale value files. It does not create Projects, Branches, hosted sync, auth, or remote runtime behavior.
+
+The local editor is split across package boundaries. `packages/better-translation` owns the Vite dev middleware and local Locale value file writes. `packages/locale-editor` owns the reusable Message and Locale value editor React surface. `packages/ui` owns the shared shadcn/Base UI primitives and theme CSS used by the hosted app and editor.
+
+Future editor surface ideas, including a mounted local editor, remote embedded editor adapters, and iframe embeds, are captured in `docs/editor-surfaces.md`. The broader open Manifest, Locale values, and provider protocol idea is captured separately in `docs/open-translation-protocol.md`.
+
 ## Remote Mode
 
 Remote mode means the plugin syncs source metadata to the hosted service and the Consumer app reads branch-local Locale values at runtime.

@@ -114,6 +114,16 @@ export interface TranslateMessage {
 /** User-provided translation function used to fill missing locale entries. */
 export type TranslateFn = (messages: TranslateMessage[], locale: string) => Promise<Record<string, string>>
 
+/** Dev-only local editor for searching and editing local Locale values. */
+export interface BetterTranslateLocalEditorOptions {
+  /** Enables the local editor during Vite dev. */
+  enabled?: boolean
+  /** Local dev URL path served by the Vite plugin. */
+  path?: string
+  /** Open the editor URL when the dev server starts. */
+  open?: boolean
+}
+
 /** Writes locale files into the app and loads them through Vite. */
 export interface BetterTranslateLocalRuntimeOptions {
   /** Selects local runtime artifacts. */
@@ -126,6 +136,8 @@ export interface BetterTranslateLocalRuntimeOptions {
   basePath?: string
   /** Custom translation function used for messages missing from non-default locales. */
   translate?: TranslateFn
+  /** Dev-only UI for editing local Locale values. */
+  editor?: boolean | BetterTranslateLocalEditorOptions
 }
 
 /** Loads locale files from an external translation service. */

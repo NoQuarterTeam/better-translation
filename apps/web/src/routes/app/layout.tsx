@@ -1,9 +1,9 @@
+import { Separator } from "@better-translation/ui/components/separator"
+import { Sidebar, SidebarInset, SidebarProvider, SidebarTrigger } from "@better-translation/ui/components/sidebar"
+import { TooltipProvider } from "@better-translation/ui/components/tooltip"
 import { createFileRoute, Outlet, useMatches } from "@tanstack/react-router"
 
 import { DefaultError } from "@/components/default-error"
-import { Separator } from "@/components/ui/separator"
-import { Sidebar, SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { TooltipProvider } from "@/components/ui/tooltip"
 
 import { NavUser } from "./-components/nav-user"
 

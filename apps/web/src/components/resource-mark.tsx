@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn } from "@better-translation/ui/lib/utils"
 
 export function ResourceMark({ className, label, imageUrl }: { className?: string; imageUrl?: string | null; label: string }) {
   const initials = label

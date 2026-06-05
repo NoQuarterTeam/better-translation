@@ -1,11 +1,9 @@
+import { NativeSelect, NativeSelectOption } from "@better-translation/ui/components/native-select"
 import { useRouteContext, useRouter } from "@tanstack/react-router"
-import * as React from "react"
 
 import type { Locale } from "better-translation/messages"
 
 import { setLocaleFn } from "@/routes/-locale"
-
-import { NativeSelect, NativeSelectOption } from "./ui/native-select"
 
 export function LocaleSwitcher() {
   const router = useRouter()

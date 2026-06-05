@@ -1,3 +1,7 @@
+import { Badge } from "@better-translation/ui/components/badge"
+import { Button, buttonVariants } from "@better-translation/ui/components/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@better-translation/ui/components/tooltip"
+import { cn } from "@better-translation/ui/lib/utils"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowRightIcon, CloudCheck, PlusIcon } from "lucide-react"
@@ -6,11 +10,7 @@ import { T, useT } from "better-translation/react"
 import { createTranslator } from "better-translation/server"
 
 import { ResourceMark } from "@/components/resource-mark"
-import { Badge } from "@/components/ui/badge"
-import { Button, buttonVariants } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { formatLocale } from "@/lib/locales"
-import { cn } from "@/lib/utils"
 
 import { projectsQueryOptions, type listProjectsFn } from "./-data"
 

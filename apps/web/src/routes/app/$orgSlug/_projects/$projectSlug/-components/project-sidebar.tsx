@@ -1,10 +1,3 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
-import { Link, useParams } from "@tanstack/react-router"
-import { BotIcon, GitBranchIcon, KeyRoundIcon, LanguagesIcon, SettingsIcon } from "lucide-react"
-import { Suspense } from "react"
-
-import { T } from "better-translation/react"
-
 import {
   SidebarContent,
   SidebarGroup,
@@ -14,8 +7,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { Skeleton } from "@/components/ui/skeleton"
+} from "@better-translation/ui/components/sidebar"
+import { Skeleton } from "@better-translation/ui/components/skeleton"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { Link, useParams } from "@tanstack/react-router"
+import { BotIcon, GitBranchIcon, KeyRoundIcon, LanguagesIcon, SettingsIcon } from "lucide-react"
+import { Suspense } from "react"
+
+import { T } from "better-translation/react"
 
 import { projectBranchRedirectNameQueryOptions } from "../-data"
 

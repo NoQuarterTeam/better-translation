@@ -28,6 +28,51 @@ src/lib/bt/
 | `locales/*.json`            | Flat Runtime bundles, one per Locale, keyed by lookup id. These are what your app loads. Commit them. |
 | `.cache/better-translation` | Plugin-owned cache and private Manifest state. Do not commit it.                                      |
 
+## Local editor
+
+Local mode can expose a dev-only editor from the Vite plugin. It lets you search Messages,
+inspect source details, and edit non-default Locale values from inside your app's dev server.
+
+```ts title="vite.config.ts"
+betterTranslation({
+  locales: ["en", "es", "fr"],
+  defaultLocale: "en",
+  runtime: {
+    type: "local",
+    editor: true,
+  },
+})
+```
+
+When enabled, the editor is served during `vite dev` at `/__better-translation`. The plugin
+logs the URL when the dev server starts. The editor reads the private Manifest from
+`.cache/better-translation` and writes edits back to the flat Locale files under your local
+runtime output.
+
+You can customize the path or ask the plugin to open the editor automatically:
+
+```ts title="vite.config.ts"
+betterTranslation({
+  locales: ["en", "es", "fr"],
+  defaultLocale: "en",
+  runtime: {
+    type: "local",
+    editor: {
+      path: "/translations",
+      open: true,
+    },
+  },
+})
+```
+
+Set `editor: false` or omit `editor` to disable it. The editor only runs for local runtime
+mode during `vite dev`; production builds do not serve it.
+
+<Callout title="Local editor scope">
+  The local editor edits flat Locale files in your repo. It does not create Projects, Branches, hosted sync, auth, or source
+  provenance. Existing values are treated as present local values, and missing values are the only special state.
+</Callout>
+
 ## Serve as static assets
 
 Prefer fetching Locale files as static assets instead of bundling them? Set the local runtime

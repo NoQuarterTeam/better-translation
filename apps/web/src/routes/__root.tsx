@@ -1,3 +1,4 @@
+import { Toaster } from "@better-translation/ui/components/sonner"
 import type { QueryClient } from "@tanstack/react-query"
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
@@ -8,7 +9,6 @@ import { TranslateProvider } from "better-translation/react"
 
 import { DefaultError } from "@/components/default-error"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/sonner"
 
 import appCss from "../styles.css?url"
 import { getLocaleFn } from "./-locale"

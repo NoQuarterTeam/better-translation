@@ -15,6 +15,7 @@ export default defineConfig({
       defaultLocale: "en",
       runtime: {
         type: "local",
+        editor: true,
         target: "module",
         translate: createAiTranslate({ prompt: "Keep it short and sweet" }),
       },
