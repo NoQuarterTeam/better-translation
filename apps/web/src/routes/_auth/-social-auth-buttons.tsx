@@ -21,10 +21,10 @@ export function SocialAuthButtons({ callbackURL, requestSignUp = false }: { call
 
   return (
     <div className="space-y-3">
-      <Button className="w-full justify-center" variant="outline" onClick={() => void continueWithProvider("google")}>
+      {/* <Button className="w-full justify-center" variant="outline" onClick={() => void continueWithProvider("google")}>
         <GoogleMark />
         <T>Continue with Google</T>
-      </Button>
+      </Button> */}
       <Button className="w-full justify-center" variant="outline" onClick={() => void continueWithProvider("github")}>
         <GitHubMark />
         <T>Continue with GitHub</T>
@@ -41,25 +41,25 @@ function GitHubMark() {
   )
 }
 
-function GoogleMark() {
-  return (
-    <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24">
-      <path
-        d="M21.81 12.23c0-.72-.06-1.25-.2-1.8H12.2v3.45h5.52c-.11.86-.72 2.16-2.08 3.03l-.02.12 3.01 2.28.21.02c1.96-1.77 2.97-4.36 2.97-7.1Z"
-        fill="#4285F4"
-      />
-      <path
-        d="M12.2 22c2.71 0 4.98-.87 6.64-2.37l-3.17-2.42c-.85.58-1.98.99-3.47.99-2.66 0-4.92-1.72-5.73-4.1l-.12.01-3.13 2.37-.04.11A10.06 10.06 0 0 0 12.2 22Z"
-        fill="#34A853"
-      />
-      <path
-        d="M6.47 14.1A5.88 5.88 0 0 1 6.13 12c0-.73.13-1.43.33-2.1l-.01-.14-3.17-2.41-.1.05A9.83 9.83 0 0 0 2.1 12c0 1.59.39 3.09 1.08 4.4l3.29-2.3Z"
-        fill="#FBBC05"
-      />
-      <path
-        d="M12.2 5.8c1.88 0 3.15.8 3.87 1.46l2.82-2.68C17.17 3.04 14.9 2 12.2 2 8.18 2 4.7 4.25 3.18 7.6l3.28 2.3c.82-2.38 3.08-4.1 5.74-4.1Z"
-        fill="#EA4335"
-      />
-    </svg>
-  )
-}
+// function GoogleMark() {
+//   return (
+//     <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24">
+//       <path
+//         d="M21.81 12.23c0-.72-.06-1.25-.2-1.8H12.2v3.45h5.52c-.11.86-.72 2.16-2.08 3.03l-.02.12 3.01 2.28.21.02c1.96-1.77 2.97-4.36 2.97-7.1Z"
+//         fill="#4285F4"
+//       />
+//       <path
+//         d="M12.2 22c2.71 0 4.98-.87 6.64-2.37l-3.17-2.42c-.85.58-1.98.99-3.47.99-2.66 0-4.92-1.72-5.73-4.1l-.12.01-3.13 2.37-.04.11A10.06 10.06 0 0 0 12.2 22Z"
+//         fill="#34A853"
+//       />
+//       <path
+//         d="M6.47 14.1A5.88 5.88 0 0 1 6.13 12c0-.73.13-1.43.33-2.1l-.01-.14-3.17-2.41-.1.05A9.83 9.83 0 0 0 2.1 12c0 1.59.39 3.09 1.08 4.4l3.29-2.3Z"
+//         fill="#FBBC05"
+//       />
+//       <path
+//         d="M12.2 5.8c1.88 0 3.15.8 3.87 1.46l2.82-2.68C17.17 3.04 14.9 2 12.2 2 8.18 2 4.7 4.25 3.18 7.6l3.28 2.3c.82-2.38 3.08-4.1 5.74-4.1Z"
+//         fill="#EA4335"
+//       />
+//     </svg>
+//   )
+// }
