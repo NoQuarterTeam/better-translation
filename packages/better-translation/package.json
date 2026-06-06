@@ -1,6 +1,6 @@
 {
   "name": "better-translation",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "description": "Vite plugin and runtime helpers for Better Translation.",
   "repository": {
     "type": "git",

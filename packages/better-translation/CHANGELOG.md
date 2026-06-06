@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.3.0
+
+### Minor Changes
+
+- [`bd606db`](https://github.com/NoQuarterTeam/better-translation/commit/bd606db292f5ff4791ba099dc47059585cdb2edd) Thanks [@JClackett](https://github.com/JClackett)! - set production hosted url
+
 ## 0.2.7
 
 ### Patch Changes
