@@ -10,7 +10,7 @@ import { toast } from "sonner"
 import * as z from "zod"
 
 import { T, useT } from "better-translation/react"
-import { createTranslator } from "better-translation/runtime"
+import { createT } from "better-translation/runtime"
 
 import { useAppForm } from "@/components/react-form"
 import { ResourceMark } from "@/components/resource-mark"
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/app/$orgSlug/_org/settings/")({
     await context.queryClient.ensureQueryData(organizationSettingsQueryOptions(params.orgSlug))
   },
   head: ({ match }) => {
-    const t = createTranslator(match.context.messages)
+    const t = createT(match.context.messages)
     return { meta: [{ title: `${t("Organization settings")} · Better Translation` }] }
   },
 })

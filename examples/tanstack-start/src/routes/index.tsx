@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router"
 
 import { T, Var } from "better-translation/react"
-import { createTranslator } from "better-translation/runtime"
+import { createT } from "better-translation/runtime"
 
 import { LocaleSwitcher } from "@/components/locale-switcher"
 
 export const Route = createFileRoute("/")({
   component: HomePage,
   head: ({ match }) => {
-    const t = createTranslator(match.context.messages)
+    const t = createT(match.context.messages)
 
     return {
       meta: [

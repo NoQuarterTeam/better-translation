@@ -26,7 +26,7 @@ import { toast } from "sonner"
 import * as z from "zod"
 
 import { T, useT } from "better-translation/react"
-import { createTranslator } from "better-translation/runtime"
+import { createT } from "better-translation/runtime"
 
 import { DataTable } from "@/components/data-table"
 import { useAppForm } from "@/components/react-form"
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/app/$orgSlug/_projects/$projectSlug/branc
     await context.queryClient.ensureQueryData(projectBranchesQueryOptions(params.orgSlug, params.projectSlug))
   },
   head: ({ match }) => {
-    const t = createTranslator(match.context.messages)
+    const t = createT(match.context.messages)
     return { meta: [{ title: `${t("Branches")} · Better Translation` }] }
   },
 })

@@ -9,7 +9,7 @@ import { CheckIcon, LinkIcon, UnlinkIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { T, useT, Var } from "better-translation/react"
-import { createTranslator } from "better-translation/runtime"
+import { createT } from "better-translation/runtime"
 
 import { authClient } from "@/lib/auth/client"
 
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/app/account/authentication/")({
   },
   component: AuthenticationPage,
   head: ({ match }) => {
-    const t = createTranslator(match.context.messages)
+    const t = createT(match.context.messages)
     return { meta: [{ title: `${t("Authentication")} · Better Translation` }] }
   },
 })

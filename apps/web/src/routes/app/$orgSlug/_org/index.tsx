@@ -7,7 +7,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowRightIcon, CloudCheck, PlusIcon } from "lucide-react"
 
 import { T, useT } from "better-translation/react"
-import { createTranslator } from "better-translation/runtime"
+import { createT } from "better-translation/runtime"
 
 import { ResourceMark } from "@/components/resource-mark"
 import { formatLocale } from "@/lib/locales"
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/app/$orgSlug/_org/")({
     await context.queryClient.ensureQueryData(projectsQueryOptions(params.orgSlug))
   },
   head: ({ match }) => {
-    const t = createTranslator(match.context.messages)
+    const t = createT(match.context.messages)
     return { meta: [{ title: `${t("Projects")} · Better Translation` }] }
   },
 })

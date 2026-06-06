@@ -10,7 +10,7 @@ export type Translator = (
 ) => string
 
 /** Creates a lightweight translator from a loaded Runtime bundle. */
-export function createTranslator(messages: Record<string, string>): Translator {
+export function createT(messages: Record<string, string>): Translator {
   return function t(message: string, valuesOrOptions?: MessageValues | TranslateOptions, options?: TranslateOptions) {
     const values = isTranslateOptions(valuesOrOptions) ? undefined : normalizeValues(valuesOrOptions)
     const resolvedOptions = isTranslateOptions(valuesOrOptions) ? valuesOrOptions : options

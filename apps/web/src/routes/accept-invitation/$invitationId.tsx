@@ -8,7 +8,7 @@ import { AlertCircleIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { T, useT, Var } from "better-translation/react"
-import { createTranslator } from "better-translation/runtime"
+import { createT } from "better-translation/runtime"
 
 import { authClient } from "@/lib/auth/client"
 
@@ -17,7 +17,7 @@ import { organizationInvitationQueryOptions } from "./-data"
 export const Route = createFileRoute("/accept-invitation/$invitationId")({
   component: AcceptInvitationPage,
   head: ({ match }) => {
-    const t = createTranslator(match.context.messages)
+    const t = createT(match.context.messages)
     return { meta: [{ title: `${t("Accept invitation")} · Better Translation` }] }
   },
 })

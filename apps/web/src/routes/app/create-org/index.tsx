@@ -4,7 +4,7 @@ import { useState } from "react"
 import * as z from "zod"
 
 import { T, useT } from "better-translation/react"
-import { createTranslator } from "better-translation/runtime"
+import { createT } from "better-translation/runtime"
 
 import { useAppForm } from "@/components/react-form"
 import { authClient } from "@/lib/auth/client"
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/app/create-org/")({
   },
   component: CreateOrgPage,
   head: ({ match }) => {
-    const t = createTranslator(match.context.messages)
+    const t = createT(match.context.messages)
     return { meta: [{ title: `${t("Create your organization")} · Better Translation` }] }
   },
 })

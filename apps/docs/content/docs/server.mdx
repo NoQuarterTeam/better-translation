@@ -4,7 +4,7 @@ description: Build a translator from a loaded message map for SSR, titles, and m
 ---
 
 For server-side rendering, document titles, or metadata, build a translator from the loaded
-Runtime bundle with `createTranslator`. It has the same call signature as `useT` but takes the
+Runtime bundle with `createT`. It has the same call signature as `useT` but takes the
 messages directly.
 
 ## Loading messages
@@ -79,7 +79,7 @@ export async function load() {
 </Tab>
 </Tabs>
 
-## createTranslator
+## createT
 
 Once messages are in route context, child routes can translate metadata without rendering a
 component.
@@ -87,7 +87,7 @@ component.
 ```tsx title="src/routes/projects.$projectId.tsx"
 import { createFileRoute } from "@tanstack/react-router"
 
-import { createTranslator } from "better-translation/runtime"
+import { createT } from "better-translation/runtime"
 
 export const Route = createFileRoute("/projects/$projectId")({
   loader: async ({ params }) => {
@@ -96,7 +96,7 @@ export const Route = createFileRoute("/projects/$projectId")({
     return { project }
   },
   head: ({ match }) => {
-    const t = createTranslator(match.context.messages)
+    const t = createT(match.context.messages)
     const { project } = match.loaderData
 
     return {

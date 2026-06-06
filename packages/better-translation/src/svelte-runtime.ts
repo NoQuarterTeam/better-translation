@@ -4,7 +4,7 @@ import type { Snippet } from "svelte"
 import type { Translator } from "./runtime.js"
 import type { TranslateOptions } from "./types.js"
 
-import { createTranslator } from "./runtime.js"
+import { createT } from "./runtime.js"
 
 const TRANSLATE_CONTEXT = "better-translation"
 
@@ -27,7 +27,7 @@ export function getMessages() {
 }
 
 export function getT(): Translator {
-  return createTranslator(getMessages())
+  return createT(getMessages())
 }
 
 export type { TranslateOptions }

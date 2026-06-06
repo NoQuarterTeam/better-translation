@@ -182,7 +182,7 @@ type RemoteRuntime = {
 
 ## Translation options
 
-`T`, `useT`, `getT`, and `createTranslator` accept the same message options.
+`T`, `useT`, `getT`, and `createT` accept the same message options.
 
 ```ts
 type TranslateOptions = {
@@ -286,11 +286,11 @@ Import these from `better-translation/svelte`.
 
 ## Runtime translator
 
-Import `createTranslator` from `better-translation/runtime`.
+Import `createT` from `better-translation/runtime`.
 
 <TypeTable
   type={{
-    createTranslator: {
+    createT: {
       type: "(messages: Record<string, string>) => Translator",
       description: "Creates a framework-neutral translator from a loaded Locale value map.",
     },
