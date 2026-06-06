@@ -9,11 +9,10 @@ messages directly.
 
 ## Loading messages
 
-In TanStack Start, load the active Locale's messages in route data, then translate metadata in
-the route `head` function.
+Load the active Locale's messages in route data before rendering the provider.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["TanStack Start", "SvelteKit"]} groupId="app-framework" persist>
+<Tab value="TanStack Start">
 
 ```tsx title="src/routes/__root.tsx"
 import { createRootRoute } from "@tanstack/react-router"
@@ -49,7 +48,7 @@ function RootComponent() {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="SvelteKit">
 
 ```ts title="src/routes/+layout.ts"
 import { loadMessages } from "better-translation/messages"

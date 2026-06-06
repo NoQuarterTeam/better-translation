@@ -31,15 +31,15 @@ virtual module by the plugin:
 Load messages before rendering the provider so the active Locale and its Runtime bundle are
 available to translated content.
 
+<Tabs items={["TanStack Start", "TanStack Router", "SvelteKit"]} groupId="app-framework" persist>
+<Tab value="TanStack Start">
+
 ```ts title="vite.config.ts"
 betterTranslation({
   locales: ["en", "es", "fr"],
   defaultLocale: "en",
 })
 ```
-
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
 
 ```tsx title="src/routes/__root.tsx"
 import { createRootRoute, Outlet } from "@tanstack/react-router"
@@ -71,7 +71,57 @@ function RootComponent() {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="TanStack Router">
+
+```ts title="vite.config.ts"
+betterTranslation({
+  locales: ["en", "es", "fr"],
+  defaultLocale: "en",
+  runtime: {
+    type: "local",
+    target: "public",
+  },
+})
+```
+
+```tsx title="src/routes/__root.tsx"
+import { createRootRoute, Outlet } from "@tanstack/react-router"
+
+import { loadMessages } from "better-translation/messages"
+import { TranslateProvider } from "better-translation/react"
+
+import { getLocale } from "./-locale"
+
+export const Route = createRootRoute({
+  beforeLoad: async () => {
+    const locale = getLocale()
+    const messages = await loadMessages(locale)
+
+    return { locale, messages }
+  },
+  component: RootComponent,
+})
+
+function RootComponent() {
+  const { messages } = Route.useRouteContext()
+
+  return (
+    <TranslateProvider messages={messages}>
+      <Outlet />
+    </TranslateProvider>
+  )
+}
+```
+
+</Tab>
+<Tab value="SvelteKit">
+
+```ts title="vite.config.ts"
+betterTranslation({
+  locales: ["en", "es", "fr"],
+  defaultLocale: "en",
+})
+```
 
 ```ts title="src/routes/+layout.ts"
 import { loadMessages } from "better-translation/messages"
@@ -100,13 +150,6 @@ export async function load() {
 
 </Tab>
 </Tabs>
-
-With the default `module` target, generated Locale files live under `src/lib/bt` by default
-and the virtual module imports the matching JSON file through Vite.
-
-For a browser-only TanStack Router app, use `runtime: { type: "local", target: "public" }`.
-The route code above stays the same, but the generated loader fetches
-`/bt/locales/${locale}.json` from Vite's public directory.
 
 ## One config, one loader
 

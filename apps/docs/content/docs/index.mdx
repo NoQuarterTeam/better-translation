@@ -49,8 +49,8 @@ yarn add better-translation
 
 Add the plugin to your Vite config, list your Locales, and choose the Default locale.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["TanStack Start", "TanStack Router", "SvelteKit"]} groupId="app-framework" persist>
+<Tab value="TanStack Start">
 
 ```ts title="vite.config.ts"
 import { defineConfig } from "vite"
@@ -71,7 +71,30 @@ export default defineConfig({
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="TanStack Router">
+
+```ts title="vite.config.ts"
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
+import { betterTranslation } from "better-translation/vite"
+
+export default defineConfig({
+  plugins: [
+    betterTranslation({
+      locales: ["en", "es", "fr"],
+      defaultLocale: "en",
+      runtime: {
+        type: "local",
+        target: "public",
+      },
+    }),
+    react(),
+  ],
+})
+```
+
+</Tab>
+<Tab value="SvelteKit">
 
 ```ts title="vite.config.ts"
 import { svelte } from "@sveltejs/vite-plugin-svelte"
@@ -92,21 +115,6 @@ export default defineConfig({
 </Tab>
 </Tabs>
 
-The default local runtime target is `module`, which works well for TanStack Start. If you are
-using TanStack Router in a browser-only Vite app, use the `public` target so the generated
-loader fetches Locale JSON from public assets.
-
-```ts title="vite.config.ts"
-betterTranslation({
-  locales: ["en", "es", "fr"],
-  defaultLocale: "en",
-  runtime: {
-    type: "local",
-    target: "public",
-  },
-})
-```
-
 <Callout title="Plugin order">
   Put `betterTranslation` before the framework plugin. It rewrites Translation markers before React or Svelte transforms see your
   code.
@@ -119,8 +127,8 @@ that virtual module, then wrap your app with `TranslateProvider`.
 
 Load messages before rendering your translated app, then pass them to the framework provider.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["TanStack Start", "TanStack Router", "SvelteKit"]} groupId="app-framework" persist>
+<Tab value="TanStack Start">
 
 ```tsx title="src/routes/__root.tsx"
 import { createRootRoute, Outlet } from "@tanstack/react-router"
@@ -152,7 +160,39 @@ function RootComponent() {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="TanStack Router">
+
+```tsx title="src/routes/__root.tsx"
+import { createRootRoute, Outlet } from "@tanstack/react-router"
+
+import { loadMessages } from "better-translation/messages"
+import { TranslateProvider } from "better-translation/react"
+
+import { getLocale } from "./-locale"
+
+export const Route = createRootRoute({
+  beforeLoad: async () => {
+    const locale = getLocale()
+    const messages = await loadMessages(locale)
+
+    return { locale, messages }
+  },
+  component: RootComponent,
+})
+
+function RootComponent() {
+  const { messages } = Route.useRouteContext()
+
+  return (
+    <TranslateProvider messages={messages}>
+      <Outlet />
+    </TranslateProvider>
+  )
+}
+```
+
+</Tab>
+<Tab value="SvelteKit">
 
 ```ts title="src/routes/+layout.ts"
 import { loadMessages } from "better-translation/messages"
@@ -190,8 +230,8 @@ Runtime bundle.
 Once the provider is in place, wrap UI copy where you author it. The plugin extracts this as a
 Message and gives it a stable lookup id.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["React", "Svelte"]} groupId="framework" persist>
+<Tab value="React">
 
 ```tsx title="CheckoutButton.tsx"
 import { T } from "better-translation/react"
@@ -206,7 +246,7 @@ export function CheckoutButton() {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="Svelte">
 
 ```svelte title="CheckoutButton.svelte"
 <script>

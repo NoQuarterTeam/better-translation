@@ -9,8 +9,8 @@ Use `T` for source copy that already lives as component children. At build time 
 plugin turns the source copy into a stable lookup id, so there is usually nothing to name and
 nothing to keep in sync by hand.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["React", "Svelte"]} groupId="framework" persist>
+<Tab value="React">
 
 ```tsx title="Checkout.tsx"
 import { T } from "better-translation/react"
@@ -25,7 +25,7 @@ export function Checkout() {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="Svelte">
 
 ```svelte title="Checkout.svelte"
 <script>
@@ -47,8 +47,8 @@ translations catch up.
 Use `T` around the smallest complete Message a translator should see. Keep surrounding markup
 outside when it is only layout, and keep meaningful inline content inside the Message.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["React", "Svelte"]} groupId="framework" persist>
+<Tab value="React">
 
 ```tsx title="ProjectEmptyState.tsx"
 import { T } from "better-translation/react"
@@ -68,7 +68,7 @@ export function ProjectEmptyState() {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="Svelte">
 
 ```svelte title="ProjectEmptyState.svelte"
 <script>
@@ -97,8 +97,8 @@ good translation.
 Context also disambiguates lookup ids. When the same source copy needs different Locale
 values, give each Message its own context.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["React", "Svelte"]} groupId="framework" persist>
+<Tab value="React">
 
 ```tsx title="ArchiveActions.tsx"
 import { T } from "better-translation/react"
@@ -118,7 +118,7 @@ export function ArchiveActions() {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="Svelte">
 
 ```svelte title="ArchiveActions.svelte"
 <script>
@@ -162,8 +162,8 @@ the generated lookup id.
 
 Use `id` when an integration needs a stable lookup id that does not depend on the source copy.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["React", "Svelte"]} groupId="framework" persist>
+<Tab value="React">
 
 ```tsx title="ExplicitId.tsx"
 import { T } from "better-translation/react"
@@ -174,7 +174,7 @@ export function ExplicitId() {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="Svelte">
 
 ```svelte title="ExplicitId.svelte"
 <script>

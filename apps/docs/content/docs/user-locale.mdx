@@ -71,8 +71,8 @@ export function resolveLocale(locale: string): Locale {
 }
 ```
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["TanStack Router", "SvelteKit"]} groupId="app-framework" persist>
+<Tab value="TanStack Router">
 
 ```tsx title="src/routes/$locale/__root.tsx"
 import { createFileRoute, Outlet } from "@tanstack/react-router"
@@ -104,7 +104,7 @@ function LocaleRoot() {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="SvelteKit">
 
 ```ts title="src/routes/[locale]/+layout.ts"
 import { loadMessages } from "better-translation/messages"
@@ -158,8 +158,8 @@ function resolveLocale(locale: unknown): Locale {
 The switcher should update whatever source owns the Locale, then cause route data to reload.
 For the cookie-backed version, set the cookie and invalidate the router.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["TanStack Router", "SvelteKit"]} groupId="app-framework" persist>
+<Tab value="TanStack Router">
 
 ```tsx title="src/components/locale-switcher.tsx"
 import { useRouteContext, useRouter } from "@tanstack/react-router"
@@ -195,7 +195,7 @@ export function LocaleSwitcher() {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="SvelteKit">
 
 ```svelte title="src/components/LocaleSwitcher.svelte"
 <script lang="ts">

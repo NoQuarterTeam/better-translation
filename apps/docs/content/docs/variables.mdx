@@ -11,8 +11,8 @@ Locale needs them.
 Use `Var` inside `T` to interpolate runtime values without breaking the translatable
 sentence. The placeholder name is part of the Message.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["React", "Svelte"]} groupId="framework" persist>
+<Tab value="React">
 
 ```tsx title="Greeting.tsx"
 import { T, Var } from "better-translation/react"
@@ -27,7 +27,7 @@ export function Greeting({ name, date }: { name: string; date: string }) {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="Svelte">
 
 ```svelte title="Greeting.svelte"
 <script lang="ts">
@@ -49,8 +49,8 @@ and `date` placeholders and fills the values at render time.
 
 You can also pass the placeholder name explicitly when the value is easier to read as children.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["React", "Svelte"]} groupId="framework" persist>
+<Tab value="React">
 
 ```tsx title="MessageList.tsx"
 import { T, Var } from "better-translation/react"
@@ -65,7 +65,7 @@ export function MessageList({ count }: { count: number }) {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="Svelte">
 
 ```svelte title="MessageList.svelte"
 <script lang="ts">
@@ -85,8 +85,8 @@ export function MessageList({ count }: { count: number }) {
 `Var` values can be formatted values, not just raw source strings. Keep formatting in the
 placeholder value when it belongs to the runtime value.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["React", "Svelte"]} groupId="framework" persist>
+<Tab value="React">
 
 ```tsx title="WelcomeMessage.tsx"
 import { T, Var } from "better-translation/react"
@@ -101,7 +101,7 @@ export function WelcomeMessage({ name, plan }: { name: string; plan: string }) {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="Svelte">
 
 ```svelte title="WelcomeMessage.svelte"
 <script lang="ts">
@@ -125,8 +125,8 @@ runtime through the placeholders, so translators can still reorder the sentence.
 
 For non-component strings, use `{name}` placeholders and pass values as the second argument.
 
-<Tabs items={["react", "svelte"]} groupId="framework" persist>
-<Tab value="react">
+<Tabs items={["React", "Svelte"]} groupId="framework" persist>
+<Tab value="React">
 
 ```tsx title="MessageSearch.tsx"
 import { useT } from "better-translation/react"
@@ -139,7 +139,7 @@ export function MessageSearch({ count }: { count: number }) {
 ```
 
 </Tab>
-<Tab value="svelte">
+<Tab value="Svelte">
 
 ```svelte title="MessageSearch.svelte"
 <script lang="ts">
