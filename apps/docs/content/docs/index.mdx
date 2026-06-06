@@ -272,6 +272,81 @@ bun run dev
 The default `module` target writes files under `src/lib/bt`. The `public` target writes files
 under Vite's public directory, at `/bt` by default.
 
+## Bonus: auto-fill Locale values
+
+Local mode can fill missing non-default Locale values during dev with a `translate` function.
+Use the built-in AI helper, or call your own translation API.
+
+<Tabs items={["AI helper", "Custom API"]} groupId="translator" persist>
+<Tab value="AI helper">
+
+```ts title="vite.config.ts"
+import { defineConfig } from "vite"
+import { betterTranslation } from "better-translation/vite"
+import { createAiTranslate } from "better-translation/ai"
+
+export default defineConfig({
+  plugins: [
+    betterTranslation({
+      locales: ["en", "es", "fr"],
+      defaultLocale: "en",
+      runtime: {
+        type: "local",
+        translate: createAiTranslate({
+          prompt: "Friendly, concise product UI copy.",
+        }),
+      },
+    }),
+  ],
+})
+```
+
+</Tab>
+<Tab value="Custom API">
+
+```ts title="vite.config.ts"
+import { defineConfig } from "vite"
+import { betterTranslation } from "better-translation/vite"
+
+export default defineConfig({
+  plugins: [
+    betterTranslation({
+      locales: ["en", "es", "fr"],
+      defaultLocale: "en",
+      runtime: {
+        type: "local",
+        translate: async (messages, locale) => {
+          const response = await fetch("https://translations.example.com/api/translate", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              locale,
+              messages: messages.map(({ id, text, meta, placeholders }) => ({
+                id,
+                text,
+                context: meta.context,
+                placeholders,
+              })),
+            }),
+          })
+
+          if (!response.ok) throw new Error("Translation API request failed")
+
+          const data = (await response.json()) as { values: Record<string, string> }
+          return data.values
+        },
+      },
+    }),
+  ],
+})
+```
+
+</Tab>
+</Tabs>
+
+The plugin writes generated values into your local Locale files and cache. Production local
+builds never call `translate`; they only check that committed Locale files are complete.
+
 <Cards>
   <Card title="How it works" href="/how-it-works" description="The extraction and runtime model behind the plugin." />
   <Card
