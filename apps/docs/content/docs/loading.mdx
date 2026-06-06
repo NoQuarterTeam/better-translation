@@ -7,7 +7,8 @@ The Vite plugin generates the virtual `better-translation/messages` module from 
 config. Import `loadMessages` from that module to load a flat lookup id map for a Locale, then
 pass that map to `TranslateProvider`.
 
-Everything below `TranslateProvider` can use `T`, `Var`, and `useT`.
+Everything below `TranslateProvider` can use the framework runtime helpers such as `T`, `Var`,
+`useT`, or `getT`.
 
 ```ts title="messages.ts"
 import { loadMessages, locales, type Locale } from "better-translation/messages"
@@ -27,9 +28,8 @@ virtual module by the plugin:
 
 ## App setup
 
-Use TanStack Router route data to load messages before rendering the provider. `beforeLoad`
-can be async, so the active Locale and its Runtime bundle can be resolved before the route
-tree renders.
+Load messages before rendering the provider so the active Locale and its Runtime bundle are
+available to translated content.
 
 ```ts title="vite.config.ts"
 betterTranslation({
@@ -37,6 +37,9 @@ betterTranslation({
   defaultLocale: "en",
 })
 ```
+
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
 
 ```tsx title="src/routes/__root.tsx"
 import { createRootRoute, Outlet } from "@tanstack/react-router"
@@ -66,6 +69,37 @@ function RootComponent() {
   )
 }
 ```
+
+</Tab>
+<Tab value="svelte">
+
+```ts title="src/routes/+layout.ts"
+import { loadMessages } from "better-translation/messages"
+
+import { getLocale } from "./locale"
+
+export async function load() {
+  const locale = getLocale()
+  const messages = await loadMessages(locale)
+
+  return { locale, messages }
+}
+```
+
+```svelte title="src/routes/+layout.svelte"
+<script lang="ts">
+  import { TranslateProvider } from "better-translation/svelte"
+
+  let { data, children } = $props()
+</script>
+
+<TranslateProvider messages={data.messages}>
+  {@render children()}
+</TranslateProvider>
+```
+
+</Tab>
+</Tabs>
 
 With the default `module` target, generated Locale files live under `src/lib/bt` by default
 and the virtual module imports the matching JSON file through Vite.

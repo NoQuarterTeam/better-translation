@@ -27,6 +27,9 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
   "oxc.fmt.configPath": "./vite.config.ts",
   "oxc.configPath": "./vite.config.ts",
   "oxc.path.oxfmt": "node_modules/vite-plus/bin/oxfmt",

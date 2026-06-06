@@ -1,12 +1,15 @@
 ---
-title: The useT hook
+title: Plain string translator
 description: Translate plain strings for attributes like aria-label, placeholder, and title.
 ---
 
-## useT hook
+## Translator function
 
-Use `useT` for copy that must be returned as a plain string, such as labels, placeholders,
-document titles, form errors, and toast messages.
+Use the framework translator function for copy that must be returned as a plain string, such
+as labels, placeholders, document titles, form errors, and toast messages.
+
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
 
 ```tsx title="SearchBar.tsx"
 import { useT } from "better-translation/react"
@@ -18,6 +21,22 @@ export function SearchBar() {
 }
 ```
 
+</Tab>
+<Tab value="svelte">
+
+```svelte title="SearchBar.svelte"
+<script>
+  import { getT } from "better-translation/svelte"
+
+  const t = getT()
+</script>
+
+<input aria-label={t("Search Projects")} placeholder={t("Search...")} />
+```
+
+</Tab>
+</Tabs>
+
 ## Context
 
 Pass `context` as the second argument to give translation tools more information about a
@@ -27,8 +46,9 @@ plain string. Use it for copy that is short, ambiguous, or needs a specific tone
 t("Archive", { context: "Verb on a button" })
 ```
 
-Context also disambiguates lookup ids. `T` and `useT` share the same lookup id behavior, so
-the same source copy and options resolve to the same Message wherever they appear.
+Context also disambiguates lookup ids. `T`, `useT`, and `getT` share the same lookup id
+behavior, so the same source copy and options resolve to the same Message wherever they
+appear.
 
 For Messages with runtime values, see [Variables](/variables).
 
@@ -47,7 +67,7 @@ For Messages with runtime values, see [Variables](/variables).
   }}
 />
 
-Use `id` when a non-JSX Message needs a lookup id owned by your code.
+Use `id` when a plain-string Message needs a lookup id owned by your code.
 
 ```ts title="usage.ts"
 t("Pay now", { id: "billing.checkout.submit" })

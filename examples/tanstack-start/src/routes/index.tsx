@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 
 import { T, Var } from "better-translation/react"
-import { createTranslator } from "better-translation/server"
+import { createTranslator } from "better-translation/runtime"
 
 import { LocaleSwitcher } from "@/components/locale-switcher"
 
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
 })
 
 const name = "Jack"
-const date = new Date().toLocaleDateString()
+const date = formatExampleDate(new Date())
 
 function HomePage() {
   return (
@@ -46,4 +46,8 @@ function HomePage() {
       </p>
     </div>
   )
+}
+
+function formatExampleDate(date: Date) {
+  return date.toISOString().slice(0, 10)
 }

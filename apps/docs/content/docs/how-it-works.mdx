@@ -8,7 +8,7 @@ import { ScanIcon, PackageIcon, SparklesIcon, LanguagesIcon } from "lucide-react
 
 The Vite plugin scans your source for Translation markers at build time, gives each Message a
 stable lookup id, and keeps your Locale values in sync. At runtime your app loads a flat map
-of translated strings for the active Locale, so your components keep rendering normal React.
+of translated strings for the active Locale, so your components keep rendering normal UI.
 
 <Cards>
   <Card
@@ -35,9 +35,9 @@ of translated strings for the active Locale, so your components keep rendering n
 
 ## Extraction
 
-Better Translation looks for markers such as `T`, `useT`, and `t()` inside your configured
-source roots. Each discovered Message records the Default locale text, placeholders, optional
-context, and source locations in the private Manifest.
+Better Translation looks for markers such as `T`, `useT`, `getT`, and `t()` inside your
+configured source roots. Each discovered Message records the Default locale text,
+placeholders, optional context, and source locations in the private Manifest.
 
 The lookup id is stable, so moving a Message through the codebase does not create a new runtime
 key. If two Messages need different translations, add context or an explicit id to separate

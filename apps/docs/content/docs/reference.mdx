@@ -1,6 +1,6 @@
 ---
 title: API reference
-description: The configurable Better Translation API surface for the Vite plugin, runtime helpers, React markers, and local editor.
+description: The configurable Better Translation API surface for the Vite plugin, runtime helpers, React and Svelte markers, and local editor.
 ---
 
 This page lists the developer-facing APIs you configure or import from Better Translation.
@@ -182,7 +182,7 @@ type RemoteRuntime = {
 
 ## Translation options
 
-`T`, `useT`, and `createTranslator` accept the same message options.
+`T`, `useT`, `getT`, and `createTranslator` accept the same message options.
 
 ```ts
 type TranslateOptions = {
@@ -224,7 +224,7 @@ Import these from `better-translation/react`.
     },
     useT: {
       type: "() => (message: string, valuesOrOptions?, options?) => string",
-      description: "Returns a translator function for props, labels, titles, and other non-JSX positions.",
+      description: "Returns a translator function for props, labels, titles, and other plain-string positions.",
     },
     useMessages: {
       type: "() => Record<string, string>",
@@ -245,17 +245,56 @@ const t = useT()
 t("Invite {email}", { email: user.email }, { context: "invitation title" })
 ```
 
-## Server runtime
+## Svelte runtime
 
-Import `createTranslator` from `better-translation/server`.
+Import these from `better-translation/svelte`.
+
+<TypeTable
+  type={{
+    TranslateProvider: {
+      type: "(props: { messages: Record<string, string>; children?: Snippet }) => Component",
+      description: "Provides loaded Locale values to translated Svelte content.",
+    },
+    T: {
+      type: "(props: { id?: string; message?: string; values?: Record<string, unknown>; children?: Snippet }) => Component",
+      description: "Marks Svelte children as a translatable Message and renders the active Locale value.",
+    },
+    Var: {
+      type: "Component<Record<string, unknown>>",
+      description: "Marks a runtime value for placeholder interpolation inside T content.",
+    },
+    getT: {
+      type: "() => (message: string, valuesOrOptions?, options?) => string",
+      description: "Returns a translator function for attributes, labels, titles, and other non-component positions.",
+    },
+    getMessages: {
+      type: "() => Record<string, string>",
+      description: "Returns the raw Locale value map from the current TranslateProvider.",
+    },
+  }}
+/>
+
+```svelte
+<script>
+  import { T, Var } from "better-translation/svelte"
+</script>
+
+<T>
+  Hello <Var name={user.name} />
+</T>
+```
+
+## Runtime translator
+
+Import `createTranslator` from `better-translation/runtime`.
 
 <TypeTable
   type={{
     createTranslator: {
-      type: "(messages: Record<string, string>) => ServerTranslator",
-      description: "Creates a server-side translator from a loaded Locale value map.",
+      type: "(messages: Record<string, string>) => Translator",
+      description: "Creates a framework-neutral translator from a loaded Locale value map.",
     },
-    ServerTranslator: {
+    Translator: {
       type: "(message: string, valuesOrOptions?, options?) => string",
       description: "Translates a source Message and interpolates string values.",
     },

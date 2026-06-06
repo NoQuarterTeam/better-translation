@@ -9,7 +9,7 @@ import { CheckIcon, LinkIcon, UnlinkIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { T, useT, Var } from "better-translation/react"
-import { createTranslator } from "better-translation/server"
+import { createTranslator } from "better-translation/runtime"
 
 import { authClient } from "@/lib/auth/client"
 

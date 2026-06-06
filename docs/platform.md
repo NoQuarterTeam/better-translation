@@ -7,7 +7,8 @@ This document records the intended product and platform behavior for Better Tran
 The repo currently supports a local bundle-first workflow.
 
 - `packages/better-translation` publishes the Vite plugin and runtime helpers.
-- `apps/web` is the hosted app scaffold and current example surface.
+- `apps/web` is the hosted app scaffold.
+- `examples/tanstack-start` and `examples/svelte-kit` are local-first Consumer app examples.
 - The plugin scans configured source roots for markers such as `t("...")`, `useT()`, and `<T>...</T>`.
 - The plugin generates stable lookup ids and writes local artifacts.
 - Missing non-default Locale values can be filled with a custom async `translate()` function, including the built-in AI helper.
@@ -37,7 +38,7 @@ Generated local snapshots are fallbacks, not a second source of truth.
 - Manifest creation from source code.
 - Local runtime artifacts.
 - Virtual runtime loaders.
-- React and server runtime helpers.
+- React, Svelte, and framework-neutral runtime helpers.
 - Translation callback contracts and cache behavior.
 
 Hosted-service behavior belongs in `apps/web` or a service layer unless it is part of the published package contract.

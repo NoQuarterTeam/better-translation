@@ -8,8 +8,11 @@ Locale needs them.
 
 ## T component
 
-Use `Var` inside `T` to interpolate JSX values without breaking the translatable sentence. The
-placeholder name is part of the Message.
+Use `Var` inside `T` to interpolate runtime values without breaking the translatable
+sentence. The placeholder name is part of the Message.
+
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
 
 ```tsx title="Greeting.tsx"
 import { T, Var } from "better-translation/react"
@@ -23,10 +26,31 @@ export function Greeting({ name, date }: { name: string; date: string }) {
 }
 ```
 
+</Tab>
+<Tab value="svelte">
+
+```svelte title="Greeting.svelte"
+<script lang="ts">
+  import { T, Var } from "better-translation/svelte"
+
+  let { name, date }: { name: string; date: string } = $props()
+</script>
+
+<T>
+  Hello <Var name={name} />, the date is <Var date={date} />!
+</T>
+```
+
+</Tab>
+</Tabs>
+
 The prop key becomes the placeholder name. The example above extracts the Message with `name`
 and `date` placeholders and fills the values at render time.
 
 You can also pass the placeholder name explicitly when the value is easier to read as children.
+
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
 
 ```tsx title="MessageList.tsx"
 import { T, Var } from "better-translation/react"
@@ -40,8 +64,29 @@ export function MessageList({ count }: { count: number }) {
 }
 ```
 
-`Var` values can be React elements, not just raw strings or numbers. Keep inline markup inside
-the placeholder value when the styling belongs to the runtime value.
+</Tab>
+<Tab value="svelte">
+
+```svelte title="MessageList.svelte"
+<script lang="ts">
+  import { T, Var } from "better-translation/svelte"
+
+  let { count }: { count: number } = $props()
+</script>
+
+<T>
+  <Var name="count" value={count} /> Messages need review
+</T>
+```
+
+</Tab>
+</Tabs>
+
+`Var` values can be formatted values, not just raw source strings. Keep formatting in the
+placeholder value when it belongs to the runtime value.
+
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
 
 ```tsx title="WelcomeMessage.tsx"
 import { T, Var } from "better-translation/react"
@@ -55,12 +100,33 @@ export function WelcomeMessage({ name, plan }: { name: string; plan: string }) {
 }
 ```
 
-The example above extracts `Welcome {name} to the {plan} plan`. The `b` elements are
-rendered at runtime through the placeholders, so translators can still reorder the sentence.
+</Tab>
+<Tab value="svelte">
 
-## useT hook
+```svelte title="WelcomeMessage.svelte"
+<script lang="ts">
+  import { T, Var } from "better-translation/svelte"
 
-For non-JSX strings, use `{name}` placeholders and pass values as the second argument.
+  let { name, plan }: { name: string; plan: string } = $props()
+</script>
+
+<T>
+  Welcome <Var name={name} /> to the <Var plan={plan} /> plan
+</T>
+```
+
+</Tab>
+</Tabs>
+
+The example above extracts `Welcome {name} to the {plan} plan`. The values are rendered at
+runtime through the placeholders, so translators can still reorder the sentence.
+
+## Plain strings
+
+For non-component strings, use `{name}` placeholders and pass values as the second argument.
+
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
 
 ```tsx title="MessageSearch.tsx"
 import { useT } from "better-translation/react"
@@ -72,10 +138,28 @@ export function MessageSearch({ count }: { count: number }) {
 }
 ```
 
+</Tab>
+<Tab value="svelte">
+
+```svelte title="MessageSearch.svelte"
+<script lang="ts">
+  import { getT } from "better-translation/svelte"
+
+  let { count }: { count: number } = $props()
+
+  const t = getT()
+</script>
+
+<input aria-label={t("Search {count} Messages", { count })} placeholder={t("Search Messages")} />
+```
+
+</Tab>
+</Tabs>
+
 When a Message has both values and context, pass context as the third argument.
 
 ```ts title="usage.ts"
 t("Moved {count} Messages", { count }, { context: "Bulk action toast" })
 ```
 
-Use `Var` only with `T`. Use `{name}` placeholders with `useT` and the server translator.
+Use `Var` only with `T`. Use `{name}` placeholders with `useT`, `getT`, and the runtime translator.

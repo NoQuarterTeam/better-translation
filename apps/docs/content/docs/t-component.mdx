@@ -1,13 +1,16 @@
 ---
 title: The T component
-description: Wrap JSX copy in T and the plugin gives it a stable lookup id at build time.
+description: Wrap component copy in T and the plugin gives it a stable lookup id at build time.
 ---
 
 ## T component
 
-Use `T` for source copy that already lives as JSX children. At build time the Vite plugin
-turns the source copy into a stable lookup id, so there is usually nothing to name and
+Use `T` for source copy that already lives as component children. At build time the Vite
+plugin turns the source copy into a stable lookup id, so there is usually nothing to name and
 nothing to keep in sync by hand.
+
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
 
 ```tsx title="Checkout.tsx"
 import { T } from "better-translation/react"
@@ -21,12 +24,31 @@ export function Checkout() {
 }
 ```
 
+</Tab>
+<Tab value="svelte">
+
+```svelte title="Checkout.svelte"
+<script>
+  import { T } from "better-translation/svelte"
+</script>
+
+<button>
+  <T>Pay now</T>
+</button>
+```
+
+</Tab>
+</Tabs>
+
 At runtime `T` looks up the translated value for the active Locale and renders it. If no value
 exists yet it falls back to the original source copy, so your UI is never blank while
 translations catch up.
 
 Use `T` around the smallest complete Message a translator should see. Keep surrounding markup
 outside when it is only layout, and keep meaningful inline content inside the Message.
+
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
 
 ```tsx title="ProjectEmptyState.tsx"
 import { T } from "better-translation/react"
@@ -45,6 +67,27 @@ export function ProjectEmptyState() {
 }
 ```
 
+</Tab>
+<Tab value="svelte">
+
+```svelte title="ProjectEmptyState.svelte"
+<script>
+  import { T } from "better-translation/svelte"
+</script>
+
+<section>
+  <h1>
+    <T>No Projects yet</T>
+  </h1>
+  <p>
+    <T>Create your first Project to start syncing Messages.</T>
+  </p>
+</section>
+```
+
+</Tab>
+</Tabs>
+
 ## Context
 
 Use `context` to tell translation tools what the Message means, where it appears, or what tone
@@ -53,6 +96,9 @@ good translation.
 
 Context also disambiguates lookup ids. When the same source copy needs different Locale
 values, give each Message its own context.
+
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
 
 ```tsx title="ArchiveActions.tsx"
 import { T } from "better-translation/react"
@@ -71,18 +117,37 @@ export function ArchiveActions() {
 }
 ```
 
+</Tab>
+<Tab value="svelte">
+
+```svelte title="ArchiveActions.svelte"
+<script>
+  import { T } from "better-translation/svelte"
+</script>
+
+<button>
+  <T context="Verb, archives the current Branch">Archive</T>
+</button>
+<h1>
+  <T context="Noun, page title for archived Branches">Archive</T>
+</h1>
+```
+
+</Tab>
+</Tabs>
+
 The two `Archive` Messages above can have different Locale values because context is part of
 the generated lookup id.
 
 ## Props
 
-`T` accepts the source JSX as children and two optional props.
+`T` accepts the source component content as children and two optional author-facing props.
 
 <TypeTable
   type={{
     children: {
-      type: "ReactNode",
-      description: "The source-language JSX content to translate.",
+      type: "ReactNode | Snippet",
+      description: "The source-language component content to translate.",
     },
     context: {
       type: "string",
@@ -97,6 +162,9 @@ the generated lookup id.
 
 Use `id` when an integration needs a stable lookup id that does not depend on the source copy.
 
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
+
 ```tsx title="ExplicitId.tsx"
 import { T } from "better-translation/react"
 
@@ -104,3 +172,17 @@ export function ExplicitId() {
   return <T id="billing.checkout.submit">Pay now</T>
 }
 ```
+
+</Tab>
+<Tab value="svelte">
+
+```svelte title="ExplicitId.svelte"
+<script>
+  import { T } from "better-translation/svelte"
+</script>
+
+<T id="billing.checkout.submit">Pay now</T>
+```
+
+</Tab>
+</Tabs>

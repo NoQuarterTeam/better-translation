@@ -1,5 +1,5 @@
 ---
-title: Server code
+title: Runtime translator
 description: Build a translator from a loaded message map for SSR, titles, and metadata.
 ---
 
@@ -11,6 +11,9 @@ messages directly.
 
 In TanStack Start, load the active Locale's messages in route data, then translate metadata in
 the route `head` function.
+
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
 
 ```tsx title="src/routes/__root.tsx"
 import { createRootRoute } from "@tanstack/react-router"
@@ -45,15 +48,46 @@ function RootComponent() {
 }
 ```
 
+</Tab>
+<Tab value="svelte">
+
+```ts title="src/routes/+layout.ts"
+import { loadMessages } from "better-translation/messages"
+
+import { getLocale } from "./locale"
+
+export async function load() {
+  const locale = getLocale()
+  const messages = await loadMessages(locale)
+
+  return { locale, messages }
+}
+```
+
+```svelte title="src/routes/+layout.svelte"
+<script lang="ts">
+  import { TranslateProvider } from "better-translation/svelte"
+
+  let { data, children } = $props()
+</script>
+
+<TranslateProvider messages={data.messages}>
+  {@render children()}
+</TranslateProvider>
+```
+
+</Tab>
+</Tabs>
+
 ## createTranslator
 
 Once messages are in route context, child routes can translate metadata without rendering a
-React component.
+component.
 
 ```tsx title="src/routes/projects.$projectId.tsx"
 import { createFileRoute } from "@tanstack/react-router"
 
-import { createTranslator } from "better-translation/server"
+import { createTranslator } from "better-translation/runtime"
 
 export const Route = createFileRoute("/projects/$projectId")({
   loader: async ({ params }) => {
@@ -80,7 +114,7 @@ export const Route = createFileRoute("/projects/$projectId")({
 
 ## Options
 
-The server translator accepts the same `id` and `context` options as `useT`. Use `context` to
+The runtime translator accepts the same `id` and `context` options as `useT`. Use `context` to
 give translation tools more information about server-rendered copy, metadata, and titles; it
 also disambiguates generated lookup ids.
 

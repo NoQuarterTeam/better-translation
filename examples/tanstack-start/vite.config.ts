@@ -13,9 +13,8 @@ export default defineConfig({
       locales: ["en", "nl", "es"],
       defaultLocale: "en",
       runtime: {
-        type: "remote",
-        projectId: "prj_rdbk7ts1qriiqpz9glzm537t",
-        endpoint: process.env.BETTER_TRANSLATION_ENDPOINT,
+        type: "local",
+        editor: true,
       },
     }),
     // devtools(),

@@ -11,7 +11,7 @@ import { toast } from "sonner"
 import * as z from "zod"
 
 import { T, useT } from "better-translation/react"
-import { createTranslator } from "better-translation/server"
+import { createTranslator } from "better-translation/runtime"
 
 import { useAppForm } from "@/components/react-form"
 import { imageUploadAccept, imageUploadMaxBytes, imageUploadMimeTypes } from "@/lib/image-upload"

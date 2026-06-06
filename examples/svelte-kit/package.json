@@ -1,0 +1,25 @@
+{
+  "name": "@better-translation/example-svelte-kit",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --host",
+    "build": "bun --cwd ../.. --filter better-translation build && vite build",
+    "preview": "vite preview --host",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit"
+  },
+  "dependencies": {
+    "better-translation": "workspace:*",
+    "svelte": "^5.56.2"
+  },
+  "devDependencies": {
+    "@better-translation/tsconfig": "workspace:*",
+    "@sveltejs/adapter-auto": "^7.0.0",
+    "@sveltejs/kit": "^2.49.1",
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "svelte-check": "^4.3.4",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  },
+  "portless": "svelte-kit.bt"
+}

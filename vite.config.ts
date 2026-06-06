@@ -5,6 +5,7 @@ const ignorePatterns = [
   ".cache/",
   ".turbo/",
   ".output/",
+  ".svelte-kit/",
   "bun.lock",
   "routeTree.gen.ts",
   ".tanstack-start/",

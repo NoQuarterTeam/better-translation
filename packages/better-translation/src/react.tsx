@@ -3,6 +3,7 @@ import { Children, createContext, isValidElement, use, useMemo, type ReactNode }
 import type { TranslateOptions } from "./types.js"
 
 import { getCallMessageId, getMessageId } from "./message-id.js"
+import { isTranslateOptions, normalizeValues } from "./runtime.js"
 
 interface TranslateContextValue {
   messages: Record<string, string>
@@ -135,15 +136,4 @@ function getRuntimeVarEntry(props: VarProps) {
 
   const [name, value] = entries[0]!
   return { name, value }
-}
-
-function isTranslateOptions(value?: MessageValues | TranslateOptions): value is TranslateOptions {
-  if (!value || Array.isArray(value)) return false
-  return Object.keys(value).every((key) => key === "id" || key === "context")
-}
-
-function normalizeValues(values?: MessageValues) {
-  if (!values) return undefined
-  const entries = Object.entries(values).map(([name, value]) => [name, String(value)] as const)
-  return entries.length > 0 ? Object.fromEntries(entries) : undefined
 }

@@ -21,12 +21,13 @@ The long-term goal is a hosted service where Projects sync extracted Messages to
 - Read `CONTEXT.md` before naming product concepts. Preserve its terms exactly.
 - Read `docs/platform.md` before changing plugin sync, runtime loading, branch behavior, or hosted-service behavior.
 - Inspect the current code before assuming the hosted-service direction is implemented.
+- Preserve changes you did not make. The user often edits files at the same time, so do not revert or overwrite unrelated work unless you are sure it is accidental and blocking the task.
 - Keep `CONTEXT.md` free of implementation details, roadmap notes, and design decisions.
 - Put product/platform behavior in `docs/platform.md` unless it is better captured as an ADR.
 
 ## Coding Guidance
 
-- Use Bun for repo commands. The repo declares `bun@1.3.13` and Node `>=24`.
+- Use Bun for repo commands.
 - Prefer existing package boundaries over adding new cross-cutting abstractions.
 - Keep `packages/better-translation` focused on the library/plugin surface.
 - Keep hosted-service behavior in the app/service layer unless it truly belongs in the published package.

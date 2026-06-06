@@ -22,9 +22,9 @@ calling `loadMessages`.
 ## Cookie-backed Locale
 
 In a TanStack Start app, a cookie is a good default because the server can resolve it before
-loading the Runtime bundle. This example mirrors the shape used by Better Translation's own
-web app: read the cookie in a server function, set it from a switcher, then invalidate the
-router so root route data reloads.
+loading the Runtime bundle. This example mirrors the shape used by the TanStack Start example:
+read the cookie in a server function, set it from a switcher, then invalidate the router so
+root route data reloads.
 
 ```ts title="src/routes/-locale.ts"
 import { createServerFn } from "@tanstack/react-start"
@@ -71,6 +71,9 @@ export function resolveLocale(locale: string): Locale {
 }
 ```
 
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
+
 ```tsx title="src/routes/$locale/__root.tsx"
 import { createFileRoute, Outlet } from "@tanstack/react-router"
 
@@ -100,6 +103,37 @@ function LocaleRoot() {
 }
 ```
 
+</Tab>
+<Tab value="svelte">
+
+```ts title="src/routes/[locale]/+layout.ts"
+import { loadMessages } from "better-translation/messages"
+
+import { resolveLocale } from "./-locale"
+
+export async function load({ params }) {
+  const locale = resolveLocale(params.locale)
+  const messages = await loadMessages(locale)
+
+  return { locale, messages }
+}
+```
+
+```svelte title="src/routes/[locale]/+layout.svelte"
+<script lang="ts">
+  import { TranslateProvider } from "better-translation/svelte"
+
+  let { data, children } = $props()
+</script>
+
+<TranslateProvider messages={data.messages}>
+  {@render children()}
+</TranslateProvider>
+```
+
+</Tab>
+</Tabs>
+
 ## Account-backed Locale
 
 For signed-in users, store the preferred Locale on the user profile. The root route can read
@@ -123,6 +157,9 @@ function resolveLocale(locale: unknown): Locale {
 
 The switcher should update whatever source owns the Locale, then cause route data to reload.
 For the cookie-backed version, set the cookie and invalidate the router.
+
+<Tabs items={["react", "svelte"]} groupId="framework" persist>
+<Tab value="react">
 
 ```tsx title="src/components/locale-switcher.tsx"
 import { useRouteContext, useRouter } from "@tanstack/react-router"
@@ -156,3 +193,33 @@ export function LocaleSwitcher() {
   )
 }
 ```
+
+</Tab>
+<Tab value="svelte">
+
+```svelte title="src/components/LocaleSwitcher.svelte"
+<script lang="ts">
+  import { locales, type Locale } from "better-translation/messages"
+
+  let { locale, setLocale }: { locale: Locale; setLocale: (locale: Locale) => Promise<void> } = $props()
+
+  function formatLocale(locale: string) {
+    return new Intl.DisplayNames([locale], { type: "language" }).of(locale) ?? locale
+  }
+</script>
+
+<select
+  aria-label="Select locale"
+  value={locale}
+  onchange={(event) => void setLocale((event.currentTarget as HTMLSelectElement).value as Locale)}
+>
+  {#each locales as option}
+    <option value={option}>
+      {formatLocale(option)}
+    </option>
+  {/each}
+</select>
+```
+
+</Tab>
+</Tabs>

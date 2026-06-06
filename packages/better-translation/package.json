@@ -22,9 +22,13 @@
       "import": "./dist/react.mjs",
       "types": "./dist/react.d.mts"
     },
-    "./server": {
-      "import": "./dist/server.mjs",
-      "types": "./dist/server.d.mts"
+    "./runtime": {
+      "import": "./dist/runtime.mjs",
+      "types": "./dist/runtime.d.mts"
+    },
+    "./svelte": {
+      "import": "./dist/svelte.mjs",
+      "types": "./dist/svelte.d.mts"
     },
     "./ai": {
       "import": "./dist/ai.mjs",
@@ -49,16 +53,20 @@
   "devDependencies": {
     "@better-translation/locale-editor": "workspace:*",
     "@better-translation/tsconfig": "workspace:*",
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "svelte": "^5.56.2",
     "typescript": "catalog:",
     "vite": "catalog:"
   },
   "peerDependencies": {
+    "@sveltejs/vite-plugin-svelte": ">=7",
     "react": ">=19",
     "react-dom": ">=19",
+    "svelte": ">=5",
     "vite": ">=8"
   },
   "peerDependenciesMeta": {
@@ -66,6 +74,12 @@
       "optional": true
     },
     "react-dom": {
+      "optional": true
+    },
+    "@sveltejs/vite-plugin-svelte": {
+      "optional": true
+    },
+    "svelte": {
       "optional": true
     }
   }

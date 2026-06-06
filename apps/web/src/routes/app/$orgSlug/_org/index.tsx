@@ -7,7 +7,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowRightIcon, CloudCheck, PlusIcon } from "lucide-react"
 
 import { T, useT } from "better-translation/react"
-import { createTranslator } from "better-translation/server"
+import { createTranslator } from "better-translation/runtime"
 
 import { ResourceMark } from "@/components/resource-mark"
 import { formatLocale } from "@/lib/locales"

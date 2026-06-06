@@ -9,7 +9,7 @@ Add the plugin, mark UI copy in your source, and Better Translation generates fl
 - A Vite plugin that scans source files for Translation markers.
 - Stable lookup ids generated from Message text, placeholders, and context.
 - Local Runtime bundles as flat `id -> translated string` JSON objects.
-- React helpers for marking JSX and reading Locale values at runtime.
+- React and Svelte helpers for marking UI copy and reading Locale values at runtime.
 - Optional dev-time translation through your own async `translate()` function.
 - Optional dev-only local editor for local Locale values.
 
@@ -18,6 +18,7 @@ Add the plugin, mark UI copy in your source, and Better Translation generates fl
 - Node 24 or later
 - Vite 8 or later
 - React 19 or later when using `better-translation/react`
+- Svelte 5 and `@sveltejs/vite-plugin-svelte` when using `better-translation/svelte`
 
 This repo uses Bun:
 
@@ -55,6 +56,25 @@ export default defineConfig({
 ```
 
 If your Start app also uses plugins such as Nitro, Tailwind, or tsconfig-path resolution, keep `betterTranslation()` before the plugins that transform React route code.
+
+For Svelte apps, keep `betterTranslation()` before the Svelte plugin:
+
+```ts
+// vite.config.ts
+import { svelte } from "@sveltejs/vite-plugin-svelte"
+import { defineConfig } from "vite"
+import { betterTranslation } from "better-translation/vite"
+
+export default defineConfig({
+  plugins: [
+    betterTranslation({
+      locales: ["en", "es", "fr"],
+      defaultLocale: "en",
+    }),
+    svelte(),
+  ],
+})
+```
 
 The default local runtime works well for TanStack Start. It writes generated Locale values under `src/lib/bt` and exposes them through the virtual `better-translation/messages` module.
 
@@ -193,6 +213,8 @@ The current package keeps the local bundle-first workflow working while the host
 - `packages/better-translation`: published Vite plugin, runtime helpers, local editor middleware, and AI translation helper.
 - `apps/web`: hosted app and service scaffold.
 - `apps/docs`: documentation site.
+- `examples/tanstack-start`: local-first TanStack Start example.
+- `examples/svelte-kit`: local-first SvelteKit example.
 - `CONTEXT.md`: canonical product vocabulary.
 - `docs/platform.md`: current platform behavior and intended hosted-service direction.
 

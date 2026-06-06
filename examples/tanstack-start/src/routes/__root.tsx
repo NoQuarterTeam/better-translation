@@ -10,7 +10,7 @@ import { TranslateProvider } from "better-translation/react"
 import { DefaultError } from "@/components/default-error"
 
 import appCss from "../styles.css?url"
-import { getLocaleFn } from "./-locale"
+import { getLocale } from "./-locale"
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -24,7 +24,7 @@ const getMessagesFn = createServerFn({ method: "GET" })
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async () => {
-    const locale = await getLocaleFn()
+    const locale = getLocale()
     const messages = await getMessagesFn({ data: { locale } })
 
     return { locale, messages }

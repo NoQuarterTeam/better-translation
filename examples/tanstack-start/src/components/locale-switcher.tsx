@@ -1,9 +1,9 @@
 import { NativeSelect, NativeSelectOption } from "@better-translation/ui/components/native-select"
 import { useRouteContext, useRouter } from "@tanstack/react-router"
 
-import type { Locale } from "better-translation/messages"
+import { locales, type Locale } from "better-translation/messages"
 
-import { setLocaleFn } from "@/routes/-locale"
+import { setLocale } from "@/routes/-locale"
 
 export function LocaleSwitcher() {
   const router = useRouter()
@@ -14,11 +14,15 @@ export function LocaleSwitcher() {
       size="sm"
       value={locale}
       onChange={(e) => {
-        void setLocaleFn({ data: { locale: e.target.value as Locale } }).then(() => router.invalidate())
+        setLocale(e.target.value as Locale)
+        void router.invalidate()
       }}
     >
-      <NativeSelectOption value="en">English</NativeSelectOption>
-      <NativeSelectOption value="nl">Nederlands</NativeSelectOption>
+      {locales.map((locale) => (
+        <NativeSelectOption key={locale} value={locale}>
+          {locale.toUpperCase()}
+        </NativeSelectOption>
+      ))}
     </NativeSelect>
   )
 }
