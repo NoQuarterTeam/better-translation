@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.4.1
+
+### Patch Changes
+
+- [`8937094`](https://github.com/NoQuarterTeam/better-translation/commit/8937094e47fb63253b7aa300a0d0081fab6daed5) Thanks [@JClackett](https://github.com/JClackett)! - Rename the framework-neutral runtime helper from `createTranslator` to `createT`.
+
 ## 0.4.0
 
 ### Minor Changes
