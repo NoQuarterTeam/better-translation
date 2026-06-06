@@ -16,6 +16,12 @@ const githubInstallationRepositoriesResponseSchema = z.object({
   ),
 })
 
+const githubBranchesResponseSchema = z.array(
+  z.object({
+    name: z.string().trim().min(1),
+  }),
+)
+
 const githubInstallationSchema = z.object({
   account: z.object({
     avatar_url: z.string().nullable(),
@@ -173,6 +179,36 @@ export async function ensureGitHubInstallationRepository(params: {
 
   if (!repository) throw new Error("Selected repository is not available to this GitHub App installation.")
   return repository
+}
+
+export async function listGitHubRepositoryBranches(params: {
+  installationId: string
+  repositoryName: string
+  repositoryOwner: string
+}) {
+  const token = await createGitHubInstallationToken(params.installationId)
+  const branches: Array<{ name: string }> = []
+
+  for (let page = 1; ; page++) {
+    const url = new URL(`https://api.github.com/repos/${params.repositoryOwner}/${params.repositoryName}/branches`)
+    url.searchParams.set("page", String(page))
+    url.searchParams.set("per_page", "100")
+
+    const response = await fetch(url, {
+      headers: githubJsonHeaders(token),
+    })
+
+    if (!response.ok) throw new Error("Could not load GitHub branches.")
+
+    const parsed = githubBranchesResponseSchema.safeParse(await response.json())
+    if (!parsed.success) throw new Error("GitHub returned an invalid branches payload.")
+
+    branches.push(...parsed.data)
+
+    if (parsed.data.length < 100) break
+  }
+
+  return branches.map((branch) => branch.name)
 }
 
 export function createGitHubWebhookSignature(body: string, secret: string) {

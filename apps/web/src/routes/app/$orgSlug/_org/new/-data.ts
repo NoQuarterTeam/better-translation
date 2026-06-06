@@ -7,7 +7,12 @@ import { organizationMiddleware } from "@/lib/functions/middleware"
 import { parseZod } from "@/lib/functions/zod"
 import { db } from "@/server/db"
 import { branchesTable, projectInsertSchema, projectsTable } from "@/server/db/schema"
-import { createGitHubInstallUrl, ensureGitHubInstallationRepository, searchGitHubInstallationRepositories } from "@/server/github"
+import {
+  createGitHubInstallUrl,
+  ensureGitHubInstallationRepository,
+  listGitHubRepositoryBranches,
+  searchGitHubInstallationRepositories,
+} from "@/server/github"
 import {
   getOrganizationGitHubInstallation,
   listOrganizationGitHubInstallations,
@@ -78,6 +83,7 @@ export const createProjectFromGitHubRepositoryFn = createServerFn({ method: "POS
   .inputValidator(
     parseZod(
       z.object({
+        defaultBranchName: z.string().trim().min(1).max(100),
         installationId: z.string().trim().min(1),
         name: projectInsertSchema.shape.name,
         repositoryId: z.string().trim().min(1),
@@ -126,10 +132,7 @@ export const createProjectFromGitHubRepositoryFn = createServerFn({ method: "POS
 
       if (!project) throw new Error("Could not create Project.")
 
-      const [branch] = await tx
-        .insert(branchesTable)
-        .values({ name: repository.defaultBranch, projectId: project.id })
-        .returning()
+      const [branch] = await tx.insert(branchesTable).values({ name: data.defaultBranchName, projectId: project.id }).returning()
       if (!branch) throw new Error("Could not create Production Branch.")
 
       const [updatedProject] = await tx
@@ -141,6 +144,25 @@ export const createProjectFromGitHubRepositoryFn = createServerFn({ method: "POS
       if (!updatedProject) throw new Error("Could not update Project.")
       return updatedProject
     })
+  })
+
+export const suggestProjectSlugFn = createServerFn({ method: "GET" })
+  .middleware([organizationMiddleware])
+  .inputValidator(parseZod(z.object({ baseSlug: projectInsertSchema.shape.slug })))
+  .handler(async ({ context, data }) => {
+    const projects = await db.query.projectsTable.findMany({
+      columns: { slug: true },
+      where: { organizationId: context.organization.id },
+    })
+    const existingSlugs = new Set(projects.map((project) => project.slug))
+
+    if (!existingSlugs.has(data.baseSlug)) return data.baseSlug
+
+    for (let index = 2; ; index++) {
+      const suffix = `-${index}`
+      const slug = `${data.baseSlug.slice(0, 64 - suffix.length).replace(/-+$/g, "")}${suffix}`
+      if (!existingSlugs.has(slug)) return slug
+    }
   })
 
 export const getNewProjectGitHubSetupFn = createServerFn({ method: "GET" })
@@ -180,6 +202,40 @@ export const listNewProjectGitHubRepositoriesFn = createServerFn({ method: "GET"
     })
   })
 
+export const listNewProjectGitHubBranchesFn = createServerFn({ method: "GET" })
+  .middleware([organizationMiddleware])
+  .inputValidator(
+    parseZod(
+      z.object({
+        installationId: z.string().trim().min(1),
+        repositoryId: z.string().trim().min(1),
+        repositoryName: projectInsertSchema.shape.githubRepositoryName.unwrap(),
+        repositoryOwner: projectInsertSchema.shape.githubRepositoryOwner.unwrap(),
+      }),
+    ),
+  )
+  .handler(async ({ context, data }) => {
+    const canUseInstallation = await organizationCanUseGitHubInstallation({
+      installationId: data.installationId,
+      organizationId: context.organization.id,
+    })
+
+    if (!canUseInstallation) throw new Error("Connect this GitHub account before listing branches.")
+
+    await ensureGitHubInstallationRepository({
+      installationId: data.installationId,
+      repositoryId: data.repositoryId,
+      repositoryName: data.repositoryName,
+      repositoryOwner: data.repositoryOwner,
+    })
+
+    return listGitHubRepositoryBranches({
+      installationId: data.installationId,
+      repositoryName: data.repositoryName,
+      repositoryOwner: data.repositoryOwner,
+    })
+  })
+
 export const newProjectGitHubSetupQueryOptions = (orgSlug: string) =>
   queryOptions({
     queryKey: ["new-project-github-setup", orgSlug],
@@ -202,4 +258,36 @@ export const newProjectGitHubRepositoriesQueryOptions = ({
     queryKey: ["new-project-github-repositories", orgSlug, installationId, search, page],
     queryFn: () => listNewProjectGitHubRepositoriesFn({ data: { orgSlug, installationId, page, search } }),
     staleTime: 5 * 60 * 1000,
+  })
+
+export const newProjectGitHubBranchesQueryOptions = ({
+  installationId,
+  orgSlug,
+  repository,
+}: {
+  installationId: string
+  orgSlug: string
+  repository: { id: string; name: string; owner: string }
+}) =>
+  queryOptions({
+    enabled: Boolean(installationId),
+    queryKey: ["new-project-github-branches", orgSlug, installationId, repository.id],
+    queryFn: () =>
+      listNewProjectGitHubBranchesFn({
+        data: {
+          installationId,
+          orgSlug,
+          repositoryId: repository.id,
+          repositoryName: repository.name,
+          repositoryOwner: repository.owner,
+        },
+      }),
+    staleTime: 5 * 60 * 1000,
+  })
+
+export const suggestedProjectSlugQueryOptions = (orgSlug: string, baseSlug: string) =>
+  queryOptions({
+    enabled: Boolean(baseSlug),
+    queryKey: ["suggested-project-slug", orgSlug, baseSlug],
+    queryFn: () => suggestProjectSlugFn({ data: { baseSlug, orgSlug } }),
   })

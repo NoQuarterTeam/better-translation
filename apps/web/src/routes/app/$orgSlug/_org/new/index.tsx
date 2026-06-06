@@ -2,11 +2,12 @@ import { Button } from "@better-translation/ui/components/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@better-translation/ui/components/card"
 import { FieldError } from "@better-translation/ui/components/field"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@better-translation/ui/components/input-group"
+import { NativeSelectOption } from "@better-translation/ui/components/native-select"
 import { Skeleton } from "@better-translation/ui/components/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@better-translation/ui/components/tabs"
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { GitBranchIcon, PlusIcon, SearchIcon } from "lucide-react"
+import { ArrowLeftIcon, GitBranchIcon, PlusIcon, SearchIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import * as z from "zod"
@@ -21,11 +22,23 @@ import { projectSwitcherProjectsQueryOptions } from "../../_projects/$projectSlu
 import {
   createProjectFn,
   createProjectFromGitHubRepositoryFn,
+  newProjectGitHubBranchesQueryOptions,
   newProjectGitHubRepositoriesQueryOptions,
   newProjectGitHubSetupQueryOptions,
+  suggestedProjectSlugQueryOptions,
 } from "./-data"
 
 const githubInstallationIdSearchSchema = z.union([z.string(), z.number()]).transform(String).optional().catch(undefined)
+
+type GitHubRepository = {
+  defaultBranch: string
+  fullName: string
+  id: string
+  name: string
+  owner: string
+}
+
+type GitHubImportStep = { type: "list" } | { type: "configure"; installationId: string; repository: GitHubRepository }
 
 export const Route = createFileRoute("/app/$orgSlug/_org/new/")({
   component: NewProjectPage,
@@ -52,13 +65,17 @@ export const Route = createFileRoute("/app/$orgSlug/_org/new/")({
 })
 
 function slugify(name: string) {
-  return name
+  const slug = name
     .trim()
     .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "")
+    .slice(0, 64)
+    .replace(/-+$/g, "")
+
+  return slug || "project"
 }
 
 function NewProjectPage() {
@@ -97,8 +114,6 @@ function NewProjectPage() {
 function GitHubImportCard() {
   const { orgSlug } = Route.useParams()
   const search = Route.useSearch()
-  const { queryClient } = Route.useRouteContext()
-  const navigate = useNavigate()
   const t = useT()
   const setupQuery = useSuspenseQuery(newProjectGitHubSetupQueryOptions(orgSlug))
   const setup = setupQuery.data
@@ -107,6 +122,7 @@ function GitHubImportCard() {
   const activeInstallationId = selectedInstallationId || setup.githubInstallations[0]?.installationId || ""
   const [repositoryPage, setRepositoryPage] = useState(1)
   const [repositorySearch, setRepositorySearch] = useState("")
+  const [step, setStep] = useState<GitHubImportStep>({ type: "list" })
   const repositoriesQuery = useQuery(
     newProjectGitHubRepositoriesQueryOptions({
       installationId: activeInstallationId,
@@ -120,15 +136,15 @@ function GitHubImportCard() {
   const showPagination =
     repositoriesQuery.data && (repositoriesQuery.data.page > 1 || repositoriesQuery.data.hasMore) && !showPaginationSkeleton
 
-  const createFromRepository = useMutation({
-    mutationFn: createProjectFromGitHubRepositoryFn,
-    onSuccess: (project) => {
-      toast.success(t("Project imported"))
-      void queryClient.invalidateQueries(projectSwitcherProjectsQueryOptions(orgSlug))
-      void navigate({ to: "/app/$orgSlug/$projectSlug", params: { orgSlug, projectSlug: project.slug } })
-    },
-    onError: (error: Error) => toast.error(t("Could not import repository"), { description: error.message }),
-  })
+  if (step.type === "configure") {
+    return (
+      <GitHubRepositoryConfigureCard
+        installationId={step.installationId}
+        repository={step.repository}
+        onBack={() => setStep({ type: "list" })}
+      />
+    )
+  }
 
   return (
     <Card>
@@ -212,20 +228,7 @@ function GitHubImportCard() {
                   </div>
                   <Button
                     type="button"
-                    disabled={createFromRepository.isPending}
-                    onClick={() =>
-                      createFromRepository.mutate({
-                        data: {
-                          installationId: activeInstallationId,
-                          name: repository.name,
-                          orgSlug,
-                          repositoryId: repository.id,
-                          repositoryName: repository.name,
-                          repositoryOwner: repository.owner,
-                          slug: slugify(repository.name),
-                        },
-                      })
-                    }
+                    onClick={() => setStep({ type: "configure", installationId: activeInstallationId, repository })}
                   >
                     <T>Import</T>
                   </Button>
@@ -256,7 +259,236 @@ function GitHubImportCard() {
             </Button>
           </div>
         ) : null}
-        <FieldError>{repositoriesQuery.error?.message ?? createFromRepository.error?.message}</FieldError>
+        <FieldError>{repositoriesQuery.error?.message}</FieldError>
+      </CardContent>
+    </Card>
+  )
+}
+
+function GitHubRepositoryConfigureCard({
+  installationId,
+  repository,
+  onBack,
+}: {
+  installationId: string
+  repository: GitHubRepository
+  onBack: () => void
+}) {
+  const { orgSlug } = Route.useParams()
+  const { queryClient } = Route.useRouteContext()
+  const t = useT()
+  const navigate = useNavigate()
+  const [hasEditedSlug, setHasEditedSlug] = useState(false)
+  const suggestedSlugQuery = useQuery(suggestedProjectSlugQueryOptions(orgSlug, slugify(repository.name)))
+  const branchesQuery = useQuery(newProjectGitHubBranchesQueryOptions({ installationId, orgSlug, repository }))
+  const branches = [...new Set([repository.defaultBranch, ...(branchesQuery.data ?? [])])]
+
+  const createFromRepository = useMutation({
+    mutationFn: createProjectFromGitHubRepositoryFn,
+    onSuccess: (project) => {
+      toast.success(t("Project imported"))
+      void queryClient.invalidateQueries(projectSwitcherProjectsQueryOptions(orgSlug))
+      void navigate({ to: "/app/$orgSlug/$projectSlug", params: { orgSlug, projectSlug: project.slug } })
+    },
+    onError: (error: Error) => toast.error(t("Could not import repository"), { description: error.message }),
+  })
+
+  if (suggestedSlugQuery.error) {
+    return (
+      <Card>
+        <CardHeader>
+          <Button type="button" variant="ghost" className="mb-2 -ml-2 w-fit" onClick={onBack}>
+            <ArrowLeftIcon />
+            <T>Back</T>
+          </Button>
+          <CardTitle>
+            <T>Create Project from repository</T>
+          </CardTitle>
+          <CardDescription>
+            {repository.owner}/{repository.name}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FieldError>{suggestedSlugQuery.error.message}</FieldError>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!suggestedSlugQuery.data) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-56 max-w-full" />
+          <Skeleton className="h-4 w-72 max-w-full" />
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <GitHubRepositoryConfigureForm
+      hasEditedSlug={hasEditedSlug}
+      importError={createFromRepository.error?.message}
+      initialSlug={suggestedSlugQuery.data}
+      branches={branches}
+      branchError={branchesQuery.error?.message}
+      isLoadingBranches={branchesQuery.isLoading}
+      isImporting={createFromRepository.isPending}
+      onBack={onBack}
+      onCreate={(value) =>
+        createFromRepository.mutate({
+          data: {
+            defaultBranchName: value.defaultBranchName.trim(),
+            installationId,
+            name: value.name,
+            orgSlug,
+            repositoryId: repository.id,
+            repositoryName: repository.name,
+            repositoryOwner: repository.owner,
+            slug: value.slug.trim() || slugify(value.name),
+          },
+        })
+      }
+      repository={repository}
+      setHasEditedSlug={setHasEditedSlug}
+    />
+  )
+}
+
+function GitHubRepositoryConfigureForm({
+  branches,
+  branchError,
+  hasEditedSlug,
+  importError,
+  initialSlug,
+  isLoadingBranches,
+  isImporting,
+  onBack,
+  onCreate,
+  repository,
+  setHasEditedSlug,
+}: {
+  branches: Array<string>
+  branchError?: string
+  hasEditedSlug: boolean
+  importError?: string
+  initialSlug: string
+  isLoadingBranches: boolean
+  isImporting: boolean
+  onBack: () => void
+  onCreate: (value: { defaultBranchName: string; name: string; slug: string }) => void
+  repository: GitHubRepository
+  setHasEditedSlug: (hasEditedSlug: boolean) => void
+}) {
+  const t = useT()
+  const form = useAppForm({
+    defaultValues: {
+      defaultBranchName: repository.defaultBranch,
+      name: repository.name,
+      slug: initialSlug,
+    },
+    validators: {
+      onSubmit: z.object({
+        defaultBranchName: z
+          .string()
+          .trim()
+          .min(1, { error: t("Production Branch is required") })
+          .max(100),
+        name: z
+          .string()
+          .trim()
+          .min(1, { error: t("Project name is required") })
+          .max(120),
+        slug: z.string().trim(),
+      }),
+    },
+    onSubmit: ({ value }) => onCreate(value),
+  })
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <T>Create Project from repository</T>
+        </CardTitle>
+        <CardDescription>
+          {repository.owner}/{repository.name}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form.AppForm>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              void form.handleSubmit()
+            }}
+          >
+            <form.AppField name="name">
+              {(field) => (
+                <field.TextField
+                  label={t("Project name")}
+                  placeholder="Acme Web"
+                  onChange={(e) => {
+                    const value = e.target.value
+                    field.handleChange(value)
+                    if (!hasEditedSlug) {
+                      form.setFieldValue("slug", slugify(value))
+                    }
+                  }}
+                />
+              )}
+            </form.AppField>
+            <form.AppField name="slug">
+              {(field) => (
+                <field.TextField
+                  label={t("URL slug")}
+                  placeholder="acme-web"
+                  description={t("Lowercase, hyphens only. Used in URLs and must be unique.")}
+                  onChange={(e) => {
+                    setHasEditedSlug(true)
+                    field.handleChange(e.target.value)
+                  }}
+                />
+              )}
+            </form.AppField>
+            <form.AppField name="defaultBranchName">
+              {(field) => (
+                <field.NativeSelectField
+                  label={t("Production Branch")}
+                  description={t("Prefilled from the repository default branch.")}
+                  disabled={isLoadingBranches}
+                >
+                  {isLoadingBranches ? (
+                    <NativeSelectOption value={repository.defaultBranch}>{t("Loading branches...")}</NativeSelectOption>
+                  ) : (
+                    branches.map((branch) => (
+                      <NativeSelectOption key={branch} value={branch}>
+                        {branch}
+                      </NativeSelectOption>
+                    ))
+                  )}
+                </field.NativeSelectField>
+              )}
+            </form.AppField>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" size="icon" aria-label={t("Back")} title={t("Back")} onClick={onBack}>
+                <ArrowLeftIcon />
+              </Button>
+              <form.SubmitButton className="flex-1">
+                {(isSubmitting) => (isSubmitting || isImporting ? <T>Creating...</T> : <T>Create project</T>)}
+              </form.SubmitButton>
+            </div>
+            {branchError && <FieldError>{branchError}</FieldError>}
+            <form.FormError>{importError}</form.FormError>
+          </form>
+        </form.AppForm>
       </CardContent>
     </Card>
   )

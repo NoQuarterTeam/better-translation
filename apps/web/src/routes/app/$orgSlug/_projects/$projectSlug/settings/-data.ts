@@ -32,13 +32,22 @@ export const getProjectSettingsFn = createServerFn({ method: "GET" })
     return getProjectSettings(context.project, context.organization)
   })
 
-export const updateProjectNameFn = createServerFn({ method: "POST" })
+export const updateProjectProfileFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(z.object({ name: projectInsertSchema.shape.name })))
+  .inputValidator(parseZod(z.object({ name: projectInsertSchema.shape.name, slug: projectInsertSchema.shape.slug })))
   .handler(async ({ context, data }) => {
+    const existingProject = await db.query.projectsTable.findFirst({
+      columns: { id: true },
+      where: { organizationId: context.organization.id, slug: data.slug },
+    })
+
+    if (existingProject && existingProject.id !== context.project.id) {
+      throw new Error("A Project with that slug already exists.")
+    }
+
     const [updatedProject] = await db
       .update(projectsTable)
-      .set({ name: data.name, updatedAt: new Date() })
+      .set({ name: data.name, slug: data.slug, updatedAt: new Date() })
       .where(eq(projectsTable.id, context.project.id))
       .returning()
 

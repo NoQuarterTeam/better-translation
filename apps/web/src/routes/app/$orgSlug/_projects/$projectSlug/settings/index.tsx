@@ -29,11 +29,25 @@ import {
   projectSettingsQueryOptions,
   removeProjectIconFn,
   updateProjectGitHubCleanupFn,
-  updateProjectNameFn,
+  updateProjectProfileFn,
   type getProjectSettingsFn,
 } from "./-data"
 
 const githubInstallationIdSearchSchema = z.union([z.string(), z.number()]).transform(String).optional().catch(undefined)
+
+function slugify(name: string) {
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64)
+    .replace(/-+$/g, "")
+
+  return slug || "project"
+}
 
 export const Route = createFileRoute("/app/$orgSlug/_projects/$projectSlug/settings/")({
   component: ProjectSettingsPage,
@@ -66,10 +80,12 @@ function ProjectSettingsPage() {
   const search = Route.useSearch()
   const { queryClient } = Route.useRouteContext()
   const t = useT()
+  const navigate = useNavigate()
   const projectQuery = useSuspenseQuery(projectSettingsQueryOptions(orgSlug, projectSlug))
   const project = projectQuery.data
   const projectSettingsQueryKey = projectSettingsQueryOptions(orgSlug, projectSlug).queryKey
   const iconInputRef = useRef<HTMLInputElement>(null)
+  const [hasEditedSlug, setHasEditedSlug] = useState(project.slug !== slugify(project.name))
 
   const updateProjectSettings = (updatedProject: ProjectSettings) => {
     queryClient.setQueryData<ProjectSettings>(projectSettingsQueryKey, updatedProject)
@@ -77,10 +93,26 @@ function ProjectSettingsPage() {
     void queryClient.invalidateQueries(projectSwitcherProjectsQueryOptions(orgSlug))
   }
 
-  const updateNameMutation = useMutation({
-    mutationFn: updateProjectNameFn,
+  const updateProfileMutation = useMutation({
+    mutationFn: updateProjectProfileFn,
     onSuccess: (updatedProject) => {
       toast.success(t("Project updated"))
+      queryClient.setQueryData<ProjectSettings>(
+        projectSettingsQueryOptions(orgSlug, updatedProject.slug).queryKey,
+        updatedProject,
+      )
+      void queryClient.invalidateQueries(currentProjectSwitcherQueryOptions(orgSlug, updatedProject.slug))
+      void queryClient.invalidateQueries(projectSwitcherProjectsQueryOptions(orgSlug))
+
+      if (updatedProject.slug !== projectSlug) {
+        void navigate({
+          to: "/app/$orgSlug/$projectSlug/settings",
+          params: { orgSlug, projectSlug: updatedProject.slug },
+          replace: true,
+        })
+        return
+      }
+
       updateProjectSettings(updatedProject)
     },
   })
@@ -119,7 +151,7 @@ function ProjectSettingsPage() {
   })
 
   const profileForm = useAppForm({
-    defaultValues: { name: project.name },
+    defaultValues: { name: project.name, slug: project.slug },
     validators: {
       onSubmit: z.object({
         name: z
@@ -127,10 +159,11 @@ function ProjectSettingsPage() {
           .trim()
           .min(1, { error: t("Project name is required") })
           .max(120),
+        slug: z.string().trim(),
       }),
     },
     onSubmit: ({ value }) => {
-      updateNameMutation.mutate({ data: { orgSlug, projectSlug, name: value.name.trim() } })
+      updateProfileMutation.mutate({ data: { orgSlug, projectSlug, name: value.name.trim(), slug: value.slug.trim() } })
     },
   })
 
@@ -141,17 +174,17 @@ function ProjectSettingsPage() {
           <T>Project settings</T>
         </h1>
         <p className="text-sm text-muted-foreground">
-          <T>Manage Project profile and repository settings.</T>
+          <T>Manage Project info and repository settings.</T>
         </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>
-            <T>Project name</T>
+            <T>Info</T>
           </CardTitle>
           <CardDescription>
-            <T>Give this project a name</T>
+            <T>Manage the Project name and URL slug.</T>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -163,11 +196,38 @@ function ProjectSettingsPage() {
                 void profileForm.handleSubmit()
               }}
             >
-              <profileForm.AppField name="name">{(field) => <field.TextField placeholder="Acme Web" />}</profileForm.AppField>
+              <profileForm.AppField name="name">
+                {(field) => (
+                  <field.TextField
+                    label={t("Project name")}
+                    placeholder="Acme Web"
+                    onChange={(event) => {
+                      const value = event.target.value
+                      field.handleChange(value)
+                      if (!hasEditedSlug) {
+                        profileForm.setFieldValue("slug", slugify(value))
+                      }
+                    }}
+                  />
+                )}
+              </profileForm.AppField>
+              <profileForm.AppField name="slug">
+                {(field) => (
+                  <field.TextField
+                    label={t("URL slug")}
+                    placeholder="acme-web"
+                    description={t("Lowercase, hyphens only. Used in URLs and must be unique.")}
+                    onChange={(event) => {
+                      setHasEditedSlug(true)
+                      field.handleChange(event.target.value)
+                    }}
+                  />
+                )}
+              </profileForm.AppField>
               <profileForm.SubmitButton className="w-fit">
-                {(isSubmitting) => (isSubmitting || updateNameMutation.isPending ? <T>Saving...</T> : <T>Save profile</T>)}
+                {(isSubmitting) => (isSubmitting || updateProfileMutation.isPending ? <T>Saving...</T> : <T>Save</T>)}
               </profileForm.SubmitButton>
-              <profileForm.FormError>{updateNameMutation.error?.message}</profileForm.FormError>
+              <profileForm.FormError>{updateProfileMutation.error?.message}</profileForm.FormError>
             </form>
           </profileForm.AppForm>
         </CardContent>
