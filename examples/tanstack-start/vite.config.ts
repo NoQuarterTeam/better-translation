@@ -12,10 +12,7 @@ export default defineConfig({
     betterTranslation({
       locales: ["en", "nl", "es"],
       defaultLocale: "en",
-      runtime: {
-        type: "local",
-        editor: true,
-      },
+      runtime: { type: "local" },
     }),
     // devtools(),
     nitro(),
