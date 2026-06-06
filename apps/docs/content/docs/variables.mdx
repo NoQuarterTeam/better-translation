@@ -40,17 +40,35 @@ export function MessageList({ count }: { count: number }) {
 }
 ```
 
+`Var` values can be React elements, not just raw strings or numbers. Keep inline markup inside
+the placeholder value when the styling belongs to the runtime value.
+
+```tsx title="WelcomeMessage.tsx"
+import { T, Var } from "better-translation/react"
+
+export function WelcomeMessage({ name, plan }: { name: string; plan: string }) {
+  return (
+    <T>
+      Welcome <Var name={<b>{name}</b>} /> to the <Var plan={<b>{plan}</b>} /> plan
+    </T>
+  )
+}
+```
+
+The example above extracts `Welcome {name} to the {plan} plan`. The `b` elements are
+rendered at runtime through the placeholders, so translators can still reorder the sentence.
+
 ## useT hook
 
 For non-JSX strings, use `{name}` placeholders and pass values as the second argument.
 
-```tsx title="MessageCount.tsx"
+```tsx title="MessageSearch.tsx"
 import { useT } from "better-translation/react"
 
-export function MessageCount({ count }: { count: number }) {
+export function MessageSearch({ count }: { count: number }) {
   const t = useT()
 
-  return <p>{t("Found {count} Messages", { count })}</p>
+  return <input aria-label={t("Search {count} Messages", { count })} placeholder={t("Search Messages")} />
 }
 ```
 
