@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.4.0
+
+### Minor Changes
+
+- [`9d3064b`](https://github.com/NoQuarterTeam/better-translation/commit/9d3064b6b04a104d843424c93a859fc235c812eb) Thanks [@JClackett](https://github.com/JClackett)! - Add Svelte translation markers and rename the framework-neutral translator export to `better-translation/runtime`.
+
 ## 0.3.0
 
 ### Minor Changes
