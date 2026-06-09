@@ -20,7 +20,7 @@
       "dependencies": {
         "@tanstack/react-router": "catalog:",
         "@tanstack/react-start": "catalog:",
-        "@vercel/functions": "3.6.2",
+        "@vercel/functions": "3.6.3",
         "fumadocs-core": "16.9.3",
         "fumadocs-mdx": "15.0.11",
         "fumadocs-ui": "16.9.3",
@@ -73,7 +73,7 @@
         "@tanstack/react-table": "catalog:",
         "@tanstack/router-plugin": "catalog:",
         "@tanstack/store": "catalog:",
-        "@vercel/functions": "3.6.2",
+        "@vercel/functions": "3.6.3",
         "ai": "6.0.197",
         "better-auth": "catalog:",
         "better-translation": "workspace:*",
@@ -1204,9 +1204,9 @@
 
     "@vercel/cli-exec": ["@vercel/cli-exec@0.1.1", "", { "dependencies": { "execa": "5.1.1" } }, "sha512-LMRMEai3Z+BODyxGcU9+KiWrS/UElNiOLKiNRfGNt2Vu3NTEmXgFeXG9wBfocAnTe5yJCX/DY6k3k7S/LkPp/g=="],
 
-    "@vercel/functions": ["@vercel/functions@3.6.2", "", { "dependencies": { "@vercel/oidc": "3.6.0" }, "peerDependencies": { "@aws-sdk/credential-provider-web-identity": "*" }, "optionalPeers": ["@aws-sdk/credential-provider-web-identity"] }, "sha512-AeWUppTKlHoeJ4zttStwAJ1PsSqucSK7NPy27wrb5cSBBo4VbRo7j6rFCcJrGg4jcV9Cv5Qmk4Dc2dHe6/1g5A=="],
+    "@vercel/functions": ["@vercel/functions@3.6.3", "", { "dependencies": { "@vercel/oidc": "3.6.1" }, "peerDependencies": { "@aws-sdk/credential-provider-web-identity": "*" }, "optionalPeers": ["@aws-sdk/credential-provider-web-identity"] }, "sha512-Dg46bG7WapCcVNCT4hrcb+27Ao8iFg0WpFy2KkztyrB5JU5eWx6Rxo0BSnvg5+/VUepM3XItr9GjZw/cffv27A=="],
 
-    "@vercel/oidc": ["@vercel/oidc@3.6.0", "", { "dependencies": { "@vercel/cli-config": "0.2.0", "@vercel/cli-exec": "0.1.1" } }, "sha512-a2HjItW75qSZfyyDbZ2XDFTQAfNKM93uloZABPgx6t8IrdbCgf+EQBeSypQVP2jHrZ3LHApDgLFCf1frRgPwLg=="],
+    "@vercel/oidc": ["@vercel/oidc@3.6.1", "", { "dependencies": { "@vercel/cli-config": "0.2.0", "@vercel/cli-exec": "0.1.1", "jose": "^5.9.6" } }, "sha512-8ipTFoiX3WBRrvXLjSrmgAiwtMDQk3EgSxe8N7v2rXBz39NBIIyoGXeVbJRoBcP8WEuVnvjvIQsggbGU7ZKrMw=="],
 
     "@vitejs/plugin-react": ["@vitejs/plugin-react@6.0.2", "", { "dependencies": { "@rolldown/pluginutils": "^1.0.0" }, "peerDependencies": { "@rolldown/plugin-babel": "^0.1.7 || ^0.2.0", "babel-plugin-react-compiler": "^1.0.0", "vite": "^8.0.0" }, "optionalPeers": ["@rolldown/plugin-babel", "babel-plugin-react-compiler"] }, "sha512-DlSMqo4WhThw4vB8Mpn0Woe9J+Jfq1geJ61AKW0QEgLzGMNwtIMdxbDUzLxcun8W7NbJO0e2Jg/Nxm3cCSVzzg=="],
 
@@ -2665,6 +2665,8 @@
     "@vercel/cli-config/zod": ["zod@4.1.11", "", {}, "sha512-WPsqwxITS2tzx1bzhIKsEs19ABD5vmCVa4xBo2tq/SrV4RNZtfws1EnCWQXM6yh8bD08a1idvkB5MZSBiZsjwg=="],
 
     "@vercel/cli-exec/execa": ["execa@5.1.1", "", { "dependencies": { "cross-spawn": "^7.0.3", "get-stream": "^6.0.0", "human-signals": "^2.1.0", "is-stream": "^2.0.0", "merge-stream": "^2.0.0", "npm-run-path": "^4.0.1", "onetime": "^5.1.2", "signal-exit": "^3.0.3", "strip-final-newline": "^2.0.0" } }, "sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg=="],
+
+    "@vercel/oidc/jose": ["jose@5.10.0", "", {}, "sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg=="],
 
     "accepts/mime-types": ["mime-types@2.1.35", "", { "dependencies": { "mime-db": "1.52.0" } }, "sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw=="],
 
