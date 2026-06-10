@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.4.2
+
+### Patch Changes
+
+- [`ae9cdaf`](https://github.com/NoQuarterTeam/better-translation/commit/ae9cdaf805349a2aba7efb5526e7fdec2524bfa5) Thanks [@JClackett](https://github.com/JClackett)! - Update the AI SDK dependency to the v7 beta.
+
 ## 0.4.1
 
 ### Patch Changes
