@@ -18,7 +18,6 @@
     "with-env": "dotenv -e ../../.env.local --"
   },
   "dependencies": {
-    "@ai-sdk/vercel": "2.0.50",
     "@better-translation/email": "workspace:*",
     "@better-translation/locale-editor": "workspace:*",
     "@better-translation/ui": "workspace:*",
@@ -46,7 +45,7 @@
     "@tanstack/router-plugin": "catalog:",
     "@tanstack/store": "catalog:",
     "@vercel/functions": "3.6.2",
-    "ai": "6.0.197",
+    "ai": "7.0.0-beta.116",
     "better-auth": "catalog:",
     "better-translation": "workspace:*",
     "dedent": "1.7.2",
