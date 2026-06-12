@@ -10,7 +10,7 @@
   "dependencies": {
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",
-    "@vercel/functions": "3.7.0",
+    "@vercel/functions": "3.7.1",
     "fumadocs-core": "16.9.3",
     "fumadocs-mdx": "15.0.12",
     "fumadocs-ui": "16.9.3",

@@ -20,7 +20,7 @@
       "dependencies": {
         "@tanstack/react-router": "catalog:",
         "@tanstack/react-start": "catalog:",
-        "@vercel/functions": "3.7.0",
+        "@vercel/functions": "3.7.1",
         "fumadocs-core": "16.9.3",
         "fumadocs-mdx": "15.0.12",
         "fumadocs-ui": "16.9.3",
@@ -72,7 +72,7 @@
         "@tanstack/react-table": "catalog:",
         "@tanstack/router-plugin": "catalog:",
         "@tanstack/store": "catalog:",
-        "@vercel/functions": "3.7.0",
+        "@vercel/functions": "3.7.1",
         "ai": "7.0.0-canary.170",
         "better-auth": "catalog:",
         "better-translation": "workspace:*",
@@ -1199,7 +1199,7 @@
 
     "@vercel/cli-exec": ["@vercel/cli-exec@0.1.1", "", { "dependencies": { "execa": "5.1.1" } }, "sha512-LMRMEai3Z+BODyxGcU9+KiWrS/UElNiOLKiNRfGNt2Vu3NTEmXgFeXG9wBfocAnTe5yJCX/DY6k3k7S/LkPp/g=="],
 
-    "@vercel/functions": ["@vercel/functions@3.7.0", "", { "dependencies": { "@vercel/oidc": "3.6.1", "ws": "8.20.0" }, "peerDependencies": { "@aws-sdk/credential-provider-web-identity": "*" }, "optionalPeers": ["@aws-sdk/credential-provider-web-identity"] }, "sha512-Dzcs1CHRP0aV/dFHUJ8BEMcKjbsPZZoKyyCSCbHRev+Qlj96q1pKKTXcc9m9p7U/kJz7+Dl+GgPHUFGMEKYUOQ=="],
+    "@vercel/functions": ["@vercel/functions@3.7.1", "", { "dependencies": { "@vercel/oidc": "3.6.1" }, "peerDependencies": { "@aws-sdk/credential-provider-web-identity": "*", "ws": ">=8" }, "optionalPeers": ["@aws-sdk/credential-provider-web-identity", "ws"] }, "sha512-7PsCL2Vz4MKz4t+Nxu8u4mu/t66y1xv9I0njb3EYoFoFCsXchOChT7YFgXZYFQiUXFEifBpnoLma4e+ep7cKKA=="],
 
     "@vercel/oidc": ["@vercel/oidc@3.6.1", "", { "dependencies": { "@vercel/cli-config": "0.2.0", "@vercel/cli-exec": "0.1.1", "jose": "^5.9.6" } }, "sha512-8ipTFoiX3WBRrvXLjSrmgAiwtMDQk3EgSxe8N7v2rXBz39NBIIyoGXeVbJRoBcP8WEuVnvjvIQsggbGU7ZKrMw=="],
 
