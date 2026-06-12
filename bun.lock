@@ -73,7 +73,7 @@
         "@tanstack/router-plugin": "catalog:",
         "@tanstack/store": "catalog:",
         "@vercel/functions": "3.7.1",
-        "ai": "7.0.0-canary.170",
+        "ai": "7.0.0-canary.171",
         "better-auth": "catalog:",
         "better-translation": "workspace:*",
         "dedent": "1.7.2",
@@ -158,7 +158,7 @@
       "name": "better-translation",
       "version": "0.4.2",
       "dependencies": {
-        "ai": "7.0.0-canary.170",
+        "ai": "7.0.0-canary.171",
         "oxc-parser": "0.135.0",
       },
       "devDependencies": {
@@ -1237,7 +1237,7 @@
 
     "agent-base": ["agent-base@7.1.4", "", {}, "sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ=="],
 
-    "ai": ["ai@7.0.0-canary.170", "", { "dependencies": { "@ai-sdk/gateway": "4.0.0-canary.103", "@ai-sdk/provider": "4.0.0-canary.18", "@ai-sdk/provider-utils": "5.0.0-canary.47" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-ItW2qr9t12Szw5/EAJuw3PgDBL6TE9RtccHk1ZrSlZe34bIb3hb6pniJI2ouo7g2wvL1qxH14EwKycAqamzlWQ=="],
+    "ai": ["ai@7.0.0-canary.171", "", { "dependencies": { "@ai-sdk/gateway": "4.0.0-canary.103", "@ai-sdk/provider": "4.0.0-canary.18", "@ai-sdk/provider-utils": "5.0.0-canary.47" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-9idMcZNoAFwMksgq1riDPGbuGDVT/9PbRjDmgR5lis67uN/wd9bNFDhtfwi6BtiAMs3aeZbsLwoOdCncjVgtBA=="],
 
     "ajv": ["ajv@8.20.0", "", { "dependencies": { "fast-deep-equal": "^3.1.3", "fast-uri": "^3.0.1", "json-schema-traverse": "^1.0.0", "require-from-string": "^2.0.2" } }, "sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA=="],
 
