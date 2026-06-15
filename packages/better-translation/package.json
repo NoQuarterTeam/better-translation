@@ -47,7 +47,7 @@
     "prepack": "bun run build"
   },
   "dependencies": {
-    "ai": "7.0.0-canary.168",
+    "ai": "7.0.0-canary.172",
     "oxc-parser": "0.135.0"
   },
   "devDependencies": {
