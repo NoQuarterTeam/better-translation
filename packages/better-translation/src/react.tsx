@@ -65,17 +65,22 @@ export interface TProps {
   id?: string
   /** Extra disambiguating context for translators and custom grouping. */
   context?: string
+  /** Source-language message template injected by the Vite plugin for deterministic fallback rendering. */
+  message?: string
+  /** Runtime placeholder values injected by the Vite plugin for deterministic interpolation. */
+  values?: Record<string, ReactNode>
   /** Source-language JSX content to translate. */
   children?: ReactNode
 }
 
 /** Renders translated JSX content and supports placeholders through `<Var>`. */
-export function T({ id, context, children }: TProps) {
+export function T({ id, context, message, values, children }: TProps) {
   const { messages } = use(TranslateContext)
   const resolvedMeta = context ? { context } : undefined
   const runtimeContent = useMemo(() => extractRuntimeContent(children), [children])
-  const template = messages[id ?? (runtimeContent.message ? getMessageId(runtimeContent.message, resolvedMeta) : "")]
-  const vars = template?.includes("{") ? runtimeContent.vars : undefined
+  const sourceMessage = message ?? runtimeContent.message
+  const template = messages[id ?? (sourceMessage ? getMessageId(sourceMessage, resolvedMeta) : "")] ?? message
+  const vars = template?.includes("{") ? (values ?? runtimeContent.vars) : undefined
   const interpolated = useMemo(() => interpolate(template, vars), [template, vars])
 
   if (!template) return <>{children}</>

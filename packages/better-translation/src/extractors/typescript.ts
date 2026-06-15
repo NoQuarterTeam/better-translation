@@ -67,7 +67,7 @@ export function analyzeTypeScriptSourceFile(code: string, filename: string, mark
       if (opening.name.type !== "JSXIdentifier") return
       if (!markers.component.includes(opening.name.name)) return
 
-      const extraction = extractJSXChildren(node.children)
+      const extraction = extractJSXChildren(code, node.children)
       if (!extraction.valid) {
         if (markers.logging) {
           console.warn(`[better-translation] Non-static <${opening.name.name}> in ${filename}, skipping`)
@@ -95,6 +95,22 @@ export function analyzeTypeScriptSourceFile(code: string, filename: string, mark
           start: opening.name.end,
           end: opening.name.end,
           replacement: ` id="${id}"`,
+        })
+      }
+
+      if (!hasJSXAttribute(opening.attributes as Array<unknown>, "message")) {
+        edits.push({
+          start: opening.name.end,
+          end: opening.name.end,
+          replacement: ` message={${JSON.stringify(extraction.message)}}`,
+        })
+      }
+
+      if (!hasJSXAttribute(opening.attributes as Array<unknown>, "values") && extraction.values.length > 0) {
+        edits.push({
+          start: opening.name.end,
+          end: opening.name.end,
+          replacement: ` values={{ ${extraction.values.map((entry) => `${entry.name}: ${entry.value}`).join(", ")} }}`,
         })
       }
     },
@@ -249,12 +265,14 @@ function hasObjectProperty(node: { properties: Array<unknown> }, name: string) {
 interface ExtractionResult {
   message: string
   placeholders: string[]
+  values: Array<{ name: string; value: string }>
   valid: boolean
 }
 
-function extractJSXChildren(children: Array<JSXChild>): ExtractionResult {
+function extractJSXChildren(code: string, children: Array<JSXChild>): ExtractionResult {
   const parts: string[] = []
   const placeholders: string[] = []
+  const values: Array<{ name: string; value: string }> = []
 
   for (const child of children) {
     switch (child.type) {
@@ -265,20 +283,21 @@ function extractJSXChildren(children: Array<JSXChild>): ExtractionResult {
       case "JSXElement": {
         const name = child.openingElement.name
         if (name.type !== "JSXIdentifier" || name.name !== "Var") {
-          return { message: "", placeholders: [], valid: false }
+          return { message: "", placeholders: [], values: [], valid: false }
         }
 
-        const varName = getVarPlaceholderName(child)
-        if (!varName) return { message: "", placeholders: [], valid: false }
+        const entry = getVarEntry(code, child)
+        if (!entry) return { message: "", placeholders: [], values: [], valid: false }
 
-        placeholders.push(varName)
-        parts.push(`{${varName}}`)
+        placeholders.push(entry.name)
+        values.push(entry)
+        parts.push(`{${entry.name}}`)
         break
       }
 
       case "JSXExpressionContainer":
         if (child.expression.type !== "JSXEmptyExpression") {
-          return { message: "", placeholders: [], valid: false }
+          return { message: "", placeholders: [], values: [], valid: false }
         }
         break
 
@@ -288,33 +307,68 @@ function extractJSXChildren(children: Array<JSXChild>): ExtractionResult {
   }
 
   const message = parts.join("").replace(/\s+/g, " ").trim()
-  return { message, placeholders, valid: message.length > 0 }
+  return { message, placeholders, values, valid: message.length > 0 }
 }
 
-function getVarPlaceholderName(node: { openingElement: { attributes: Array<unknown> }; children: Array<JSXChild> }) {
+function getVarEntry(
+  code: string,
+  node: { openingElement: { attributes: Array<unknown> }; children: Array<JSXChild> },
+): { name: string; value: string } | undefined {
   const explicitName = getJSXStringAttribute(node.openingElement.attributes as Array<unknown>, "name")
-  if (explicitName) return explicitName
+  const explicitValue = getJSXExpressionAttributeSource(code, node.openingElement.attributes as Array<unknown>, "value")
+  const childValue = getVarChildrenSource(code, node.children)
+  if (explicitName && explicitValue) return { name: explicitName, value: explicitValue }
+  if (explicitName && childValue) return { name: explicitName, value: childValue }
+  if (explicitName) return { name: explicitName, value: JSON.stringify(explicitName) }
 
-  const customPropName = getSingleJSXAttributeName(node.openingElement.attributes as Array<unknown>)
-  if (customPropName) return customPropName
+  const customProp = getSingleJSXAttributeEntry(code, node.openingElement.attributes as Array<unknown>)
+  if (customProp) return customProp
 
-  return getVarChildIdentifier(node.children)
+  const childIdentifier = getVarChildIdentifier(node.children)
+  return childIdentifier ? { name: childIdentifier, value: childIdentifier } : undefined
 }
 
-function getSingleJSXAttributeName(attributes: Array<unknown>) {
+function getSingleJSXAttributeEntry(code: string, attributes: Array<unknown>): { name: string; value: string } | undefined {
   const keys = attributes.flatMap((attr) => {
     const attribute = attr as
       | {
           type?: string
           name?: { type?: string; name?: string }
+          value?: { type?: string; value?: unknown; expression?: { start: number; end: number } } | null
         }
       | undefined
 
-    if (attribute?.type !== "JSXAttribute" || attribute.name?.type !== "JSXIdentifier") return []
-    return [attribute.name.name]
+    if (attribute?.type !== "JSXAttribute" || attribute.name?.type !== "JSXIdentifier" || !attribute.name.name) return []
+    const value = getJSXAttributeValueSource(code, attribute.value)
+    return value ? [{ name: attribute.name.name, value }] : []
   })
 
   return keys.length === 1 ? keys[0] : undefined
+}
+
+function getJSXExpressionAttributeSource(code: string, attributes: Array<unknown>, name: string) {
+  for (const attr of attributes as Array<{
+    type: string
+    name?: { type: string; name?: string }
+    value?: { type?: string; expression?: { start: number; end: number } } | null
+  }>) {
+    if (attr.type !== "JSXAttribute" || attr.name?.type !== "JSXIdentifier" || attr.name.name !== name) continue
+    if (attr.value?.type !== "JSXExpressionContainer" || !attr.value.expression) return undefined
+    return code.slice(attr.value.expression.start, attr.value.expression.end)
+  }
+}
+
+function getJSXAttributeValueSource(
+  code: string,
+  value?: { type?: string; value?: unknown; expression?: { start: number; end: number } } | null,
+) {
+  if (!value) return undefined
+  if (value.type === "JSXExpressionContainer" && value.expression) {
+    return code.slice(value.expression.start, value.expression.end)
+  }
+  if (value.type === "Literal" && typeof value.value === "string") {
+    return JSON.stringify(value.value)
+  }
 }
 
 function getVarChildIdentifier(children: Array<JSXChild>) {
@@ -324,4 +378,22 @@ function getVarChildIdentifier(children: Array<JSXChild>) {
   const [child] = meaningfulChildren
   if (!child || child.type !== "JSXExpressionContainer" || child.expression.type !== "Identifier") return undefined
   return child.expression.name
+}
+
+function getVarChildrenSource(code: string, children: Array<JSXChild>) {
+  const meaningfulChildren = children.filter((child) => !(child.type === "JSXText" && child.value.trim().length === 0))
+  if (meaningfulChildren.length === 0) return undefined
+
+  if (meaningfulChildren.length === 1) {
+    const [child] = meaningfulChildren
+    if (!child) return undefined
+    if (child.type === "JSXExpressionContainer" && child.expression.type !== "JSXEmptyExpression") {
+      return code.slice(child.expression.start, child.expression.end)
+    }
+  }
+
+  const [first] = meaningfulChildren
+  const last = meaningfulChildren.at(-1)
+  if (!first || !last) return undefined
+  return `<>${code.slice(first.start, last.end)}</>`
 }
