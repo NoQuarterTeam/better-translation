@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.4.3
+
+### Patch Changes
+
+- [`79e5d61`](https://github.com/NoQuarterTeam/better-translation/commit/79e5d61d2cda9ce4379c28224a85232f19834711) Thanks [@JClackett](https://github.com/JClackett)! - Inject React `<T>` message and values props so `<Var>` interpolation works reliably with translated Locale values.
+
 ## 0.4.2
 
 ### Patch Changes
