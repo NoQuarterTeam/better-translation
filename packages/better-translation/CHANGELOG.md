@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.4.5
+
+### Patch Changes
+
+- [`9ff8126`](https://github.com/NoQuarterTeam/better-translation/commit/9ff81261b631cf6ff2e2ac7b512efa376e53979c) Thanks [@JClackett](https://github.com/JClackett)! - Expose local runtime `translationBatchSize` so apps can choose how many missing messages are translated before progress is persisted.
+
 ## 0.4.4
 
 ### Patch Changes
