@@ -174,6 +174,7 @@ betterTranslation({
   defaultLocale: "en",
   runtime: {
     type: "local",
+    translationBatchSize: 25,
     translate: createAiTranslate({
       prompt: "Use concise product UI copy.",
     }),
@@ -182,6 +183,7 @@ betterTranslation({
 ```
 
 You can also pass your own `translate(messages, locale)` implementation. Return a record keyed by lookup id.
+`translationBatchSize` controls how many missing messages are passed to `translate` at once before progress is persisted.
 
 ## Local Editor
 

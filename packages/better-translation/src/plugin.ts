@@ -44,7 +44,7 @@ const RESOLVED_VIRTUAL_MESSAGES_MODULE_ID = `\0${VIRTUAL_MESSAGES_MODULE_ID}`
 const CALL_MARKERS = ["t", "useT"]
 const COMPONENT_MARKERS = ["T"]
 const LOCALES_SUBDIR = "locales"
-const TRANSLATION_BATCH_SIZE = 25
+const DEFAULT_TRANSLATION_BATCH_SIZE = 25
 
 interface SyncResult {
   manifestChanged: boolean
@@ -328,7 +328,8 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
 
     let translatedCount = 0
     for (const [locale, misses] of missingByLocale) {
-      for (const batch of chunk(misses, TRANSLATION_BATCH_SIZE)) {
+      const batchSize = getTranslationBatchSize(resolvedRuntime)
+      for (const batch of chunk(misses, batchSize)) {
         const result = await resolvedTranslate(batch, locale)
 
         for (const miss of batch) {
@@ -671,7 +672,15 @@ function getRuntimeOutputDir(runtime: BetterTranslateRuntimeOptions, isDev: bool
 }
 
 function normalizeRuntimeOptions(runtime: BetterTranslateRuntimeOptions | undefined): BetterTranslateRuntimeOptions {
-  if (runtime) return runtime.type === "local" ? { ...runtime, target: runtime.target ?? "module" } : runtime
+  if (runtime) {
+    if (runtime.type !== "local") return runtime
+    if (!runtime.translate) return { ...runtime, target: runtime.target ?? "module" }
+    return {
+      ...runtime,
+      target: runtime.target ?? "module",
+      translationBatchSize: normalizeTranslationBatchSize(runtime.translationBatchSize),
+    }
+  }
   return { type: "local", target: "module" }
 }
 
@@ -916,6 +925,16 @@ function chunk<T>(items: T[], size: number) {
     chunks.push(items.slice(index, index + size))
   }
   return chunks
+}
+
+function normalizeTranslationBatchSize(size: number | undefined) {
+  if (typeof size !== "number" || !Number.isFinite(size)) return DEFAULT_TRANSLATION_BATCH_SIZE
+  return Math.max(1, Math.floor(size))
+}
+
+function getTranslationBatchSize(runtime: BetterTranslateRuntimeOptions) {
+  if (runtime.type !== "local") return DEFAULT_TRANSLATION_BATCH_SIZE
+  return normalizeTranslationBatchSize(runtime.translate ? runtime.translationBatchSize : undefined)
 }
 
 function applyEdits(code: string, edits: Array<{ start: number; end: number; replacement: string }>) {

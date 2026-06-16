@@ -3,7 +3,6 @@ import type { generateText } from "ai"
 import type { TranslateFn, TranslateMessage } from "./types.js"
 
 const DEFAULT_GATEWAY_MODEL = "openai/gpt-5.5"
-const DEFAULT_CONCURRENCY = 10
 type AiModel = Parameters<typeof generateText>[0]["model"]
 
 export interface CreateAiTranslateOptions {
@@ -13,31 +12,16 @@ export interface CreateAiTranslateOptions {
   prompt?: string
   /** Optional temperature forwarded to the selected model provider. */
   temperature?: number
-  /** Maximum number of per-message translation requests to run at once. */
-  concurrency?: number
 }
 
 export function createAiTranslate(options: CreateAiTranslateOptions = {}): TranslateFn {
   return async (messages, locale) => {
-    const result: Record<string, string> = {}
-    const concurrency = normalizeConcurrency(options.concurrency)
-
-    await Promise.all(
-      Array.from({ length: Math.min(concurrency, messages.length) }, async (_, workerIndex) => {
-        for (let index = workerIndex; index < messages.length; index += concurrency) {
-          const message = messages[index]!
-          result[message.id] = await translateMessage(message, locale, options)
-        }
-      }),
+    const entries = await Promise.all(
+      messages.map(async (message) => [message.id, await translateMessage(message, locale, options)] as const),
     )
 
-    return result
+    return Object.fromEntries(entries)
   }
-}
-
-function normalizeConcurrency(concurrency = DEFAULT_CONCURRENCY) {
-  if (!Number.isFinite(concurrency)) return DEFAULT_CONCURRENCY
-  return Math.max(1, Math.floor(concurrency))
 }
 
 async function translateMessage(message: TranslateMessage, locale: string, options: CreateAiTranslateOptions) {

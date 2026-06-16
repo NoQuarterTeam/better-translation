@@ -124,8 +124,7 @@ export interface BetterTranslateLocalEditorOptions {
   open?: boolean
 }
 
-/** Writes locale files into the app and loads them through Vite. */
-export interface BetterTranslateLocalRuntimeOptions {
+interface BetterTranslateLocalRuntimeBaseOptions {
   /** Selects local runtime artifacts. */
   type: "local"
   /** Chooses whether locale files are imported as modules or fetched from Vite public assets. */
@@ -134,11 +133,24 @@ export interface BetterTranslateLocalRuntimeOptions {
   output?: string
   /** Public URL prefix used by the generated loader for `target: "public"`. */
   basePath?: string
-  /** Custom translation function used for messages missing from non-default locales. */
-  translate?: TranslateFn
   /** Dev-only UI for editing local Locale values. */
   editor?: boolean | BetterTranslateLocalEditorOptions
 }
+
+/** Writes locale files into the app and loads them through Vite. */
+export type BetterTranslateLocalRuntimeOptions =
+  | (BetterTranslateLocalRuntimeBaseOptions & {
+      /** Custom translation function used for messages missing from non-default locales. */
+      translate: TranslateFn
+      /** Number of missing messages sent to `translate` before cache and locale files are persisted. Defaults to 25. */
+      translationBatchSize?: number
+    })
+  | (BetterTranslateLocalRuntimeBaseOptions & {
+      /** Omit `translate` to keep non-default locale values as source fallbacks during dev. */
+      translate?: undefined
+      /** Only available when `translate` is provided. */
+      translationBatchSize?: never
+    })
 
 /** Loads locale files from an external translation service. */
 export interface BetterTranslateRemoteRuntimeOptions {

@@ -56,9 +56,17 @@ type LocalRuntime = {
   target?: "module" | "public"
   output?: string
   basePath?: string
-  translate?: TranslateFn
   editor?: boolean | LocalEditorOptions
-}
+} & (
+  | {
+      translate: TranslateFn
+      translationBatchSize?: number
+    }
+  | {
+      translate?: undefined
+      translationBatchSize?: never
+    }
+)
 ```
 
 <TypeTable
@@ -82,6 +90,11 @@ type LocalRuntime = {
     translate: {
       type: "TranslateFn",
       description: "Optional local-mode function for filling missing non-default Locale values during dev.",
+    },
+    translationBatchSize: {
+      type: "number",
+      description:
+        "Number of missing Messages passed to translate at once before cache and Locale files are persisted. Defaults to 25. Only valid when translate is provided.",
     },
     editor: {
       type: "boolean | LocalEditorOptions",
@@ -341,10 +354,6 @@ Import `createAiTranslate` from `better-translation/ai`. Use it as local runtime
     temperature: {
       type: "number",
       description: "Optional temperature forwarded to the selected model provider.",
-    },
-    concurrency: {
-      type: "number",
-      description: "Maximum number of per-message translation requests to run at once. Defaults to 10.",
     },
   }}
 />
