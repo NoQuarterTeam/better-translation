@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.4.4
+
+### Patch Changes
+
+- [`a04ba63`](https://github.com/NoQuarterTeam/better-translation/commit/a04ba637f3d3f21056d972824d0c4bc6984909fb) Thanks [@JClackett](https://github.com/JClackett)! - Persist local translation progress after each batch so large locale regenerations can resume instead of waiting for every missing message to finish.
+
 ## 0.4.3
 
 ### Patch Changes
