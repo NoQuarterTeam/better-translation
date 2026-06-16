@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "ai": "7.0.0-canary.176",
-    "oxc-parser": "0.135.0"
+    "oxc-parser": "0.136.0"
   },
   "devDependencies": {
     "@better-translation/locale-editor": "workspace:*",
