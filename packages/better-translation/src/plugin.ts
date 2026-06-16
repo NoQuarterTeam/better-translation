@@ -44,6 +44,7 @@ const RESOLVED_VIRTUAL_MESSAGES_MODULE_ID = `\0${VIRTUAL_MESSAGES_MODULE_ID}`
 const CALL_MARKERS = ["t", "useT"]
 const COMPONENT_MARKERS = ["T"]
 const LOCALES_SUBDIR = "locales"
+const TRANSLATION_BATCH_SIZE = 25
 
 interface SyncResult {
   manifestChanged: boolean
@@ -327,19 +328,28 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
 
     let translatedCount = 0
     for (const [locale, misses] of missingByLocale) {
-      const result = await resolvedTranslate(misses, locale)
+      for (const batch of chunk(misses, TRANSLATION_BATCH_SIZE)) {
+        const result = await resolvedTranslate(batch, locale)
 
-      for (const miss of misses) {
-        const translated = result[miss.id]?.trim()
-        if (!translated) continue
-        cache.entries[getCacheKey(miss.id, locale)] = {
-          sourceText: miss.text,
-          meta: miss.meta,
-          locale,
-          translation: translated,
-          timestamp: Date.now(),
+        for (const miss of batch) {
+          const translated = result[miss.id]?.trim()
+          if (!translated) continue
+          cache.entries[getCacheKey(miss.id, locale)] = {
+            sourceText: miss.text,
+            meta: miss.meta,
+            locale,
+            translation: translated,
+            timestamp: Date.now(),
+          }
+          translatedCount += 1
         }
-        translatedCount += 1
+
+        saveCache(resolve(root, cacheFile), cache)
+        writeLocaleFilesToDisk()
+        writePrivateManifest()
+        log(
+          `${PREFIX} ${BOLD}Translated${RESET} ${CYAN}${translatedCount}${RESET}/${CYAN}${totalMisses}${RESET} ${totalMisses === 1 ? "Message" : "Messages"} -> ${CYAN}${formatLocales(missLocales)}${RESET}`,
+        )
       }
     }
 
@@ -898,6 +908,14 @@ function collectScanFiles(root: string) {
 
 function isRuntimeMessages(input: unknown): input is RuntimeMessages {
   return typeof input === "object" && input !== null && Object.values(input).every((value) => typeof value === "string")
+}
+
+function chunk<T>(items: T[], size: number) {
+  const chunks: T[][] = []
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size))
+  }
+  return chunks
 }
 
 function applyEdits(code: string, edits: Array<{ start: number; end: number; replacement: string }>) {
