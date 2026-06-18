@@ -120,7 +120,7 @@ export function analyzeTypeScriptSourceFile(code: string, filename: string, mark
   return { parsed: true, messages, edits }
 }
 
-function isStringLiteral(node: Argument): node is StringLiteral {
+function isStringLiteral(node: { type?: string; value?: unknown }): node is StringLiteral {
   return node.type === "Literal" && typeof (node as StringLiteral).value === "string"
 }
 
@@ -296,6 +296,11 @@ function extractJSXChildren(code: string, children: Array<JSXChild>): Extraction
       }
 
       case "JSXExpressionContainer":
+        if (isStringLiteral(child.expression)) {
+          parts.push(child.expression.value)
+          break
+        }
+
         if (child.expression.type !== "JSXEmptyExpression") {
           return { message: "", placeholders: [], values: [], valid: false }
         }
