@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.4.6
+
+### Patch Changes
+
+- [`9cabf90`](https://github.com/NoQuarterTeam/better-translation/commit/9cabf904f86c21c54546aaf905bac87a021b1be1) Thanks [@JClackett](https://github.com/JClackett)! - Allow static string expression children inside React `<T>` markers.
+
 ## 0.4.5
 
 ### Patch Changes
