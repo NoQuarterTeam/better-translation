@@ -57,7 +57,7 @@
     "posthog-node": "5.38.1",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "resend": "6.12.4",
+    "resend": "6.14.0",
     "sonner": "^2.0.7",
     "superjson": "catalog:",
     "zod": "catalog:"
