@@ -82,7 +82,7 @@
         "nitro": "3.0.260522-beta",
         "pg": "8.22.0",
         "posthog-js": "1.390.2",
-        "posthog-node": "5.38.1",
+        "posthog-node": "5.38.2",
         "react": "catalog:",
         "react-dom": "catalog:",
         "resend": "6.14.0",
@@ -2181,7 +2181,7 @@
 
     "posthog-js": ["posthog-js@1.390.2", "", { "dependencies": { "@posthog/core": "^1.35.1", "@posthog/types": "^1.390.0", "core-js": "^3.38.1", "dompurify": "^3.3.2", "fflate": "^0.4.8", "preact": "^10.28.2", "query-selector-shadow-dom": "^1.0.1", "web-vitals": "^5.1.0" } }, "sha512-z1zh0mMokecCILXxabmo5Xag6uCVYEDhP2JnMYLNxwmKN7d7u1S94XYmhUTF3iyAo2JOg6c7n86mGaTXliz4MA=="],
 
-    "posthog-node": ["posthog-node@5.38.1", "", { "dependencies": { "@posthog/core": "^1.35.2" }, "peerDependencies": { "rxjs": "^7.0.0" }, "optionalPeers": ["rxjs"] }, "sha512-qjcy8pGrgcycDjUOHv8xOPBJ/5PdjqmeB3LhwDt428LEwMgjLWjUdK6n+g0mjSXhLD9WO6NKFMZH85z4ukKM+w=="],
+    "posthog-node": ["posthog-node@5.38.2", "", { "dependencies": { "@posthog/core": "^1.35.3" }, "peerDependencies": { "rxjs": "^7.0.0" }, "optionalPeers": ["rxjs"] }, "sha512-eiKpU+vX4hVuHbO/EosvPHsmh2AVIdoVmWss/uUOs1t4b0ViCblw2o8OIFqHxKj3mYRnSOBlX0Dw3wBvcCaYpA=="],
 
     "powershell-utils": ["powershell-utils@0.1.0", "", {}, "sha512-dM0jVuXJPsDN6DvRpea484tCUaMiXWjuCn++HGTqUWzGDjv5tZkEZldAJ/UMlqRYGFrD/etByo4/xOuC/snX2A=="],
 
@@ -2803,7 +2803,7 @@
 
     "pg/pg-protocol": ["pg-protocol@1.15.0", "", {}, "sha512-cq9sECI5s0+uPUXjbz8ioyPJni6RzsRib0US67i5IoTZKw8fNeYlVE7u8F4dG7vEJJtc5wdD1K189lCCUwqWTQ=="],
 
-    "posthog-node/@posthog/core": ["@posthog/core@1.35.2", "", { "dependencies": { "@posthog/types": "^1.390.0" } }, "sha512-aV6nkkKCF//NnR9SyQD00+sPg0A4v1m3Xk/fcsnYs+z3qCRXgjwOhfQX2lceAKWlru3o5l9Yn/480GovLOnqKA=="],
+    "posthog-node/@posthog/core": ["@posthog/core@1.35.3", "", { "dependencies": { "@posthog/types": "^1.390.2" } }, "sha512-EsGPbSLl39Jgo2KZ+kI9UAxFnh5nddaN5bNm2rXvUwF+vGmam9eN1EXeNbxhRU7ulEeIiGdm7XjoU7pzavkgIQ=="],
 
     "prompts/kleur": ["kleur@3.0.3", "", {}, "sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w=="],
 
@@ -3004,6 +3004,8 @@
     "ora/log-symbols/is-unicode-supported": ["is-unicode-supported@1.3.0", "", {}, "sha512-43r2mRvz+8JRIKnWJ+3j8JtjRKZ6GmjzfaE/qiBJnikNnYv/6bagRJ1kUhNk8R5EX/GkobD+r+sfxCPJsiKBLQ=="],
 
     "ora/strip-ansi/ansi-regex": ["ansi-regex@6.2.2", "", {}, "sha512-Bq3SmSpyFHaWjPk8If9yc6svM8c56dB5BAtW4Qbw5jHTwwXXcTLoRMkpDJp6VL0XzlWaCHTXrkFURMYmD0sLqg=="],
+
+    "posthog-node/@posthog/core/@posthog/types": ["@posthog/types@1.390.2", "", {}, "sha512-WcfKz2GNn2vfDX8vXmJYbKxegPxVWHuDQ/pHdAn0HoZDXDFnEp/+x3qBQA+fEvtbPjjtjgAt2wIgJMlM7asx7g=="],
 
     "react-email/@babel/traverse/@babel/parser": ["@babel/parser@7.29.7", "", { "dependencies": { "@babel/types": "^7.29.7" }, "bin": "./bin/babel-parser.js" }, "sha512-hnORnjP/1P/zFEndoeX+n+t1RwWRJiJpM/jO7FW32Kn9r5+sJB2JWOdYo4L6k78j15eCwY3Gm/7364B1EMwtNg=="],
 
