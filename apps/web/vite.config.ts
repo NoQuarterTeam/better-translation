@@ -20,7 +20,7 @@ export default defineConfig({
       },
     }),
     // devtools(),
-    workflow({ dirs: ["src/routes/api/projects/$projectId/branches/$branchName"] }),
+    workflow({ dirs: ["src/workflows"] }),
     nitro({ traceDeps: ["react", "react-dom"] }),
     tailwindcss(),
     tanstackStart({

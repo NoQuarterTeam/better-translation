@@ -6,8 +6,7 @@ import * as z from "zod"
 import { db } from "@/server/db"
 import { apiKeysTable, branchesTable, messagesTable, projectsTable } from "@/server/db/schema"
 import { createProjectApiKeyHash, createStableHash, readBearerToken } from "@/server/platform"
-
-import { fillManifestLocaleValuesWorkflow } from "./-manifest-locale-fill"
+import { fillManifestLocaleValuesWorkflow } from "@/workflows/manifest-locale-fill"
 
 const manifestSourceSchema = z
   .object({
