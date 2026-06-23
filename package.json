@@ -67,7 +67,7 @@
     "@changesets/cli": "^2.31.0",
     "@tsdown/css": "^0.22.1",
     "better-translation": "workspace:*",
-    "oxlint": "1.70.0",
+    "oxlint": "1.71.0",
     "oxlint-tsgolint": "0.23.0",
     "typescript": "catalog:",
     "vite-plus": "0.2.1"
