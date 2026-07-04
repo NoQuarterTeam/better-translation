@@ -128,3 +128,24 @@ builds never call `translate`, they only check that committed files are complete
   `translate` is just a function that receives the missing Messages and a target Locale and returns a map of lookup id to
   translated string. Use any provider you like, `createAiTranslate` is only a convenience.
 </Callout>
+
+## Generate without a dev server
+
+Run the same local generation step from the command line when you need Locale files updated
+without starting Vite dev:
+
+```bash
+bt generate
+```
+
+The package also exposes the longer binary name:
+
+```bash
+better-translation generate
+```
+
+The command loads your Vite config, finds `betterTranslation()`, scans source files, writes the
+private Manifest and local Runtime bundles, and calls `runtime.translate` for missing
+non-default Locale values when local translation is configured. This is useful in agent or CI
+workflows that change marked copy and need generated artifacts refreshed before running a
+production build check.

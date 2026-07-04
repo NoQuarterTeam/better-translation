@@ -6,6 +6,7 @@ export default defineConfig({
     clean: true,
     dts: true,
     entry: {
+      cli: "src/cli.ts",
       vite: "src/vite.ts",
       react: "src/react.tsx",
       runtime: "src/runtime.ts",

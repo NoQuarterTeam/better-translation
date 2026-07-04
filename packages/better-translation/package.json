@@ -6,6 +6,10 @@
     "type": "git",
     "url": "https://github.com/NoQuarterTeam/better-translation.git"
   },
+  "bin": {
+    "better-translation": "./dist/cli.mjs",
+    "bt": "./dist/cli.mjs"
+  },
   "files": [
     "dist"
   ],

@@ -45,10 +45,23 @@ const CALL_MARKERS = ["t", "useT"]
 const COMPONENT_MARKERS = ["T"]
 const LOCALES_SUBDIR = "locales"
 const DEFAULT_TRANSLATION_BATCH_SIZE = 25
+const BETTER_TRANSLATION_PLUGIN_API = "__betterTranslation" as const
 
 interface SyncResult {
   manifestChanged: boolean
   localeMessagesChanged: boolean
+}
+
+export interface BetterTranslationPluginApi {
+  generate(): Promise<void>
+}
+
+type BetterTranslationPluginWithApi = Plugin & {
+  [BETTER_TRANSLATION_PLUGIN_API]?: BetterTranslationPluginApi
+}
+
+export function getBetterTranslationPluginApi(plugin: Plugin) {
+  return (plugin as BetterTranslationPluginWithApi)[BETTER_TRANSLATION_PLUGIN_API]
 }
 
 function formatLocale(locale: string) {
@@ -308,7 +321,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       [
         `${PREFIX} committed locale artifacts are out of sync for local production build`,
         `local production builds are check-only and never regenerate locale files`,
-        `run the dev workflow to regenerate locale artifacts and commit the result`,
+        `run \`bt generate\` or the dev workflow to regenerate locale artifacts and commit the result`,
         ...issues,
       ].join("\n"),
     )
@@ -532,7 +545,32 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     return createModuleMessagesModule(locales, (locale) => `/${normalizePath(toRootRelativePath(getLocalePath(locale)))}`)
   }
 
-  return {
+  async function generateLocalArtifacts() {
+    if (!root) throw new Error(`${PREFIX} Vite config must be resolved before generating locale artifacts`)
+    if (resolvedRuntime.type !== "local") {
+      throw new Error(
+        [
+          `${PREFIX} \`bt generate\` currently supports local runtime mode only`,
+          `remote runtime mode syncs its Manifest through the Vite plugin during dev and build`,
+        ].join("\n"),
+      )
+    }
+
+    cache = loadCache(resolve(root, cacheFile))
+    scanAllSourceFiles()
+    writeLocaleFilesToDisk()
+    writePrivateManifest()
+
+    await translateMissingMessages()
+
+    writeLocaleFilesToDisk()
+    writePrivateManifest()
+    saveCache(resolve(root, cacheFile), cache)
+    assertLocalBuildTranslationsComplete()
+    log(`${PREFIX} ${BOLD}Generated${RESET} Runtime bundles -> ${CYAN}${formatRuntime(resolvedRuntime)}${RESET}`)
+  }
+
+  const plugin: BetterTranslationPluginWithApi = {
     name: "better-translation-extract",
     enforce: "pre",
 
@@ -646,6 +684,12 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       saveCache(resolve(root, cacheFile), cache)
     },
   }
+
+  plugin[BETTER_TRANSLATION_PLUGIN_API] = {
+    generate: generateLocalArtifacts,
+  }
+
+  return plugin
 }
 
 function formatLocaleIssue(locale: string, label: string, ids: string[]) {
