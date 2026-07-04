@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.5.0
+
+### Minor Changes
+
+- [`969a2cd`](https://github.com/NoQuarterTeam/better-translation/commit/969a2cd3413a940627387fbc53daea7ca7d8f665) Thanks [@JClackett](https://github.com/JClackett)! - Add `bt generate` and `better-translation generate` to regenerate local Runtime bundles without starting Vite dev.
+
 ## 0.4.6
 
 ### Patch Changes
