@@ -9,6 +9,7 @@
     "use-t",
     "variables",
     "server",
+    "agent-skill",
     "---Runtime loading---",
     "loading",
     "user-locale",

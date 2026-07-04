@@ -1,0 +1,78 @@
+---
+title: Agent skill
+description: Give AI coding agents a reusable Better Translation workflow for installing the package and marking translatable code.
+---
+
+Better Translation ships a portable Agent Skill at
+[`skills/better-translation/SKILL.md`](https://github.com/NoQuarterTeam/better-translation/tree/main/skills/better-translation).
+Add it to a Consumer app when you want AI coding agents to follow the same marker rules every
+time they install Better Translation, convert existing copy, or add new translatable code.
+
+## Why one skill
+
+Use one skill with two workflows inside it: adoption and maintenance. Both workflows depend on
+the same decisions:
+
+- use `T` for component children
+- use `Var` for runtime values inside `T`
+- use `useT`, `getT`, or `createT` for plain strings
+- run `bt generate` after marker changes
+
+Keeping those rules in one skill gives agents one trigger to load and keeps the install and
+daily-development paths consistent.
+
+## Install
+
+Agent Skills are a portable folder format built around a required `SKILL.md` file. The current
+spec describes the folder as a `SKILL.md` plus optional `scripts/`, `references/`, and
+`assets/`, with required `name` and `description` frontmatter. See the
+[Agent Skills specification](https://agentskills.io/specification), the
+[Codex skills documentation](https://developers.openai.com/codex/skills), and
+[skills.sh](https://www.skills.sh/docs) for the current ecosystem guidance.
+
+For skills.sh-compatible agents, install the Better Translation skill from GitHub:
+
+```bash
+npx skills add https://github.com/NoQuarterTeam/better-translation --skill better-translation
+```
+
+If your agent expects project-local skills, copy the skill folder into that agent's workspace
+skills directory instead. For example:
+
+```text
+.github/skills/better-translation/SKILL.md
+```
+
+or:
+
+```text
+.agents/skills/better-translation/SKILL.md
+```
+
+The skill is plain Markdown, so agents without first-class skill support can still use the file
+as a project prompt.
+
+## Use it
+
+Invoke the skill explicitly when starting a translation pass:
+
+```text
+$better-translation Install Better Translation in this Vite app and convert the existing UI copy route by route.
+```
+
+For routine feature work, ask the agent to use the same skill before it finishes:
+
+```text
+$better-translation Review the changed UI code, add missing Translation markers, then run bt generate.
+```
+
+The skill tells agents to preserve the existing runtime mode, keep Runtime bundles flat, avoid
+dynamic expressions directly inside `T`, use `context` for ambiguous Messages, and commit
+local-mode generated Locale values with the source change.
+
+## Keep it current
+
+Update `skills/better-translation/SKILL.md` when the marker API, runtime loader, generated
+artifact behavior, or recommended verification command changes. Agent skill descriptions are
+used for automatic triggering, so keep the description concise and include the words agents are
+likely to see in user requests, such as `T`, `Var`, `useT`, `createT`, and `bt generate`.
