@@ -49,7 +49,7 @@
     "better-auth": "catalog:",
     "better-translation": "workspace:*",
     "dedent": "1.7.2",
-    "drizzle-orm": "1.0.0-rc.4-5d5b77c",
+    "drizzle-orm": "1.0.0-rc.4-de6c356",
     "lucide-react": "^1.17.0",
     "nitro": "3.0.260522-beta",
     "pg": "8.22.0",
