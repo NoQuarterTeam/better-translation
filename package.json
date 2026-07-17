@@ -70,7 +70,7 @@
     "oxlint": "1.72.0",
     "oxlint-tsgolint": "0.24.0",
     "typescript": "catalog:",
-    "vite-plus": "0.2.2"
+    "vite-plus": "0.2.4"
   },
   "engines": {
     "node": ">=24"
