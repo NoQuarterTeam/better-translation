@@ -13,7 +13,7 @@
     "@vercel/functions": "3.7.6",
     "fumadocs-core": "16.13.0",
     "fumadocs-mdx": "15.2.0",
-    "fumadocs-ui": "16.12.1",
+    "fumadocs-ui": "16.13.0",
     "lucide-react": "catalog:",
     "nitro": "3.0.260522-beta",
     "react": "catalog:",
