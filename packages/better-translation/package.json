@@ -47,7 +47,7 @@
     "prepack": "bun run build"
   },
   "dependencies": {
-    "ai": "7.0.40",
+    "ai": "7.0.41",
     "oxc-parser": "0.142.0"
   },
   "devDependencies": {
