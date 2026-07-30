@@ -10,7 +10,7 @@ import { TranslateProvider } from "better-translation/react"
 import { DefaultError } from "@/components/default-error"
 import { ThemeProvider } from "@/components/theme-provider"
 
-import appCss from "../styles.css?url"
+import "../styles.css"
 import { getLocaleFn } from "./-locale"
 
 interface MyRouterContext {
@@ -37,7 +37,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         { title: `Better Translation` },
       ],
-      links: [{ rel: "stylesheet", href: appCss }],
     }
   },
   headers: () => ({ "Cache-Control": "no-cache", "CDN-Cache-Control": "no-cache", "Vercel-CDN-Cache-Control": "no-cache" }),
