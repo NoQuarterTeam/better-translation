@@ -4,6 +4,7 @@ import viteReact from "@vitejs/plugin-react"
 import { nitro } from "nitro/vite"
 import { defineConfig } from "vite-plus"
 
+import { createAiTranslate } from "better-translation/ai"
 import { betterTranslation } from "better-translation/vite"
 
 export default defineConfig({
@@ -12,7 +13,7 @@ export default defineConfig({
     betterTranslation({
       locales: ["en", "nl", "es"],
       defaultLocale: "en",
-      runtime: { type: "local" },
+      runtime: { type: "local", translate: createAiTranslate() },
     }),
     // devtools(),
     nitro(),
