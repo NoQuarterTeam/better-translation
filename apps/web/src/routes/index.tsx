@@ -124,7 +124,7 @@ function Hero() {
             </T>
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" nativeButton={false} render={<a href="/docs" />}>
+            <Button size="lg" nativeButton={false} render={<a href="https://better-translation-docs.vercel.app" />}>
               <T>Read the docs</T>
               <ArrowRightIcon />
             </Button>
@@ -471,7 +471,7 @@ function FinalCta() {
               <T>Wrap your first Message, run the plugin, and watch translations follow your code.</T>
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button size="lg" nativeButton={false} render={<a href="/docs" />}>
+              <Button size="lg" nativeButton={false} render={<a href="https://better-translation-docs.vercel.app" />}>
                 <T>Read the docs</T>
                 <ArrowRightIcon />
               </Button>
