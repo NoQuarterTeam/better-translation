@@ -72,7 +72,7 @@ jobs:
 
       - name: Upload benchmark reports
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: compiler-performance-${{ github.sha }}
           retention-days: 90
