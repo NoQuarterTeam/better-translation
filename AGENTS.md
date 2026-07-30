@@ -45,6 +45,10 @@ The long-term goal is a hosted service where Projects sync extracted Messages to
 - Every bug fix in `packages/better-translation` must include a regression test that fails against the pre-fix behavior
   and passes with the fix. Put it in the closest logical test file; cover both TypeScript/React and Svelte when they
   share the affected contract, and cover both source analysis and runtime rendering when the bug crosses that boundary.
+- Before substantial compiler or Vite-plugin feature work, capture `bun run bench:performance:json` from the merge-base.
+  Capture it again after the change, then run
+  `bun run bench:performance:compare -- --base base.json --current current.json`. Report the p50 deltas and investigate
+  any enforced regression before handing work off.
 - When changing local artifact behavior, verify both dev regeneration and production build checks.
 - When adding hosted behavior, keep local bundle-first behavior working until the replacement path is implemented end to end.
 

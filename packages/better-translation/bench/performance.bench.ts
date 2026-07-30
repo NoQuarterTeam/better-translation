@@ -202,57 +202,84 @@ function runScalingGuards() {
   const guards = [
     {
       large: () => analyzeSourceFile(largeTypeScriptSource, "/benchmark/large.tsx", markers),
+      largeInput: "2,000 markers",
+      inputScale: 4,
       maxRatio: FOUR_TIMES_INPUT_MAX_RATIO,
       name: "TypeScript analysis",
       small: () => analyzeSourceFile(smallTypeScriptSource, "/benchmark/small.tsx", markers),
+      smallInput: "500 markers",
     },
     {
       large: () => analyzeSourceFile(largeSvelteSource, "/benchmark/large.svelte", markers),
+      largeInput: "2,000 markers",
+      inputScale: 4,
       maxRatio: FOUR_TIMES_INPUT_MAX_RATIO,
       name: "Svelte analysis",
       small: () => analyzeSourceFile(smallSvelteSource, "/benchmark/small.svelte", markers),
+      smallInput: "500 markers",
     },
     {
       large: () => analyzeSourceFile(largeSvelteRichTextSource, "/benchmark/large-rich-text.svelte", markers),
+      largeInput: "2,000 rich-text siblings",
+      inputScale: 8,
       maxRatio: EIGHT_TIMES_COMPLEX_INPUT_MAX_RATIO,
       name: "Svelte sibling Rich-text Message analysis",
       small: () => analyzeSourceFile(smallSvelteRichTextSource, "/benchmark/small-rich-text.svelte", markers),
+      smallInput: "250 rich-text siblings",
     },
     {
       large: () => parseRichTextMessage(largeRichMessage),
+      largeInput: "2,048 elements",
+      inputScale: 8,
       maxRatio: EIGHT_TIMES_INPUT_MAX_RATIO,
       name: "Message-template parsing",
       small: () => parseRichTextMessage(smallRichMessage),
+      smallInput: "256 elements",
     },
     {
       large: () => analyzeProject(largeTypeScriptProject),
+      largeInput: "100 files",
+      inputScale: 4,
       maxRatio: FOUR_TIMES_PROJECT_INPUT_MAX_RATIO,
       name: "Project-shaped TypeScript analysis",
       small: () => analyzeProject(smallTypeScriptProject),
+      smallInput: "25 files",
     },
     {
       large: () => analyzeProject(largeSvelteProject),
+      largeInput: "100 files",
+      inputScale: 4,
       maxRatio: FOUR_TIMES_PROJECT_INPUT_MAX_RATIO,
       name: "Project-shaped Svelte analysis",
       small: () => analyzeProject(smallSvelteProject),
+      smallInput: "25 files",
     },
     {
       large: largeIncrementalManifest,
+      largeInput: "1,000 files",
+      inputScale: 10,
       maxRatio: INCREMENTAL_PROJECT_SIZE_MAX_RATIO,
       name: "Incremental Manifest update across project sizes",
       small: smallIncrementalManifest,
+      smallInput: "100 files",
     },
     {
       large: () => createSharedSourceManifest(largeMarkerCount),
+      largeInput: "2,000 sources",
+      inputScale: 4,
       maxRatio: FOUR_TIMES_INPUT_MAX_RATIO,
       name: "Manifest shared-source aggregation",
       small: () => createSharedSourceManifest(smallMarkerCount),
+      smallInput: "500 sources",
     },
     {
       large: largeTransform,
+      largeInput: "2,000 edits",
+      inputScale: 4,
       maxRatio: FOUR_TIMES_INPUT_MAX_RATIO,
       name: "Cached source-edit application",
       small: smallTransform,
+      smallInput: "500 edits",
     },
   ]
 
@@ -276,7 +303,9 @@ function runScalingGuards() {
     const smallMedian = median(smallSamples)
     const largeMedian = median(largeSamples)
     const ratio = largeMedian / smallMedian
-    console.log(`${guard.name}: ${formatMilliseconds(smallMedian)} -> ${formatMilliseconds(largeMedian)} (${ratio.toFixed(2)}x)`)
+    console.log(
+      `${guard.name} — ${guard.smallInput} -> ${guard.largeInput} (${guard.inputScale}x input): ${formatMilliseconds(smallMedian)} -> ${formatMilliseconds(largeMedian)} (${ratio.toFixed(2)}x time; budget <${guard.maxRatio}x)`,
+    )
     if (ratio >= guard.maxRatio) {
       throw new Error(`${guard.name} exceeded its ${guard.maxRatio}x scaling budget with a ${ratio.toFixed(2)}x increase`)
     }

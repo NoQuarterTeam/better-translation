@@ -54,6 +54,7 @@
   "type": "module",
   "scripts": {
     "bench:performance": "bun --filter better-translation bench:performance",
+    "bench:performance:compare": "bun packages/better-translation/bench/compare-performance.ts",
     "bench:performance:guard": "bun --filter better-translation bench:performance:guard",
     "bench:performance:json": "bun packages/better-translation/bench/performance.bench.ts --json",
     "build:packages": "bun --filter better-translation build",

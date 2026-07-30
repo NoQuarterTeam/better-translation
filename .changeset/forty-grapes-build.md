@@ -13,7 +13,8 @@ Message validation and context-setting helpers private to the runtime implementa
 Make Svelte Rich-text Message analysis near-linear by indexing source edits and walking its AST once, without retaining
 duplicated placeholder expressions in transformed source. Treat reordered equivalent file Messages as an unchanged Manifest
 contribution. Add statistically sampled source-analysis benchmarks and scaling guards for giant files, project-shaped
-TypeScript and Svelte analysis, incremental Manifest updates, Message templates, and cached source edits.
+TypeScript and Svelte analysis, incremental Manifest updates, Message templates, and cached source edits. Compare p50 benchmark
+reports between the pull-request base and current revision in CI, retaining the reports as build artifacts.
 
 Apply completed local development translations to React and Svelte providers through Vite HMR so authored fallbacks switch to
 their active Locale values without a page reload or component-state loss.

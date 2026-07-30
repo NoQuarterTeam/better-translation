@@ -48,6 +48,7 @@
   },
   "scripts": {
     "bench:performance": "bun run bench/performance.bench.ts",
+    "bench:performance:compare": "bun run bench/compare-performance.ts",
     "bench:performance:guard": "bun run bench/performance.bench.ts --guard",
     "bench:performance:json": "bun run bench/performance.bench.ts --json",
     "build": "vp pack && vite build",
