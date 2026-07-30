@@ -10,12 +10,12 @@
   "dependencies": {
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",
-    "@vercel/functions": "3.7.6",
+    "@vercel/functions": "catalog:",
     "fumadocs-core": "16.13.0",
     "fumadocs-mdx": "15.2.0",
     "fumadocs-ui": "16.13.0",
     "lucide-react": "catalog:",
-    "nitro": "3.0.260522-beta",
+    "nitro": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "tailwindcss": "catalog:"

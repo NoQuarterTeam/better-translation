@@ -2,7 +2,7 @@ import tailwindcss from "@tailwindcss/vite"
 import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import viteReact from "@vitejs/plugin-react"
 import { nitro } from "nitro/vite"
-import { defineConfig } from "vite-plus"
+import { defineConfig } from "vite"
 
 import { createAiTranslate } from "better-translation/ai"
 import { betterTranslation } from "better-translation/vite"

@@ -47,18 +47,18 @@
     "prepack": "bun run build"
   },
   "dependencies": {
-    "ai": "7.0.42",
+    "ai": "catalog:",
     "oxc-parser": "0.142.0"
   },
   "devDependencies": {
     "@better-translation/locale-editor": "workspace:*",
     "@better-translation/tsconfig": "workspace:*",
-    "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "@sveltejs/vite-plugin-svelte": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "svelte": "^5.56.2",
+    "svelte": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:"
   },
