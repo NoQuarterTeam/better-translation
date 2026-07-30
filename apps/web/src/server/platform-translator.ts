@@ -1,5 +1,7 @@
 import type { generateText } from "ai"
 
+import { hasSameMessageStructure } from "./message-structure"
+
 type AiModel = Parameters<typeof generateText>[0]["model"]
 const DEFAULT_TRANSLATION_CONCURRENCY = 4
 const PLATFORM_TRANSLATION_MODEL = "openai/gpt-5.5"
@@ -33,6 +35,9 @@ export async function translateMessageWithPlatform({
 }) {
   const translated = (await translateWithAi({ glossaryTerms, locale, message, prompt })).trim()
   if (!translated) throw new Error(`The Platform translator returned no value for ${message.id}.`)
+  if (!hasSameMessageStructure(message.defaultMessage, translated)) {
+    throw new Error(`The Platform translator did not preserve the placeholders and rich-text elements for ${message.id}.`)
+  }
   return translated
 }
 
@@ -101,7 +106,7 @@ ${createGlossaryPrompt(glossaryTerms)}
 ## Output Contract
 Return only the translated text for the provided source Message.
 Do not include the lookup id, labels, explanations, markdown, code fences, or surrounding quotes.
-Keep placeholders exactly as provided.
+Keep variable placeholders and numbered rich-text tags exactly as provided.
 Use the Message context when provided.`,
   ].join("\n\n")
 }

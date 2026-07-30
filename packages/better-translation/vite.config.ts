@@ -10,7 +10,7 @@ export default defineConfig({
       react: "src/react.tsx",
       runtime: "src/runtime.ts",
       svelte: "src/svelte.ts",
-      "svelte-runtime": "src/svelte-runtime.ts",
+      "svelte-runtime": "src/svelte/runtime.ts",
       ai: "src/ai.ts",
       messages: "src/messages.ts",
     },
@@ -39,7 +39,7 @@ export default defineConfig({
     emptyOutDir: false,
     lib: {
       cssFileName: "style",
-      entry: "src/local-editor/client.tsx",
+      entry: "src/vite-plugin/local-editor/client.tsx",
       fileName: () => "local-editor.js",
       formats: ["iife"],
       name: "BetterTranslationLocalEditor",

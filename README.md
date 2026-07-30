@@ -99,10 +99,10 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const { messages } = Route.useRouteContext()
+  const { locale, messages } = Route.useRouteContext()
 
   return (
-    <TranslateProvider messages={messages}>
+    <TranslateProvider locale={locale} messages={messages}>
       <Outlet />
     </TranslateProvider>
   )
@@ -110,6 +110,8 @@ function RootComponent() {
 ```
 
 `getLocale()` is whatever your app uses to resolve the active Locale, such as a cookie, route param, or request header.
+Passing it to `TranslateProvider` lets completed local development translations replace the authored fallback without
+reloading the page or remounting application state.
 
 Mark UI copy where you author it:
 
@@ -126,6 +128,21 @@ export function CheckoutButton() {
   )
 }
 ```
+
+Static inline elements inside React and Svelte `<T>` markers are preserved automatically while their text is translated:
+
+```tsx
+<T>
+  Always make sure <strong>you are safe first</strong> before approaching the casualty.
+</T>
+```
+
+This works with supported inline elements such as `<strong>`, `<b>`, `<i>`, `<em>`, `<span>`, `<a>`, and `<br />`, including
+nested elements. Source-owned React components such as `<B>` or `<Text.Italic>` and normal Svelte components work too, so a
+design-system component can render `<b>` or another element under the hood. Better Translation represents each authored
+element or component as a numbered rich-text tag in the Message, then restores that same source-owned renderer and its props
+at runtime. Consumer apps do not import a parser, register tag callbacks, or validate translations themselves. Translated
+strings never become arbitrary HTML, and dynamic values should still use `<Var>`.
 
 Run your dev server. The plugin scans your source and writes Runtime bundles for each configured Locale.
 
@@ -177,11 +194,14 @@ betterTranslation({
     translate: createAiTranslate({
       prompt: "Use concise product UI copy.",
     }),
+    translationBatchSize: 25,
   },
 })
 ```
 
 You can also pass your own `translate(messages, locale)` implementation. Return a record keyed by lookup id.
+`translationBatchSize` controls how many missing Messages are sent to that function before the cache and local Runtime bundles are
+persisted, so completed batches survive an interruption.
 
 ## Local Editor
 
@@ -211,6 +231,8 @@ The current package keeps the local bundle-first workflow working while the host
 ## Repo Layout
 
 - `packages/better-translation`: published Vite plugin, runtime helpers, local editor middleware, and AI translation helper.
+  Public build entry modules stay at the top of `src`; private Message grammar lives in `src/message`, Vite-plugin behavior in
+  `src/vite-plugin`, and Svelte implementation files in `src/svelte`.
 - `apps/web`: hosted app and service scaffold.
 - `apps/docs`: documentation site.
 - `examples/tanstack-start`: local-first TanStack Start example.
@@ -226,6 +248,7 @@ Run routine verification from the repo root:
 bun run format
 bun run lint
 bun run check
+bun run test
 ```
 
 Build the published package:
@@ -233,6 +256,23 @@ Build the published package:
 ```bash
 bun --filter better-translation build
 ```
+
+Measure Vite-plugin and runtime performance with statistically sampled benchmarks:
+
+```bash
+bun run bench:performance
+```
+
+`bun run test` also runs coarse scaling guards. They reject gross superlinear growth across TypeScript and Svelte source
+analysis, Message-template parsing, Manifest aggregation, and cached source edits without relying on hardware-specific
+millisecond limits. Use
+`bun run bench:performance:json` when benchmark results need to be captured for a same-machine comparison.
+
+The package regression suite is split by the interface it protects:
+
+- `packages/better-translation/test/source-analysis.test.ts`: extraction, source edits, and diagnostics.
+- `packages/better-translation/test/runtime.test.tsx`: React and Svelte rendering, interpolation, and rich text.
+- `packages/better-translation/test/vite-plugin.test.ts`: Manifest, cache, local artifacts, and plugin lifecycle.
 
 ## Documentation
 

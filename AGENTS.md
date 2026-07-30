@@ -4,13 +4,16 @@
 
 Better Translation is a developer tool for adding AI-assisted translations to Vite apps.
 
-Developers install the package, add the Vite plugin, mark UI copy in their code, and let the plugin extract messages into locale files. The package also includes runtime helpers for loading and rendering those translated messages in React and server code.
+Developers install the package, add the Vite plugin, mark UI copy in their code, and let the plugin discover Messages and
+produce Locale values. The package also includes runtime helpers for loading and rendering those Messages in React, Svelte,
+and server code.
 
 The long-term goal is a hosted service where Projects sync extracted Messages to Branches, edit branch-local Locale values in a UI, and serve Runtime bundles. For now, the repo still supports a local bundle-first workflow.
 
 ## Repo Shape
 
-- `packages/better-translation`: the published package. This contains the Vite plugin, extractor, AI translation helper, cache logic, React helpers, and server helpers.
+- `packages/better-translation`: the published package. This contains the Vite plugin, source analysis, AI translation
+  helper, cache logic, and React, Svelte, and server runtime helpers.
 - `apps/web`: the hosted app/service scaffold and current local example surface.
 - `CONTEXT.md`: canonical product vocabulary. Keep it glossary-only.
 - `docs/platform.md`: current implementation reality and intended hosted-service behavior.
@@ -32,9 +35,16 @@ The long-term goal is a hosted service where Projects sync extracted Messages to
 - Keep `packages/better-translation` focused on the library/plugin surface.
 - Keep hosted-service behavior in the app/service layer unless it truly belongs in the published package.
 - Preserve the separation between manifest metadata and runtime bundles.
-- Runtime bundles should remain flat `id -> translated string` JSON objects.
-- Runtime bundles must not include editor metadata, source locations, or Manifest details.
-- When changing translation behavior, check both extraction-time behavior and runtime loading behavior.
+- Runtime bundles should remain flat `lookup id -> translated string` JSON objects.
+- Runtime bundles must not include editor metadata, source ownership metadata, or Manifest details.
+- Give every published package export and Consumer-app configuration type purpose-led JSDoc that explains its contract,
+  important defaults, and safety behavior where relevant. Keep internal comments for non-obvious invariants and design
+  reasons rather than narrating implementation.
+- Use the canonical terms from `CONTEXT.md` in public JSDoc, source comments, errors, and adopter documentation.
+- When changing translation behavior, check both source-analysis behavior and runtime-loading behavior.
+- Every bug fix in `packages/better-translation` must include a regression test that fails against the pre-fix behavior
+  and passes with the fix. Put it in the closest logical test file; cover both TypeScript/React and Svelte when they
+  share the affected contract, and cover both source analysis and runtime rendering when the bug crosses that boundary.
 - When changing local artifact behavior, verify both dev regeneration and production build checks.
 - When adding hosted behavior, keep local bundle-first behavior working until the replacement path is implemented end to end.
 

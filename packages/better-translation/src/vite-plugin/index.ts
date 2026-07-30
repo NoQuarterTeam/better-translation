@@ -1,26 +1,25 @@
 import { execFileSync } from "node:child_process"
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, relative, resolve } from "node:path"
-import { normalizePath, type Plugin, type ResolvedConfig } from "vite"
+import { normalizePath, type Plugin, type ResolvedConfig, type ViteDevServer } from "vite"
 
 import type {
   BetterTranslatePluginOptions,
   BetterTranslateRuntimeOptions,
-  ExtractedMessage,
   ManifestEntry,
-  MessageManifest,
-  MessageManifestFile,
-  MessageSource,
   RuntimeMessages,
   TranslateFn,
   TranslateMessage,
   TranslationCache,
-} from "./types.js"
+} from "../types.js"
 
+import { serializeMeta } from "../message/id.js"
+import { hasSameMessageStructure } from "../message/template.js"
+import { getOwnValue } from "../message/value-record.js"
+import { LOCALE_VALUES_HOT_UPDATE_EVENT } from "../runtime/hot-locale-values.js"
 import { createEmptyCache, getCacheKey, loadCache, saveCache } from "./cache.js"
-import { analyzeSourceFile } from "./extractor.js"
 import { configureLocalEditor, getLocalEditorOptions } from "./local-editor/server.js"
-import { serializeMeta } from "./message-id.js"
+import { ManifestState, type ManifestSyncResult } from "./manifest-state.js"
 
 const PREFIX = "\x1b[36m[better-translation]\x1b[0m"
 const DIM = "\x1b[2m"
@@ -41,14 +40,10 @@ const DEFAULT_ROOT_DIR = "src"
 const DEFAULT_SCAN_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".svelte"]
 const VIRTUAL_MESSAGES_MODULE_ID = "better-translation/messages"
 const RESOLVED_VIRTUAL_MESSAGES_MODULE_ID = `\0${VIRTUAL_MESSAGES_MODULE_ID}`
-const CALL_MARKERS = ["t", "useT"]
-const COMPONENT_MARKERS = ["T"]
 const LOCALES_SUBDIR = "locales"
-
-interface SyncResult {
-  manifestChanged: boolean
-  localeMessagesChanged: boolean
-}
+const DEFAULT_TRANSLATION_BATCH_SIZE = 25
+const WATCHER_RECONCILIATION_DELAY_MS = 50
+let temporaryFileSequence = 0
 
 function formatLocale(locale: string) {
   return locale.toUpperCase()
@@ -58,7 +53,19 @@ function formatLocales(locales: string[]) {
   return locales.map(formatLocale).join(", ")
 }
 
-/** Scans source files for translatable messages and keeps locale JSON files in sync. */
+/**
+ * Creates the Better Translation Vite plugin.
+ *
+ * The plugin discovers Translation markers, maintains the private Manifest,
+ * injects stable Lookup ids and runtime metadata, and generates flat Runtime
+ * bundles. Local mode owns repo-local Locale values; remote mode synchronizes
+ * the Manifest and generates a hosted Runtime bundle loader. Manifest metadata
+ * and write credentials are never included in Runtime bundles.
+ *
+ * @param options - Locales, source roots, Runtime bundle ownership, and optional
+ *   translation behavior.
+ * @returns A Vite plugin for source transformation and build/dev lifecycle work.
+ */
 export function betterTranslation(options: BetterTranslatePluginOptions): Plugin {
   const {
     locales,
@@ -69,8 +76,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     runtime,
   } = options
   const configuredRuntime = normalizeRuntimeOptions(runtime)
-  const manifest: MessageManifest = {}
-  const fileMessages = new Map<string, ExtractedMessage[]>()
+  let manifestState = new ManifestState("", logging)
   let cache: TranslationCache = createEmptyCache()
   let resolvedRuntime = configuredRuntime
   let usesLocalStorage = shouldUseLocalStorage(configuredRuntime, false)
@@ -85,9 +91,17 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
   let root = ""
   let isDev = false
   let translateTimer: ReturnType<typeof setTimeout> | null = null
+  let artifactReconciliationTimer: ReturnType<typeof setTimeout> | null = null
+  let pendingManifestWrite = false
+  let pendingLocaleWrite = false
+  let translationRun: Promise<void> | null = null
+  let translationRunRequested = false
   let remoteSyncTimer: ReturnType<typeof setTimeout> | null = null
+  let remoteSyncRun: Promise<void> | null = null
+  let remoteSyncRunRequested = false
   let lastSyncedRemoteManifestSignature: string | null = null
   let sourceRoots: string[] = []
+  let viteDevServer: ViteDevServer | undefined
 
   function log(message: string) {
     if (logging) console.log(message)
@@ -99,7 +113,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     const payload = {
       defaultLocale,
       locales,
-      messages: buildMessageManifest(),
+      messages: manifestState.snapshot(),
     }
     const signature = JSON.stringify(payload)
     if (lastSyncedRemoteManifestSignature === signature) return
@@ -149,30 +163,15 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     return envApiKey || null
   }
 
-  function buildMessageManifest(): MessageManifestFile {
-    return Object.fromEntries(
-      Object.entries(manifest)
-        .sort(compareManifestEntryIds)
-        .map(([id, entry]) => [
-          id,
-          {
-            defaultMessage: entry.defaultMessage,
-            meta: entry.meta,
-            placeholders: entry.placeholders,
-            sources: entry.sources.length > 1 ? [...entry.sources].sort(compareMessageSources) : entry.sources,
-          },
-        ]),
-    )
-  }
-
   function shouldScanFile(id: string) {
-    const cleanId = id.split("?", 1)[0] ?? id
-    if (cleanId.includes("node_modules")) return false
+    const cleanId = normalizePath(id.split("?", 1)[0] ?? id)
+    if (cleanId.split("/").includes("node_modules")) return false
     const extension = DEFAULT_SCAN_EXTENSIONS.find((ext) => cleanId.endsWith(ext))
     if (!extension) return false
-    return sourceRoots.some(
-      (sourceRoot) => cleanId === sourceRoot || cleanId.startsWith(`${sourceRoot}/`) || cleanId.startsWith(`${sourceRoot}\\`),
-    )
+    return sourceRoots.some((sourceRoot) => {
+      const normalizedSourceRoot = normalizePath(sourceRoot)
+      return cleanId === normalizedSourceRoot || cleanId.startsWith(`${normalizedSourceRoot}/`)
+    })
   }
 
   function getPrivateManifestPath() {
@@ -189,14 +188,18 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
 
   function readLocaleMessages(locale: string): RuntimeMessages {
     const path = getLocalePath(locale)
-    if (!existsSync(path)) return {}
+    if (!existsSync(path)) return createRuntimeMessages()
 
+    let input: unknown
     try {
-      const input = JSON.parse(readFileSync(path, "utf-8")) as unknown
-      return normalizeLocaleMessages(input)
-    } catch {
-      return {}
+      input = JSON.parse(readFileSync(path, "utf-8")) as unknown
+    } catch (error) {
+      throw new Error(`${PREFIX} could not parse Locale values at ${relative(root, path)}`, { cause: error })
     }
+
+    const messages = normalizeLocaleMessages(input)
+    if (!messages) throw new Error(`${PREFIX} invalid Locale values at ${relative(root, path)}`)
+    return messages
   }
 
   function writePrivateManifest() {
@@ -204,12 +207,12 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     const path = getPrivateManifestPath()
     const dir = dirname(path)
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    writeFileIfChanged(path, JSON.stringify(buildMessageManifest(), null, 2) + "\n")
+    writeFileIfChanged(path, JSON.stringify(manifestState.snapshot(), null, 2) + "\n")
   }
 
   function buildLocalLocaleMessages(locale: string, manifestEntries: Array<[string, ManifestEntry]>): RuntimeMessages {
     const existingMessages = readLocaleMessages(locale)
-    const messages: RuntimeMessages = {}
+    const messages = createRuntimeMessages()
 
     if (locale === defaultLocale) {
       for (const [id, entry] of manifestEntries) {
@@ -222,13 +225,16 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       if (Object.hasOwn(messages, id)) continue
       const existingMessage = existingMessages[id]
       const cachedMessage = getFreshCachedMessage(id, locale)
+      const existingMessageIsValid =
+        existingMessage !== undefined && hasSameMessageStructure(entry.defaultMessage, existingMessage)
 
-      if (existingMessage !== undefined && !isUntranslatedLocaleValue(existingMessage, entry)) {
+      if (existingMessageIsValid && !isUntranslatedLocaleValue(existingMessage, entry)) {
         messages[id] = existingMessage
         continue
       }
 
       if (cachedMessage !== undefined) messages[id] = cachedMessage
+      else if (existingMessage !== undefined) messages[id] = existingMessage
       else if (shouldWriteDefaultLocaleFallback()) messages[id] = entry.defaultMessage
     }
     return messages
@@ -238,25 +244,27 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     if (!usesLocalStorage) return
     const dir = getLocalesDirPath()
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    const manifestEntries = Object.entries(manifest).sort(compareManifestEntryIds)
-    for (const locale of locales) {
-      writeFileIfChanged(
-        resolve(dir, `${locale}.json`),
-        JSON.stringify(buildLocalLocaleMessages(locale, manifestEntries), null, 2) + "\n",
-      )
-    }
+    const manifestEntries = Object.entries(manifestState.snapshot())
+    const localeArtifacts = locales.map((locale) => ({
+      contents: JSON.stringify(buildLocalLocaleMessages(locale, manifestEntries), null, 2) + "\n",
+      path: resolve(dir, `${locale}.json`),
+    }))
+    for (const artifact of localeArtifacts) writeFileIfChanged(artifact.path, artifact.contents)
   }
 
   function getMissingMessagesByLocale() {
     const missingByLocale = new Map<string, TranslateMessage[]>()
-    const manifestEntries = Object.entries(manifest).sort(compareManifestEntryIds)
+    const manifestEntries = Object.entries(manifestState.snapshot())
 
     for (const locale of locales) {
       if (locale === defaultLocale) continue
       const existingMessages = readLocaleMessages(locale)
       for (const [id, entry] of manifestEntries) {
         const existingMessage = existingMessages[id]
-        const hasExistingMessage = existingMessage !== undefined && !isUntranslatedLocaleValue(existingMessage, entry)
+        const hasExistingMessage =
+          existingMessage !== undefined &&
+          hasSameMessageStructure(entry.defaultMessage, existingMessage) &&
+          !isUntranslatedLocaleValue(existingMessage, entry)
         if (!hasExistingMessage && getFreshCachedMessage(id, locale) === undefined) {
           const misses = missingByLocale.get(locale) ?? []
           misses.push({
@@ -275,7 +283,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
   }
 
   function assertLocalBuildTranslationsComplete() {
-    const expectedIds = new Set(Object.keys(manifest))
+    const expectedIds = new Set(Object.keys(manifestState.manifest))
     const issues: string[] = []
 
     for (const locale of locales) {
@@ -290,15 +298,31 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       const orphanIds = Object.keys(localeMessages).filter((id) => !expectedIds.has(id))
 
       if (locale === defaultLocale) {
-        const staleIds = [...expectedIds].filter((id) => localeMessages[id] !== manifest[id]!.defaultMessage)
+        const staleIds = [...expectedIds].filter((id) => localeMessages[id] !== manifestState.manifest[id]!.defaultMessage)
         if (missingIds.length > 0) issues.push(formatLocaleIssue(locale, "missing", missingIds))
         if (orphanIds.length > 0) issues.push(formatLocaleIssue(locale, "orphaned", orphanIds))
         if (staleIds.length > 0) issues.push(formatLocaleIssue(locale, "outdated default messages", staleIds))
         continue
       }
 
+      const invalidIds = [...expectedIds].filter((id) => {
+        const value = localeMessages[id]
+        return value !== undefined && !hasSameMessageStructure(manifestState.manifest[id]!.defaultMessage, value)
+      })
+      const untranslatedFallbackIds = [...expectedIds].filter((id) => {
+        const value = localeMessages[id]
+        return (
+          value !== undefined &&
+          isUntranslatedLocaleValue(value, manifestState.manifest[id]!) &&
+          getFreshCachedMessage(id, locale) !== value
+        )
+      })
       if (missingIds.length > 0) issues.push(formatLocaleIssue(locale, "missing", missingIds))
       if (orphanIds.length > 0) issues.push(formatLocaleIssue(locale, "orphaned", orphanIds))
+      if (invalidIds.length > 0) issues.push(formatLocaleIssue(locale, "invalid placeholders or rich-text elements", invalidIds))
+      if (untranslatedFallbackIds.length > 0) {
+        issues.push(formatLocaleIssue(locale, "untranslated fallback", untranslatedFallbackIds))
+      }
     }
 
     if (issues.length === 0) return
@@ -306,7 +330,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     throw new Error(
       [
         `${PREFIX} committed locale artifacts are out of sync for local production build`,
-        `local production builds are check-only and never regenerate locale files`,
+        `local production builds are check-only and never regenerate Runtime bundles`,
         `run the dev workflow to regenerate locale artifacts and commit the result`,
         ...issues,
       ].join("\n"),
@@ -326,20 +350,40 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     )
 
     let translatedCount = 0
+    pruneTranslationCache()
     for (const [locale, misses] of missingByLocale) {
-      const result = await resolvedTranslate(misses, locale)
+      const localeMessages = readLocaleMessages(locale)
+      for (const batch of chunk(misses, getTranslationBatchSize(resolvedRuntime))) {
+        const result = await resolvedTranslate(batch, locale)
+        const translatedMessages = createRuntimeMessages()
 
-      for (const miss of misses) {
-        const translated = result[miss.id]?.trim()
-        if (!translated) continue
-        cache.entries[getCacheKey(miss.id, locale)] = {
-          sourceText: miss.text,
-          meta: miss.meta,
-          locale,
-          translation: translated,
-          timestamp: Date.now(),
+        for (const miss of batch) {
+          const translated = getOwnValue(result, miss.id)?.trim()
+          if (!translated) continue
+          if (!hasSameMessageStructure(miss.text, translated)) {
+            throw new Error(`${PREFIX} translation for "${miss.id}" did not preserve its placeholders and rich-text elements`)
+          }
+          cache.entries[getCacheKey(miss.id, locale)] = {
+            sourceText: miss.text,
+            meta: miss.meta,
+            locale,
+            translation: translated,
+            timestamp: Date.now(),
+          }
+          localeMessages[miss.id] = translated
+          translatedMessages[miss.id] = translated
+          translatedCount += 1
         }
-        translatedCount += 1
+
+        saveCache(resolve(root, cacheFile), cache)
+        writeFileIfChanged(getLocalePath(locale), JSON.stringify(localeMessages, null, 2) + "\n")
+        if (Object.keys(translatedMessages).length > 0) {
+          viteDevServer?.ws.send({
+            type: "custom",
+            event: LOCALE_VALUES_HOT_UPDATE_EVENT,
+            data: { locale, messages: translatedMessages },
+          })
+        }
       }
     }
 
@@ -351,12 +395,29 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
   }
 
   function getFreshCachedMessage(id: string, locale: string) {
-    const entry = manifest[id]
+    const entry = manifestState.manifest[id]
     const cachedMessage = cache.entries[getCacheKey(id, locale)]
     if (!entry || !cachedMessage) return undefined
     if (cachedMessage.sourceText !== entry.defaultMessage) return undefined
     if (serializeMeta(cachedMessage.meta) !== serializeMeta(entry.meta)) return undefined
+    if (!hasSameMessageStructure(entry.defaultMessage, cachedMessage.translation)) return undefined
     return cachedMessage.translation
+  }
+
+  function pruneTranslationCache() {
+    for (const [key, cachedMessage] of Object.entries(cache.entries)) {
+      const separatorIndex = key.lastIndexOf("\0")
+      const id = separatorIndex === -1 ? "" : key.slice(0, separatorIndex)
+      const locale = separatorIndex === -1 ? "" : key.slice(separatorIndex + 1)
+      if (
+        locale !== cachedMessage.locale ||
+        !locales.includes(locale) ||
+        !manifestState.manifest[id] ||
+        getFreshCachedMessage(id, locale) === undefined
+      ) {
+        delete cache.entries[key]
+      }
+    }
   }
 
   function isUntranslatedLocaleValue(value: string, entry: Pick<ManifestEntry, "defaultMessage">) {
@@ -371,28 +432,65 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     if (!resolvedTranslate) return
     if (!isDev) return
     if (translateTimer) clearTimeout(translateTimer)
-    translateTimer = setTimeout(async () => {
-      const translated = await translateMissingMessages()
-      if (translated) saveCache(resolve(root, cacheFile), cache)
-      writeLocaleFilesToDisk()
-      writePrivateManifest()
+    translateTimer = setTimeout(() => {
+      translateTimer = null
+      requestDevTranslationRun()
     }, 1000)
+  }
+
+  function requestDevTranslationRun() {
+    translationRunRequested = true
+    if (translationRun) return
+
+    translationRun = (async () => {
+      while (translationRunRequested) {
+        translationRunRequested = false
+        try {
+          await translateMissingMessages()
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error)
+        }
+      }
+    })().finally(() => {
+      translationRun = null
+      if (translationRunRequested) requestDevTranslationRun()
+    })
   }
 
   function scheduleDevRemoteSync() {
     if (usesLocalStorage || !isDev) return
     if (remoteSyncTimer) clearTimeout(remoteSyncTimer)
     remoteSyncTimer = setTimeout(() => {
-      void syncRemote().catch((error) => console.error(error instanceof Error ? error.message : error))
+      remoteSyncTimer = null
+      requestDevRemoteSyncRun()
     }, 1000)
+  }
+
+  function requestDevRemoteSyncRun() {
+    remoteSyncRunRequested = true
+    if (remoteSyncRun) return
+
+    remoteSyncRun = (async () => {
+      while (remoteSyncRunRequested) {
+        remoteSyncRunRequested = false
+        try {
+          await syncRemote()
+        } catch (error) {
+          console.error(error instanceof Error ? error.message : error)
+        }
+      }
+    })().finally(() => {
+      remoteSyncRun = null
+      if (remoteSyncRunRequested) requestDevRemoteSyncRun()
+    })
   }
 
   function writeLocaleMessages(locale: string, localeMessages: RuntimeMessages) {
     const dir = getLocalesDirPath()
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
 
-    const messages: RuntimeMessages = {}
-    for (const [id, entry] of Object.entries(manifest).sort(compareManifestEntryIds)) {
+    const messages = createRuntimeMessages()
+    for (const [id, entry] of Object.entries(manifestState.snapshot())) {
       if (locale === defaultLocale) {
         messages[id] = entry.defaultMessage
         continue
@@ -408,102 +506,66 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     writeFileIfChanged(getLocalePath(locale), JSON.stringify(messages, null, 2) + "\n")
   }
 
-  function removeFileMessages(file: string) {
-    const previous = fileMessages.get(file)
-    if (!previous) return false
+  function flushArtifactReconciliation() {
+    const shouldWriteLocales = pendingLocaleWrite
+    const shouldWriteManifest = pendingManifestWrite
+    pendingLocaleWrite = false
+    pendingManifestWrite = false
 
-    for (const message of previous) {
-      const entry = manifest[message.id]
-      if (!entry) continue
-      entry.sources = entry.sources.filter((source) => !isSameSource(source, message.source))
-      if (entry.sources.length === 0) delete manifest[message.id]
-    }
-
-    fileMessages.delete(file)
-    return true
-  }
-
-  function syncFileMessages(file: string, messages: ExtractedMessage[]): SyncResult {
-    const previousMessages = fileMessages.get(file) ?? []
-    const nextEntries = groupMessagesById(messages)
-    for (const [id, entry] of Object.entries(nextEntries)) {
-      const existing = manifest[id]
-      if (existing && !hasSameMessageShape(existing, entry)) {
-        throw new Error(formatCollisionError(id, existing, entry))
-      }
-    }
-
-    removeFileMessages(file)
-    for (const [id, entry] of Object.entries(nextEntries)) {
-      if (!manifest[id]) {
-        manifest[id] = entry
-        continue
-      }
-      for (const source of entry.sources) {
-        if (!manifest[id]!.sources.some((existingSource) => isSameSource(existingSource, source))) {
-          manifest[id]!.sources.push(source)
-        }
-      }
-    }
-
-    if (messages.length > 0) fileMessages.set(file, messages)
-    return {
-      manifestChanged:
-        previousMessages.length !== messages.length ||
-        previousMessages.some((message, index) => !isSameExtractedMessage(message, messages[index])),
-      localeMessagesChanged:
-        previousMessages.length !== messages.length ||
-        previousMessages.some((message, index) => !hasSameMessageShape(message, messages[index]!)),
-    }
-  }
-
-  function syncSourceCode(file: string, code: string) {
-    const analysis = analyzeSourceFile(code, file, {
-      call: CALL_MARKERS,
-      component: COMPONENT_MARKERS,
-      logging,
-    })
-    if (!analysis.parsed) return null
-    return syncFileMessages(
-      file,
-      analysis.messages.map((message) => ({
-        ...message,
-        source: {
-          ...message.source,
-          file: toRootRelativePath(message.source.file),
-        },
-      })),
-    )
-  }
-
-  function removeTrackedFile(file: string): SyncResult {
-    const hadPreviousMessages = removeFileMessages(file)
-    return {
-      manifestChanged: hadPreviousMessages,
-      localeMessagesChanged: hadPreviousMessages,
-    }
-  }
-
-  function applySyncResult(syncResult: SyncResult | null, options: { scheduleTranslation: boolean }) {
-    if (!syncResult) return
-    if (syncResult.localeMessagesChanged) {
+    if (shouldWriteLocales) {
       writeLocaleFilesToDisk()
       writePrivateManifest()
-      if (options.scheduleTranslation) scheduleDevTranslation()
       return
     }
-    if (syncResult.manifestChanged) writePrivateManifest()
+    if (shouldWriteManifest) writePrivateManifest()
+  }
+
+  function applySyncResult(syncResult: ManifestSyncResult | null, options: { scheduleTranslation: boolean }) {
+    if (!syncResult) return
+    pendingManifestWrite ||= syncResult.manifestChanged
+    pendingLocaleWrite ||= syncResult.localeMessagesChanged
+    if (!pendingManifestWrite && !pendingLocaleWrite) return
+    if (syncResult.localeMessagesChanged && options.scheduleTranslation) scheduleDevTranslation()
+
+    if (artifactReconciliationTimer) clearTimeout(artifactReconciliationTimer)
+    artifactReconciliationTimer = setTimeout(() => {
+      artifactReconciliationTimer = null
+      try {
+        flushArtifactReconciliation()
+      } catch (error) {
+        console.error(error instanceof Error ? error.message : error)
+      }
+    }, WATCHER_RECONCILIATION_DELAY_MS)
+  }
+
+  function stopPendingArtifactReconciliation() {
+    if (!artifactReconciliationTimer) return
+    clearTimeout(artifactReconciliationTimer)
+    artifactReconciliationTimer = null
+    flushArtifactReconciliation()
+  }
+
+  function resetPendingArtifactReconciliation() {
+    if (artifactReconciliationTimer) {
+      clearTimeout(artifactReconciliationTimer)
+      artifactReconciliationTimer = null
+    }
+    pendingManifestWrite = false
+    pendingLocaleWrite = false
   }
 
   function scanAllSourceFiles() {
-    for (const id of Object.keys(manifest)) delete manifest[id]
-    fileMessages.clear()
+    manifestState.reset()
 
+    const scannedFiles = new Set<string>()
     for (const sourceRoot of sourceRoots) {
       if (!existsSync(sourceRoot)) continue
       for (const file of collectScanFiles(sourceRoot).sort()) {
+        const normalizedFile = normalizePath(file)
+        if (scannedFiles.has(normalizedFile)) continue
+        scannedFiles.add(normalizedFile)
         const code = readFileSync(file, "utf-8")
-        syncSourceCode(file, code)
+        manifestState.sync(file, code)
       }
     }
   }
@@ -513,12 +575,32 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
   }
 
   function createVirtualMessagesModule() {
+    let moduleCode: string
     if (isRemoteOfflineDev(resolvedRuntime, isDev)) {
-      return createModuleMessagesModule(locales, (locale) => `/${normalizePath(toRootRelativePath(getLocalePath(locale)))}`)
+      moduleCode = createModuleMessagesModule(locales, (locale) => `/${normalizePath(toRootRelativePath(getLocalePath(locale)))}`)
+    } else if (resolvedRuntime.type === "remote") {
+      moduleCode = createRemoteMessagesModule(resolvedRuntime, locales, remoteUrl)
+    } else if (resolvedRuntime.target === "public") {
+      moduleCode = createPublicMessagesModule(locales, publicBasePath)
+    } else {
+      moduleCode = createModuleMessagesModule(locales, (locale) => `/${normalizePath(toRootRelativePath(getLocalePath(locale)))}`)
     }
-    if (resolvedRuntime.type === "remote") return createRemoteMessagesModule(resolvedRuntime, locales, remoteUrl)
-    if (resolvedRuntime.target === "public") return createPublicMessagesModule(locales, publicBasePath)
-    return createModuleMessagesModule(locales, (locale) => `/${normalizePath(toRootRelativePath(getLocalePath(locale)))}`)
+    return isDev ? `${moduleCode}\n${createLocaleValuesHotUpdateBridge()}` : moduleCode
+  }
+
+  async function stopPendingLifecycleWork() {
+    stopPendingArtifactReconciliation()
+    if (translateTimer) {
+      clearTimeout(translateTimer)
+      translateTimer = null
+    }
+    if (remoteSyncTimer) {
+      clearTimeout(remoteSyncTimer)
+      remoteSyncTimer = null
+    }
+    translationRunRequested = false
+    remoteSyncRunRequested = false
+    await Promise.all([translationRun, remoteSyncRun])
   }
 
   return {
@@ -534,7 +616,10 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     },
 
     configResolved(config) {
+      resetPendingArtifactReconciliation()
+      validateLocaleConfiguration(locales, defaultLocale)
       root = config.root
+      manifestState = new ManifestState(root, logging)
       isDev = config.command === "serve"
       resolvedRuntime = resolveRuntimeOptions(configuredRuntime, config)
       usesLocalStorage = shouldUseLocalStorage(resolvedRuntime, isDev)
@@ -573,11 +658,20 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     },
 
     configureServer(server) {
+      viteDevServer = server
       const localEditorOptions = getLocalEditorOptions({ isDev, runtime: resolvedRuntime })
       if (localEditorOptions) {
         configureLocalEditor(
           server,
-          { defaultLocale, isUntranslatedLocaleValue, locales, log, manifest, readLocaleMessages, writeLocaleMessages },
+          {
+            defaultLocale,
+            isUntranslatedLocaleValue,
+            locales,
+            log,
+            manifest: manifestState.manifest,
+            readLocaleMessages,
+            writeLocaleMessages,
+          },
           localEditorOptions,
         )
       }
@@ -586,13 +680,13 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
 
       const syncFileFromDisk = (file: string) => {
         if (!shouldScanFile(file) || !existsSync(file)) return
-        applySyncResult(syncSourceCode(file, readFileSync(file, "utf-8")), { scheduleTranslation: true })
+        applySyncResult(manifestState.sync(file, readFileSync(file, "utf-8")), { scheduleTranslation: true })
         scheduleDevRemoteSync()
       }
 
       const removeFileFromManifest = (file: string) => {
         if (!shouldScanFile(file)) return
-        applySyncResult(removeTrackedFile(file), { scheduleTranslation: true })
+        applySyncResult(manifestState.remove(file), { scheduleTranslation: true })
         scheduleDevRemoteSync()
       }
 
@@ -605,11 +699,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       const cleanId = id.split("?", 1)[0] ?? id
       if (!shouldScanFile(cleanId)) return
 
-      const analysis = analyzeSourceFile(code, cleanId, {
-        call: CALL_MARKERS,
-        component: COMPONENT_MARKERS,
-        logging,
-      })
+      const analysis = manifestState.analyze(cleanId, code)
 
       if (analysis.edits.length === 0) return
       return {
@@ -619,9 +709,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     },
 
     async generateBundle() {
-      if (usesLocalStorage) {
-        assertLocalBuildTranslationsComplete()
-      } else if (isDev) {
+      if (!usesLocalStorage && isDev) {
         await translateMissingMessages()
       }
 
@@ -630,10 +718,14 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       }
     },
 
-    closeBundle() {
-      if (usesLocalStorage && !isDev) return
+    async closeBundle() {
+      await stopPendingLifecycleWork()
+      if (!usesLocalStorage || !isDev) return
+      pruneTranslationCache()
       saveCache(resolve(root, cacheFile), cache)
     },
+
+    closeWatcher: stopPendingLifecycleWork,
   }
 }
 
@@ -644,6 +736,15 @@ function formatLocaleIssue(locale: string, label: string, ids: string[]) {
     .join(", ")
   const suffix = ids.length > 5 ? `, ... ${ids.length - 5} more` : ""
   return `- ${locale}: ${label} (${preview}${suffix})`
+}
+
+function validateLocaleConfiguration(locales: string[], defaultLocale: string) {
+  if (locales.length === 0) throw new Error(`${PREFIX} configure at least one Locale`)
+  if (locales.some((locale) => locale.trim().length === 0)) throw new Error(`${PREFIX} Locale names cannot be empty`)
+  if (new Set(locales).size !== locales.length) throw new Error(`${PREFIX} duplicate Locale values are not allowed`)
+  if (!locales.includes(defaultLocale)) {
+    throw new Error(`${PREFIX} Default locale ${JSON.stringify(defaultLocale)} must be included in locales`)
+  }
 }
 
 function shouldUseLocalStorage(runtime: BetterTranslateRuntimeOptions, isDev: boolean) {
@@ -661,7 +762,16 @@ function getRuntimeOutputDir(runtime: BetterTranslateRuntimeOptions, isDev: bool
 }
 
 function normalizeRuntimeOptions(runtime: BetterTranslateRuntimeOptions | undefined): BetterTranslateRuntimeOptions {
-  if (runtime) return runtime.type === "local" ? { ...runtime, target: runtime.target ?? "module" } : runtime
+  if (runtime) {
+    if (runtime.type !== "local" || !runtime.translate) {
+      return runtime.type === "local" ? { ...runtime, target: runtime.target ?? "module" } : runtime
+    }
+    return {
+      ...runtime,
+      target: runtime.target ?? "module",
+      translationBatchSize: normalizeTranslationBatchSize(runtime.translationBatchSize),
+    }
+  }
   return { type: "local", target: "module" }
 }
 
@@ -807,6 +917,17 @@ function createModuleMessagesModule(locales: string[], getImportPath: (locale: s
   ].join("\n")
 }
 
+function createLocaleValuesHotUpdateBridge() {
+  return [
+    `if (import.meta.hot && typeof window !== "undefined") {`,
+    `  import.meta.hot.on(${JSON.stringify(LOCALE_VALUES_HOT_UPDATE_EVENT)}, (update) => {`,
+    `    window.dispatchEvent(new CustomEvent(${JSON.stringify(LOCALE_VALUES_HOT_UPDATE_EVENT)}, { detail: update }))`,
+    "  })",
+    "}",
+    "",
+  ].join("\n")
+}
+
 function createPublicMessagesModule(locales: string[], basePath: string) {
   const normalizedBasePath = basePath.replace(/\/$/, "")
   return [
@@ -856,29 +977,42 @@ function createKnownLocaleAssertion(locales: string[]) {
   ].join("\n")
 }
 
-function normalizeLocaleMessages(input: unknown): RuntimeMessages {
-  if (isRuntimeMessages(input)) return input
+function normalizeLocaleMessages(input: unknown): RuntimeMessages | null {
+  if (isRuntimeMessages(input)) return createRuntimeMessages(Object.entries(input))
   if (
     typeof input === "object" &&
     input !== null &&
     "messages" in input &&
     typeof input.messages === "object" &&
-    input.messages !== null
+    input.messages !== null &&
+    !Array.isArray(input.messages)
   ) {
-    return Object.fromEntries(
-      Object.entries(input.messages).flatMap(([id, entry]) =>
-        typeof entry === "object" && entry !== null && "translation" in entry && typeof entry.translation === "string"
-          ? [[id, entry.translation]]
-          : [],
-      ),
-    ) as RuntimeMessages
+    const entries = Object.entries(input.messages)
+    if (!entries.every(([, entry]) => isLegacyLocaleMessageEntry(entry))) return null
+    return createRuntimeMessages(entries.map(([id, entry]) => [id, entry.translation]))
   }
-  return {}
+  return null
+}
+
+function createRuntimeMessages(entries: Iterable<readonly [string, string]> = []) {
+  const messages = Object.create(null) as RuntimeMessages
+  for (const [id, value] of entries) messages[id] = value
+  return messages
+}
+
+function isLegacyLocaleMessageEntry(input: unknown): input is { translation: string } {
+  return typeof input === "object" && input !== null && "translation" in input && typeof input.translation === "string"
 }
 
 function writeFileIfChanged(path: string, contents: string) {
   if (existsSync(path) && readFileSync(path, "utf-8") === contents) return false
-  writeFileSync(path, contents)
+  const temporaryPath = `${path}.${process.pid}.${temporaryFileSequence++}.tmp`
+  try {
+    writeFileSync(temporaryPath, contents)
+    renameSync(temporaryPath, path)
+  } finally {
+    if (existsSync(temporaryPath)) rmSync(temporaryPath)
+  }
   return true
 }
 
@@ -891,92 +1025,46 @@ function collectScanFiles(root: string) {
       files.push(...collectScanFiles(path))
       continue
     }
-    files.push(path)
+    if (DEFAULT_SCAN_EXTENSIONS.some((extension) => path.endsWith(extension))) files.push(path)
   }
   return files
 }
 
 function isRuntimeMessages(input: unknown): input is RuntimeMessages {
-  return typeof input === "object" && input !== null && Object.values(input).every((value) => typeof value === "string")
-}
-
-function applyEdits(code: string, edits: Array<{ start: number; end: number; replacement: string }>) {
-  let transformed = code
-  for (const edit of [...edits].sort((a, b) => b.start - a.start)) {
-    transformed = `${transformed.slice(0, edit.start)}${edit.replacement}${transformed.slice(edit.end)}`
-  }
-  return transformed
-}
-
-function groupMessagesById(messages: ExtractedMessage[]): MessageManifest {
-  const grouped: MessageManifest = {}
-
-  for (const message of messages) {
-    const existing = grouped[message.id]
-    if (existing && !hasSameMessageShape(existing, message)) {
-      throw new Error(formatCollisionError(message.id, existing, message))
-    }
-    if (!existing) {
-      grouped[message.id] = {
-        defaultMessage: message.defaultMessage,
-        meta: message.meta,
-        placeholders: message.placeholders,
-        sources: [message.source],
-      }
-      continue
-    }
-    if (!existing.sources.some((source) => isSameSource(source, message.source))) {
-      existing.sources.push(message.source)
-    }
-  }
-
-  return grouped
-}
-
-function hasSameMessageShape(
-  existing: Pick<ManifestEntry, "defaultMessage" | "meta" | "placeholders">,
-  incoming: Pick<ManifestEntry, "defaultMessage" | "meta" | "placeholders"> | ExtractedMessage,
-) {
   return (
-    existing.defaultMessage === incoming.defaultMessage &&
-    serializeMeta(existing.meta) === serializeMeta(incoming.meta) &&
-    JSON.stringify(existing.placeholders) === JSON.stringify(incoming.placeholders)
+    typeof input === "object" &&
+    input !== null &&
+    !Array.isArray(input) &&
+    Object.values(input).every((value) => typeof value === "string")
   )
 }
 
-function isSameSource(left: MessageSource, right: MessageSource) {
-  return left.file === right.file && left.kind === right.kind && left.marker === right.marker
+function chunk<T>(items: T[], size: number) {
+  const chunks: T[][] = []
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size))
+  }
+  return chunks
 }
 
-function compareManifestEntryIds([left]: [string, ManifestEntry], [right]: [string, ManifestEntry]) {
-  return left.localeCompare(right)
+function normalizeTranslationBatchSize(size: number | undefined) {
+  if (typeof size !== "number" || !Number.isFinite(size)) return DEFAULT_TRANSLATION_BATCH_SIZE
+  return Math.max(1, Math.floor(size))
 }
 
-function compareMessageSources(left: MessageSource, right: MessageSource) {
-  return left.file.localeCompare(right.file) || left.kind.localeCompare(right.kind) || left.marker.localeCompare(right.marker)
+function getTranslationBatchSize(runtime: BetterTranslateRuntimeOptions) {
+  if (runtime.type !== "local" || !runtime.translate) return DEFAULT_TRANSLATION_BATCH_SIZE
+  return normalizeTranslationBatchSize(runtime.translationBatchSize)
 }
 
-function isSameExtractedMessage(left: ExtractedMessage, right?: ExtractedMessage) {
-  if (!right) return false
-  return hasSameMessageShape(left, right) && isSameSource(left.source, right.source)
-}
-
-function formatCollisionError(
-  id: string,
-  existing: Pick<ManifestEntry, "defaultMessage" | "meta" | "placeholders" | "sources">,
-  incoming: Pick<ManifestEntry, "defaultMessage" | "meta" | "placeholders" | "sources"> | ExtractedMessage,
-) {
-  const existingSources = formatSources(existing.sources)
-  const incomingSources = formatSources("source" in incoming ? [incoming.source] : incoming.sources)
-  return [
-    `${PREFIX} conflicting message definition for ${BOLD}"${id}"${RESET}`,
-    `existing: ${JSON.stringify({ defaultMessage: existing.defaultMessage, meta: existing.meta, placeholders: existing.placeholders })}`,
-    `existing sources: ${existingSources}`,
-    `incoming: ${JSON.stringify({ defaultMessage: incoming.defaultMessage, meta: incoming.meta, placeholders: incoming.placeholders })}`,
-    `incoming sources: ${incomingSources}`,
-  ].join("\n")
-}
-
-function formatSources(sources: MessageSource[]) {
-  return sources.map((source) => `${source.file} (${source.kind}:${source.marker})`).join(", ")
+function applyEdits(code: string, edits: Array<{ start: number; end: number; replacement: string }>) {
+  const reversedChunks: string[] = []
+  let cursor = code.length
+  for (const edit of [...edits].sort((a, b) => b.start - a.start)) {
+    if (edit.end > cursor) throw new Error(`${PREFIX} source analysis produced overlapping source edits`)
+    reversedChunks.push(code.slice(edit.end, cursor), edit.replacement)
+    cursor = edit.start
+  }
+  reversedChunks.push(code.slice(0, cursor))
+  return reversedChunks.reverse().join("")
 }

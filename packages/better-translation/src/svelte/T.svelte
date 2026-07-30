@@ -1,8 +1,14 @@
 <script lang="ts">
   import type { Snippet } from "svelte"
 
-  import { getMessages } from "../svelte-runtime.mjs"
-  import { interpolateString, normalizeValues } from "../runtime.mjs"
+  import {
+    getMessage,
+    getMessagesReader,
+    normalizeValues,
+    parseSvelteRichTextMessage,
+    resolveSvelteRichTextNodes,
+    type RichTextMessageNode,
+  } from "../svelte-runtime.mjs"
 
   interface Props {
     id?: string
@@ -10,20 +16,49 @@
     message?: string
     values?: Record<string, unknown>
     children?: Snippet
+    [name: `__better_translation_${number}`]: Snippet<[Snippet]> | undefined
   }
 
-  let { id, message, values, children }: Props = $props()
+  let { id, message, values, children, ...richTextElements }: Props = $props()
 
-  const messages = $derived(getMessages())
+  const readMessages = getMessagesReader()
+  const messages = $derived(readMessages())
 
-  const template = $derived(id ? messages[id] : undefined)
-  const translated = $derived(template ? interpolateString(template, normalizeValues(values)) : undefined)
+  const template = $derived(id !== undefined ? getMessage(messages, id) : undefined)
+  const normalizedValues = $derived(normalizeValues(values))
+  const sourceMessage = $derived(message ? parseSvelteRichTextMessage(message) : undefined)
+  const translatedMessage = $derived(template ? parseSvelteRichTextMessage(template) : undefined)
+  const hasRichTextElements = $derived.by(() => {
+    if (!sourceMessage) return false
+    for (const index of sourceMessage.structure.elements.keys()) {
+      if (!richTextElements[`__better_translation_${index}`]) return false
+    }
+    return true
+  })
+  const richTextNodes = $derived(
+    hasRichTextElements ? resolveSvelteRichTextNodes(sourceMessage, translatedMessage) : undefined,
+  )
 </script>
 
-{#if translated}
-  {translated}
-{:else if message}
-  {interpolateString(message, normalizeValues(values))}
+{#snippet renderNodes(nodes: RichTextMessageNode[])}
+  {#each nodes as node (node.key)}
+    {#if node.type === "text"}
+      {node.value}
+    {:else if node.type === "variable"}
+      {normalizedValues && Object.hasOwn(normalizedValues, node.name)
+        ? normalizedValues[node.name]
+        : `{${node.name}}`}
+    {:else}
+      {#snippet translatedChildren()}
+        {@render renderNodes(node.children)}
+      {/snippet}
+      {@render richTextElements[`__better_translation_${node.index}`]?.(translatedChildren)}
+    {/if}
+  {/each}
+{/snippet}
+
+{#if richTextNodes}
+  {@render renderNodes(richTextNodes)}
 {:else}
   {@render children?.()}
 {/if}

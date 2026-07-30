@@ -10,7 +10,6 @@
   <title>Better Translation SvelteKit</title>
 </svelte:head>
 
-<TranslateProvider messages={data.messages}>
+<TranslateProvider locale={data.locale} messages={data.messages}>
   {@render children?.()}
 </TranslateProvider>
-

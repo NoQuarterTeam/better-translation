@@ -1,4 +1,4 @@
-import type { TranslateOptions } from "./types.js"
+import type { TranslateOptions } from "../types.js"
 
 export function normalizeMeta(meta?: TranslateOptions): TranslateOptions {
   if (!meta) return {}

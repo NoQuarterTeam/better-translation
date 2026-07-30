@@ -157,7 +157,7 @@ Runtime bundles must stay plain JSON maps:
 Runtime bundles should not include:
 
 - Manifest metadata
-- source locations
+- source ownership metadata
 - editor state
 - review status
 - value provenance

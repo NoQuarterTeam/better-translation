@@ -9,6 +9,7 @@ import { projectMiddleware } from "@/lib/functions/middleware"
 import { parseZod } from "@/lib/functions/zod"
 import { db } from "@/server/db"
 import { localeValueInsertSchema, localeValuesTable, type LocaleValue, messagesTable } from "@/server/db/schema"
+import { hasSameMessageStructure } from "@/server/message-structure"
 import { createStableHash } from "@/server/platform"
 import { translateMessageWithPlatform } from "@/server/platform-translator"
 import { listEnabledTranslationGlossaryTerms } from "@/server/translation-glossary"
@@ -303,6 +304,9 @@ export const saveLocaleValueFn = createServerFn({ method: "POST" })
 
     if (data.locale === branch.defaultLocale) throw new Error("Default locale Messages come from the Manifest.")
     if (!branch.locales.includes(data.locale)) throw new Error("Locale is not configured for this Branch.")
+    if (!hasSameMessageStructure(message.defaultMessage, data.value)) {
+      throw new Error("Locale value must preserve the Message placeholders and rich-text elements.")
+    }
 
     return upsertLocaleValue({
       branchId: branch.id,

@@ -93,10 +93,10 @@ export const Route = createFileRoute("/$locale")({
 })
 
 function LocaleRoot() {
-  const { messages } = Route.useRouteContext()
+  const { locale, messages } = Route.useRouteContext()
 
   return (
-    <TranslateProvider messages={messages}>
+    <TranslateProvider locale={locale} messages={messages}>
       <Outlet />
     </TranslateProvider>
   )
@@ -126,7 +126,7 @@ export async function load({ params }) {
   let { data, children } = $props()
 </script>
 
-<TranslateProvider messages={data.messages}>
+<TranslateProvider locale={data.locale} messages={data.messages}>
   {@render children()}
 </TranslateProvider>
 ```

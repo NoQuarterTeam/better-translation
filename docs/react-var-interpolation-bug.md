@@ -1,10 +1,11 @@
-# React Var Interpolation Bug
+# React Var Interpolation
 
-## Summary
+Status: resolved.
 
-React `<T>` Messages with `<Var>` placeholders can render raw placeholders when a Locale value exists.
+## Original Failure
 
-Observed in a Consumer app:
+React `T` Messages with `Var` placeholders could previously render the raw placeholder after a translated Locale value became
+available:
 
 ```tsx
 <T>
@@ -12,235 +13,16 @@ Observed in a Consumer app:
 </T>
 ```
 
-With Dutch Locale value:
-
-```json
-"m_1m4u4y": "{count} weergaven"
-```
-
-Rendered output:
-
 ```text
 {count} weergaven
 ```
 
-Expected output:
+The Runtime bundle was correct. The old React runtime identified `Var` only through function-object equality while walking
+children. That was fragile when a Consumer app loaded the package through different bundling or runtime boundaries.
 
-```text
-12 weergaven
-```
+## Current Contract
 
-This is not a Locale value issue. The Runtime bundle correctly contains `{count}`. The problem is that React `<T>` sometimes does not have the runtime `count` value when it replaces the source children with the translated template.
-
-## Affected Consumer App Example
-
-Repo:
-
-```text
-/Users/jclackett/Apps/NoQuarter/unlisted
-```
-
-Affected source:
-
-```text
-src/routes/dashboard/_org/events/_list/-components/event-item.tsx
-```
-
-Original pattern:
-
-```tsx
-{
-  event.pageViewCount === 1 ? (
-    <T>
-      <Var count={event.pageViewCount} /> view
-    </T>
-  ) : (
-    <T>
-      <Var count={event.pageViewCount} /> views
-    </T>
-  )
-}
-```
-
-Affected generated Locale values:
-
-```json
-"m_4c8umt": "{count} weergave",
-"m_1m4u4y": "{count} weergaven",
-"m_cg4ns2": "{count} deelnemer",
-"m_1d42r43": "{count} deelnemers"
-```
-
-## Why It Can Look Like It Worked Before
-
-When no translated Locale value exists, React `<T>` renders its original children:
-
-```tsx
-<Var count={12} /> views
-```
-
-In that fallback path, `<Var>` renders its value directly, so the UI displays:
-
-```text
-12 views
-```
-
-Once a translated Locale value exists, `<T>` stops rendering its children and renders the translated template instead:
-
-```text
-{count} weergaven
-```
-
-At that point `<T>` must have a runtime value map:
-
-```ts
-{
-  count: 12
-}
-```
-
-If `<T>` fails to recover that map from its children, interpolation cannot happen and `{count}` remains visible.
-
-## Current React Implementation
-
-Relevant files:
-
-```text
-packages/better-translation/src/extractors/typescript.ts
-packages/better-translation/src/react.tsx
-```
-
-The React/TypeScript extractor can statically identify the placeholder name and extracted Message:
-
-```ts
-const extraction = extractJSXChildren(node.children)
-messages.push({
-  id,
-  defaultMessage: extraction.message,
-  placeholders: extraction.placeholders,
-  // ...
-})
-```
-
-For a React `<T>` marker, it currently only injects the `id`:
-
-```ts
-if (!hasJSXAttribute(opening.attributes as Array<unknown>, "id")) {
-  edits.push({
-    start: opening.name.end,
-    end: opening.name.end,
-    replacement: ` id="${id}"`,
-  })
-}
-```
-
-That means the transformed React source is effectively:
-
-```tsx
-<T id="m_1m4u4y">
-  <Var count={event.pageViewCount} /> views
-</T>
-```
-
-The React runtime then tries to reconstruct the source Message and runtime values by walking React children:
-
-```ts
-function extractRuntimeContent(children: ReactNode) {
-  const parts: string[] = []
-  const vars: Record<string, ReactNode> = {}
-
-  Children.forEach(children, (child) => {
-    if (typeof child === "string" || typeof child === "number") {
-      parts.push(String(child))
-      return
-    }
-
-    if (isValidElement<VarProps>(child) && child.type === Var) {
-      const entry = getRuntimeVarEntry(child.props)
-      if (entry) {
-        parts.push(`{${entry.name}}`)
-        vars[entry.name] = entry.value
-      }
-    }
-  })
-
-  return {
-    message: parts.join("").replace(/\s+/g, " ").trim(),
-    vars: Object.keys(vars).length > 0 ? vars : undefined,
-  }
-}
-```
-
-Then `<T>` does:
-
-```ts
-const vars = template?.includes("{") ? runtimeContent.vars : undefined
-if (!vars) return <>{template}</>
-```
-
-So if `child.type === Var` does not match, `vars` is `undefined`, and the translated template is returned as raw text.
-
-## Likely Root Cause
-
-React `<T>` relies on runtime component identity:
-
-```ts
-child.type === Var
-```
-
-That is brittle across bundling and runtime boundaries. It can fail when a Consumer app ends up with more than one module instance or when the rendered `Var` element does not reference the exact same function object as the `Var` captured inside the `T` module closure.
-
-Potential triggers include:
-
-- Vite dev/HMR boundaries
-- SSR/client chunk boundaries
-- duplicated package instances
-- transformed output importing aliased/minified exports
-- package linking or monorepo dependency resolution
-
-The concrete symptom is independent of extraction: the Manifest and Locale values can be correct, but runtime interpolation still fails because the runtime value map was not recovered.
-
-## Why Svelte Is Less Fragile
-
-The Svelte extractor already injects compile-time runtime props into `<T>`:
-
-```ts
-if (!hasAttribute(node.attributes, "message") && insertAt !== undefined) {
-  edits.push({
-    replacement: ` message=${JSON.stringify(extraction.message)}`,
-  })
-}
-
-if (!hasAttribute(node.attributes, "values") && extraction.values.length > 0 && insertAt !== undefined) {
-  edits.push({
-    replacement: ` values={{ ${extraction.values.map((entry) => `${entry.name}: ${entry.value}`).join(", ")} }}`,
-  })
-}
-```
-
-Svelte runtime accepts:
-
-```ts
-interface Props {
-  id?: string
-  context?: string
-  message?: string
-  values?: Record<string, unknown>
-  children?: Snippet
-}
-```
-
-Then it interpolates with explicit `values`:
-
-```ts
-const translated = $derived(template ? interpolateString(template, normalizeValues(values)) : undefined)
-```
-
-React should follow the same model.
-
-## Desired Fix
-
-Keep the authoring API unchanged:
+The authoring API remains:
 
 ```tsx
 <T>
@@ -248,235 +30,83 @@ Keep the authoring API unchanged:
 </T>
 ```
 
-Change the React extraction and runtime path so the Vite plugin injects enough compile-time data for deterministic interpolation.
+The Vite plugin records the canonical Message and injects the private build-time props needed by the runtime. React `Var`
+also carries a global Better Translation marker, so runtime fallback discovery does not depend on one JavaScript function
+instance.
 
-Target transformed shape:
+Relevant implementation:
+
+```text
+packages/better-translation/src/vite-plugin/source-analysis/typescript.ts
+packages/better-translation/src/react.tsx
+packages/better-translation/src/message/template.ts
+```
+
+`message` and `values` on the runtime component are transform details, not an author-facing API. Consumer apps should not set
+them, import a parser or validator, or reconstruct Message templates themselves.
+
+## Rich Text And Variables
+
+The same runtime path supports `Var` values inside safe inline elements and source-owned components:
 
 ```tsx
-<T id="m_1m4u4y" message="{count} views" values={{ count: event.pageViewCount }}>
-  <Var count={event.pageViewCount} /> views
+<T>
+  Delete{" "}
+  <strong>
+    <Var name={event.name} />
+  </strong>
 </T>
 ```
 
-Then React `<T>` should prefer explicit props:
+The Vite plugin represents the source renderer as a numbered tag while keeping the variable as `{name}`. The React runtime:
 
-```ts
-export interface TProps {
-  id?: string
-  context?: string
-  message?: string
-  values?: Record<string, unknown>
-  children?: ReactNode
-}
-```
+1. looks up the translated string by stable lookup id
+2. verifies that variables and numbered rich-text tags preserve the source structure
+3. interpolates React values without converting them to strings
+4. clones only the source-owned elements and components authored inside `T`
+5. renders the authored JSX if the translated structure is malformed or incompatible
 
-Runtime behavior:
-
-1. Resolve the translated template by `id`.
-2. If a translated template exists, interpolate it with `values`.
-3. If no translated template exists but `message` exists, render `message` interpolated with `values`.
-4. Otherwise fall back to `children`.
-
-The original `children` should remain for source readability and fallback rendering, but translated rendering should not depend on inspecting those children.
-
-## Implementation Notes
-
-### 1. Extend React `TProps`
-
-File:
-
-```text
-packages/better-translation/src/react.tsx
-```
-
-Add `message?: string` and `values?: Record<string, unknown>` to `TProps`.
-
-Use existing `normalizeValues` and interpolation logic, or share `interpolateString` where appropriate. React interpolation must preserve ReactNode values, not force all values to strings, because `<Var title={<strong>{title}</strong>} />` is supported in existing Consumer app code.
-
-Do not blindly use `interpolateString` for React if it stringifies ReactNode placeholders. The current React `interpolate()` function returns `ReactNode[]`, which is the right output shape for JSX values.
-
-### 2. Extend React Extraction Result To Include Values
-
-File:
-
-```text
-packages/better-translation/src/extractors/typescript.ts
-```
-
-Current `extractJSXChildren` returns:
-
-```ts
-{
-  message: string
-  placeholders: string[]
-  valid: boolean
-}
-```
-
-It needs to return value expressions too, similar to Svelte:
-
-```ts
-{
-  message: string
-  placeholders: string[]
-  values: Array<{ name: string; value: string }>
-  valid: boolean
-}
-```
-
-For `<Var count={event.pageViewCount} />`, capture:
-
-```ts
-{ name: "count", value: "event.pageViewCount" }
-```
-
-For shorthand child normalization:
-
-```tsx
-<Var>{count}</Var>
-```
-
-The existing transform already rewrites this to:
-
-```tsx
-<Var count={count} />
-```
-
-Make sure extraction either:
-
-- reads the original shorthand child and captures `{ name: "count", value: "count" }`, or
-- relies on a predictable edit ordering that keeps the final output correct.
-
-Prefer making `extractJSXChildren` able to read both forms directly.
-
-### 3. Inject `message` And `values` For React `<T>`
-
-When a React `<T>` has placeholders:
-
-- Add `message={JSON.stringify(extraction.message)}` unless already present.
-- Add `values={{ ... }}` unless already present.
-
-When there are no placeholders:
-
-- `message` is still useful for deterministic fallback without child reconstruction, but it is optional.
-- To keep output smaller, it is acceptable to only inject `message` when there are placeholders or when needed for explicit behavior.
-
-Important: avoid duplicating props if the user explicitly provided `message` or `values` in future usage.
-
-### 4. Keep Runtime Bundle Flat
-
-Do not change Runtime bundle shape.
-
-Runtime bundles must remain:
+Runtime bundles remain flat:
 
 ```json
 {
-  "m_lookup": "Translated string"
+  "m_lookup": "<0>{name}</0> verwijderen"
 }
 ```
 
-This fix belongs in source transform/runtime helper behavior, not in Locale values or Runtime bundle metadata.
+They contain neither React nodes nor private Manifest metadata.
 
-## Tests To Add
+## React And Svelte Parity
 
-Add focused tests around the package behavior.
+React and Svelte share the same Message structure contract and safe-fallback behavior. Their implementation adapters differ:
 
-Suggested coverage:
+- React retains authored elements and clones them with translated children.
+- Svelte source analysis generates private Snippets that invoke the authored elements or components with translated children.
 
-1. React extractor transforms `<T><Var count={count} /> views</T>` into a `<T>` with:
-   - `id`
-   - `message="{count} views"`
-   - `values={{ count }}`
+Neither runtime parses translated values as arbitrary HTML. Neither framework requires a Consumer app to register rich-text
+renderers.
 
-2. React extractor transforms `<T><Var count={event.pageViewCount} /> views</T>` into:
-   - `values={{ count: event.pageViewCount }}`
+## Regression Coverage
 
-3. React runtime renders translated template with values:
-
-```tsx
-<TranslateProvider messages={{ m_test: "{count} weergaven" }}>
-  <T id="m_test" message="{count} views" values={{ count: 12 }}>
-    <Var count={12} /> views
-  </T>
-</TranslateProvider>
-```
-
-Expected:
+The current suite keeps interpolation and rich-text behavior covered at each owning interface:
 
 ```text
-12 weergaven
+packages/better-translation/test/source-analysis.test.ts
+packages/better-translation/test/runtime.test.tsx
+packages/better-translation/test/vite-plugin.test.ts
 ```
 
-4. React runtime supports ReactNode placeholder values:
+Coverage includes ReactNode placeholder values, Svelte values, source-owned components, nested and reordered elements,
+malformed translations, structure repair, source fallback, and prototype-like lookup ids.
 
-```tsx
-<T id="m_test" message="Delete {name}" values={{ name: <strong>Event</strong> }}>
-  Delete <Var name={<strong>Event</strong>} />
-</T>
-```
-
-Expected rendered output should preserve the `<strong>` node.
-
-5. Fallback behavior still works when no translated template exists:
-
-```tsx
-<T message="{count} views" values={{ count: 12 }}>
-  <Var count={12} /> views
-</T>
-```
-
-Expected:
-
-```text
-12 views
-```
-
-## Manual Verification
-
-Use the Unlisted Consumer app as an end-to-end repro:
-
-```text
-/Users/jclackett/Apps/NoQuarter/unlisted
-```
-
-Run its dev server and open:
-
-```text
-http://unlisted.localhost:1355/dashboard/events
-```
-
-Switch to Dutch and inspect event cards. Counts should render as:
-
-```text
-12 weergaven
-4 deelnemers
-```
-
-They must not render as:
-
-```text
-{count} weergaven
-{count} deelnemers
-```
-
-Also check other `<Var>` examples in the Consumer app, especially messages with ReactNode placeholder values:
-
-- delete confirmation dialogs with `<strong>` placeholders
-- ticket/order/refund strings with amount placeholders
-- inventory count strings
-
-## Acceptance Criteria
-
-- React `<T>` placeholder interpolation does not depend on `child.type === Var` when transform-injected `values` are present.
-- Existing authoring API remains unchanged.
-- Svelte behavior remains unchanged.
-- Runtime bundles remain flat lookup-id to string maps.
-- ReactNode placeholder values still render as ReactNode values.
-- Package checks pass:
+Run the complete regression and scaling gate:
 
 ```bash
-bun run check
-bun --filter better-translation build
+bun run test
 ```
 
-- If changing `packages/better-translation`, add a changeset.
+Run the package build after changing published runtime or Vite-plugin behavior:
+
+```bash
+bun --filter better-translation build
+```

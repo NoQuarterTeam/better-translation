@@ -60,10 +60,10 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const { messages } = Route.useRouteContext()
+  const { locale, messages } = Route.useRouteContext()
 
   return (
-    <TranslateProvider messages={messages}>
+    <TranslateProvider locale={locale} messages={messages}>
       <Outlet />
     </TranslateProvider>
   )
@@ -103,10 +103,10 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const { messages } = Route.useRouteContext()
+  const { locale, messages } = Route.useRouteContext()
 
   return (
-    <TranslateProvider messages={messages}>
+    <TranslateProvider locale={locale} messages={messages}>
       <Outlet />
     </TranslateProvider>
   )
@@ -143,7 +143,7 @@ export async function load() {
   let { data, children } = $props()
 </script>
 
-<TranslateProvider messages={data.messages}>
+<TranslateProvider locale={data.locale} messages={data.messages}>
   {@render children()}
 </TranslateProvider>
 ```
@@ -157,3 +157,7 @@ You do not keep separate state between the Vite plugin and app runtime code. The
 is the source for the generated `better-translation/messages` module, and your app imports
 that module. Change the runtime target in `vite.config.ts`, restart Vite, and the generated
 loader changes while your app code can keep calling `loadMessages(locale)`.
+
+In local development, `TranslateProvider` uses the active `locale` to apply completed
+translations through Vite HMR. The authored fallback remains visible while translation is in
+progress, then the translated value replaces it without a page reload or component remount.

@@ -88,6 +88,90 @@ export function ProjectEmptyState() {
 </Tab>
 </Tabs>
 
+## Rich text
+
+Static inline elements and source-owned components can stay inside a Message. Better Translation turns them into numbered
+rich-text tags for translators, then renders the translated content through the exact authored React element or Svelte
+Snippet. Props, events, actions, bindings, and component implementations remain source-owned; translated strings are never
+rendered as arbitrary HTML. The Vite plugin and runtime handle numbering and validation internally, so Consumer apps do
+not import a validator or register rich-text renderers.
+
+<Tabs items={["React", "Svelte"]} groupId="framework" persist>
+<Tab value="React">
+
+```tsx title="SafetyNotice.tsx"
+import { T } from "better-translation/react"
+
+export function SafetyNotice() {
+  return (
+    <T>
+      Always make sure <strong>you are safe first</strong> before approaching the casualty.
+    </T>
+  )
+}
+```
+
+Source-owned components are not limited to a built-in registry. Normal identifiers such as `B` and member components such
+as `Text.Italic` work without Better Translation inspecting what they render:
+
+```tsx
+import type { ReactNode } from "react"
+
+function B({ children }: { children: ReactNode }) {
+  return <b className="font-semibold">{children}</b>
+}
+
+export function CustomSafetyNotice() {
+  return (
+    <T>
+      Always make sure <B>you are safe first</B>.
+    </T>
+  )
+}
+```
+
+</Tab>
+<Tab value="Svelte">
+
+```svelte title="SafetyNotice.svelte"
+<script>
+  import Emphasis from "./Emphasis.svelte"
+  import { T } from "better-translation/svelte"
+</script>
+
+<T>
+  Always make sure <Emphasis>you are safe first</Emphasis> before approaching the casualty.
+</T>
+```
+
+`Emphasis` remains an ordinary source-owned component and can choose its own underlying markup:
+
+```svelte title="Emphasis.svelte"
+<script lang="ts">
+  import type { Snippet } from "svelte"
+
+  let { children }: { children: Snippet } = $props()
+</script>
+
+<b class="font-semibold">{@render children()}</b>
+```
+
+</Tab>
+</Tabs>
+
+Supported native inline tags include `strong`, `b`, `i`, `em`, `span`, `a`, and `br`, among other text-level elements, and
+can be nested. Keep unsupported native layout or media elements outside `T`; wrap source-owned behavior in a component when
+it belongs to the Message.
+
+Translations may reorder sibling rich-text tags but must preserve every tag, variable, paired/self-closing shape, and
+authored parent topology. If a Locale value does not preserve that structure, React and Svelte both render the authored
+source content instead. Use `Var` for runtime values.
+
+<Callout title="No rich-text setup">
+  Rich text has no parser, validator, renderer registry, or tag map for Consumer apps to import. Author the element or component
+  inside `T`; the Vite plugin and runtime carry it through automatically.
+</Callout>
+
 ## Context
 
 Use `context` to tell translation tools what the Message means, where it appears, or what tone
@@ -147,7 +231,7 @@ the generated lookup id.
   type={{
     children: {
       type: "ReactNode | Snippet",
-      description: "The source-language component content to translate.",
+      description: "The authored Default locale component content to translate.",
     },
     context: {
       type: "string",

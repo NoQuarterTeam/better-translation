@@ -1,87 +1,69 @@
-/** A single extracted message discovered during source scanning. */
+/** One Message discovered by Vite-plugin source analysis. */
 export interface ExtractedMessage {
-  /** Stable lookup id used for lookups and locale file keys. */
+  /** Stable Lookup id used in the Manifest and Runtime bundles. */
   id: string
-  /** Source-language text that should be translated. */
+  /** Authored Default locale Message. */
   defaultMessage: string
-  /** Optional metadata that affects translation or message grouping. */
+  /** Message identity and translator context. */
   meta: TranslateOptions
-  /** Placeholder names discovered in the message text. */
+  /** Placeholder names discovered in the Default locale Message. */
   placeholders: string[]
-  /** Rich source metadata for the extracted occurrence. */
+  /** Durable source ownership for this Translation marker occurrence. */
   source: MessageSource
 }
 
-/** Source metadata for a single extracted message occurrence. */
+/** Durable source ownership for one Translation marker occurrence. */
 export interface MessageSource {
-  /** File path relative to the Vite root where the message came from. */
+  /** File path relative to the Vite root containing the Translation marker. */
   file: string
-  /** Extraction marker that produced the message. */
+  /** Translation marker syntax that produced the Message. */
   kind: "call" | "component"
-  /** Concrete marker name encountered in source, such as `t` or `T`. */
+  /** Concrete marker name found in source, such as `t` or `T`. */
   marker: string
 }
 
-/** Internal manifest entry used while aggregating extracted messages. */
+/** Internal Manifest entry aggregated from every occurrence of one Lookup id. */
 export interface ManifestEntry {
-  /** Source-language text that should be translated. */
+  /** Authored Default locale Message. */
   defaultMessage: string
-  /** Optional metadata that affects translation or message grouping. */
+  /** Message identity and translator context. */
   meta: TranslateOptions
-  /** Placeholder names discovered in the message text. */
+  /** Placeholder names discovered in the Default locale Message. */
   placeholders: string[]
-  /** Source locations that contributed to this manifest entry. */
+  /** Source occurrences that contributed to this Manifest entry. */
   sources: MessageSource[]
 }
 
-/** In-memory manifest keyed by stable lookup id. */
+/** In-memory Manifest keyed by Lookup id. */
 export type MessageManifest = Record<string, ManifestEntry>
 
-/** Private on-disk manifest keyed by stable lookup id. */
+/**
+ * Private Manifest persisted by the Vite plugin, keyed by Lookup id.
+ *
+ * A Manifest contains source metadata used for synchronization and editing. It
+ * is separate from the flat {@link RuntimeMessages} payload loaded by Consumer
+ * apps.
+ */
 export type MessageManifestFile = MessageManifest
 
-/** Flat runtime message map keyed by stable lookup id. */
+/** Flat Runtime bundle of Locale values keyed by Lookup id. */
 export type RuntimeMessages = Record<string, string>
-
-/** A single translated message entry written to a locale file. */
-export interface LocaleMessageEntry {
-  /** Final translated text for the target locale. */
-  translation: string
-  /** Original source-language text for reference and re-translation. */
-  defaultMessage: string
-  /** Optional metadata that affects translation or message grouping. */
-  meta: TranslateOptions
-  /** Placeholder names discovered in the message text. */
-  placeholders: string[]
-  /** Source locations that contributed to this locale entry. */
-  sources: MessageSource[]
-}
-
-/** Legacy on-disk JSON structure emitted by earlier local runtime modes. */
-export interface LocaleFile {
-  /** Locale code represented by this file. */
-  locale: string
-  /** Source locale used as the untranslated fallback. */
-  defaultLocale: string
-  /** Locale entries keyed by stable lookup id. */
-  messages: Record<string, LocaleMessageEntry>
-}
 
 /** Translation cache persisted between runs to avoid re-translating unchanged messages. */
 export interface TranslationCache {
   /** Cache schema version used for invalidation. */
   version: number
-  /** Cached translations keyed by stable lookup id and locale. */
+  /** Cached Locale values keyed by Lookup id and Locale. */
   entries: Record<
     string,
     {
-      /** Original source-language text used to generate the translation. */
+      /** Default locale Message used to generate the Locale value. */
       sourceText: string
-      /** Metadata that was present when the translation was generated. */
+      /** Message identity and translator context used during generation. */
       meta: TranslateOptions
-      /** Locale code the translation was generated for. */
+      /** Locale for which the value was generated. */
       locale: string
-      /** Cached translated text. */
+      /** Cached Locale value. */
       translation: string
       /** Unix timestamp in milliseconds when the translation was cached. */
       timestamp: number
@@ -89,91 +71,137 @@ export interface TranslationCache {
   >
 }
 
-/** Extra metadata that can influence translation and message grouping. */
+/** Options that disambiguate or explicitly identify a Message. */
 export interface TranslateOptions {
-  /** Explicit stable lookup id for direct runtime lookups, whether provided manually or by a transform. */
+  /** Explicit Lookup id to use instead of the stable id generated from Message content and context. */
   id?: string
-  /** Extra disambiguating context for translators and custom ids. */
+  /** Disambiguating information for translators and otherwise-identical Messages with different meanings. */
   context?: string
 }
 
-/** A full message payload passed to the translate callback. */
+/** One Message passed to a local-mode {@link TranslateFn}. */
 export interface TranslateMessage {
-  /** Stable lookup id used for locale file keys and translation results. */
+  /** Stable Lookup id that the callback uses as its result key. */
   id: string
-  /** Source-language text that should be translated. */
+  /** Default locale Message to translate, including placeholders and numbered rich-text tags. */
   text: string
-  /** Optional metadata that affects translation or message grouping. */
+  /** Message identity and translator context. */
   meta: TranslateOptions
-  /** Placeholder names discovered in the message text. */
+  /** Placeholder names that the returned Locale value must preserve. */
   placeholders: string[]
-  /** Source locations that produced this message. */
+  /** Translation marker occurrences that produced this Message. */
   sources: MessageSource[]
 }
 
-/** User-provided translation function used to fill missing locale entries. */
+/**
+ * Fills missing non-default Locale values in local mode.
+ *
+ * The Vite plugin calls this function with one configured batch and target
+ * Locale at a time. Return translated values keyed by each Message's Lookup id;
+ * omitted ids remain missing. Returned values are trimmed and must preserve the
+ * source Message's placeholders and numbered rich-text structure.
+ *
+ * @param messages - Missing Messages in the current translation batch.
+ * @param locale - Target Locale configured in the Vite plugin.
+ * @returns Translated Locale values keyed by Lookup id.
+ */
 export type TranslateFn = (messages: TranslateMessage[], locale: string) => Promise<Record<string, string>>
 
-/** Dev-only local editor for searching and editing local Locale values. */
+/** Configuration for the dev-only local Locale value editor. */
 export interface BetterTranslateLocalEditorOptions {
-  /** Enables the local editor during Vite dev. */
+  /** Enables the editor during `vite dev`. Defaults to `true` when an options object is supplied. */
   enabled?: boolean
-  /** Local dev URL path served by the Vite plugin. */
+  /** Vite dev-server path used by the editor. Defaults to `"/__better-translation"`. */
   path?: string
-  /** Open the editor URL when the dev server starts. */
+  /** Opens the editor when the dev server starts. Defaults to `false`. */
   open?: boolean
 }
 
-/** Writes locale files into the app and loads them through Vite. */
-export interface BetterTranslateLocalRuntimeOptions {
-  /** Selects local runtime artifacts. */
+interface BetterTranslateLocalRuntimeBaseOptions {
+  /** Selects repo-owned local Runtime bundles. */
   type: "local"
-  /** Chooses whether locale files are imported as modules or fetched from Vite public assets. */
+  /** Imports Runtime bundles as modules or fetches them from Vite public assets. Defaults to `"module"`. */
   target?: "module" | "public"
-  /** Output directory where locale artifacts are written. */
+  /**
+   * Output directory for generated Runtime bundles, relative to the Vite root.
+   *
+   * Defaults to `"src/lib/bt"` for the module target and `<publicDir>/bt` for
+   * the public target.
+   */
   output?: string
-  /** Public URL prefix used by the generated loader for `target: "public"`. */
+  /** Public URL prefix for `target: "public"`. By default it is inferred from `output` and Vite's `publicDir`. */
   basePath?: string
-  /** Custom translation function used for messages missing from non-default locales. */
-  translate?: TranslateFn
-  /** Dev-only UI for editing local Locale values. */
+  /** Enables or configures the local Locale value editor during `vite dev`. */
   editor?: boolean | BetterTranslateLocalEditorOptions
 }
 
-/** Loads locale files from an external translation service. */
+/**
+ * Configures repo-owned local Runtime bundles.
+ *
+ * During development the Vite plugin maintains flat Runtime bundles and can
+ * fill missing values through {@link TranslateFn}. Local production builds are
+ * check-only and fail when committed artifacts are stale, incomplete, invalid,
+ * or contain Lookup ids that are absent from the current Manifest.
+ */
+export type BetterTranslateLocalRuntimeOptions =
+  | (BetterTranslateLocalRuntimeBaseOptions & {
+      /** Callback used during development to fill missing non-default Locale values. */
+      translate: TranslateFn
+      /** Number of Messages translated before cache and Locale values are persisted. Defaults to `25`. */
+      translationBatchSize?: number
+    })
+  | (BetterTranslateLocalRuntimeBaseOptions & {
+      /** Omit the callback to manage non-default Locale values manually. */
+      translate?: undefined
+      /** Only available when `translate` is provided. */
+      translationBatchSize?: never
+    })
+
+/**
+ * Configures Manifest synchronization and branch-addressed Runtime bundle
+ * loading through the hosted platform.
+ */
 export interface BetterTranslateRemoteRuntimeOptions {
-  /** Selects remote runtime loading. */
+  /** Selects hosted Manifest sync and Runtime bundle loading. */
   type: "remote"
-  /** Remote translation service URL. */
+  /** Hosted-platform base URL. Defaults to the Better Translation service. */
   endpoint?: string
-  /** Remote project identifier. */
+  /** Existing Project whose Manifest and Runtime bundles this Consumer app uses. */
   projectId: string
-  /** Project API key used by the Vite plugin to sync Manifests. Falls back to `BETTER_TRANSLATION_API_KEY`. */
+  /**
+   * Project write credential used only by the Vite plugin for Manifest sync.
+   *
+   * Falls back to `BETTER_TRANSLATION_API_KEY` and is never included in
+   * generated runtime code or Runtime bundles.
+   */
   apiKey?: string
-  /** Branch to read from, or `"auto"` to infer it from the environment. */
+  /** Branch to sync and load, or `"auto"` to resolve it from the environment and Git. Defaults to `"auto"`. */
   branch?: "auto" | (string & {})
   /** Local development behavior for remote runtime mode. */
   dev?: {
-    /** Avoid platform reads and writes during local development. */
+    /** Uses ignored local fallback artifacts and avoids hosted reads and writes during local development. */
     offline?: boolean
   }
 }
 
-/** Controls where locale artifacts live and how the virtual runtime loader reads them. */
+/** Selects local repo-owned or remote hosted Runtime bundle behavior. */
 export type BetterTranslateRuntimeOptions = BetterTranslateLocalRuntimeOptions | BetterTranslateRemoteRuntimeOptions
 
-/** Public configuration for the Better Translation Vite plugin. */
+/**
+ * Configures source discovery, the Default locale, supported Locales, and
+ * Runtime bundle ownership for `betterTranslation`.
+ */
 export interface BetterTranslatePluginOptions {
-  /** All locale codes that should be emitted. */
+  /** All supported Locale codes. At least one unique, non-empty value is required. */
   locales: string[]
-  /** Locale code treated as the source language. */
+  /** Locale used for authored Messages. Defaults to the first configured Locale. */
   defaultLocale?: string
-  /** Source directory or directories, relative to the Vite root. Defaults to `"src"`. */
+  /** Directories scanned for Translation markers, relative to the Vite root. Defaults to `"src"`. */
   rootDir?: string | string[]
-  /** Cache file path, relative to the Vite root. */
+  /** Local translation cache path, relative to the Vite root. Defaults to `".cache/better-translation/cache.json"`. */
   cacheFile?: string
-  /** Enables or disables plugin logging. */
+  /** Enables Vite plugin lifecycle and translation logs. Defaults to `true`. */
   logging?: boolean
-  /** Runtime backend configuration. */
+  /** Runtime bundle configuration. Defaults to local mode with the module target. */
   runtime?: BetterTranslateRuntimeOptions
 }

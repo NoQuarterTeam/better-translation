@@ -7,7 +7,7 @@ import { Cards, Card } from "fumadocs-ui/components/card"
 import { Tabs, Tab } from "fumadocs-ui/components/tabs"
 
 This gets Better Translation running in local dev mode. Local mode is the default: the Vite
-plugin scans your app, writes generated Locale files, and generates the virtual
+plugin scans your app, writes generated Runtime bundles, and generates the virtual
 `better-translation/messages` module your app uses at runtime.
 
 ## 1. Install
@@ -149,10 +149,10 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const { messages } = Route.useRouteContext()
+  const { locale, messages } = Route.useRouteContext()
 
   return (
-    <TranslateProvider messages={messages}>
+    <TranslateProvider locale={locale} messages={messages}>
       <Outlet />
     </TranslateProvider>
   )
@@ -181,10 +181,10 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const { messages } = Route.useRouteContext()
+  const { locale, messages } = Route.useRouteContext()
 
   return (
-    <TranslateProvider messages={messages}>
+    <TranslateProvider locale={locale} messages={messages}>
       <Outlet />
     </TranslateProvider>
   )
@@ -214,7 +214,7 @@ export async function load() {
   let { data, children } = $props()
 </script>
 
-<TranslateProvider messages={data.messages}>
+<TranslateProvider locale={data.locale} messages={data.messages}>
   {@render children()}
 </TranslateProvider>
 ```
@@ -344,8 +344,8 @@ export default defineConfig({
 </Tab>
 </Tabs>
 
-The plugin writes generated values into your local Locale files and cache. Production local
-builds never call `translate`; they only check that committed Locale files are complete.
+The plugin writes generated values into your local Runtime bundles and cache. Production local
+builds never call `translate`; they only check that committed Runtime bundles are complete.
 
 <Cards>
   <Card title="How it works" href="/how-it-works" description="The extraction and runtime model behind the plugin." />
@@ -354,5 +354,5 @@ builds never call `translate`; they only check that committed Locale files are c
     href="/loading"
     description="How the virtual loader changes between module and public targets."
   />
-  <Card title="Local mode" href="/local-mode" description="Locale files in your repo, no account required." />
+  <Card title="Local mode" href="/local-mode" description="Runtime bundles in your repo, no account required." />
 </Cards>

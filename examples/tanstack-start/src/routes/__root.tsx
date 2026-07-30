@@ -50,9 +50,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 })
 
 function RootComponent() {
-  const { messages } = Route.useRouteContext()
+  const { locale, messages } = Route.useRouteContext()
   return (
-    <TranslateProvider messages={messages}>
+    <TranslateProvider locale={locale} messages={messages}>
       <Outlet />
     </TranslateProvider>
   )

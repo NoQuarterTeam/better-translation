@@ -10,6 +10,8 @@ The repo currently supports a local bundle-first workflow.
 - `apps/web` is the hosted app scaffold.
 - `examples/tanstack-start` and `examples/svelte-kit` are local-first Consumer app examples.
 - The plugin scans configured source roots for markers such as `t("...")`, `useT()`, and `<T>...</T>`.
+- React and Svelte `<T>` markers support safe static inline elements and source-owned components as automatic numbered
+  rich-text tags while preserving their authored renderers and props at runtime.
 - The plugin generates stable lookup ids and writes local artifacts.
 - Missing non-default Locale values can be filled with a custom async `translate()` function, including the built-in AI helper.
 - Runtime code loads local JSON through the virtual `better-translation/messages` module.
@@ -66,7 +68,12 @@ Runtime bundles are plain JSON maps:
 }
 ```
 
-Runtime bundles must not include editor metadata, source locations, Manifest details, or draft-only state.
+Runtime bundles must not include editor metadata, source ownership metadata, Manifest details, or draft-only state.
+
+Rich-text Messages remain strings in Runtime bundles. Numbered tags such as `<0>...</0>` and `<1/>` identify supported inline
+elements or source-owned React and Svelte components from the authored `<T>` marker. React clones only source-owned
+elements; Svelte invokes only Vite-plugin-generated source-owned Snippets. Neither runtime parses translated values as
+arbitrary HTML. Locale values must preserve the numbered tag structure and authored parent topology.
 
 Remote runtime URLs are branch-addressed:
 
@@ -97,14 +104,22 @@ type BetterTranslateLocalRuntimeOptions = {
   output?: string
   basePath?: string
   translate?: TranslateFn
+  translationBatchSize?: number
 }
 ```
 
-`target: "module"` writes generated Locale files under the app source tree and loads them through Vite module imports. `target: "public"` writes generated Locale files under Vite's `publicDir` and the virtual loader fetches them at runtime.
+`target: "module"` writes generated Runtime bundles under the app source tree and loads them through Vite module imports. `target: "public"` writes generated Runtime bundles under Vite's `publicDir` and the virtual loader fetches them at runtime.
 
 For public local runtime, the default output is Vite `publicDir` plus `bt`, and the default public base path is `/bt`. `basePath` exists for deployments where the public URL does not directly match the output path.
 
 `translate?: TranslateFn` belongs to local runtime options. It fills missing non-default Locale values during dev and writes those values into local artifacts/cache. Production local builds do not call `translate`.
+
+`translationBatchSize` is available when `translate` is configured. It controls both the number of missing Messages passed
+to each translation call and the boundary at which cache and Locale values are persisted; it defaults to 25.
+
+When a React or Svelte `TranslateProvider` receives the active Locale, the plugin sends each completed local translation batch
+through Vite HMR after persisting it. The provider updates its in-memory Runtime bundle without reloading the page or remounting
+the Consumer app subtree.
 
 Local mode can optionally expose a dev-only local editor from the Vite plugin:
 
@@ -329,7 +344,7 @@ Existing local Locale values are not part of the normal hosted workflow.
 
 When a Consumer app migrates from local mode to remote mode, a one-time import can seed hosted Locale values from existing local files. This import should be explicit, fill blank hosted fields only, and never overwrite hosted edits.
 
-After migration, remote mode should not keep reading or writing editable local Locale files. The hosted platform owns Locale values.
+After migration, remote mode should not keep reading or writing editable local Runtime bundles. The hosted platform owns Locale values.
 
 ## AI Translation
 

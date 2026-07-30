@@ -121,6 +121,12 @@ export function WelcomeMessage({ name, plan }: { name: string; plan: string }) {
 The example above extracts `Welcome {name} to the {plan} plan`. The values are rendered at
 runtime through the placeholders, so translators can still reorder the sentence.
 
+<Callout title="Var or rich text?">
+  Use `Var` for a value that changes at runtime. If only the enclosed words are translated and the renderer is fixed, put the
+  native element or source-owned component directly inside `T`; Better Translation handles it as rich text without a renderer
+  registry.
+</Callout>
+
 ## Plain strings
 
 For non-component strings, use `{name}` placeholders and pass values as the second argument.

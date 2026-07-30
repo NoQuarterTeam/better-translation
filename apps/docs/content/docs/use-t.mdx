@@ -37,6 +37,11 @@ export function SearchBar() {
 </Tab>
 </Tabs>
 
+<Callout title="Svelte component initialization">
+  Call `getT()` and `getMessages()` during Svelte component initialization, normally in the component's script. Both helpers read
+  Svelte context. Keep the returned translator and call it later from markup, handlers, or derived state.
+</Callout>
+
 ## Context
 
 Pass `context` as the second argument to give translation tools more information about a

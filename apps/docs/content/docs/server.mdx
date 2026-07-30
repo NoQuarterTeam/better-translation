@@ -41,9 +41,13 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const { messages } = Route.useRouteContext()
+  const { locale, messages } = Route.useRouteContext()
 
-  return <TranslateProvider messages={messages}>{/* app */}</TranslateProvider>
+  return (
+    <TranslateProvider locale={locale} messages={messages}>
+      {/* app */}
+    </TranslateProvider>
+  )
 }
 ```
 
@@ -70,7 +74,7 @@ export async function load() {
   let { data, children } = $props()
 </script>
 
-<TranslateProvider messages={data.messages}>
+<TranslateProvider locale={data.locale} messages={data.messages}>
   {@render children()}
 </TranslateProvider>
 ```

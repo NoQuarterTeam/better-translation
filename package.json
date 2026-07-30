@@ -30,6 +30,7 @@
       "@tanstack/router-plugin": "1.168.12",
       "@tanstack/store": "0.11.0",
       "@types/node": "25.9.1",
+      "@types/bun": "1.3.14",
       "@types/react-dom": "19.2.3",
       "@types/react": "19.2.15",
       "@vitejs/plugin-react": "6.0.2",
@@ -52,11 +53,16 @@
   },
   "type": "module",
   "scripts": {
+    "bench:performance": "bun --filter better-translation bench:performance",
+    "bench:performance:guard": "bun --filter better-translation bench:performance:guard",
+    "bench:performance:json": "bun packages/better-translation/bench/performance.bench.ts --json",
     "build:packages": "bun --filter better-translation build",
     "changeset": "changeset",
     "lint": "vp lint",
     "format": "vp fmt",
     "fix": "vp lint --fix && vp fmt",
+    "test": "bun test && bun run test:types && bun run bench:performance:guard",
+    "test:types": "bun --filter better-translation test:types",
     "check": "vp check",
     "check:publish": "vp check packages/better-translation",
     "version-packages": "changeset version && bun install",
@@ -75,5 +81,5 @@
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "bun@1.3.13"
+  "packageManager": "bun@1.3.14"
 }

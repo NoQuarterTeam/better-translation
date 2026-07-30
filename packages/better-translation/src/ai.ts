@@ -1,49 +1,56 @@
+/**
+ * Optional AI SDK adapter for local-mode translation.
+ *
+ * @packageDocumentation
+ */
 import type { generateText } from "ai"
 
 import type { TranslateFn, TranslateMessage } from "./types.js"
 
+import { hasSameMessageStructure } from "./message/template.js"
+
 const DEFAULT_GATEWAY_MODEL = "openai/gpt-5.5"
-const DEFAULT_CONCURRENCY = 10
 type AiModel = Parameters<typeof generateText>[0]["model"]
 
+/** Model and translation-brief options for {@link createAiTranslate}. */
 export interface CreateAiTranslateOptions {
-  /** AI SDK model value. Defaults to a Vercel AI Gateway model string. */
+  /** AI SDK model used for each Message. Defaults to `"openai/gpt-5.5"` through Vercel AI Gateway. */
   model?: AiModel
-  /** Primary translation brief for product, tone, glossary, or domain instructions. */
+  /** Translation brief containing product, tone, glossary, or domain guidance. */
   prompt?: string
-  /** Optional temperature forwarded to the selected model provider. */
+  /** Temperature forwarded to the selected model when explicitly provided. */
   temperature?: number
-  /** Maximum number of per-message translation requests to run at once. */
-  concurrency?: number
 }
 
+/**
+ * Creates a local-mode {@link TranslateFn} backed by AI SDK `generateText`.
+ *
+ * Each Message is translated independently. The returned callback preserves
+ * placeholders and numbered rich-text tags, and rejects generated values whose
+ * structure does not match the Default locale Message. Use it as
+ * `runtime.translate` only; remote mode uses the Platform translator.
+ *
+ * @param options - Model and translation-brief configuration.
+ * @returns A callback accepted by the local runtime's `translate` option.
+ */
 export function createAiTranslate(options: CreateAiTranslateOptions = {}): TranslateFn {
   return async (messages, locale) => {
-    const result: Record<string, string> = {}
-    const concurrency = normalizeConcurrency(options.concurrency)
-
-    await Promise.all(
-      Array.from({ length: Math.min(concurrency, messages.length) }, async (_, workerIndex) => {
-        for (let index = workerIndex; index < messages.length; index += concurrency) {
-          const message = messages[index]!
-          result[message.id] = await translateMessage(message, locale, options)
-        }
-      }),
+    const entries = await Promise.all(
+      messages.map(async (message) => [message.id, await translateMessage(message, locale, options)] as const),
     )
 
-    return result
+    return Object.fromEntries(entries.filter((entry): entry is [string, string] => entry[1] !== undefined))
   }
-}
-
-function normalizeConcurrency(concurrency = DEFAULT_CONCURRENCY) {
-  if (!Number.isFinite(concurrency)) return DEFAULT_CONCURRENCY
-  return Math.max(1, Math.floor(concurrency))
 }
 
 async function translateMessage(message: TranslateMessage, locale: string, options: CreateAiTranslateOptions) {
   const translated = (await translateWithAi(message, locale, options)).trim()
 
-  return translated || message.text
+  if (!translated) return undefined
+  if (!hasSameMessageStructure(message.text, translated)) {
+    throw new Error(`The translation for ${message.id} did not preserve its placeholders and rich-text elements.`)
+  }
+  return translated
 }
 
 async function translateWithAi(message: TranslateMessage, locale: string, options: CreateAiTranslateOptions) {
@@ -71,6 +78,7 @@ ${locale}
 ## Output Contract
 Return only the translated text for the provided source message.
 Do not include the lookup id, labels, explanations, markdown, code fences, or surrounding quotes.
+Keep variable placeholders and numbered rich-text tags exactly as provided.
 Use the message context when provided.`,
   ].join("\n\n")
 }

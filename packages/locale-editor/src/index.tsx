@@ -286,7 +286,7 @@ function MessageDetail({
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const editableLocales = config.locales.filter((locale) => locale !== config.defaultLocale)
-  const hasDetails = Boolean(message.context || message.placeholders.length > 0 || message.sources.length > 0)
+  const hasDetails = Boolean(message.context || getMessagePlaceholderTokens(message).length > 0 || message.sources.length > 0)
 
   useEffect(() => setDetailsOpen(false), [message.id])
 
@@ -532,7 +532,8 @@ function TranslationValueForm({
 }
 
 function TranslationValueEditorGuidance({ labels, message }: { labels: MessageInboxLabels; message: MessageEditorMessage }) {
-  if (!message.context && message.placeholders.length === 0) return null
+  const placeholders = getMessagePlaceholderTokens(message)
+  if (!message.context && placeholders.length === 0) return null
 
   return (
     <div className="grid gap-3 rounded-md border bg-muted/30 p-3 text-sm">
@@ -541,11 +542,11 @@ function TranslationValueEditorGuidance({ labels, message }: { labels: MessageIn
           {message.context}
         </GuidanceItem>
       )}
-      {message.placeholders.length > 0 && (
+      {placeholders.length > 0 && (
         <GuidanceItem icon={<BracesIcon />} title={labels.placeholders}>
           <p className="mt-1 text-muted-foreground">{labels.includePlaceholders}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {message.placeholders.map((placeholder) => (
+            {placeholders.map((placeholder) => (
               <PlaceholderLiteral key={placeholder} placeholder={placeholder} />
             ))}
           </div>
@@ -556,6 +557,8 @@ function TranslationValueEditorGuidance({ labels, message }: { labels: MessageIn
 }
 
 function MessageSourceDetails({ labels, message }: { labels: MessageInboxLabels; message: MessageEditorMessage }) {
+  const placeholders = getMessagePlaceholderTokens(message)
+
   return (
     <div className="flex flex-col gap-3 rounded-b-md border-t bg-background p-3 text-sm">
       {message.sources.length > 0 && (
@@ -577,10 +580,10 @@ function MessageSourceDetails({ labels, message }: { labels: MessageInboxLabels;
           {message.context}
         </GuidanceItem>
       )}
-      {message.placeholders.length > 0 && (
+      {placeholders.length > 0 && (
         <GuidanceItem icon={<BracesIcon />} title={labels.placeholders}>
           <div className="mt-1 flex flex-wrap gap-1.5">
-            {message.placeholders.map((placeholder) => (
+            {placeholders.map((placeholder) => (
               <PlaceholderBadge key={placeholder} placeholder={placeholder} />
             ))}
           </div>
@@ -648,7 +651,7 @@ function LocaleValueSourceBadge({
 }
 
 function MessageText({ className, placeholders, value }: { className?: string; placeholders: string[]; value: string }) {
-  const placeholderSet = useMemo(() => new Set(placeholders), [placeholders])
+  const placeholderSet = useMemo(() => new Set([...placeholders, ...getRichTextPlaceholderTokens(value)]), [placeholders, value])
   const nodes = getMessageTextNodes(value, placeholderSet)
 
   return (
@@ -673,7 +676,11 @@ function PlaceholderBadge({ placeholder }: { placeholder: string }) {
 }
 
 function PlaceholderLiteral({ placeholder }: { placeholder: string }) {
-  return <code className="rounded-md border bg-background px-1.5 py-0.5 font-mono text-xs">{"{" + placeholder + "}"}</code>
+  return (
+    <code className="rounded-md border bg-background px-1.5 py-0.5 font-mono text-xs">
+      {placeholder.startsWith("<") ? placeholder : `{${placeholder}}`}
+    </code>
+  )
 }
 
 function MessageListSkeleton() {
@@ -728,10 +735,10 @@ function getMessageTextNodes(value: string, placeholders: Set<string>): Array<st
   if (placeholders.size === 0) return [value]
 
   const nodes: Array<string | { placeholder: string }> = []
-  const matcher = /\{([A-Za-z_$][\w$]*)\}/g
+  const matcher = /\{([A-Za-z_$][\w$]*)\}|<\/?\d+\/?>/g
   let lastIndex = 0
   for (const match of value.matchAll(matcher)) {
-    const placeholder = match[1]
+    const placeholder = match[1] ?? match[0]
     if (!placeholder || !placeholders.has(placeholder)) continue
     if (match.index > lastIndex) pushMessageTextNode(nodes, value.slice(lastIndex, match.index))
     nodes.push({ placeholder })
@@ -748,7 +755,16 @@ function pushMessageTextNode(nodes: Array<string | { placeholder: string }>, tex
   else nodes.push(text)
 }
 
+function getMessagePlaceholderTokens(message: Pick<MessageEditorMessage, "defaultMessage" | "placeholders">) {
+  return [...new Set([...message.placeholders, ...getRichTextPlaceholderTokens(message.defaultMessage)])]
+}
+
+function getRichTextPlaceholderTokens(value: string) {
+  return [...new Set([...value.matchAll(/<\/?\d+\/?>/g)].map((match) => match[0]))]
+}
+
 function formatPlaceholderLabel(placeholder: string) {
+  if (placeholder.startsWith("<")) return placeholder
   return placeholder
     .replace(/[_-]+/g, " ")
     .replace(/([a-z])([A-Z])/g, "$1 $2")

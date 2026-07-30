@@ -1,9 +1,9 @@
 ---
 title: Local mode
-description: The default, account-free mode. The plugin writes Locale files into your repo and can fill missing values during dev.
+description: The default, account-free mode. The plugin writes Runtime bundles into your repo and can fill missing values during dev.
 ---
 
-Local mode is the default and needs no account. The plugin writes Locale files into your repo
+Local mode is the default and needs no account. The plugin writes Runtime bundles into your repo
 and the runtime loads them. You commit the generated artifacts alongside your code.
 
 ## Generated artifacts
@@ -46,7 +46,7 @@ betterTranslation({
 
 When enabled, the editor is served during `vite dev` at `/__better-translation`. The plugin
 logs the URL when the dev server starts. The editor reads the private Manifest from
-`.cache/better-translation` and writes edits back to the flat Locale files under your local
+`.cache/better-translation` and writes edits back to the flat Runtime bundles under your local
 runtime output.
 
 You can customize the path or ask the plugin to open the editor automatically:
@@ -69,14 +69,14 @@ Set `editor: false` or omit `editor` to disable it. The editor only runs for loc
 mode during `vite dev`; production builds do not serve it.
 
 <Callout title="Local editor scope">
-  The local editor edits flat Locale files in your repo. It does not create Projects, Branches, hosted sync, auth, or source
+  The local editor edits flat Runtime bundles in your repo. It does not create Projects, Branches, hosted sync, auth, or source
   provenance. Existing values are treated as present local values, and missing values are the only special state.
 </Callout>
 
 ## Serve as static assets
 
-Prefer fetching Locale files as static assets instead of bundling them? Set the local runtime
-target to `public`. The plugin writes the files under your Vite public directory and the loader
+Prefer fetching Runtime bundles as static assets instead of bundling them? Set the local runtime
+target to `public`. The plugin writes the bundles under your Vite public directory and the loader
 fetches them at runtime.
 
 ```ts title="vite.config.ts"
@@ -108,22 +108,28 @@ betterTranslation({
     translate: createAiTranslate({
       prompt: "Friendly, concise product UI copy.",
     }),
+    translationBatchSize: 25,
   },
 })
 ```
 
 During dev the plugin batches missing Messages, calls `translate`, and writes the results into
-your Locale files and cache. Production local builds never call `translate`, they only check
-that committed files are complete.
+your local Runtime bundles and cache after every completed batch. `translationBatchSize` defaults to
+25 and is the single batching and persistence boundary. The built-in AI helper translates the
+Messages in that batch concurrently; a custom translator controls how it processes the batch.
+When `TranslateProvider` receives the active `locale`, each completed batch also updates matching
+React or Svelte content through Vite HMR without remounting application state.
+Production local builds never call `translate`, they only check that committed Runtime bundles
+are complete.
 
-| Option        | Description                                                        |
-| ------------- | ------------------------------------------------------------------ |
-| `model`       | AI SDK model value. Defaults to an AI Gateway model string.        |
-| `prompt`      | Translation brief for tone, glossary, and domain guidance.         |
-| `temperature` | Optional temperature forwarded to the model provider.              |
-| `concurrency` | Max number of per-message requests to run at once. Defaults to 10. |
+| AI helper option | Description                                                 |
+| ---------------- | ----------------------------------------------------------- |
+| `model`          | AI SDK model value. Defaults to an AI Gateway model string. |
+| `prompt`         | Translation brief for tone, glossary, and domain guidance.  |
+| `temperature`    | Optional temperature forwarded to the model provider.       |
 
 <Callout title="Write your own translator">
   `translate` is just a function that receives the missing Messages and a target Locale and returns a map of lookup id to
-  translated string. Use any provider you like, `createAiTranslate` is only a convenience.
+  translated string. Use any provider you like, `createAiTranslate` is only a convenience. Every returned value must preserve the
+  source placeholders and numbered rich-text tags; the plugin rejects an incompatible result before writing it.
 </Callout>

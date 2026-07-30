@@ -40,7 +40,7 @@ betterTranslation({
     },
     runtime: {
       type: "LocalRuntime | RemoteRuntime",
-      description: "Runtime backend. Defaults to local mode with module target.",
+      description: "Runtime bundle configuration. Defaults to local mode with module target.",
     },
   }}
 />
@@ -57,6 +57,7 @@ type LocalRuntime = {
   output?: string
   basePath?: string
   translate?: TranslateFn
+  translationBatchSize?: number
   editor?: boolean | LocalEditorOptions
 }
 ```
@@ -69,7 +70,7 @@ type LocalRuntime = {
     },
     target: {
       type: '"module" | "public"',
-      description: 'Writes Locale files for Vite module imports or public static fetches. Defaults to "module".',
+      description: 'Writes Runtime bundles for Vite module imports or public static fetches. Defaults to "module".',
     },
     output: {
       type: "string",
@@ -77,11 +78,15 @@ type LocalRuntime = {
     },
     basePath: {
       type: "string",
-      description: 'Public URL prefix used when target is "public". Defaults to "/bt".',
+      description: 'Public URL prefix used when target is "public". Inferred from output; "/bt" for the default output.',
     },
     translate: {
       type: "TranslateFn",
       description: "Optional local-mode function for filling missing non-default Locale values during dev.",
+    },
+    translationBatchSize: {
+      type: "number",
+      description: "Messages sent to translate before cache and Runtime bundles are persisted. Defaults to 25.",
     },
     editor: {
       type: "boolean | LocalEditorOptions",
@@ -89,6 +94,38 @@ type LocalRuntime = {
     },
   }}
 />
+
+`translationBatchSize` is available only when `translate` is provided. The plugin persists the
+translation cache and Runtime bundles after each completed batch.
+
+### Translation callback
+
+`TranslateFn` receives missing Messages for one Locale and returns any completed Locale values
+keyed by lookup id.
+
+```ts
+type TranslateFn = (
+  messages: Array<{
+    id: string
+    text: string
+    meta: {
+      id?: string
+      context?: string
+    }
+    placeholders: string[]
+    sources: Array<{
+      file: string
+      kind: "call" | "component"
+      marker: string
+    }>
+  }>,
+  locale: string,
+) => Promise<Record<string, string>>
+```
+
+The returned record may omit a Message when no value was produced. Every returned value must
+preserve the source placeholders and numbered rich-text tags. The plugin rejects incompatible
+results before adding them to the cache or Runtime bundle.
 
 ## Local editor
 
@@ -211,12 +248,12 @@ Import these from `better-translation/react`.
 <TypeTable
   type={{
     TranslateProvider: {
-      type: "(props: { messages: Record<string, string>; children: ReactNode }) => ReactNode",
-      description: "Provides loaded Locale values to translated React content.",
+      type: "(props: { locale?: string; messages: Record<string, string>; children: ReactNode }) => ReactNode",
+      description: "Provides loaded Locale values and applies local development HMR updates to translated React content.",
     },
     T: {
       type: "(props: { id?: string; context?: string; children?: ReactNode }) => ReactNode",
-      description: "Marks JSX children as a translatable Message and renders the active Locale value.",
+      description: "Marks JSX children as a translatable Message, including safe inline elements and source-owned components.",
     },
     Var: {
       type: "(props: { children?: ReactNode } & Record<string, ReactNode>) => ReactNode",
@@ -252,12 +289,12 @@ Import these from `better-translation/svelte`.
 <TypeTable
   type={{
     TranslateProvider: {
-      type: "(props: { messages: Record<string, string>; children?: Snippet }) => Component",
-      description: "Provides loaded Locale values to translated Svelte content.",
+      type: "(props: { locale?: string; messages: Record<string, string>; children?: Snippet }) => Component",
+      description: "Provides loaded Locale values and applies local development HMR updates to translated Svelte content.",
     },
     T: {
-      type: "(props: { id?: string; message?: string; values?: Record<string, unknown>; children?: Snippet }) => Component",
-      description: "Marks Svelte children as a translatable Message and renders the active Locale value.",
+      type: "(props: { id?: string; context?: string; children?: Snippet }) => Component",
+      description: "Marks Svelte children as a translatable Message, including safe inline elements and source-owned components.",
     },
     Var: {
       type: "Component<Record<string, unknown>>",
@@ -265,11 +302,12 @@ Import these from `better-translation/svelte`.
     },
     getT: {
       type: "() => (message: string, valuesOrOptions?, options?) => string",
-      description: "Returns a translator function for attributes, labels, titles, and other non-component positions.",
+      description:
+        "Called during component initialization; returns a translator for attributes, labels, and other non-component positions.",
     },
     getMessages: {
       type: "() => Record<string, string>",
-      description: "Returns the raw Locale value map from the current TranslateProvider.",
+      description: "Called during component initialization; returns the Runtime bundle from the current TranslateProvider.",
     },
   }}
 />
@@ -280,9 +318,25 @@ Import these from `better-translation/svelte`.
 </script>
 
 <T>
-  Hello <Var name={user.name} />
+  Hello <Var name="name" value={user.name} />
 </T>
 ```
+
+## Rich-text contract
+
+Rich text is part of `T`; it is not a separate package export. Put supported native inline
+elements or source-owned React and Svelte components directly inside the marker. The Vite
+plugin represents them as numbered tags in the Message, and each runtime renders translated
+children through the exact authored renderer while retaining its props and behavior.
+
+Consumer apps do not import a Message parser or structure validator, and they do not register
+tag callbacks. Those are private plugin/runtime details. A translated Locale value must retain
+the source variables, numbered tags, paired/self-closing form, and parent topology. When that
+contract is not met, `T` falls back to its authored source content rather than interpreting the
+value as HTML.
+
+The plugin injects private transform props needed by the runtime. They are not author-facing
+`T` options; Consumer apps should use only `id`, `context`, `children`, and `Var`.
 
 ## Runtime translator
 
@@ -320,6 +374,10 @@ your runtime config.
       type: "string",
       description: "Type alias for values accepted by loadMessages.",
     },
+    RuntimeMessages: {
+      type: "Record<string, string>",
+      description: "Flat Runtime bundle type, keyed by Lookup id.",
+    },
   }}
 />
 
@@ -341,10 +399,6 @@ Import `createAiTranslate` from `better-translation/ai`. Use it as local runtime
     temperature: {
       type: "number",
       description: "Optional temperature forwarded to the selected model provider.",
-    },
-    concurrency: {
-      type: "number",
-      description: "Maximum number of per-message translation requests to run at once. Defaults to 10.",
     },
   }}
 />

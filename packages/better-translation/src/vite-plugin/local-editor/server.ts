@@ -3,7 +3,9 @@ import { readFileSync } from "node:fs"
 import type { IncomingMessage, ServerResponse } from "node:http"
 import type { ViteDevServer } from "vite"
 
-import type { BetterTranslateRuntimeOptions, ManifestEntry, MessageManifest, RuntimeMessages } from "../types.js"
+import type { BetterTranslateRuntimeOptions, ManifestEntry, MessageManifest, RuntimeMessages } from "../../types.js"
+
+import { hasSameMessageStructure } from "../../message/template.js"
 
 export const DEFAULT_LOCAL_EDITOR_PATH = "/__better-translation"
 
@@ -228,7 +230,11 @@ function updateLocalEditorLocaleValue(
 ) {
   if (locale === context.defaultLocale) throw new Error("Default locale Messages come from source code.")
   if (!context.locales.includes(locale)) throw new Error("Unknown Locale.")
-  if (!context.manifest[lookupId]) throw new Error("Unknown Message.")
+  const message = context.manifest[lookupId]
+  if (!message) throw new Error("Unknown Message.")
+  if (!hasSameMessageStructure(message.defaultMessage, value)) {
+    throw new Error("Locale value must preserve the Message placeholders and rich-text elements.")
+  }
 
   const localeMessages = context.readLocaleMessages(locale)
   localeMessages[lookupId] = value
