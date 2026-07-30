@@ -65,7 +65,7 @@
     "test": "bun test && bun run test:types && bun run bench:performance:guard",
     "test:types": "bun --filter better-translation test:types",
     "check": "vp check",
-    "check:publish": "vp check packages/better-translation",
+    "check:publish": "bun run build:packages && vp check packages/better-translation",
     "version-packages": "changeset version && bun install",
     "release": "bun run build:packages && changeset publish"
   },
