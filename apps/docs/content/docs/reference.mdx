@@ -56,10 +56,17 @@ type LocalRuntime = {
   target?: "module" | "public"
   output?: string
   basePath?: string
-  translate?: TranslateFn
-  translationBatchSize?: number
   editor?: boolean | LocalEditorOptions
-}
+} & (
+  | {
+      translate: TranslateFn
+      translationBatchSize?: number
+    }
+  | {
+      translate?: undefined
+      translationBatchSize?: never
+    }
+)
 ```
 
 <TypeTable
@@ -86,7 +93,8 @@ type LocalRuntime = {
     },
     translationBatchSize: {
       type: "number",
-      description: "Messages sent to translate before cache and Runtime bundles are persisted. Defaults to 25.",
+      description:
+        "Messages sent to translate before cache and Runtime bundles are persisted. Defaults to 25. Only valid when translate is provided.",
     },
     editor: {
       type: "boolean | LocalEditorOptions",

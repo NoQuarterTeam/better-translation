@@ -105,10 +105,10 @@ betterTranslation({
   defaultLocale: "en",
   runtime: {
     type: "local",
+    translationBatchSize: 25,
     translate: createAiTranslate({
       prompt: "Friendly, concise product UI copy.",
     }),
-    translationBatchSize: 25,
   },
 })
 ```
@@ -133,3 +133,24 @@ are complete.
   translated string. Use any provider you like, `createAiTranslate` is only a convenience. Every returned value must preserve the
   source placeholders and numbered rich-text tags; the plugin rejects an incompatible result before writing it.
 </Callout>
+
+## Generate without a dev server
+
+Run the same local generation step from the command line when you need Locale files updated
+without starting Vite dev:
+
+```bash
+bt generate
+```
+
+The package also exposes the longer binary name:
+
+```bash
+better-translation generate
+```
+
+The command loads your Vite config, finds `betterTranslation()`, scans source files, writes the
+private Manifest and local Runtime bundles, and calls `runtime.translate` for missing
+non-default Locale values when local translation is configured. This is useful in agent or CI
+workflows that change marked copy and need generated artifacts refreshed before running a
+production build check.

@@ -191,10 +191,10 @@ betterTranslation({
   defaultLocale: "en",
   runtime: {
     type: "local",
+    translationBatchSize: 25,
     translate: createAiTranslate({
       prompt: "Use concise product UI copy.",
     }),
-    translationBatchSize: 25,
   },
 })
 ```

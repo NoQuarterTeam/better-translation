@@ -1,5 +1,35 @@
 # better-translation
 
+## 0.5.0
+
+### Minor Changes
+
+- [`969a2cd`](https://github.com/NoQuarterTeam/better-translation/commit/969a2cd3413a940627387fbc53daea7ca7d8f665) Thanks [@JClackett](https://github.com/JClackett)! - Add `bt generate` and `better-translation generate` to regenerate local Runtime bundles without starting Vite dev.
+
+## 0.4.6
+
+### Patch Changes
+
+- [`9cabf90`](https://github.com/NoQuarterTeam/better-translation/commit/9cabf904f86c21c54546aaf905bac87a021b1be1) Thanks [@JClackett](https://github.com/JClackett)! - Allow static string expression children inside React `<T>` markers.
+
+## 0.4.5
+
+### Patch Changes
+
+- [`9ff8126`](https://github.com/NoQuarterTeam/better-translation/commit/9ff81261b631cf6ff2e2ac7b512efa376e53979c) Thanks [@JClackett](https://github.com/JClackett)! - Expose local runtime `translationBatchSize` so apps can choose how many missing messages are translated before progress is persisted.
+
+## 0.4.4
+
+### Patch Changes
+
+- [`a04ba63`](https://github.com/NoQuarterTeam/better-translation/commit/a04ba637f3d3f21056d972824d0c4bc6984909fb) Thanks [@JClackett](https://github.com/JClackett)! - Persist local translation progress after each batch so large locale regenerations can resume instead of waiting for every missing message to finish.
+
+## 0.4.3
+
+### Patch Changes
+
+- [`79e5d61`](https://github.com/NoQuarterTeam/better-translation/commit/79e5d61d2cda9ce4379c28224a85232f19834711) Thanks [@JClackett](https://github.com/JClackett)! - Inject React `<T>` message and values props so `<Var>` interpolation works reliably with translated Locale values.
+
 ## 0.4.2
 
 ### Patch Changes
