@@ -94,6 +94,9 @@ The public Runtime bundle stays flat even when a value falls back to the Default
 Local mode means the plugin writes Locale values into the Consumer app and the runtime loader reads those generated local files.
 
 This is the working mode today. In local production builds, generated artifacts are check-only: the build should fail if committed local artifacts are missing, stale, incomplete, or contain orphaned ids.
+Committed non-default Locale values are authoritative, including values that intentionally match the Default locale message.
+The ignored translation cache can accelerate and coordinate generation during development, but production checks must not require
+that private cache to prove whether a committed value is translated.
 
 Local runtime options should keep the current shape:
 

@@ -323,20 +323,9 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
         const value = localeMessages[id]
         return value !== undefined && !hasSameMessageStructure(manifestState.manifest[id]!.defaultMessage, value)
       })
-      const untranslatedFallbackIds = [...expectedIds].filter((id) => {
-        const value = localeMessages[id]
-        return (
-          value !== undefined &&
-          isUntranslatedLocaleValue(value, manifestState.manifest[id]!) &&
-          getFreshCachedMessage(id, locale) !== value
-        )
-      })
       if (missingIds.length > 0) issues.push(formatLocaleIssue(locale, "missing", missingIds))
       if (orphanIds.length > 0) issues.push(formatLocaleIssue(locale, "orphaned", orphanIds))
       if (invalidIds.length > 0) issues.push(formatLocaleIssue(locale, "invalid placeholders or rich-text elements", invalidIds))
-      if (untranslatedFallbackIds.length > 0) {
-        issues.push(formatLocaleIssue(locale, "untranslated fallback", untranslatedFallbackIds))
-      }
     }
 
     if (issues.length === 0) return

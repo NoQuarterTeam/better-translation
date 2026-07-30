@@ -141,7 +141,9 @@ interface BetterTranslateLocalRuntimeBaseOptions {
  * During development the Vite plugin maintains flat Runtime bundles and can
  * fill missing values through {@link TranslateFn}. Local production builds are
  * check-only and fail when committed artifacts are stale, incomplete, invalid,
- * or contain Lookup ids that are absent from the current Manifest.
+ * or contain Lookup ids that are absent from the current Manifest. A committed
+ * Locale value may intentionally equal its Default locale message; production
+ * checks never require the private translation cache to prove that value.
  */
 export type BetterTranslateLocalRuntimeOptions =
   | (BetterTranslateLocalRuntimeBaseOptions & {

@@ -255,59 +255,12 @@ describe("plugin state regressions", () => {
     expect(readFileSync(localePath, "utf8")).toBe(input)
   })
 
-  test("rejects an unresolved generated fallback in a local production build", async () => {
+  test("accepts a committed translation that intentionally matches the source without a private cache", async () => {
     const root = createPluginRoot()
     mkdirSync(join(root, "translations/locales"), { recursive: true })
     writeFileSync(join(root, "src/message.tsx"), `<T id="stable">Hello</T>`)
     writeFileSync(join(root, "translations/locales/en.json"), JSON.stringify({ stable: "Hello" }))
     writeFileSync(join(root, "translations/locales/fr.json"), JSON.stringify({ stable: "Hello" }))
-    const hooks = resolvePlugin(
-      betterTranslation({
-        locales: ["en", "fr"],
-        logging: false,
-        runtime: {
-          type: "local",
-          output: "translations",
-          translate: async () => ({}),
-        },
-      }),
-      root,
-      "build",
-    )
-    let buildError: unknown
-
-    try {
-      await hooks.buildStart()
-    } catch (error) {
-      buildError = error
-    }
-
-    expect(buildError).toBeInstanceOf(Error)
-    expect((buildError as Error).message).toContain("untranslated fallback")
-  })
-
-  test("accepts an identical translated value proven by a fresh cache entry", async () => {
-    const root = createPluginRoot()
-    mkdirSync(join(root, "translations/locales"), { recursive: true })
-    mkdirSync(join(root, ".cache/better-translation"), { recursive: true })
-    writeFileSync(join(root, "src/message.tsx"), `<T id="stable">Hello</T>`)
-    writeFileSync(join(root, "translations/locales/en.json"), JSON.stringify({ stable: "Hello" }))
-    writeFileSync(join(root, "translations/locales/fr.json"), JSON.stringify({ stable: "Hello" }))
-    writeFileSync(
-      join(root, ".cache/better-translation/cache.json"),
-      JSON.stringify({
-        entries: {
-          "stable\u0000fr": {
-            locale: "fr",
-            meta: {},
-            sourceText: "Hello",
-            timestamp: 1,
-            translation: "Hello",
-          },
-        },
-        version: 1,
-      }),
-    )
     const hooks = resolvePlugin(
       betterTranslation({
         locales: ["en", "fr"],
