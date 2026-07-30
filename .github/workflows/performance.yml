@@ -30,12 +30,12 @@ jobs:
         with:
           path: current
 
-      - name: Check out pull request base
-        if: ${{ github.event_name == 'pull_request' }}
+      - name: Check out base revision
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         uses: actions/checkout@v7
         with:
           path: baseline
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -46,7 +46,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Install baseline dependencies
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         working-directory: baseline
         run: bun install --frozen-lockfile
 
@@ -54,13 +54,13 @@ jobs:
         working-directory: current
         run: bun run bench:performance:json > ../performance-current.json
 
-      - name: Benchmark pull request base
-        if: ${{ github.event_name == 'pull_request' }}
+      - name: Benchmark base revision
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         working-directory: baseline
         run: bun run bench:performance:json > ../performance-base.json
 
-      - name: Compare pull request performance
-        if: ${{ github.event_name == 'pull_request' }}
+      - name: Compare performance
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         working-directory: current
         run: |
           set -o pipefail
@@ -75,6 +75,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: compiler-performance-${{ github.sha }}
+          retention-days: 90
           path: |
             performance-base.json
             performance-current.json

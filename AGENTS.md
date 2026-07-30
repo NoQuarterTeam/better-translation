@@ -48,7 +48,9 @@ The long-term goal is a hosted service where Projects sync extracted Messages to
 - Before substantial compiler or Vite-plugin feature work, capture `bun run bench:performance:json` from the merge-base.
   Capture it again after the change, then run
   `bun run bench:performance:compare -- --base base.json --current current.json`. Report the p50 deltas and investigate
-  any enforced regression before handing work off.
+  any enforced regression before handing work off. The Performance workflow repeats this comparison for pull requests
+  and direct pushes to `main`, publishes it in the run summary, and retains the base/current reports as artifacts for 90
+  days.
 - When changing local artifact behavior, verify both dev regeneration and production build checks.
 - When adding hosted behavior, keep local bundle-first behavior working until the replacement path is implemented end to end.
 
