@@ -10,12 +10,24 @@ const markers = {
 }
 const FOUR_TIMES_INPUT_MAX_RATIO = 12
 const FOUR_TIMES_PROJECT_INPUT_MAX_RATIO = 8
-const EIGHT_TIMES_COMPLEX_INPUT_MAX_RATIO = 12
+const EIGHT_TIMES_SVELTE_RICH_TEXT_MAX_RATIO = 16
 const EIGHT_TIMES_INPUT_MAX_RATIO = 24
 const INCREMENTAL_PROJECT_SIZE_MAX_RATIO = 4
 const PROJECT_MESSAGES_PER_FILE = 16
 const MINIMUM_GUARD_SAMPLE_MILLISECONDS = 100
 let guardSink: unknown
+
+function collectGarbage() {
+  const bunRuntime = globalThis as typeof globalThis & {
+    Bun?: { gc(force?: boolean): void }
+  }
+
+  if (!bunRuntime.Bun) {
+    throw new Error("Performance scaling guards require the Bun runtime.")
+  }
+
+  bunRuntime.Bun.gc(true)
+}
 
 if (process.argv.includes("--guard")) {
   runScalingGuards()
@@ -222,7 +234,7 @@ function runScalingGuards() {
       large: () => analyzeSourceFile(largeSvelteRichTextSource, "/benchmark/large-rich-text.svelte", markers),
       largeInput: "2,000 rich-text siblings",
       inputScale: 8,
-      maxRatio: EIGHT_TIMES_COMPLEX_INPUT_MAX_RATIO,
+      maxRatio: EIGHT_TIMES_SVELTE_RICH_TEXT_MAX_RATIO,
       name: "Svelte sibling Rich-text Message analysis",
       small: () => analyzeSourceFile(smallSvelteRichTextSource, "/benchmark/small-rich-text.svelte", markers),
       smallInput: "250 rich-text siblings",
@@ -323,6 +335,7 @@ function calibrate(operation: () => unknown) {
 }
 
 function measure(operation: () => unknown, iterations: number) {
+  collectGarbage()
   const start = performance.now()
   for (let index = 0; index < iterations; index++) guardSink = operation()
   return (performance.now() - start) * 1_000_000

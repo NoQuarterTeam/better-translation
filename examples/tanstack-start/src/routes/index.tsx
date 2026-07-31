@@ -42,7 +42,9 @@ function HomePage() {
       </p>
 
       <p>
-        <T>And more things</T>
+        <T>
+          And more <strong>things</strong>
+        </T>
       </p>
     </div>
   )

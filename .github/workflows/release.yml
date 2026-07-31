@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+    paths:
+      - ".changeset/**"
+      - ".github/workflows/release.yml"
+      - "packages/better-translation/**"
+      - "packages/locale-editor/**"
+      - "packages/ui/**"
 
 concurrency:
   group: release-${{ github.ref }}
@@ -29,6 +35,8 @@ jobs:
           filters: |
             package:
               - 'packages/better-translation/**'
+              - 'packages/locale-editor/**'
+              - 'packages/ui/**'
 
   canary:
     needs: changes

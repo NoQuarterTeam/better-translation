@@ -1,5 +1,37 @@
 # better-translation
 
+## 0.6.5
+
+### Patch Changes
+
+- [`9c3ea16`](https://github.com/NoQuarterTeam/better-translation/commit/9c3ea16d1d65c2280fe87e98cd6186639eeaec8b) Thanks [@JClackett](https://github.com/JClackett)! - Show rich-text Message previews without editor annotations
+
+- [`0f328eb`](https://github.com/NoQuarterTeam/better-translation/commit/0f328ebeae0b6d5b641fa518f3b225e6a3d258c8) Thanks [@JClackett](https://github.com/JClackett)! - Distinguish Variable placeholders from Rich-text slots across the editor, diagnostics, and documentation.
+
+## 0.6.4
+
+### Patch Changes
+
+- [`342e824`](https://github.com/NoQuarterTeam/better-translation/commit/342e824cf5d4a856d875ed7b3730b21597ecfbd7) Thanks [@JClackett](https://github.com/JClackett)! - Use www.better-translation.dev as the default hosted platform URL.
+
+## 0.6.3
+
+### Patch Changes
+
+- [`6bcebe9`](https://github.com/NoQuarterTeam/better-translation/commit/6bcebe978da871fae471b3f7adfde3865dbca3db) Thanks [@JClackett](https://github.com/JClackett)! - Improve rich-text Message previews in the locale editor
+
+## 0.6.2
+
+### Patch Changes
+
+- [#358](https://github.com/NoQuarterTeam/better-translation/pull/358) [`0f0601b`](https://github.com/NoQuarterTeam/better-translation/commit/0f0601b942401b9260e55590abaa267d627bdf96) Thanks [@JClackett](https://github.com/JClackett)! - Fix the published npm manifest so the AI SDK dependency uses a registry-compatible version.
+
+## 0.6.1
+
+### Patch Changes
+
+- [`88496f8`](https://github.com/NoQuarterTeam/better-translation/commit/88496f82e50974dbcde97bed6bf8ebd46085007e) Thanks [@JClackett](https://github.com/JClackett)! - Support TypeScript 7 tooling while preserving TypeScript 6 API compatibility.
+
 ## 0.6.0
 
 ### Minor Changes

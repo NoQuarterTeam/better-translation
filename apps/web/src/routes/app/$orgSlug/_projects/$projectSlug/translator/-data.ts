@@ -26,7 +26,7 @@ export const getProjectTranslatorFn = createServerFn({ method: "GET" })
 
 export const updateProjectTranslatorFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       z.object({
         translationPrompt: z.string().trim().min(1).max(4000),
@@ -49,7 +49,7 @@ export const updateProjectTranslatorFn = createServerFn({ method: "POST" })
 
 export const createTranslationGlossaryTermFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(glossaryTermInputSchema))
+  .validator(parseZod(glossaryTermInputSchema))
   .handler(async ({ context, data }) => {
     const [term] = await db
       .insert(translationGlossaryTermsTable)
@@ -70,7 +70,7 @@ export const createTranslationGlossaryTermFn = createServerFn({ method: "POST" }
 
 export const updateTranslationGlossaryTermFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(glossaryTermUpdateInputSchema))
+  .validator(parseZod(glossaryTermUpdateInputSchema))
   .handler(async ({ context, data }) => {
     const [term] = await db
       .update(translationGlossaryTermsTable)
@@ -94,7 +94,7 @@ export const updateTranslationGlossaryTermFn = createServerFn({ method: "POST" }
 
 export const setTranslationGlossaryTermEnabledFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(glossaryTermIdSchema.extend({ enabled: z.boolean() })))
+  .validator(parseZod(glossaryTermIdSchema.extend({ enabled: z.boolean() })))
   .handler(async ({ context, data }) => {
     const [term] = await db
       .update(translationGlossaryTermsTable)
@@ -110,7 +110,7 @@ export const setTranslationGlossaryTermEnabledFn = createServerFn({ method: "POS
 
 export const deleteTranslationGlossaryTermFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(glossaryTermIdSchema))
+  .validator(parseZod(glossaryTermIdSchema))
   .handler(async ({ context, data }) => {
     const [term] = await db
       .delete(translationGlossaryTermsTable)

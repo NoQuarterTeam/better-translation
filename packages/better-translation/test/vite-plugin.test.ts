@@ -6,13 +6,16 @@ import { pathToFileURL } from "node:url"
 import type { ResolvedConfig } from "vite"
 
 import { createEmptyCache, loadCache } from "../src/vite-plugin/cache.js"
-import { betterTranslation } from "../src/vite-plugin/index.js"
+import { betterTranslation, getBetterTranslationPluginApi } from "../src/vite-plugin/index.js"
 import { ManifestState } from "../src/vite-plugin/manifest-state.js"
 import { analyzeSourceFile } from "../src/vite-plugin/source-analysis/index.js"
 
 const testDirectories: string[] = []
+let restoreLifecycleTimers: (() => void) | undefined
 
 afterEach(() => {
+  restoreLifecycleTimers?.()
+  restoreLifecycleTimers = undefined
   for (const root of testDirectories.splice(0)) {
     if (existsSync(root)) rmSync(root, { recursive: true })
   }
@@ -25,7 +28,12 @@ function createPluginRoot() {
   return root
 }
 
-function resolvePlugin(plugin: ReturnType<typeof betterTranslation>, root: string, command: "build" | "serve" = "serve") {
+function resolvePlugin(
+  plugin: ReturnType<typeof betterTranslation>,
+  root: string,
+  command: "build" | "serve" = "serve",
+  publicDir = join(root, "public"),
+) {
   const hooks = plugin as unknown as {
     buildStart: () => void | Promise<void>
     closeBundle: () => void | Promise<void>
@@ -39,7 +47,7 @@ function resolvePlugin(plugin: ReturnType<typeof betterTranslation>, root: strin
   }
   hooks.configResolved({
     command,
-    publicDir: join(root, "public"),
+    publicDir,
     root,
   } as ResolvedConfig)
   return hooks
@@ -59,6 +67,50 @@ function configureWatcher(hooks: ReturnType<typeof resolvePlugin>, onHotUpdate: 
     ws: { send: onHotUpdate },
   })
   return handlers
+}
+
+function getVirtualMessagesModule(hooks: ReturnType<typeof resolvePlugin>) {
+  const id = hooks.resolveId("better-translation/messages")
+  const moduleCode = id ? hooks.load(id) : undefined
+  if (!moduleCode) throw new Error("Expected the plugin to load better-translation/messages")
+  return moduleCode
+}
+
+function accelerateLifecycleTimers() {
+  const nativeSetTimeout = globalThis.setTimeout
+  const fastSetTimeout = ((callback: (...args: unknown[]) => void, delay?: number, ...args: unknown[]) =>
+    nativeSetTimeout(callback, delay === 1_000 ? 0 : delay, ...args)) as typeof setTimeout
+  const setTimeoutMock = spyOn(globalThis, "setTimeout").mockImplementation(fastSetTimeout)
+  restoreLifecycleTimers = () => setTimeoutMock.mockRestore()
+}
+
+async function waitFor(assertion: () => void) {
+  const deadline = performance.now() + 1_000
+  let failure: unknown
+  while (performance.now() < deadline) {
+    try {
+      assertion()
+      return
+    } catch (error) {
+      failure = error
+      await Bun.sleep(5)
+    }
+  }
+  throw failure
+}
+
+async function expectRejection(operation: () => unknown, expectedMessage: string) {
+  let rejection: unknown
+  try {
+    await Promise.resolve(operation())
+  } catch (error) {
+    rejection = error
+  }
+
+  if (!(rejection instanceof Error)) {
+    throw new Error(`Expected operation to reject with: ${expectedMessage}`)
+  }
+  expect(rejection.message).toContain(expectedMessage)
 }
 
 describe("plugin state regressions", () => {
@@ -278,6 +330,166 @@ describe("plugin state regressions", () => {
     expect(await hooks.buildStart()).toBeUndefined()
   })
 
+  test("rejects a local production build when a committed Runtime bundle is missing", async () => {
+    const root = createPluginRoot()
+    mkdirSync(join(root, "translations/locales"), { recursive: true })
+    writeFileSync(join(root, "src/message.tsx"), `<T id="stable">Hello</T>`)
+    writeFileSync(join(root, "translations/locales/en.json"), JSON.stringify({ stable: "Hello" }))
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: { type: "local", output: "translations" },
+      }),
+      root,
+      "build",
+    )
+
+    await expectRejection(() => hooks.buildStart(), "fr: missing file at translations/locales/fr.json")
+  })
+
+  test("rejects a local production build when a Runtime bundle is missing a lookup id", async () => {
+    const root = createPluginRoot()
+    mkdirSync(join(root, "translations/locales"), { recursive: true })
+    writeFileSync(join(root, "src/message.tsx"), `<T id="stable">Hello</T>`)
+    writeFileSync(join(root, "translations/locales/en.json"), JSON.stringify({ stable: "Hello" }))
+    writeFileSync(join(root, "translations/locales/fr.json"), JSON.stringify({}))
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: { type: "local", output: "translations" },
+      }),
+      root,
+      "build",
+    )
+
+    await expectRejection(() => hooks.buildStart(), 'fr: missing ("stable")')
+  })
+
+  test("rejects a local production build when a Runtime bundle contains an orphaned lookup id", async () => {
+    const root = createPluginRoot()
+    mkdirSync(join(root, "translations/locales"), { recursive: true })
+    writeFileSync(join(root, "src/message.tsx"), `<T id="stable">Hello</T>`)
+    writeFileSync(join(root, "translations/locales/en.json"), JSON.stringify({ stable: "Hello" }))
+    writeFileSync(join(root, "translations/locales/fr.json"), JSON.stringify({ orphaned: "Ancien", stable: "Bonjour" }))
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: { type: "local", output: "translations" },
+      }),
+      root,
+      "build",
+    )
+
+    await expectRejection(() => hooks.buildStart(), 'fr: orphaned ("orphaned")')
+  })
+
+  test("rejects a local production build when the Default locale Runtime bundle is stale", async () => {
+    const root = createPluginRoot()
+    mkdirSync(join(root, "translations/locales"), { recursive: true })
+    writeFileSync(join(root, "src/message.tsx"), `<T id="stable">Current</T>`)
+    writeFileSync(join(root, "translations/locales/en.json"), JSON.stringify({ stable: "Previous" }))
+    writeFileSync(join(root, "translations/locales/fr.json"), JSON.stringify({ stable: "Actuel" }))
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: { type: "local", output: "translations" },
+      }),
+      root,
+      "build",
+    )
+
+    await expectRejection(() => hooks.buildStart(), 'en: outdated default messages ("stable")')
+  })
+
+  test("rejects a local production build when a Locale value changes the Message structure", async () => {
+    const root = createPluginRoot()
+    mkdirSync(join(root, "translations/locales"), { recursive: true })
+    writeFileSync(join(root, "src/message.tsx"), `<T id="stable">Hello <strong>friend</strong></T>`)
+    writeFileSync(join(root, "translations/locales/en.json"), JSON.stringify({ stable: "Hello <0>friend</0>" }))
+    writeFileSync(join(root, "translations/locales/fr.json"), JSON.stringify({ stable: "Bonjour" }))
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: { type: "local", output: "translations" },
+      }),
+      root,
+      "build",
+    )
+
+    await expectRejection(() => hooks.buildStart(), 'fr: invalid Variable placeholders or Rich-text slots ("stable")')
+  })
+
+  test("keeps local production builds check-only when a translator is configured", async () => {
+    const root = createPluginRoot()
+    const localesDir = join(root, "translations/locales")
+    mkdirSync(localesDir, { recursive: true })
+    writeFileSync(join(root, "src/message.tsx"), `<T id="stable">Hello</T>`)
+    const defaultRuntimeBundle = `${JSON.stringify({ stable: "Hello" }, null, 2)}\n`
+    const frenchRuntimeBundle = `${JSON.stringify({ stable: "Bonjour" }, null, 2)}\n`
+    writeFileSync(join(localesDir, "en.json"), defaultRuntimeBundle)
+    writeFileSync(join(localesDir, "fr.json"), frenchRuntimeBundle)
+    let translated = false
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: {
+          type: "local",
+          output: "translations",
+          translate: async () => {
+            translated = true
+            return {}
+          },
+        },
+      }),
+      root,
+      "build",
+    )
+
+    await hooks.buildStart()
+
+    expect(translated).toBe(false)
+    expect(readFileSync(join(localesDir, "en.json"), "utf8")).toBe(defaultRuntimeBundle)
+    expect(readFileSync(join(localesDir, "fr.json"), "utf8")).toBe(frenchRuntimeBundle)
+  })
+
+  test("generates complete local artifacts immediately through the plugin lifecycle API", async () => {
+    const root = createPluginRoot()
+    writeFileSync(join(root, "src/message.tsx"), `<T id="greeting">Hello</T>`)
+    const plugin = betterTranslation({
+      locales: ["en", "fr"],
+      logging: false,
+      runtime: {
+        type: "local",
+        translate: async (messages, locale) => {
+          expect(locale).toBe("fr")
+          return Object.fromEntries(messages.map(({ id, text }) => [id, `FR ${text}`]))
+        },
+      },
+    })
+    resolvePlugin(plugin, root)
+    const api = getBetterTranslationPluginApi(plugin)
+    if (!api) throw new Error("Expected the Better Translation plugin lifecycle API")
+
+    await api.generate()
+
+    expect(JSON.parse(readFileSync(join(root, "src/lib/bt/locales/en.json"), "utf8"))).toEqual({ greeting: "Hello" })
+    expect(JSON.parse(readFileSync(join(root, "src/lib/bt/locales/fr.json"), "utf8"))).toEqual({ greeting: "FR Hello" })
+    expect(JSON.parse(readFileSync(join(root, ".cache/better-translation/manifest.json"), "utf8"))).toEqual({
+      greeting: {
+        defaultMessage: "Hello",
+        meta: {},
+        placeholders: [],
+        sources: [{ file: "src/message.tsx", kind: "component", marker: "T" }],
+      },
+    })
+  })
+
   test("aggregates large shared-message source sets without duplicate contributions or mutable snapshots", () => {
     const state = new ManifestState("/repo", false)
     for (let index = 0; index < 2_000; index++) {
@@ -413,6 +625,7 @@ describe("plugin state regressions", () => {
   })
 
   test("translates and persists missing Messages in plugin-sized batches", async () => {
+    accelerateLifecycleTimers()
     const root = createPluginRoot()
     writeFileSync(
       join(root, "src/messages.tsx"),
@@ -436,7 +649,7 @@ describe("plugin state regressions", () => {
     )
 
     await hooks.buildStart()
-    await Bun.sleep(1_100)
+    await waitFor(() => expect(batches).toHaveLength(3))
 
     expect(batches).toEqual([["message-0", "message-1"], ["message-2", "message-3"], ["message-4"]])
     expect(JSON.parse(readFileSync(join(root, "src/lib/bt/locales/fr.json"), "utf8"))).toEqual({
@@ -449,6 +662,7 @@ describe("plugin state regressions", () => {
   })
 
   test("notifies dev clients after each translated Locale batch is persisted", async () => {
+    accelerateLifecycleTimers()
     const root = createPluginRoot()
     writeFileSync(join(root, "src/messages.tsx"), `<><T id="first">First</T><T id="second">Second</T><T id="third">Third</T></>`)
     const updates: Array<{ persisted: Record<string, string>; update: unknown }> = []
@@ -472,7 +686,7 @@ describe("plugin state regressions", () => {
     })
 
     await hooks.buildStart()
-    await Bun.sleep(1_100)
+    await waitFor(() => expect(updates).toHaveLength(2))
 
     expect(updates).toEqual([
       {
@@ -516,9 +730,7 @@ describe("plugin state regressions", () => {
   test("bridges translated Locale updates from Vite into the browser runtime", async () => {
     const root = createPluginRoot()
     const hooks = resolvePlugin(betterTranslation({ locales: ["en", "fr"], logging: false }), root)
-    const id = hooks.resolveId("better-translation/messages")
-    const moduleCode = id ? hooks.load(id) : undefined
-    expect(moduleCode).toBeDefined()
+    const moduleCode = getVirtualMessagesModule(hooks)
 
     let receiveUpdate!: (update: unknown) => void
     const dispatched: Array<{ detail: unknown; type: string }> = []
@@ -537,7 +749,7 @@ describe("plugin state regressions", () => {
         dispatchEvent: (event: { detail: unknown; type: string }) => void
       }
     }
-    const executableCode = moduleCode!
+    const executableCode = moduleCode
       .replaceAll("import.meta.hot", "globalThis.__betterTranslationHot")
       .replaceAll("typeof window", "typeof globalThis.__betterTranslationWindow")
       .replaceAll("window.dispatchEvent", "globalThis.__betterTranslationWindow.dispatchEvent")
@@ -586,6 +798,7 @@ describe("plugin state regressions", () => {
   })
 
   test("reports a dev translation failure without leaking an unhandled rejection", async () => {
+    accelerateLifecycleTimers()
     const root = createPluginRoot()
     writeFileSync(join(root, "src/message.tsx"), `<T id="greeting">Hello</T>`)
     const errors = spyOn(console, "error").mockImplementation(() => {})
@@ -607,7 +820,7 @@ describe("plugin state regressions", () => {
 
     try {
       await hooks.buildStart()
-      await Bun.sleep(1_100)
+      await waitFor(() => expect(errors).toHaveBeenCalledWith(expect.stringContaining("translator unavailable")))
       expect(errors).toHaveBeenCalledWith(expect.stringContaining("translator unavailable"))
       expect(hotUpdates).toEqual([])
     } finally {
@@ -616,8 +829,570 @@ describe("plugin state regressions", () => {
   })
 })
 
+describe("plugin-generated Runtime bundle loaders", () => {
+  test("generates a production module loader for every configured Locale", () => {
+    const root = createPluginRoot()
+    const hooks = resolvePlugin(betterTranslation({ locales: ["en", "fr"], logging: false }), root, "build")
+
+    expect(getVirtualMessagesModule(hooks)).toBe(`export const locales = ["en","fr"]
+
+export async function loadMessages(locale) {
+  switch (locale) {
+    case "en":
+      return (await import("/src/lib/bt/locales/en.json")).default
+    case "fr":
+      return (await import("/src/lib/bt/locales/fr.json")).default
+    default:
+      throw new Error(\`Unknown locale: \${locale}\`)
+  }
+}
+`)
+  })
+
+  test("rejects the public target when Vite publicDir is disabled", () => {
+    const root = createPluginRoot()
+
+    expect(() =>
+      resolvePlugin(
+        betterTranslation({
+          locales: ["en"],
+          logging: false,
+          runtime: { type: "local", target: "public" },
+        }),
+        root,
+        "serve",
+        "",
+      ),
+    ).toThrow('runtime target "public" requires Vite publicDir to be enabled')
+  })
+
+  test("requires an explicit public base path when output is outside Vite publicDir", () => {
+    const root = createPluginRoot()
+
+    expect(() =>
+      resolvePlugin(
+        betterTranslation({
+          locales: ["en"],
+          logging: false,
+          runtime: { output: "translations", target: "public", type: "local" },
+        }),
+        root,
+      ),
+    ).toThrow('runtime target "public" output must be inside Vite publicDir unless basePath is provided')
+  })
+
+  test("uses an explicit base path for a custom public Runtime bundle output", () => {
+    const root = createPluginRoot()
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en"],
+        logging: false,
+        runtime: {
+          basePath: "/assets/messages/",
+          output: "translations",
+          target: "public",
+          type: "local",
+        },
+      }),
+      root,
+      "build",
+    )
+
+    expect(getVirtualMessagesModule(hooks)).toContain(
+      "const response = await fetch(`/assets/messages/locales/${encodeURIComponent(locale)}.json`)",
+    )
+  })
+
+  test("loads public Runtime bundles from the inferred Vite public path", async () => {
+    const root = createPluginRoot()
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: { type: "local", target: "public" },
+      }),
+      root,
+    )
+    const modulePath = join(root, "public-loader.mjs")
+    writeFileSync(modulePath, getVirtualMessagesModule(hooks))
+    const originalFetch = globalThis.fetch
+    const requests: Array<string | URL | Request> = []
+    globalThis.fetch = (async (input) => {
+      requests.push(input)
+      return Response.json({ greeting: "Bonjour" })
+    }) as typeof fetch
+
+    try {
+      const runtime = (await import(pathToFileURL(modulePath).href)) as {
+        loadMessages: (locale: string) => Promise<Record<string, string>>
+      }
+
+      expect(await runtime.loadMessages("fr")).toEqual({ greeting: "Bonjour" })
+      expect(requests).toEqual(["/bt/locales/fr.json"])
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test("rejects an unknown Locale before requesting a public Runtime bundle", async () => {
+    const root = createPluginRoot()
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: { type: "local", target: "public" },
+      }),
+      root,
+    )
+    const modulePath = join(root, "public-unknown-locale-loader.mjs")
+    writeFileSync(modulePath, getVirtualMessagesModule(hooks))
+    const originalFetch = globalThis.fetch
+    let requested = false
+    globalThis.fetch = (async (_input, _init) => {
+      requested = true
+      return Response.json({})
+    }) as typeof fetch
+
+    try {
+      const runtime = (await import(pathToFileURL(modulePath).href)) as {
+        loadMessages: (locale: string) => Promise<Record<string, string>>
+      }
+
+      await expectRejection(() => runtime.loadMessages("de"), "Unknown locale: de")
+      expect(requested).toBe(false)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test("rejects a failed public Runtime bundle response", async () => {
+    const root = createPluginRoot()
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: { type: "local", target: "public" },
+      }),
+      root,
+    )
+    const modulePath = join(root, "public-failed-response-loader.mjs")
+    writeFileSync(modulePath, getVirtualMessagesModule(hooks))
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async (_input, _init) => new Response(null, { status: 503 })) as typeof fetch
+
+    try {
+      const runtime = (await import(pathToFileURL(modulePath).href)) as {
+        loadMessages: (locale: string) => Promise<Record<string, string>>
+      }
+
+      await expectRejection(() => runtime.loadMessages("fr"), "Failed to load locale: fr")
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test("loads a branch-addressed remote Runtime bundle without exposing the Project API key", async () => {
+    const root = createPluginRoot()
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: {
+          apiKey: "project-secret",
+          branch: "feature/copy",
+          endpoint: "https://platform.example/",
+          projectId: "project id",
+          type: "remote",
+        },
+      }),
+      root,
+      "build",
+    )
+    const moduleCode = getVirtualMessagesModule(hooks)
+    expect(moduleCode).not.toContain("project-secret")
+    const modulePath = join(root, "remote-loader.mjs")
+    writeFileSync(modulePath, moduleCode)
+    const originalFetch = globalThis.fetch
+    const requests: Array<string | URL | Request> = []
+    globalThis.fetch = (async (input) => {
+      requests.push(input)
+      return Response.json({ greeting: "Bonjour" })
+    }) as typeof fetch
+
+    try {
+      const runtime = (await import(pathToFileURL(modulePath).href)) as {
+        loadMessages: (locale: string) => Promise<Record<string, string>>
+      }
+
+      expect(await runtime.loadMessages("fr")).toEqual({ greeting: "Bonjour" })
+      expect(requests).toEqual(["https://platform.example/projects/project%20id/branches/feature%2Fcopy/locales/fr.json"])
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test("uses the canonical hosted endpoint when a remote endpoint is not configured", () => {
+    const root = createPluginRoot()
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: {
+          branch: "main",
+          projectId: "project",
+          type: "remote",
+        },
+      }),
+      root,
+      "build",
+    )
+
+    expect(getVirtualMessagesModule(hooks)).toContain(
+      "https://www.better-translation.dev/projects/project/branches/main/locales/",
+    )
+  })
+
+  test("generates ignored local fallback bundles for offline remote development", async () => {
+    const root = createPluginRoot()
+    writeFileSync(join(root, "src/message.tsx"), `<T id="greeting">Hello</T>`)
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: {
+          branch: "feature/copy",
+          dev: { offline: true },
+          projectId: "project",
+          type: "remote",
+        },
+      }),
+      root,
+    )
+
+    await hooks.buildStart()
+
+    expect(JSON.parse(readFileSync(join(root, ".cache/better-translation/runtime/locales/en.json"), "utf8"))).toEqual({
+      greeting: "Hello",
+    })
+    expect(JSON.parse(readFileSync(join(root, ".cache/better-translation/runtime/locales/fr.json"), "utf8"))).toEqual({
+      greeting: "Hello",
+    })
+    expect(getVirtualMessagesModule(hooks)).toContain(
+      'return (await import("/.cache/better-translation/runtime/locales/fr.json")).default',
+    )
+  })
+
+  test("prefers the Better Translation Branch environment override for remote loaders", () => {
+    const root = createPluginRoot()
+    const originalBranch = process.env.BETTER_TRANSLATION_BRANCH
+    const originalProviderBranch = process.env.VERCEL_GIT_COMMIT_REF
+    process.env.BETTER_TRANSLATION_BRANCH = "feature/better-translation"
+    process.env.VERCEL_GIT_COMMIT_REF = "feature/provider"
+
+    try {
+      const hooks = resolvePlugin(
+        betterTranslation({
+          locales: ["en"],
+          logging: false,
+          runtime: {
+            branch: "auto",
+            endpoint: "https://platform.example",
+            projectId: "project",
+            type: "remote",
+          },
+        }),
+        root,
+        "build",
+      )
+
+      expect(getVirtualMessagesModule(hooks)).toContain("/branches/feature%2Fbetter-translation/locales/")
+    } finally {
+      if (originalBranch === undefined) delete process.env.BETTER_TRANSLATION_BRANCH
+      else process.env.BETTER_TRANSLATION_BRANCH = originalBranch
+      if (originalProviderBranch === undefined) delete process.env.VERCEL_GIT_COMMIT_REF
+      else process.env.VERCEL_GIT_COMMIT_REF = originalProviderBranch
+    }
+  })
+
+  test("uses the provider Branch when no Better Translation override is configured", () => {
+    const root = createPluginRoot()
+    const originalBranch = process.env.BETTER_TRANSLATION_BRANCH
+    const originalProviderBranch = process.env.VERCEL_GIT_COMMIT_REF
+    delete process.env.BETTER_TRANSLATION_BRANCH
+    process.env.VERCEL_GIT_COMMIT_REF = "preview/copy"
+
+    try {
+      const hooks = resolvePlugin(
+        betterTranslation({
+          locales: ["en"],
+          logging: false,
+          runtime: {
+            branch: "auto",
+            endpoint: "https://platform.example",
+            projectId: "project",
+            type: "remote",
+          },
+        }),
+        root,
+        "build",
+      )
+
+      expect(getVirtualMessagesModule(hooks)).toContain("/branches/preview%2Fcopy/locales/")
+    } finally {
+      if (originalBranch === undefined) delete process.env.BETTER_TRANSLATION_BRANCH
+      else process.env.BETTER_TRANSLATION_BRANCH = originalBranch
+      if (originalProviderBranch === undefined) delete process.env.VERCEL_GIT_COMMIT_REF
+      else process.env.VERCEL_GIT_COMMIT_REF = originalProviderBranch
+    }
+  })
+
+  test("falls back to the package Branch when no environment or Git Branch is available", () => {
+    const root = createPluginRoot()
+    const originalBranch = process.env.BETTER_TRANSLATION_BRANCH
+    const originalProviderBranch = process.env.VERCEL_GIT_COMMIT_REF
+    delete process.env.BETTER_TRANSLATION_BRANCH
+    delete process.env.VERCEL_GIT_COMMIT_REF
+
+    try {
+      const hooks = resolvePlugin(
+        betterTranslation({
+          locales: ["en"],
+          logging: false,
+          runtime: {
+            branch: "auto",
+            endpoint: "https://platform.example",
+            projectId: "project",
+            type: "remote",
+          },
+        }),
+        root,
+        "build",
+      )
+
+      expect(getVirtualMessagesModule(hooks)).toContain("/branches/main/locales/")
+    } finally {
+      if (originalBranch === undefined) delete process.env.BETTER_TRANSLATION_BRANCH
+      else process.env.BETTER_TRANSLATION_BRANCH = originalBranch
+      if (originalProviderBranch === undefined) delete process.env.VERCEL_GIT_COMMIT_REF
+      else process.env.VERCEL_GIT_COMMIT_REF = originalProviderBranch
+    }
+  })
+})
+
+describe("plugin-side remote Manifest sync", () => {
+  test("requires a Project API key before a remote production sync", async () => {
+    const root = createPluginRoot()
+    writeFileSync(join(root, "src/message.tsx"), `<T id="greeting">Hello</T>`)
+    const originalApiKey = process.env.BETTER_TRANSLATION_API_KEY
+    delete process.env.BETTER_TRANSLATION_API_KEY
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: {
+          branch: "main",
+          endpoint: "https://platform.example",
+          projectId: "project",
+          type: "remote",
+        },
+      }),
+      root,
+      "build",
+    )
+
+    try {
+      await hooks.buildStart()
+      await expectRejection(
+        () => hooks.generateBundle(),
+        "remote Manifest sync requires a Project API key\nset BETTER_TRANSLATION_API_KEY",
+      )
+    } finally {
+      if (originalApiKey === undefined) delete process.env.BETTER_TRANSLATION_API_KEY
+      else process.env.BETTER_TRANSLATION_API_KEY = originalApiKey
+    }
+  })
+
+  test("syncs the current Manifest to the configured Project and Branch", async () => {
+    const root = createPluginRoot()
+    writeFileSync(join(root, "src/message.tsx"), `<T id="greeting">Hello</T>`)
+    const originalFetch = globalThis.fetch
+    const originalApiKey = process.env.BETTER_TRANSLATION_API_KEY
+    process.env.BETTER_TRANSLATION_API_KEY = "environment-secret"
+    const requests: Array<{ input: string | URL | Request; init?: RequestInit }> = []
+    globalThis.fetch = (async (input, init) => {
+      requests.push({ input, init })
+      return Response.json({ changed: false })
+    }) as typeof fetch
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: {
+          apiKey: "explicit-secret",
+          branch: "feature/copy",
+          endpoint: "https://platform.example/",
+          projectId: "project id",
+          type: "remote",
+        },
+      }),
+      root,
+      "build",
+    )
+
+    try {
+      await hooks.buildStart()
+      await hooks.generateBundle()
+
+      expect(requests).toEqual([
+        {
+          input: "https://platform.example/api/projects/project%20id/branches/feature%2Fcopy/manifest",
+          init: {
+            body: JSON.stringify({
+              defaultLocale: "en",
+              locales: ["en", "fr"],
+              messages: {
+                greeting: {
+                  defaultMessage: "Hello",
+                  meta: {},
+                  placeholders: [],
+                  sources: [{ file: "src/message.tsx", kind: "component", marker: "T" }],
+                },
+              },
+            }),
+            headers: {
+              authorization: "Bearer explicit-secret",
+              "content-type": "application/json",
+            },
+            method: "POST",
+          },
+        },
+      ])
+    } finally {
+      globalThis.fetch = originalFetch
+      if (originalApiKey === undefined) delete process.env.BETTER_TRANSLATION_API_KEY
+      else process.env.BETTER_TRANSLATION_API_KEY = originalApiKey
+    }
+  })
+
+  test("reports the remote Manifest target when the hosted service cannot be reached", async () => {
+    const root = createPluginRoot()
+    writeFileSync(join(root, "src/message.tsx"), `<T id="greeting">Hello</T>`)
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async (_input, _init): Promise<Response> => {
+      throw new TypeError("connection refused")
+    }) as typeof fetch
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en"],
+        logging: false,
+        runtime: {
+          apiKey: "secret",
+          branch: "main",
+          endpoint: "https://platform.example",
+          projectId: "project",
+          type: "remote",
+        },
+      }),
+      root,
+      "build",
+    )
+
+    try {
+      await hooks.buildStart()
+      await expectRejection(
+        () => hooks.generateBundle(),
+        [
+          "remote Manifest sync could not reach the hosted service",
+          "target: https://platform.example/api/projects/project/branches/main/manifest",
+          "error: connection refused",
+        ].join("\n"),
+      )
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test("reports the hosted response when a remote Manifest sync is rejected", async () => {
+    const root = createPluginRoot()
+    writeFileSync(join(root, "src/message.tsx"), `<T id="greeting">Hello</T>`)
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async (_input, _init) =>
+      new Response(`{\n  "error": "Invalid Project API key"\n}`, {
+        status: 401,
+        statusText: "Unauthorized",
+      })) as typeof fetch
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en"],
+        logging: false,
+        runtime: {
+          apiKey: "secret",
+          branch: "main",
+          endpoint: "https://platform.example",
+          projectId: "project",
+          type: "remote",
+        },
+      }),
+      root,
+      "build",
+    )
+
+    try {
+      await hooks.buildStart()
+      await expectRejection(
+        () => hooks.generateBundle(),
+        [
+          "remote Manifest sync failed with 401 Unauthorized",
+          "target: https://platform.example/api/projects/project/branches/main/manifest",
+          'response: { "error": "Invalid Project API key" }',
+        ].join("\n"),
+      )
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test("logs changed remote syncs and keeps successful no-op syncs quiet", async () => {
+    const root = createPluginRoot()
+    const sourcePath = join(root, "src/message.tsx")
+    writeFileSync(sourcePath, `<T id="greeting">Hello</T>`)
+    const originalFetch = globalThis.fetch
+    const responses = [false, true]
+    globalThis.fetch = (async (_input, _init) => Response.json({ changed: responses.shift() })) as typeof fetch
+    const logs = spyOn(console, "log").mockImplementation(() => {})
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en"],
+        runtime: {
+          apiKey: "secret",
+          branch: "main",
+          endpoint: "https://platform.example",
+          projectId: "project",
+          type: "remote",
+        },
+      }),
+      root,
+      "build",
+    )
+
+    try {
+      await hooks.buildStart()
+      await hooks.generateBundle()
+      writeFileSync(sourcePath, `<T id="greeting">Updated</T>`)
+      await hooks.buildStart()
+      await hooks.generateBundle()
+
+      expect(logs.mock.calls.flat().filter((value) => String(value).includes("Synced"))).toHaveLength(1)
+    } finally {
+      logs.mockRestore()
+      globalThis.fetch = originalFetch
+    }
+  })
+})
+
 describe("plugin lifecycle serialization", () => {
   test("cancels pending work and waits for in-flight work when the dev watcher closes", async () => {
+    accelerateLifecycleTimers()
     const pendingRoot = createPluginRoot()
     writeFileSync(join(pendingRoot, "src/message.tsx"), `<T id="greeting">Hello</T>`)
     let pendingCalls = 0
@@ -638,7 +1413,7 @@ describe("plugin lifecycle serialization", () => {
 
     await pendingHooks.buildStart()
     await pendingHooks.closeWatcher()
-    await Bun.sleep(1_050)
+    await Bun.sleep(10)
     expect(pendingCalls).toBe(0)
 
     const activeRoot = createPluginRoot()
@@ -647,6 +1422,7 @@ describe("plugin lifecycle serialization", () => {
     const blocked = new Promise<void>((resolveBlocked) => {
       release = resolveBlocked
     })
+    let activeCalls = 0
     const activeHooks = resolvePlugin(
       betterTranslation({
         locales: ["en", "fr"],
@@ -654,6 +1430,7 @@ describe("plugin lifecycle serialization", () => {
         runtime: {
           type: "local",
           translate: async () => {
+            activeCalls += 1
             await blocked
             return { greeting: "Bonjour" }
           },
@@ -662,7 +1439,7 @@ describe("plugin lifecycle serialization", () => {
       activeRoot,
     )
     await activeHooks.buildStart()
-    await Bun.sleep(1_050)
+    await waitFor(() => expect(activeCalls).toBe(1))
     let closed = false
     const closing = Promise.resolve(activeHooks.closeWatcher()).then(() => {
       closed = true
@@ -676,6 +1453,7 @@ describe("plugin lifecycle serialization", () => {
   })
 
   test("serializes local translation and reruns against the latest Manifest", async () => {
+    accelerateLifecycleTimers()
     const root = createPluginRoot()
     const file = join(root, "src/message.tsx")
     writeFileSync(file, `<T id="first">First</T>`)
@@ -707,21 +1485,22 @@ describe("plugin lifecycle serialization", () => {
     )
     await hooks.buildStart()
     const watcher = configureWatcher(hooks)
-    await Bun.sleep(1_050)
+    await waitFor(() => expect(calls).toHaveLength(1))
 
     writeFileSync(file, `<><T id="first">First</T><T id="second">Second</T></>`)
     watcher.change!(file)
-    await Bun.sleep(1_050)
+    await Bun.sleep(10)
     expect(calls).toEqual([["first"]])
 
     releaseFirst({ first: "FR First" })
-    await Bun.sleep(50)
+    await waitFor(() => expect(calls).toHaveLength(2))
 
     expect(maximumActive).toBe(1)
     expect(calls).toEqual([["first"], ["second"]])
   })
 
   test("keeps blank results missing so the next Manifest state retries them", async () => {
+    accelerateLifecycleTimers()
     const root = createPluginRoot()
     const file = join(root, "src/message.tsx")
     writeFileSync(file, `<T id="constructor">First</T>`)
@@ -743,11 +1522,11 @@ describe("plugin lifecycle serialization", () => {
     )
     await hooks.buildStart()
     const watcher = configureWatcher(hooks)
-    await Bun.sleep(1_050)
+    await waitFor(() => expect(calls).toHaveLength(1))
 
     writeFileSync(file, `<><T id="constructor">First</T><T id="second">Second</T></>`)
     watcher.change!(file)
-    await Bun.sleep(1_050)
+    await waitFor(() => expect(calls).toHaveLength(2))
 
     expect(calls).toEqual([["constructor"], ["constructor", "second"]])
     expect(JSON.parse(readFileSync(join(root, "src/lib/bt/locales/fr.json"), "utf8"))).toEqual({
@@ -757,6 +1536,7 @@ describe("plugin lifecycle serialization", () => {
   })
 
   test("serializes remote Manifest sync and sends the latest snapshot last", async () => {
+    accelerateLifecycleTimers()
     const root = createPluginRoot()
     const file = join(root, "src/message.tsx")
     writeFileSync(file, `<T id="stable">Old</T>`)
@@ -811,15 +1591,14 @@ describe("plugin lifecycle serialization", () => {
 
     try {
       listening()
-      await Bun.sleep(1_050)
+      await waitFor(() => expect(requests).toHaveLength(1))
       writeFileSync(file, `<T id="stable">New</T>`)
       handlers.change!(file)
-      await Bun.sleep(1_050)
+      await Bun.sleep(10)
       expect(requests).toHaveLength(1)
 
       requests[0]!.resolve(new Response(`{"changed":true}`))
-      await Bun.sleep(50)
-      expect(requests).toHaveLength(2)
+      await waitFor(() => expect(requests).toHaveLength(2))
       expect(requests.map(({ body }) => body.messages.stable?.defaultMessage)).toEqual(["Old", "New"])
       requests[1]!.resolve(new Response(`{"changed":true}`))
       await Bun.sleep(10)
@@ -831,6 +1610,7 @@ describe("plugin lifecycle serialization", () => {
 
 describe("plugin rich-text repair", () => {
   test("preserves an invalid locale value until a valid translated replacement is ready", async () => {
+    accelerateLifecycleTimers()
     const root = mkdtempSync(join(tmpdir(), "better-translation-rich-text-"))
     const sourceDir = join(root, "src")
     const localesDir = join(root, "translations", "locales")
@@ -868,7 +1648,11 @@ describe("plugin rich-text repair", () => {
         safety: "Toujours en sécurité",
       })
 
-      await Bun.sleep(1_100)
+      await waitFor(() =>
+        expect(JSON.parse(readFileSync(join(localesDir, "fr.json"), "utf8"))).toEqual({
+          safety: "Toujours <0>en sécurité</0>",
+        }),
+      )
       expect(JSON.parse(readFileSync(join(localesDir, "fr.json"), "utf8"))).toEqual({
         safety: "Toujours <0>en sécurité</0>",
       })

@@ -50,6 +50,10 @@ jobs:
         working-directory: baseline
         run: bun install --frozen-lockfile
 
+      - name: Guard current scaling behavior
+        working-directory: current
+        run: bun run bench:performance:guard
+
       - name: Benchmark current revision
         working-directory: current
         run: bun run bench:performance:json > ../performance-current.json

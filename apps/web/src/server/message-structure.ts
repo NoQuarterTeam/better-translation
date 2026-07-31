@@ -6,8 +6,8 @@ type RichTextElement = {
 /**
  * Hosted-service mirror of the package's private Message-structure invariant.
  *
- * Manifest sync must reject Locale values that change placeholder multiplicity
- * or a Rich-text tag's paired/self-closing kind and authored parent topology,
+ * Manifest sync must reject Locale values that change Variable placeholder multiplicity
+ * or a Rich-text slot's paired/self-closing kind and authored parent topology,
  * without exposing the runtime parser as public API.
  */
 export function hasSameMessageStructure(sourceMessage: string, translatedMessage: string) {

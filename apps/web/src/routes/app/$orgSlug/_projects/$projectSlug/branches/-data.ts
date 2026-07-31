@@ -48,7 +48,7 @@ export const listProjectBranchesFn = createServerFn({ method: "GET" })
 
 export const createProjectBranchFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(z.object({ name: branchInsertSchema.shape.name })))
+  .validator(parseZod(z.object({ name: branchInsertSchema.shape.name })))
   .handler(async ({ context, data }) => {
     const { project } = context
     const existingBranch = await db.query.branchesTable.findFirst({
@@ -75,7 +75,7 @@ export const createProjectBranchFn = createServerFn({ method: "POST" })
 
 export const updateProjectBranchFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       z.object({
         branchId: z.string().trim().min(1),
@@ -107,7 +107,7 @@ export const updateProjectBranchFn = createServerFn({ method: "POST" })
 
 export const setDefaultProjectBranchFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(z.object({ branchId: z.string().trim().min(1) })))
+  .validator(parseZod(z.object({ branchId: z.string().trim().min(1) })))
   .handler(async ({ context, data }) => {
     const { project } = context
     const branch = await ensureBranchBelongsToProject(project.id, data.branchId)
@@ -119,7 +119,7 @@ export const setDefaultProjectBranchFn = createServerFn({ method: "POST" })
 
 export const archiveProjectBranchFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(z.object({ branchId: z.string().trim().min(1) })))
+  .validator(parseZod(z.object({ branchId: z.string().trim().min(1) })))
   .handler(async ({ context, data }) => {
     const { project } = context
     const branch = await ensureBranchBelongsToProject(project.id, data.branchId)

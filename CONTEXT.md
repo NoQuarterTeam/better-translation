@@ -20,13 +20,17 @@ _Avoid_: wrapper, tag
 A single translatable unit of source copy identified by a stable lookup id.
 _Avoid_: string, text, phrase
 
+**Variable placeholder**:
+A named token such as `{name}` that marks where a runtime value is inserted into a Message.
+_Avoid_: slot, Rich-text slot
+
 **Rich-text Message**:
 A Message containing numbered renderer slots for authored inline elements or source-owned components.
 _Avoid_: HTML message, markup string
 
-**Rich-text tag**:
-A numbered paired or self-closing token such as `<0>...</0>` or `<1/>` that identifies an authored renderer slot inside a Rich-text Message.
-_Avoid_: HTML tag, Translation marker
+**Rich-text slot**:
+An authored renderer position inside a Rich-text Message, serialized as a numbered paired or self-closing token such as `<0>...</0>` or `<1/>`.
+_Avoid_: placeholder, variable placeholder, HTML tag, Translation marker
 
 **Source-owned component**:
 A React or Svelte component authored by the Consumer app whose implementation, props, and behavior stay in source code while translated children pass through it.

@@ -32,4 +32,11 @@ describe("performance report comparison", () => {
     expect(comparison.markdown).toContain("| removed | 1.00 ms | missing | — | regression |")
     expect(comparison.markdown).toContain("| added | new | 2.00 ms | — | new |")
   })
+
+  test("treats the exact absolute budget as a regression when the relative budget is exceeded", () => {
+    const comparison = comparePerformanceReports(report({ boundary: 1_500_000 }), report({ boundary: 2_000_000 }))
+
+    expect(comparison.regressions).toEqual(["boundary increased by 33% and 500.00 µs"])
+    expect(comparison.markdown).toContain("| boundary | 1.50 ms | 2.00 ms | +33% | regression |")
+  })
 })

@@ -13,12 +13,12 @@ type MessageValues = Record<string, unknown>
 
 /**
  * Resolves an authored Message from a Runtime bundle and interpolates string
- * placeholders.
+ * Variable placeholders.
  *
  * @param message - Default locale Message and fallback value.
- * @param valuesOrOptions - Placeholder values, or `id`/`context` options when
+ * @param valuesOrOptions - Variable placeholder values, or `id`/`context` options when
  *   the Message has no values.
- * @param options - `id`/`context` options when placeholder values are supplied.
+ * @param options - `id`/`context` options when Variable placeholder values are supplied.
  * @returns The matching Locale value, or `message` when no value is available.
  */
 export type Translator = (
@@ -32,7 +32,7 @@ export type Translator = (
  * bundle.
  *
  * The translator looks up Messages by their stable generated Lookup id unless
- * an explicit `id` is supplied. It interpolates `{name}` placeholders with the
+ * an explicit `id` is supplied. It interpolates `{name}` Variable placeholders with the
  * provided values and falls back to the authored Message when the bundle has no
  * matching value.
  *

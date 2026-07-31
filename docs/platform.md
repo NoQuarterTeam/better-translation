@@ -11,7 +11,7 @@ The repo currently supports a local bundle-first workflow.
 - `examples/tanstack-start` and `examples/svelte-kit` are local-first Consumer app examples.
 - The plugin scans configured source roots for markers such as `t("...")`, `useT()`, and `<T>...</T>`.
 - React and Svelte `<T>` markers support safe static inline elements and source-owned components as automatic numbered
-  rich-text tags while preserving their authored renderers and props at runtime.
+  Rich-text slots while preserving their authored renderers and props at runtime.
 - The plugin generates stable lookup ids and writes local artifacts.
 - Missing non-default Locale values can be filled with a custom async `translate()` function, including the built-in AI helper.
 - Runtime code loads local JSON through the virtual `better-translation/messages` module.
@@ -70,10 +70,10 @@ Runtime bundles are plain JSON maps:
 
 Runtime bundles must not include editor metadata, source ownership metadata, Manifest details, or draft-only state.
 
-Rich-text Messages remain strings in Runtime bundles. Numbered tags such as `<0>...</0>` and `<1/>` identify supported inline
-elements or source-owned React and Svelte components from the authored `<T>` marker. React clones only source-owned
-elements; Svelte invokes only Vite-plugin-generated source-owned Snippets. Neither runtime parses translated values as
-arbitrary HTML. Locale values must preserve the numbered tag structure and authored parent topology.
+Rich-text Messages remain strings in Runtime bundles. Numbered Rich-text slots such as `<0>...</0>` and `<1/>` identify
+supported inline elements or source-owned React and Svelte components from the authored `<T>` marker. React clones only
+source-owned elements; Svelte invokes only Vite-plugin-generated source-owned Snippets. Neither runtime parses translated
+values as arbitrary HTML. Locale values must preserve the numbered slot structure and authored parent topology.
 
 Remote runtime URLs are branch-addressed:
 
@@ -256,7 +256,7 @@ At minimum, branch-specific Locale value storage should preserve:
 - the base value hash used when the override was created
 - update metadata such as time and editor when available
 
-The lookup id identifies the same source Message across branches. Branch-scoped Message rows can have different Default locale text, context, placeholders, and source metadata for the same lookup id. The value hash identifies whether the translated Locale value changed.
+The lookup id identifies the same source Message across branches. Branch-scoped Message rows can have different Default locale text, context, Variable placeholders, and source metadata for the same lookup id. The value hash identifies whether the translated Locale value changed.
 
 ## Branch Reconciliation
 
@@ -325,7 +325,7 @@ When local dev calls the Platform translator, the request should include enough 
 - Lookup id
 - Default locale text
 - target Locale
-- context, placeholders, and source metadata when available
+- context, Variable placeholders, and source metadata when available
 
 Platform translator requests are canonical fill-blank writes. Manifest sync should:
 

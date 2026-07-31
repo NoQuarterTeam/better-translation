@@ -62,7 +62,7 @@ export function getMessage(messages: Record<string, string>, id: string) {
  * non-component positions.
  *
  * The translator observes later Runtime bundle changes from the nearest Svelte
- * `TranslateProvider`, supports `{placeholder}` interpolation plus explicit
+ * `TranslateProvider`, supports `{placeholder}` Variable interpolation plus explicit
  * `id` and `context` options, and falls back to the authored Message when no
  * Locale value is available. Call `getT` during Svelte component initialization
  * and retain the returned translator for later use.

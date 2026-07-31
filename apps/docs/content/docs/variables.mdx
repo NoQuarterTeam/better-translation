@@ -9,7 +9,7 @@ Locale needs them.
 ## T component
 
 Use `Var` inside `T` to interpolate runtime values without breaking the translatable
-sentence. The placeholder name is part of the Message.
+sentence. The Variable placeholder name is part of the Message.
 
 <Tabs items={["React", "Svelte"]} groupId="framework" persist>
 <Tab value="React">
@@ -44,10 +44,10 @@ export function Greeting({ name, date }: { name: string; date: string }) {
 </Tab>
 </Tabs>
 
-The prop key becomes the placeholder name. The example above extracts the Message with `name`
-and `date` placeholders and fills the values at render time.
+The prop key becomes the Variable placeholder name. The example above extracts the Message with `name`
+and `date` Variable placeholders and fills the values at render time.
 
-You can also pass the placeholder name explicitly when the value is easier to read as children.
+You can also pass the Variable placeholder name explicitly when the value is easier to read as children.
 
 <Tabs items={["React", "Svelte"]} groupId="framework" persist>
 <Tab value="React">
@@ -83,7 +83,7 @@ export function MessageList({ count }: { count: number }) {
 </Tabs>
 
 `Var` values can be formatted values, not just raw source strings. Keep formatting in the
-placeholder value when it belongs to the runtime value.
+Variable placeholder value when it belongs to the runtime value.
 
 <Tabs items={["React", "Svelte"]} groupId="framework" persist>
 <Tab value="React">
@@ -119,7 +119,7 @@ export function WelcomeMessage({ name, plan }: { name: string; plan: string }) {
 </Tabs>
 
 The example above extracts `Welcome {name} to the {plan} plan`. The values are rendered at
-runtime through the placeholders, so translators can still reorder the sentence.
+runtime through the Variable placeholders, so translators can still reorder the sentence.
 
 <Callout title="Var or rich text?">
   Use `Var` for a value that changes at runtime. If only the enclosed words are translated and the renderer is fixed, put the
@@ -129,7 +129,7 @@ runtime through the placeholders, so translators can still reorder the sentence.
 
 ## Plain strings
 
-For non-component strings, use `{name}` placeholders and pass values as the second argument.
+For non-component strings, use `{name}` Variable placeholders and pass values as the second argument.
 
 <Tabs items={["React", "Svelte"]} groupId="framework" persist>
 <Tab value="React">
@@ -168,4 +168,4 @@ When a Message has both values and context, pass context as the third argument.
 t("Moved {count} Messages", { count }, { context: "Bulk action toast" })
 ```
 
-Use `Var` only with `T`. Use `{name}` placeholders with `useT`, `getT`, and the runtime translator.
+Use `Var` only with `T`. Use `{name}` Variable placeholders with `useT`, `getT`, and the runtime translator.

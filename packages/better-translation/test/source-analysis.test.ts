@@ -1,14 +1,8 @@
 import { describe, expect, spyOn, test } from "bun:test"
 import { resolve } from "node:path"
 import { pathToFileURL } from "node:url"
-import type { ComponentProps } from "svelte"
 import { compile } from "svelte/compiler"
 import { render } from "svelte/server"
-
-import type * as PublicReactApi from "better-translation/react"
-import type * as PublicRuntimeApi from "better-translation/runtime"
-import type * as PublicSvelteApi from "better-translation/svelte"
-import type * as PublicViteApi from "better-translation/vite"
 
 import { getMessageId } from "../src/message/id.js"
 import { analyzeSourceFile, type SourceEdit } from "../src/vite-plugin/source-analysis/index.js"
@@ -31,32 +25,6 @@ function applyEdits(code: string, edits: SourceEdit[]) {
 }
 
 describe("source analyzer dispatch", () => {
-  test("keeps the published package entrypoints type-resolvable", () => {
-    type ReactApi = typeof PublicReactApi
-    type RuntimeApi = typeof PublicRuntimeApi
-    type SvelteApi = typeof PublicSvelteApi
-    type ViteApi = typeof PublicViteApi
-    type PublicReactTProps = Parameters<ReactApi["T"]>[0]
-    type PublicSvelteTProps = ComponentProps<SvelteApi["T"]>
-
-    const reactExport: keyof ReactApi = "T"
-    const runtimeExport: keyof RuntimeApi = "createT"
-    const svelteExport: keyof SvelteApi = "T"
-    const viteExport: keyof ViteApi = "betterTranslation"
-    const reactTransformPropsArePrivate: Extract<"message" | "values", keyof PublicReactTProps> extends never ? true : false =
-      true
-    const svelteProps = { context: "Translator guidance", id: "explicit" } satisfies PublicSvelteTProps
-
-    expect([reactExport, runtimeExport, svelteExport, viteExport, reactTransformPropsArePrivate, svelteProps.context]).toEqual([
-      "T",
-      "createT",
-      "T",
-      "betterTranslation",
-      true,
-      "Translator guidance",
-    ])
-  })
-
   test("routes Svelte files to the Svelte analyzer and other source files to the TypeScript analyzer", () => {
     const svelte = analyzeSourceFile("<T>Svelte message</T>", "component.svelte", markers)
     const typescript = analyzeSourceFile("const content = <T>TypeScript message</T>", "component.tsx", markers)
@@ -277,7 +245,7 @@ describe("TypeScript and JSX components", () => {
     expect(analysis.messages[0]?.placeholders).toEqual([])
   })
 
-  test("encodes source-owned React components as rich-text elements", () => {
+  test("encodes source-owned React components as Rich-text slots", () => {
     const analysis = analyzeTypeScriptSourceFile(
       `const content = <T>Stay <B tone="important">safe with <Text.Italic>care</Text.Italic></B>.</T>`,
       "components.tsx",
@@ -901,7 +869,7 @@ describe("source-analysis regressions", () => {
 })
 
 describe("rich-text extraction", () => {
-  test("extracts static intrinsic JSX elements as numbered rich-text tags", () => {
+  test("extracts static intrinsic JSX elements as numbered Rich-text slots", () => {
     const analysis = analyzeTypeScriptSourceFile(
       `
         const content = (
@@ -927,7 +895,7 @@ describe("rich-text extraction", () => {
     expect(analysis.edits.some((edit) => edit.replacement.includes('message={"Always make sure <0>'))).toBe(true)
   })
 
-  test("extracts Var placeholders nested inside rich-text elements", () => {
+  test("extracts Variable placeholders nested inside Rich-text slots", () => {
     const analysis = analyzeTypeScriptSourceFile(
       `const content = <T>Delete <strong><Var name={event.name} /></strong></T>`,
       "example.tsx",

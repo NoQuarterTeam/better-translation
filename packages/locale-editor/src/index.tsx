@@ -18,7 +18,16 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@better-translation/ui/components/select"
 import { cn } from "@better-translation/ui/lib/utils"
 import { useDebouncer } from "@tanstack/react-pacer"
-import { BotIcon, BracesIcon, FileCodeIcon, InfoIcon, MessageSquareTextIcon, PencilIcon, SearchIcon } from "lucide-react"
+import {
+  BotIcon,
+  BracesIcon,
+  ComponentIcon,
+  FileCodeIcon,
+  InfoIcon,
+  MessageSquareTextIcon,
+  PencilIcon,
+  SearchIcon,
+} from "lucide-react"
 import { useEffect, useMemo, useState, type SubmitEvent, type ReactNode } from "react"
 
 const searchDebounceMs = 300
@@ -78,7 +87,8 @@ export interface MessageInboxLabels {
   generating: string
   hideMessageDetails: string
   imported: string
-  includePlaceholders: string
+  includeRichTextSlots: string
+  includeVariablePlaceholders: string
   localeValueIsRequired: string
   localeValuesProgress: (done: number, total: number) => string
   more: (count: number) => string
@@ -88,7 +98,7 @@ export interface MessageInboxLabels {
   noValueYet: string
   original: string
   outdated: string
-  placeholders: string
+  richTextSlots: string
   saveValue: string
   saving: string
   searchMessages: string
@@ -97,6 +107,7 @@ export interface MessageInboxLabels {
   show: string
   showMessageDetails: string
   sources: string
+  variablePlaceholders: string
   writeLocaleValuePlaceholder: string
 }
 
@@ -286,7 +297,12 @@ function MessageDetail({
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const editableLocales = config.locales.filter((locale) => locale !== config.defaultLocale)
-  const hasDetails = Boolean(message.context || getMessagePlaceholderTokens(message).length > 0 || message.sources.length > 0)
+  const hasDetails = Boolean(
+    message.context ||
+    message.placeholders.length > 0 ||
+    getRichTextSlotTokens(message.defaultMessage).length > 0 ||
+    message.sources.length > 0,
+  )
 
   useEffect(() => setDetailsOpen(false), [message.id])
 
@@ -532,8 +548,8 @@ function TranslationValueForm({
 }
 
 function TranslationValueEditorGuidance({ labels, message }: { labels: MessageInboxLabels; message: MessageEditorMessage }) {
-  const placeholders = getMessagePlaceholderTokens(message)
-  if (!message.context && placeholders.length === 0) return null
+  const richTextSlots = getRichTextSlotTokens(message.defaultMessage)
+  if (!message.context && message.placeholders.length === 0 && richTextSlots.length === 0) return null
 
   return (
     <div className="grid gap-3 rounded-md border bg-muted/30 p-3 text-sm">
@@ -542,12 +558,22 @@ function TranslationValueEditorGuidance({ labels, message }: { labels: MessageIn
           {message.context}
         </GuidanceItem>
       )}
-      {placeholders.length > 0 && (
-        <GuidanceItem icon={<BracesIcon />} title={labels.placeholders}>
-          <p className="mt-1 text-muted-foreground">{labels.includePlaceholders}</p>
+      {message.placeholders.length > 0 && (
+        <GuidanceItem icon={<BracesIcon />} title={labels.variablePlaceholders}>
+          <p className="mt-1 text-muted-foreground">{labels.includeVariablePlaceholders}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {placeholders.map((placeholder) => (
+            {message.placeholders.map((placeholder) => (
               <PlaceholderLiteral key={placeholder} placeholder={placeholder} />
+            ))}
+          </div>
+        </GuidanceItem>
+      )}
+      {richTextSlots.length > 0 && (
+        <GuidanceItem icon={<ComponentIcon />} title={labels.richTextSlots}>
+          <p className="mt-1 text-muted-foreground">{labels.includeRichTextSlots}</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {richTextSlots.map((slot) => (
+              <RichTextSlotLiteral key={slot} slot={slot} />
             ))}
           </div>
         </GuidanceItem>
@@ -557,7 +583,7 @@ function TranslationValueEditorGuidance({ labels, message }: { labels: MessageIn
 }
 
 function MessageSourceDetails({ labels, message }: { labels: MessageInboxLabels; message: MessageEditorMessage }) {
-  const placeholders = getMessagePlaceholderTokens(message)
+  const richTextSlots = getRichTextSlotTokens(message.defaultMessage)
 
   return (
     <div className="flex flex-col gap-3 rounded-b-md border-t bg-background p-3 text-sm">
@@ -580,11 +606,20 @@ function MessageSourceDetails({ labels, message }: { labels: MessageInboxLabels;
           {message.context}
         </GuidanceItem>
       )}
-      {placeholders.length > 0 && (
-        <GuidanceItem icon={<BracesIcon />} title={labels.placeholders}>
+      {message.placeholders.length > 0 && (
+        <GuidanceItem icon={<BracesIcon />} title={labels.variablePlaceholders}>
           <div className="mt-1 flex flex-wrap gap-1.5">
-            {placeholders.map((placeholder) => (
+            {message.placeholders.map((placeholder) => (
               <PlaceholderBadge key={placeholder} placeholder={placeholder} />
+            ))}
+          </div>
+        </GuidanceItem>
+      )}
+      {richTextSlots.length > 0 && (
+        <GuidanceItem icon={<ComponentIcon />} title={labels.richTextSlots}>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {richTextSlots.map((slot) => (
+              <RichTextSlotLiteral key={slot} slot={slot} />
             ))}
           </div>
         </GuidanceItem>
@@ -651,20 +686,30 @@ function LocaleValueSourceBadge({
 }
 
 function MessageText({ className, placeholders, value }: { className?: string; placeholders: string[]; value: string }) {
-  const placeholderSet = useMemo(() => new Set([...placeholders, ...getRichTextPlaceholderTokens(value)]), [placeholders, value])
+  const placeholderSet = useMemo(() => new Set(placeholders), [placeholders])
   const nodes = getMessageTextNodes(value, placeholderSet)
 
   return (
     <p className={cn("text-sm", className)}>
-      {nodes.map((node, index) =>
-        typeof node === "string" ? (
-          node
-        ) : (
-          <PlaceholderBadge key={`${node.placeholder}:${index}`} placeholder={node.placeholder} />
-        ),
-      )}
+      <MessageTextNodes nodes={nodes} />
     </p>
   )
+}
+
+type MessageTextNode =
+  | string
+  | { placeholder: string; type: "placeholder" }
+  | { children: MessageTextNode[]; index: string; kind: "paired" | "self-closing"; type: "rich-text" }
+
+function MessageTextNodes({ nodes }: { nodes: MessageTextNode[] }) {
+  return nodes.map((node, index) => {
+    if (typeof node === "string") return node
+    if (node.type === "placeholder") {
+      return <PlaceholderBadge key={`${node.placeholder}:${index}`} placeholder={node.placeholder} />
+    }
+    if (node.kind === "self-closing") return null
+    return <MessageTextNodes key={`${node.index}:${index}`} nodes={node.children} />
+  })
 }
 
 function PlaceholderBadge({ placeholder }: { placeholder: string }) {
@@ -676,10 +721,16 @@ function PlaceholderBadge({ placeholder }: { placeholder: string }) {
 }
 
 function PlaceholderLiteral({ placeholder }: { placeholder: string }) {
+  return <code className="rounded-md border bg-background px-1.5 py-0.5 font-mono text-xs">{`{${placeholder}}`}</code>
+}
+
+function RichTextSlotLiteral({ slot }: { slot: string }) {
+  const index = slot.match(/^<(\d+)/)?.[1]
   return (
-    <code className="rounded-md border bg-background px-1.5 py-0.5 font-mono text-xs">
-      {placeholder.startsWith("<") ? placeholder : `{${placeholder}}`}
-    </code>
+    <span className="inline-flex items-center gap-1.5 rounded-md border bg-background px-1.5 py-0.5 text-xs">
+      <span className="font-medium">Slot {index}</span>
+      <code className="font-mono text-muted-foreground">{slot}</code>
+    </span>
   )
 }
 
@@ -731,36 +782,77 @@ function MessageDetailSkeleton() {
   )
 }
 
-function getMessageTextNodes(value: string, placeholders: Set<string>): Array<string | { placeholder: string }> {
-  if (placeholders.size === 0) return [value]
-
-  const nodes: Array<string | { placeholder: string }> = []
-  const matcher = /\{([A-Za-z_$][\w$]*)\}|<\/?\d+\/?>/g
+function getMessageTextNodes(value: string, placeholders: Set<string>) {
+  const nodes: MessageTextNode[] = []
+  const stack: Array<{ children: MessageTextNode[]; index: string; opening: string }> = []
+  const matcher = /\{([A-Za-z_$][\w$]*)\}|<(\d+)\/>|<(\d+)>|<\/(\d+)>/g
   let lastIndex = 0
   for (const match of value.matchAll(matcher)) {
-    const placeholder = match[1] ?? match[0]
-    if (!placeholder || !placeholders.has(placeholder)) continue
-    if (match.index > lastIndex) pushMessageTextNode(nodes, value.slice(lastIndex, match.index))
-    nodes.push({ placeholder })
+    const currentNodes = stack.at(-1)?.children ?? nodes
+    if (match.index > lastIndex) pushMessageTextNode(currentNodes, value.slice(lastIndex, match.index))
+
+    const placeholder = match[1]
+    const selfClosingIndex = match[2]
+    const openingIndex = match[3]
+    const closingIndex = match[4]
+    if (placeholder) {
+      pushMessageTextNode(currentNodes, placeholders.has(placeholder) ? { placeholder, type: "placeholder" } : match[0])
+    } else if (selfClosingIndex) {
+      currentNodes.push({ children: [], index: selfClosingIndex, kind: "self-closing", type: "rich-text" })
+    } else if (openingIndex) {
+      stack.push({ children: [], index: openingIndex, opening: match[0] })
+    } else if (closingIndex && stack.at(-1)?.index === closingIndex) {
+      const richText = stack.pop()
+      if (richText) {
+        const currentNodes = stack.at(-1)?.children ?? nodes
+        currentNodes.push({
+          children: richText.children,
+          index: richText.index,
+          kind: "paired",
+          type: "rich-text",
+        })
+      }
+    } else {
+      currentNodes.push({ placeholder: match[0], type: "placeholder" })
+    }
     lastIndex = match.index + match[0].length
   }
-  if (lastIndex < value.length) pushMessageTextNode(nodes, value.slice(lastIndex))
+  if (lastIndex < value.length) pushMessageTextNode(stack.at(-1)?.children ?? nodes, value.slice(lastIndex))
+
+  while (stack.length > 0) {
+    const richText = stack.pop()
+    if (!richText) continue
+    const currentNodes = stack.at(-1)?.children ?? nodes
+    currentNodes.push({ placeholder: richText.opening, type: "placeholder" }, ...richText.children)
+  }
+
   return nodes.length > 0 ? nodes : [value]
 }
 
-function pushMessageTextNode(nodes: Array<string | { placeholder: string }>, text: string) {
-  if (!text) return
+function pushMessageTextNode(nodes: MessageTextNode[], node: MessageTextNode) {
+  if (node === "") return
   const previous = nodes[nodes.length - 1]
-  if (typeof previous === "string") nodes[nodes.length - 1] = previous + text
-  else nodes.push(text)
+  if (typeof previous === "string" && typeof node === "string") nodes[nodes.length - 1] = previous + node
+  else nodes.push(node)
 }
 
-function getMessagePlaceholderTokens(message: Pick<MessageEditorMessage, "defaultMessage" | "placeholders">) {
-  return [...new Set([...message.placeholders, ...getRichTextPlaceholderTokens(message.defaultMessage)])]
-}
+function getRichTextSlotTokens(value: string) {
+  const slots: string[] = []
 
-function getRichTextPlaceholderTokens(value: string) {
-  return [...new Set([...value.matchAll(/<\/?\d+\/?>/g)].map((match) => match[0]))]
+  const visit = (nodes: MessageTextNode[]) => {
+    for (const node of nodes) {
+      if (typeof node === "string") continue
+      if (node.type === "placeholder") {
+        if (node.placeholder.startsWith("<")) slots.push(node.placeholder)
+        continue
+      }
+      slots.push(node.kind === "paired" ? `<${node.index}>…</${node.index}>` : `<${node.index}/>`)
+      visit(node.children)
+    }
+  }
+
+  visit(getMessageTextNodes(value, new Set()))
+  return [...new Set(slots)]
 }
 
 function formatPlaceholderLabel(placeholder: string) {
@@ -800,7 +892,9 @@ const defaultMessageInboxLabels: MessageInboxLabels = {
   generating: "Generating...",
   hideMessageDetails: "Hide Message details",
   imported: "Imported",
-  includePlaceholders: "Include these placeholders in the Locale value.",
+  includeRichTextSlots:
+    "Keep these Rich-text slots in the Locale value. Paired slots should wrap the text rendered by the source element or component.",
+  includeVariablePlaceholders: "Keep these Variable placeholders in the Locale value.",
   localeValueIsRequired: "Locale value is required.",
   localeValuesProgress: (done, total) => `${done} of ${total} Locale values`,
   more: (count) => `+${count} more`,
@@ -810,7 +904,7 @@ const defaultMessageInboxLabels: MessageInboxLabels = {
   noValueYet: "No value yet",
   original: "Original",
   outdated: "Outdated",
-  placeholders: "Placeholders",
+  richTextSlots: "Rich-text slots",
   saveValue: "Save value",
   saving: "Saving...",
   searchMessages: "Search Messages",
@@ -819,5 +913,6 @@ const defaultMessageInboxLabels: MessageInboxLabels = {
   show: "Show",
   showMessageDetails: "Show Message details",
   sources: "Sources",
+  variablePlaceholders: "Variable placeholders",
   writeLocaleValuePlaceholder: "Write the Locale value people should see",
 }

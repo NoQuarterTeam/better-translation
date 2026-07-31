@@ -26,7 +26,7 @@ export interface CreateAiTranslateOptions {
  * Creates a local-mode {@link TranslateFn} backed by AI SDK `generateText`.
  *
  * Each Message is translated independently. The returned callback preserves
- * placeholders and numbered rich-text tags, and rejects generated values whose
+ * Variable placeholders and numbered Rich-text slots, and rejects generated values whose
  * structure does not match the Default locale Message. Use it as
  * `runtime.translate` only; remote mode uses the Platform translator.
  *
@@ -48,7 +48,7 @@ async function translateMessage(message: TranslateMessage, locale: string, optio
 
   if (!translated) return undefined
   if (!hasSameMessageStructure(message.text, translated)) {
-    throw new Error(`The translation for ${message.id} did not preserve its placeholders and rich-text elements.`)
+    throw new Error(`The translation for ${message.id} did not preserve its Variable placeholders and Rich-text slots.`)
   }
   return translated
 }
@@ -78,7 +78,7 @@ ${locale}
 ## Output Contract
 Return only the translated text for the provided source message.
 Do not include the lookup id, labels, explanations, markdown, code fences, or surrounding quotes.
-Keep variable placeholders and numbered rich-text tags exactly as provided.
+Keep Variable placeholders and numbered Rich-text slots exactly as provided.
 Use the message context when provided.`,
   ].join("\n\n")
 }

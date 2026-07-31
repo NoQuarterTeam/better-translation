@@ -24,7 +24,7 @@ export const getOrganizationSettingsFn = createServerFn({ method: "GET" })
 
 export const updateOrganizationNameFn = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       z.object({
         name: z.string().trim().min(1).max(120),
@@ -44,7 +44,7 @@ export const updateOrganizationNameFn = createServerFn({ method: "POST" })
 
 export const confirmOrganizationLogoUploadFn = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       z.object({
         sourceKey: z.string().trim().min(1).max(1024),

@@ -136,7 +136,10 @@ function MessagesInbox() {
     generating: t("Generating..."),
     hideMessageDetails: t("Hide Message details"),
     imported: t("Imported"),
-    includePlaceholders: t("Include these placeholders in the Locale value."),
+    includeRichTextSlots: t(
+      "Keep these Rich-text slots in the Locale value. Paired slots should wrap the text rendered by the source element or component.",
+    ),
+    includeVariablePlaceholders: t("Keep these Variable placeholders in the Locale value."),
     localeValueIsRequired: t("Locale value is required"),
     localeValuesProgress: (done, total) => t("{done} of {total} Locale values", { done: String(done), total: String(total) }),
     more: (count) => t("+{count} more", { count: String(count) }),
@@ -146,7 +149,7 @@ function MessagesInbox() {
     noValueYet: t("No value yet"),
     original: t("Original"),
     outdated: t("Outdated"),
-    placeholders: t("Placeholders"),
+    richTextSlots: t("Rich-text slots"),
     saveValue: t("Save value"),
     saving: t("Saving..."),
     searchMessages: t("Search Messages"),
@@ -155,6 +158,7 @@ function MessagesInbox() {
     show: t("Show"),
     showMessageDetails: t("Show Message details"),
     sources: t("Sources"),
+    variablePlaceholders: t("Variable placeholders"),
     writeLocaleValuePlaceholder: t("Write the Locale value people should see"),
   } satisfies MessageInboxLabels
 

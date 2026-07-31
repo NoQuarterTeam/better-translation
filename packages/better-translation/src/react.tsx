@@ -96,7 +96,7 @@ export function useMessages() {
  * Returns a memoized translator for Messages used in props, labels, and other
  * non-JSX positions.
  *
- * The returned function supports `{placeholder}` interpolation plus explicit
+ * The returned function supports `{placeholder}` Variable interpolation plus explicit
  * `id` and `context` options. It falls back to the authored Message when the
  * active Runtime bundle has no matching Locale value.
  *
@@ -118,10 +118,10 @@ export type VarProps = {
 } & Record<string, ReactNode | undefined>
 
 /**
- * Marks a runtime value for placeholder interpolation inside {@link T}.
+ * Marks a runtime value for Variable placeholder interpolation inside {@link T}.
  *
  * A single named prop is the concise form: `<Var count={count} />`. Use
- * `<Var name="count" value={count} />` or children when an explicit placeholder
+ * `<Var name="count" value={count} />` or children when an explicit Variable placeholder
  * name is clearer. `Var` values can be any `ReactNode`; they are inserted as
  * authored values and are never parsed as translated HTML.
  */
@@ -152,13 +152,13 @@ interface TransformedTProps extends TProps {
  *
  * Static supported inline elements such as `<strong>`, `<b>`, and `<i>`, plus
  * arbitrary source-owned React components, are represented as numbered
- * rich-text tags in the Message. At runtime `T` reuses the authored elements,
+ * Rich-text slots in the Message. At runtime `T` reuses the authored elements,
  * component implementations, and props; Locale values are never rendered as
  * arbitrary HTML. Nested elements are supported, and a Locale value with
- * invalid placeholder or rich-text structure safely falls back to the authored
- * children.
+ * invalid Variable placeholder or Rich-text slot structure safely falls back
+ * to the authored children.
  *
- * Use {@link Var} for runtime values so translators can reorder placeholders
+ * Use {@link Var} for runtime values so translators can reorder Variable placeholders
  * without changing the surrounding Message.
  */
 export function T(props: TProps) {

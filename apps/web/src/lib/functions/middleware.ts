@@ -19,7 +19,7 @@ export const authMiddleware = createMiddleware({ type: "function" }).server(asyn
 
 export const organizationMiddleware = createMiddleware({ type: "function" })
   .middleware([authMiddleware])
-  .inputValidator(parseZod(z.object({ orgSlug: z.string().trim().min(1) }).loose()))
+  .validator(parseZod(z.object({ orgSlug: z.string().trim().min(1) }).loose()))
   .server(async ({ next, context, data }) => {
     const organizationAccess = await getCurrentOrganizationAccess({ slug: data.orgSlug, userId: context.user.id })
 
@@ -36,7 +36,7 @@ export const organizationMiddleware = createMiddleware({ type: "function" })
 
 export const projectMiddleware = createMiddleware({ type: "function" })
   .middleware([organizationMiddleware])
-  .inputValidator(parseZod(z.object({ projectSlug: z.string().trim().min(1) }).loose()))
+  .validator(parseZod(z.object({ projectSlug: z.string().trim().min(1) }).loose()))
   .server(async ({ next, context, data }) => {
     const project = await db.query.projectsTable.findFirst({
       where: { slug: data.projectSlug, organizationId: context.organization.id },

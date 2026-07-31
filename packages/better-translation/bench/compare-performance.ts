@@ -51,7 +51,7 @@ export function comparePerformanceReports(
     currentByName.delete(baselineBenchmark.name)
     const difference = currentBenchmark.p50Nanoseconds - baselineBenchmark.p50Nanoseconds
     const timeRatio = currentBenchmark.p50Nanoseconds / baselineBenchmark.p50Nanoseconds
-    const regressed = timeRatio > maxTimeRatio && difference > minimumRegressionNanoseconds
+    const regressed = timeRatio > maxTimeRatio && difference >= minimumRegressionNanoseconds
     if (regressed) {
       regressions.push(`${baselineBenchmark.name} increased by ${formatPercent(timeRatio - 1)} and ${formatDuration(difference)}`)
     }

@@ -7,7 +7,7 @@ import { parseZod } from "@/lib/functions/zod"
 import { auth } from "@/server/auth"
 
 export const getOrganizationInvitationFn = createServerFn({ method: "GET" })
-  .inputValidator(parseZod(z.object({ invitationId: z.string().trim().min(1) })))
+  .validator(parseZod(z.object({ invitationId: z.string().trim().min(1) })))
   .handler(async ({ data }) => {
     return auth.api.getInvitation({
       query: { id: data.invitationId },

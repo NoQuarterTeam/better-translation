@@ -7,5 +7,5 @@
     "rootDir": ".",
     "types": ["bun"]
   },
-  "include": ["src", "test", "bench"]
+  "include": ["src/vite.ts", "test/vite-plugin.types.ts"]
 }

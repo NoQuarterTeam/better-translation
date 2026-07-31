@@ -36,7 +36,7 @@ const branchMessageDetailInputSchema = branchInputSchema.extend({
 
 export const getBranchWorkspaceFn = createServerFn({ method: "GET" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(branchInputSchema))
+  .validator(parseZod(branchInputSchema))
   .handler(async ({ context, data }) => {
     const branch = await getProjectBranch(context.project.id, data.branchName)
     const [messageCount] = await db
@@ -60,7 +60,7 @@ export const getBranchWorkspaceFn = createServerFn({ method: "GET" })
 
 export const listBranchMessagesFn = createServerFn({ method: "GET" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(branchMessagesInputSchema))
+  .validator(parseZod(branchMessagesInputSchema))
   .handler(async ({ context, data }) => {
     const { project } = context
     const branch = await getProjectBranch(project.id, data.branchName)
@@ -152,7 +152,7 @@ export const listBranchMessagesFn = createServerFn({ method: "GET" })
 
 export const getBranchMessageDetailFn = createServerFn({ method: "GET" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(branchMessageDetailInputSchema))
+  .validator(parseZod(branchMessageDetailInputSchema))
   .handler(async ({ context, data }) => {
     const { project } = context
     const branch = await getProjectBranch(project.id, data.branchName)
@@ -211,7 +211,7 @@ export const branchMessageDetailQueryOptions = (orgSlug: string, projectSlug: st
 
 export const getCurrentBranchSwitcherFn = createServerFn({ method: "GET" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(branchInputSchema))
+  .validator(parseZod(branchInputSchema))
   .handler(async ({ context, data }) => {
     const branch = await getProjectBranch(context.project.id, data.branchName)
     return {
@@ -241,7 +241,7 @@ export const listBranchSwitcherBranchesFn = createServerFn({ method: "GET" })
 
 export const setSelectedBranchFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(branchInputSchema))
+  .validator(parseZod(branchInputSchema))
   .handler(async ({ context, data }) => {
     const branch = await db.query.branchesTable.findFirst({
       columns: { name: true },
@@ -289,7 +289,7 @@ export function invalidateSelectedBranchChromeQueries(queryClient: QueryClient, 
 
 export const saveLocaleValueFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       localeValueInsertSchema.pick({ locale: true, value: true }).extend({
         branchName: branchInputSchema.shape.branchName,
@@ -305,7 +305,7 @@ export const saveLocaleValueFn = createServerFn({ method: "POST" })
     if (data.locale === branch.defaultLocale) throw new Error("Default locale Messages come from the Manifest.")
     if (!branch.locales.includes(data.locale)) throw new Error("Locale is not configured for this Branch.")
     if (!hasSameMessageStructure(message.defaultMessage, data.value)) {
-      throw new Error("Locale value must preserve the Message placeholders and rich-text elements.")
+      throw new Error("Locale value must preserve the Message's Variable placeholders and Rich-text slots.")
     }
 
     return upsertLocaleValue({
@@ -322,7 +322,7 @@ export const saveLocaleValueFn = createServerFn({ method: "POST" })
 
 export const translateLocaleValueFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       z.object({
         branchName: branchInputSchema.shape.branchName,
