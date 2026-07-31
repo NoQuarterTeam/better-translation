@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.6.4
+
+### Patch Changes
+
+- [`342e824`](https://github.com/NoQuarterTeam/better-translation/commit/342e824cf5d4a856d875ed7b3730b21597ecfbd7) Thanks [@JClackett](https://github.com/JClackett)! - Use www.better-translation.dev as the default hosted platform URL.
+
 ## 0.6.3
 
 ### Patch Changes
