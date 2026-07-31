@@ -159,13 +159,13 @@
     },
     "packages/better-translation": {
       "name": "better-translation",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "bin": {
         "better-translation": "./dist/cli.mjs",
         "bt": "./dist/cli.mjs",
       },
       "dependencies": {
-        "ai": "catalog:",
+        "ai": "7.0.44",
         "oxc-parser": "0.142.0",
       },
       "devDependencies": {

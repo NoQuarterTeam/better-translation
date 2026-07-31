@@ -89,6 +89,26 @@ Use `T` and `Var` from `better-translation/svelte` for component copy. Use `getT
 <input aria-label={t("Search Projects")} />
 ```
 
+## Rich Text
+
+Rich text is allowed inside React and Svelte `T` markers. Put static supported inline elements such as `strong`, `em`, `a`,
+and `code`, or source-owned components, directly inside the complete Message. Better Translation represents them as numbered
+Rich-text tags and preserves the authored element or component, its props, and its behavior at runtime.
+
+Use `Var` for runtime values nested inside rich text:
+
+```tsx
+<T>
+  Delete{" "}
+  <strong>
+    <Var name={event.name} />
+  </strong>
+</T>
+```
+
+Locale values are never rendered as arbitrary HTML. Keep conditional JSX and other runtime expressions out of `T`; express
+runtime values with `Var` and keep layout-only markup outside the Message.
+
 ## Server And Metadata Copy
 
 Use `createT(messages)` from `better-translation/runtime` when copy is produced outside a rendered component tree, such as route metadata, SSR-only code, or server helpers.
@@ -104,7 +124,7 @@ t("{name} settings", { name: project.name }, { context: "Page title" })
 ## Marker Rules
 
 - Keep each `T` body as the smallest complete Message a translator should see.
-- Keep layout-only markup outside `T`.
+- Keep meaningful static rich text inside `T`; keep layout-only markup outside it.
 - Keep meaningful runtime values inside the Message with `Var`, not by concatenating translated strings.
 - Do not put arbitrary runtime expressions directly inside `T`; use `Var`, `useT`, `getT`, or separate static Messages for finite variants.
 - Add `context` for short, ambiguous, or tone-sensitive Messages.

@@ -14,6 +14,7 @@ Use one skill with two workflows inside it: adoption and maintenance. Both workf
 the same decisions:
 
 - use `T` for component children
+- keep meaningful static rich text and source-owned components inside `T`
 - use `Var` for runtime values inside `T`
 - use `useT`, `getT`, or `createT` for plain strings
 - run `bt generate` after marker changes
@@ -66,9 +67,9 @@ For routine feature work, ask the agent to use the same skill before it finishes
 $better-translation Review the changed UI code, add missing Translation markers, then run bt generate.
 ```
 
-The skill tells agents to preserve the existing runtime mode, keep Runtime bundles flat, avoid
-dynamic expressions directly inside `T`, use `context` for ambiguous Messages, and commit
-local-mode generated Locale values with the source change.
+The skill tells agents to preserve the existing runtime mode, keep Runtime bundles flat, keep
+meaningful static rich text inside `T`, express runtime values with `Var`, use `context` for
+ambiguous Messages, and commit local-mode generated Locale values with the source change.
 
 ## Keep it current
 
