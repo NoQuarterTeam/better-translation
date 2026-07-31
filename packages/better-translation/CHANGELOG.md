@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.6.1
+
+### Patch Changes
+
+- [`88496f8`](https://github.com/NoQuarterTeam/better-translation/commit/88496f82e50974dbcde97bed6bf8ebd46085007e) Thanks [@JClackett](https://github.com/JClackett)! - Support TypeScript 7 tooling while preserving TypeScript 6 API compatibility.
+
 ## 0.6.0
 
 ### Minor Changes
