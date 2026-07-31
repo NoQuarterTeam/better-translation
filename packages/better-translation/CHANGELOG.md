@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.6.3
+
+### Patch Changes
+
+- [`6bcebe9`](https://github.com/NoQuarterTeam/better-translation/commit/6bcebe978da871fae471b3f7adfde3865dbca3db) Thanks [@JClackett](https://github.com/JClackett)! - Improve rich-text Message previews in the locale editor
+
 ## 0.6.2
 
 ### Patch Changes
