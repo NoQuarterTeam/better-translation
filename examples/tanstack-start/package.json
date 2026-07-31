@@ -15,7 +15,7 @@
     "@tanstack/react-start": "catalog:",
     "@tanstack/router-plugin": "catalog:",
     "better-translation": "workspace:*",
-    "nitro": "3.0.260522-beta",
+    "nitro": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "superjson": "catalog:",

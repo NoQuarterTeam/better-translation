@@ -1,7 +1,8 @@
 import tailwindcss from "@tailwindcss/vite"
-import { defineConfig } from "vite-plus"
+import type { UserConfig as ViteConfig } from "vite"
+import type { UserConfig as VitePlusConfig } from "vite-plus"
 
-export default defineConfig({
+export default {
   pack: {
     clean: true,
     dts: true,
@@ -57,4 +58,4 @@ export default defineConfig({
     sourcemap: false,
     target: "baseline-widely-available",
   },
-})
+} satisfies ViteConfig & Pick<VitePlusConfig, "pack">
