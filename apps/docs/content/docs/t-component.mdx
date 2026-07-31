@@ -90,11 +90,12 @@ export function ProjectEmptyState() {
 
 ## Rich text
 
-Static inline elements and source-owned components can stay inside a Message. Better Translation turns them into numbered
-rich-text tags for translators, then renders the translated content through the exact authored React element or Svelte
-Snippet. Props, events, actions, bindings, and component implementations remain source-owned; translated strings are never
-rendered as arbitrary HTML. The Vite plugin and runtime handle numbering and validation internally, so Consumer apps do
-not import a validator or register rich-text renderers.
+Rich text is allowed directly inside React and Svelte `T` markers. Static inline elements and source-owned components stay
+inside the Message, where Better Translation turns them into numbered rich-text tags for translators and renders the
+translated content through the exact authored React element or Svelte Snippet. Props, events, actions, bindings, and
+component implementations remain source-owned; translated strings are never rendered as arbitrary HTML. The Vite plugin
+and runtime handle numbering and validation internally, so Consumer apps do not import a validator or register rich-text
+renderers.
 
 <Tabs items={["React", "Svelte"]} groupId="framework" persist>
 <Tab value="React">
