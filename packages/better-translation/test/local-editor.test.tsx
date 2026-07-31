@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test"
 import { renderToStaticMarkup } from "react-dom/server"
 
 describe("local editor", () => {
-  test("previews paired and self-closing rich-text tags as annotated content", () => {
+  test("omits rich-text tags from Message previews", () => {
     const html = renderToStaticMarkup(
       <MessageInbox
         mode="local"
@@ -12,8 +12,8 @@ describe("local editor", () => {
           {
             id: "safety",
             lookupId: "safety",
-            defaultMessage: "Always <0>keep {status} <1>safe</1></0>.<2/>",
-            placeholders: ["status"],
+            defaultMessage: "For a perfect score, you only need to <0>count <1>a little</1> better.</0><2/>",
+            placeholders: [],
             done: 1,
             total: 1,
           },
@@ -21,13 +21,13 @@ describe("local editor", () => {
         selectedMessage={{
           id: "safety",
           lookupId: "safety",
-          defaultMessage: "Always <0>keep {status} <1>safe</1></0>.<2/>",
-          placeholders: ["status"],
+          defaultMessage: "For a perfect score, you only need to <0>count <1>a little</1> better.</0><2/>",
+          placeholders: [],
           done: 1,
           total: 1,
           localeValues: {
             nl: {
-              value: "Blijf <0>{status} <1>veilig</1></0>.<2/>",
+              value: "Voor een perfecte score hoef je alleen <0>iets <1>beter</1> te tellen.</0><2/>",
               source: "manual",
               hasValue: true,
             },
@@ -45,11 +45,11 @@ describe("local editor", () => {
       />,
     )
 
-    expect(html).toContain('data-rich-text-slot="0"')
-    expect(html).toContain('data-rich-text-slot="1"')
-    expect(html).toContain('data-rich-text-slot="2"')
+    expect(html).toContain("For a perfect score, you only need to count a little better.")
+    expect(html).toContain("Voor een perfecte score hoef je alleen iets beter te tellen.")
+    expect(html).not.toContain("data-rich-text-slot")
     expect(html).not.toContain("&lt;0&gt;")
     expect(html).not.toContain("&lt;/0&gt;")
-    expect(html).toContain("Status")
+    expect(html).not.toContain("&lt;2/&gt;")
   })
 })

@@ -672,33 +672,9 @@ function MessageTextNodes({ nodes }: { nodes: MessageTextNode[] }) {
     if (node.type === "placeholder") {
       return <PlaceholderBadge key={`${node.placeholder}:${index}`} placeholder={node.placeholder} />
     }
-    return <RichTextPreview key={`${node.index}:${index}`} node={node} />
+    if (node.kind === "self-closing") return null
+    return <MessageTextNodes key={`${node.index}:${index}`} nodes={node.children} />
   })
-}
-
-function RichTextPreview({ node }: { node: Extract<MessageTextNode, { type: "rich-text" }> }) {
-  if (node.kind === "self-closing") {
-    return (
-      <span
-        className="inline-flex items-baseline rounded-sm bg-olive-500/10 px-1.5 py-0.5 align-baseline font-mono text-[0.7rem] leading-[inherit] font-semibold text-olive-700 ring-1 ring-olive-500/20 ring-inset dark:text-olive-300"
-        data-rich-text-slot={node.index}
-      >
-        {`<${node.index}/>`}
-      </span>
-    )
-  }
-
-  return (
-    <span
-      className="rounded-sm bg-olive-500/10 box-decoration-clone py-0.5 pr-1 ring-1 ring-olive-500/20 ring-inset"
-      data-rich-text-slot={node.index}
-    >
-      <span className="mx-0.5 inline-flex size-4 translate-y-px items-center justify-center rounded-sm bg-olive-500/15 align-baseline font-mono text-[0.625rem] leading-none font-semibold text-olive-700 dark:text-olive-300">
-        {node.index}
-      </span>
-      <MessageTextNodes nodes={node.children} />
-    </span>
-  )
 }
 
 function PlaceholderBadge({ placeholder }: { placeholder: string }) {
