@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.6.2
+
+### Patch Changes
+
+- [#358](https://github.com/NoQuarterTeam/better-translation/pull/358) [`0f0601b`](https://github.com/NoQuarterTeam/better-translation/commit/0f0601b942401b9260e55590abaa267d627bdf96) Thanks [@JClackett](https://github.com/JClackett)! - Fix the published npm manifest so the AI SDK dependency uses a registry-compatible version.
+
 ## 0.6.1
 
 ### Patch Changes
