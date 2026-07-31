@@ -38,10 +38,12 @@ export const Route = createFileRoute("/")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
+        { property: "og:url", content: "https://www.better-translation.dev" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
       ],
+      links: [{ rel: "canonical", href: "https://www.better-translation.dev" }],
     }
   },
 })
@@ -124,7 +126,7 @@ function Hero() {
             </T>
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" nativeButton={false} render={<a href="https://better-translation-docs.vercel.app" />}>
+            <Button size="lg" nativeButton={false} render={<a href="https://docs.better-translation.dev" />}>
               <T>Read the docs</T>
               <ArrowRightIcon />
             </Button>
@@ -471,7 +473,7 @@ function FinalCta() {
               <T>Wrap your first Message, run the plugin, and watch translations follow your code.</T>
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button size="lg" nativeButton={false} render={<a href="https://better-translation-docs.vercel.app" />}>
+              <Button size="lg" nativeButton={false} render={<a href="https://docs.better-translation.dev" />}>
                 <T>Read the docs</T>
                 <ArrowRightIcon />
               </Button>

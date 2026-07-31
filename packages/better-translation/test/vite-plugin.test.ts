@@ -1031,6 +1031,27 @@ export async function loadMessages(locale) {
     }
   })
 
+  test("uses the canonical hosted endpoint when a remote endpoint is not configured", () => {
+    const root = createPluginRoot()
+    const hooks = resolvePlugin(
+      betterTranslation({
+        locales: ["en", "fr"],
+        logging: false,
+        runtime: {
+          branch: "main",
+          projectId: "project",
+          type: "remote",
+        },
+      }),
+      root,
+      "build",
+    )
+
+    expect(getVirtualMessagesModule(hooks)).toContain(
+      "https://www.better-translation.dev/projects/project/branches/main/locales/",
+    )
+  })
+
   test("generates ignored local fallback bundles for offline remote development", async () => {
     const root = createPluginRoot()
     writeFileSync(join(root, "src/message.tsx"), `<T id="greeting">Hello</T>`)

@@ -5,7 +5,7 @@ export function getBaseUrl() {
     return window.location.origin
   }
   if (env.VERCEL_ENV === "production") {
-    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
+    return "https://www.better-translation.dev"
   }
   if (env.VERCEL_ENV === "preview") {
     return `https://${env.VERCEL_URL}`
