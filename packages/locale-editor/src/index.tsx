@@ -651,19 +651,53 @@ function LocaleValueSourceBadge({
 }
 
 function MessageText({ className, placeholders, value }: { className?: string; placeholders: string[]; value: string }) {
-  const placeholderSet = useMemo(() => new Set([...placeholders, ...getRichTextPlaceholderTokens(value)]), [placeholders, value])
+  const placeholderSet = useMemo(() => new Set(placeholders), [placeholders])
   const nodes = getMessageTextNodes(value, placeholderSet)
 
   return (
     <p className={cn("text-sm", className)}>
-      {nodes.map((node, index) =>
-        typeof node === "string" ? (
-          node
-        ) : (
-          <PlaceholderBadge key={`${node.placeholder}:${index}`} placeholder={node.placeholder} />
-        ),
-      )}
+      <MessageTextNodes nodes={nodes} />
     </p>
+  )
+}
+
+type MessageTextNode =
+  | string
+  | { placeholder: string; type: "placeholder" }
+  | { children: MessageTextNode[]; index: string; kind: "paired" | "self-closing"; type: "rich-text" }
+
+function MessageTextNodes({ nodes }: { nodes: MessageTextNode[] }) {
+  return nodes.map((node, index) => {
+    if (typeof node === "string") return node
+    if (node.type === "placeholder") {
+      return <PlaceholderBadge key={`${node.placeholder}:${index}`} placeholder={node.placeholder} />
+    }
+    return <RichTextPreview key={`${node.index}:${index}`} node={node} />
+  })
+}
+
+function RichTextPreview({ node }: { node: Extract<MessageTextNode, { type: "rich-text" }> }) {
+  if (node.kind === "self-closing") {
+    return (
+      <span
+        className="inline-flex items-baseline rounded-sm bg-olive-500/10 px-1.5 py-0.5 align-baseline font-mono text-[0.7rem] leading-[inherit] font-semibold text-olive-700 ring-1 ring-olive-500/20 ring-inset dark:text-olive-300"
+        data-rich-text-slot={node.index}
+      >
+        {`<${node.index}/>`}
+      </span>
+    )
+  }
+
+  return (
+    <span
+      className="rounded-sm bg-olive-500/10 box-decoration-clone py-0.5 pr-1 ring-1 ring-olive-500/20 ring-inset"
+      data-rich-text-slot={node.index}
+    >
+      <span className="mx-0.5 inline-flex size-4 translate-y-px items-center justify-center rounded-sm bg-olive-500/15 align-baseline font-mono text-[0.625rem] leading-none font-semibold text-olive-700 dark:text-olive-300">
+        {node.index}
+      </span>
+      <MessageTextNodes nodes={node.children} />
+    </span>
   )
 }
 
@@ -731,28 +765,58 @@ function MessageDetailSkeleton() {
   )
 }
 
-function getMessageTextNodes(value: string, placeholders: Set<string>): Array<string | { placeholder: string }> {
-  if (placeholders.size === 0) return [value]
-
-  const nodes: Array<string | { placeholder: string }> = []
-  const matcher = /\{([A-Za-z_$][\w$]*)\}|<\/?\d+\/?>/g
+function getMessageTextNodes(value: string, placeholders: Set<string>) {
+  const nodes: MessageTextNode[] = []
+  const stack: Array<{ children: MessageTextNode[]; index: string; opening: string }> = []
+  const matcher = /\{([A-Za-z_$][\w$]*)\}|<(\d+)\/>|<(\d+)>|<\/(\d+)>/g
   let lastIndex = 0
   for (const match of value.matchAll(matcher)) {
-    const placeholder = match[1] ?? match[0]
-    if (!placeholder || !placeholders.has(placeholder)) continue
-    if (match.index > lastIndex) pushMessageTextNode(nodes, value.slice(lastIndex, match.index))
-    nodes.push({ placeholder })
+    const currentNodes = stack.at(-1)?.children ?? nodes
+    if (match.index > lastIndex) pushMessageTextNode(currentNodes, value.slice(lastIndex, match.index))
+
+    const placeholder = match[1]
+    const selfClosingIndex = match[2]
+    const openingIndex = match[3]
+    const closingIndex = match[4]
+    if (placeholder) {
+      pushMessageTextNode(currentNodes, placeholders.has(placeholder) ? { placeholder, type: "placeholder" } : match[0])
+    } else if (selfClosingIndex) {
+      currentNodes.push({ children: [], index: selfClosingIndex, kind: "self-closing", type: "rich-text" })
+    } else if (openingIndex) {
+      stack.push({ children: [], index: openingIndex, opening: match[0] })
+    } else if (closingIndex && stack.at(-1)?.index === closingIndex) {
+      const richText = stack.pop()
+      if (richText) {
+        const currentNodes = stack.at(-1)?.children ?? nodes
+        currentNodes.push({
+          children: richText.children,
+          index: richText.index,
+          kind: "paired",
+          type: "rich-text",
+        })
+      }
+    } else {
+      currentNodes.push({ placeholder: match[0], type: "placeholder" })
+    }
     lastIndex = match.index + match[0].length
   }
-  if (lastIndex < value.length) pushMessageTextNode(nodes, value.slice(lastIndex))
+  if (lastIndex < value.length) pushMessageTextNode(stack.at(-1)?.children ?? nodes, value.slice(lastIndex))
+
+  while (stack.length > 0) {
+    const richText = stack.pop()
+    if (!richText) continue
+    const currentNodes = stack.at(-1)?.children ?? nodes
+    currentNodes.push({ placeholder: richText.opening, type: "placeholder" }, ...richText.children)
+  }
+
   return nodes.length > 0 ? nodes : [value]
 }
 
-function pushMessageTextNode(nodes: Array<string | { placeholder: string }>, text: string) {
-  if (!text) return
+function pushMessageTextNode(nodes: MessageTextNode[], node: MessageTextNode) {
+  if (node === "") return
   const previous = nodes[nodes.length - 1]
-  if (typeof previous === "string") nodes[nodes.length - 1] = previous + text
-  else nodes.push(text)
+  if (typeof previous === "string" && typeof node === "string") nodes[nodes.length - 1] = previous + node
+  else nodes.push(node)
 }
 
 function getMessagePlaceholderTokens(message: Pick<MessageEditorMessage, "defaultMessage" | "placeholders">) {
@@ -760,7 +824,22 @@ function getMessagePlaceholderTokens(message: Pick<MessageEditorMessage, "defaul
 }
 
 function getRichTextPlaceholderTokens(value: string) {
-  return [...new Set([...value.matchAll(/<\/?\d+\/?>/g)].map((match) => match[0]))]
+  const placeholders: string[] = []
+
+  const visit = (nodes: MessageTextNode[]) => {
+    for (const node of nodes) {
+      if (typeof node === "string") continue
+      if (node.type === "placeholder") {
+        if (node.placeholder.startsWith("<")) placeholders.push(node.placeholder)
+        continue
+      }
+      placeholders.push(node.kind === "paired" ? `<${node.index}>…</${node.index}>` : `<${node.index}/>`)
+      visit(node.children)
+    }
+  }
+
+  visit(getMessageTextNodes(value, new Set()))
+  return [...new Set(placeholders)]
 }
 
 function formatPlaceholderLabel(placeholder: string) {
