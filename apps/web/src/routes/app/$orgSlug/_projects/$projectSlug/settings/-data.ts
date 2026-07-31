@@ -34,7 +34,7 @@ export const getProjectSettingsFn = createServerFn({ method: "GET" })
 
 export const updateProjectProfileFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(z.object({ name: projectInsertSchema.shape.name, slug: projectInsertSchema.shape.slug })))
+  .validator(parseZod(z.object({ name: projectInsertSchema.shape.name, slug: projectInsertSchema.shape.slug })))
   .handler(async ({ context, data }) => {
     const existingProject = await db.query.projectsTable.findFirst({
       columns: { id: true },
@@ -57,7 +57,7 @@ export const updateProjectProfileFn = createServerFn({ method: "POST" })
 
 export const confirmProjectIconUploadFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(z.object({ sourceKey: z.string().trim().min(1).max(1024) })))
+  .validator(parseZod(z.object({ sourceKey: z.string().trim().min(1).max(1024) })))
   .handler(async ({ context, data }) => {
     const sourceKey = getProjectIconKey(context.project.id)
     if (data.sourceKey !== sourceKey) throw new Error("Project icon upload does not match this Project.")
@@ -89,7 +89,7 @@ export const removeProjectIconFn = createServerFn({ method: "POST" })
 
 export const listGitHubInstallationRepositoriesFn = createServerFn({ method: "GET" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(githubSetupSchema))
+  .validator(parseZod(githubSetupSchema))
   .handler(async ({ context, data }) => {
     const githubInstallation = await getOrganizationGitHubInstallation({
       installationId: data.installationId,
@@ -105,7 +105,7 @@ export const listGitHubInstallationRepositoriesFn = createServerFn({ method: "GE
 
 export const connectProjectGitHubRepositoryFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       githubSetupSchema.extend({
         githubBranchCleanupEnabled: z.boolean().optional().default(true),
@@ -172,7 +172,7 @@ export const connectProjectGitHubRepositoryFn = createServerFn({ method: "POST" 
 
 export const updateProjectGitHubCleanupFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(z.object({ githubBranchCleanupEnabled: z.boolean() })))
+  .validator(parseZod(z.object({ githubBranchCleanupEnabled: z.boolean() })))
   .handler(async ({ context, data }) => {
     if (data.githubBranchCleanupEnabled && !context.project.githubRepositoryId) {
       throw new Error("Connect a GitHub repository before enabling Branch cleanup.")

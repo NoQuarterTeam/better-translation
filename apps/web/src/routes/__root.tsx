@@ -18,7 +18,7 @@ interface MyRouterContext {
 }
 
 const getMessagesFn = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ locale: z.string() }))
+  .validator(z.object({ locale: z.string() }))
   .handler(async ({ data }) => {
     return await loadMessages(data.locale).catch(() => ({}))
   })

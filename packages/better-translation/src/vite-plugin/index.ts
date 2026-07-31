@@ -325,7 +325,8 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       })
       if (missingIds.length > 0) issues.push(formatLocaleIssue(locale, "missing", missingIds))
       if (orphanIds.length > 0) issues.push(formatLocaleIssue(locale, "orphaned", orphanIds))
-      if (invalidIds.length > 0) issues.push(formatLocaleIssue(locale, "invalid placeholders or rich-text elements", invalidIds))
+      if (invalidIds.length > 0)
+        issues.push(formatLocaleIssue(locale, "invalid Variable placeholders or Rich-text slots", invalidIds))
     }
 
     if (issues.length === 0) return
@@ -364,7 +365,9 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
           const translated = getOwnValue(result, miss.id)?.trim()
           if (!translated) continue
           if (!hasSameMessageStructure(miss.text, translated)) {
-            throw new Error(`${PREFIX} translation for "${miss.id}" did not preserve its placeholders and rich-text elements`)
+            throw new Error(
+              `${PREFIX} translation for "${miss.id}" did not preserve its Variable placeholders and Rich-text slots`,
+            )
           }
           cache.entries[getCacheKey(miss.id, locale)] = {
             sourceText: miss.text,

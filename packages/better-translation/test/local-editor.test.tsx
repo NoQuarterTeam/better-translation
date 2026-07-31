@@ -1,9 +1,12 @@
 import { MessageInbox } from "@better-translation/locale-editor"
 import { describe, expect, test } from "bun:test"
+import { createRequire } from "node:module"
+import { act } from "react"
+import { createRoot } from "react-dom/client"
 import { renderToStaticMarkup } from "react-dom/server"
 
 describe("local editor", () => {
-  test("omits rich-text tags from Message previews", () => {
+  test("omits Rich-text slot syntax from Message previews", () => {
     const html = renderToStaticMarkup(
       <MessageInbox
         mode="local"
@@ -51,5 +54,90 @@ describe("local editor", () => {
     expect(html).not.toContain("&lt;0&gt;")
     expect(html).not.toContain("&lt;/0&gt;")
     expect(html).not.toContain("&lt;2/&gt;")
+  })
+
+  test("distinguishes Variable placeholders from Rich-text slots", () => {
+    const { JSDOM } = createRequire(import.meta.url)("jsdom") as {
+      JSDOM: new (html: string) => {
+        window: Window & typeof globalThis
+      }
+    }
+    const dom = new JSDOM('<div id="root"></div>')
+    const testGlobal = globalThis as unknown as Record<string, unknown>
+    const globalValues = {
+      window: dom.window,
+      document: dom.window.document,
+      navigator: dom.window.navigator,
+      Node: dom.window.Node,
+      Element: dom.window.Element,
+      HTMLElement: dom.window.HTMLElement,
+      IS_REACT_ACT_ENVIRONMENT: true,
+    }
+    const originalDescriptors = new Map(
+      Object.keys(globalValues).map((name) => [name, Object.getOwnPropertyDescriptor(globalThis, name)]),
+    )
+
+    for (const [name, value] of Object.entries(globalValues)) {
+      Object.defineProperty(globalThis, name, { configurable: true, value, writable: true })
+    }
+
+    const container = dom.window.document.getElementById("root")
+    if (!container) throw new Error("Expected the test root")
+    const root = createRoot(container)
+
+    try {
+      act(() =>
+        root.render(
+          <MessageInbox
+            mode="local"
+            config={{ appLocale: "en", defaultLocale: "en", locales: ["en", "nl"] }}
+            messages={[
+              {
+                id: "welcome",
+                lookupId: "welcome",
+                defaultMessage: "Welcome <0>{name}</0><1/>",
+                placeholders: ["name"],
+                done: 0,
+                total: 1,
+              },
+            ]}
+            selectedMessage={{
+              id: "welcome",
+              lookupId: "welcome",
+              defaultMessage: "Welcome <0>{name}</0><1/>",
+              placeholders: ["name"],
+              done: 0,
+              total: 1,
+              localeValues: {},
+              sources: [],
+            }}
+            selectedMessageId="welcome"
+            search=""
+            view="all"
+            incompleteCount={1}
+            onSearchChange={() => undefined}
+            onViewChange={() => undefined}
+            onSelectMessage={() => undefined}
+            onSaveLocaleValue={() => undefined}
+          />,
+        ),
+      )
+
+      const detailsButton = container.querySelector<HTMLButtonElement>('button[aria-label="Show Message details"]')
+      if (!detailsButton) throw new Error("Expected the Message details button")
+      act(() => detailsButton.click())
+
+      expect(container.textContent).toContain("Variable placeholders")
+      expect(container.textContent).toContain("Rich-text slots")
+      expect(container.textContent).toContain("Slot 0")
+      expect(container.textContent).toContain("Slot 1")
+    } finally {
+      act(() => root.unmount())
+      dom.window.close()
+      for (const [name, descriptor] of originalDescriptors) {
+        if (descriptor) Object.defineProperty(globalThis, name, descriptor)
+        else delete testGlobal[name]
+      }
+    }
   })
 })

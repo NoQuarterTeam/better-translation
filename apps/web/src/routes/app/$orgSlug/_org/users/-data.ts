@@ -79,7 +79,7 @@ export const getOrganizationUsersPageContextFn = createServerFn({ method: "GET" 
 
 export const inviteOrganizationMembersFn = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       z.object({
         invites: z.array(z.object({ email: z.email().trim().toLowerCase(), role: z.enum(MANAGEABLE_ORGANIZATION_ROLES) })).min(1),
@@ -101,7 +101,7 @@ export const inviteOrganizationMembersFn = createServerFn({ method: "POST" })
 
 export const updateOrganizationMemberRoleFn = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       z.object({
         memberId: z.string().trim().min(1),
@@ -120,7 +120,7 @@ export const updateOrganizationMemberRoleFn = createServerFn({ method: "POST" })
 
 export const removeOrganizationMemberFn = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
-  .inputValidator(parseZod(z.object({ memberId: z.string().trim().min(1) })))
+  .validator(parseZod(z.object({ memberId: z.string().trim().min(1) })))
   .handler(async ({ context, data }) => {
     ensureOrganizationAccess(context.member.role, { permissions: { member: ["delete"] } })
 
@@ -142,7 +142,7 @@ export const removeOrganizationMemberFn = createServerFn({ method: "POST" })
 
 export const cancelOrganizationInvitationFn = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
-  .inputValidator(parseZod(z.object({ invitationId: z.string().trim().min(1) })))
+  .validator(parseZod(z.object({ invitationId: z.string().trim().min(1) })))
   .handler(async ({ context, data }) => {
     ensureOrganizationAccess(context.member.role, { permissions: { invitation: ["cancel"] } })
 

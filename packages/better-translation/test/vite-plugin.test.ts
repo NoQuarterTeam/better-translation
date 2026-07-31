@@ -421,7 +421,7 @@ describe("plugin state regressions", () => {
       "build",
     )
 
-    await expectRejection(() => hooks.buildStart(), 'fr: invalid placeholders or rich-text elements ("stable")')
+    await expectRejection(() => hooks.buildStart(), 'fr: invalid Variable placeholders or Rich-text slots ("stable")')
   })
 
   test("keeps local production builds check-only when a translator is configured", async () => {

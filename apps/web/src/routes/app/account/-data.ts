@@ -23,7 +23,7 @@ export const userProfileQueryOptions = () =>
 
 export const updateProfileNameFn = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .inputValidator(parseZod(z.object({ name: z.string().trim().min(1) })))
+  .validator(parseZod(z.object({ name: z.string().trim().min(1) })))
   .handler(async ({ context, data }) => {
     const [user] = await db
       .update(usersTable)
@@ -38,7 +38,7 @@ export const updateProfileNameFn = createServerFn({ method: "POST" })
 
 export const confirmUserAvatarUploadFn = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .inputValidator(parseZod(z.object({ sourceKey: z.string().trim().min(1).max(1024) })))
+  .validator(parseZod(z.object({ sourceKey: z.string().trim().min(1).max(1024) })))
   .handler(async ({ context, data }) => {
     const sourceKey = getUserAvatarKey(context.user.id)
     if (data.sourceKey !== sourceKey) throw new Error("Profile image upload does not match this user")

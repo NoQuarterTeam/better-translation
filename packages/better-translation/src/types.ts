@@ -6,7 +6,7 @@ export interface ExtractedMessage {
   defaultMessage: string
   /** Message identity and translator context. */
   meta: TranslateOptions
-  /** Placeholder names discovered in the Default locale Message. */
+  /** Variable placeholder names discovered in the Default locale Message. */
   placeholders: string[]
   /** Durable source ownership for this Translation marker occurrence. */
   source: MessageSource
@@ -28,7 +28,7 @@ export interface ManifestEntry {
   defaultMessage: string
   /** Message identity and translator context. */
   meta: TranslateOptions
-  /** Placeholder names discovered in the Default locale Message. */
+  /** Variable placeholder names discovered in the Default locale Message. */
   placeholders: string[]
   /** Source occurrences that contributed to this Manifest entry. */
   sources: MessageSource[]
@@ -83,11 +83,11 @@ export interface TranslateOptions {
 export interface TranslateMessage {
   /** Stable Lookup id that the callback uses as its result key. */
   id: string
-  /** Default locale Message to translate, including placeholders and numbered rich-text tags. */
+  /** Default locale Message to translate, including Variable placeholders and numbered Rich-text slots. */
   text: string
   /** Message identity and translator context. */
   meta: TranslateOptions
-  /** Placeholder names that the returned Locale value must preserve. */
+  /** Variable placeholder names that the returned Locale value must preserve. */
   placeholders: string[]
   /** Translation marker occurrences that produced this Message. */
   sources: MessageSource[]
@@ -99,7 +99,7 @@ export interface TranslateMessage {
  * The Vite plugin calls this function with one configured batch and target
  * Locale at a time. Return translated values keyed by each Message's Lookup id;
  * omitted ids remain missing. Returned values are trimmed and must preserve the
- * source Message's placeholders and numbered rich-text structure.
+ * source Message's Variable placeholders and numbered Rich-text slot structure.
  *
  * @param messages - Missing Messages in the current translation batch.
  * @param locale - Target Locale configured in the Vite plugin.

@@ -60,7 +60,7 @@ export const listProjectSwitcherProjectsFn = createServerFn({ method: "GET" })
 
 export const setSelectedProjectFn = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
-  .inputValidator(parseZod(z.object({ projectId: z.string().trim().min(1) })))
+  .validator(parseZod(z.object({ projectId: z.string().trim().min(1) })))
   .handler(async ({ context, data }) => {
     const project = await db.query.projectsTable.findFirst({
       columns: { id: true },

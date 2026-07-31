@@ -15,7 +15,7 @@ export const listProjectApiKeysFn = createServerFn({ method: "GET" })
 
 export const createProjectApiKeyFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(apiKeyInsertSchema.pick({ name: true })))
+  .validator(parseZod(apiKeyInsertSchema.pick({ name: true })))
   .handler(async ({ context, data }) => {
     const { project } = context
     const secret = createProjectApiKeySecret()
@@ -45,7 +45,7 @@ export const createProjectApiKeyFn = createServerFn({ method: "POST" })
 
 export const revokeProjectApiKeyFn = createServerFn({ method: "POST" })
   .middleware([projectMiddleware])
-  .inputValidator(parseZod(z.object({ apiKeyId: z.string().trim().min(1) })))
+  .validator(parseZod(z.object({ apiKeyId: z.string().trim().min(1) })))
   .handler(async ({ context, data }) => {
     const { project } = context
     const [apiKey] = await db

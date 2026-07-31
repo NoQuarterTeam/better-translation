@@ -39,7 +39,7 @@ export function CheckoutButton() {
 }
 ```
 
-Use `Var` inside `T` for runtime values inside a sentence. The prop name becomes the placeholder name:
+Use `Var` inside `T` for runtime values inside a sentence. The prop name becomes the Variable placeholder name:
 
 ```tsx
 import { T, Var } from "better-translation/react"
@@ -65,7 +65,7 @@ export function SearchInput() {
 }
 ```
 
-For plain strings with values, use `{name}` placeholders:
+For plain strings with values, use `{name}` Variable placeholders:
 
 ```tsx
 t("Invite {email}", { email: user.email }, { context: "Invitation dialog title" })
@@ -93,7 +93,7 @@ Use `T` and `Var` from `better-translation/svelte` for component copy. Use `getT
 
 Rich text is allowed inside React and Svelte `T` markers. Put static supported inline elements such as `strong`, `em`, `a`,
 and `code`, or source-owned components, directly inside the complete Message. Better Translation represents them as numbered
-Rich-text tags and preserves the authored element or component, its props, and its behavior at runtime.
+Rich-text slots and preserves the authored element or component, its props, and its behavior at runtime.
 
 Use `Var` for runtime values nested inside rich text:
 

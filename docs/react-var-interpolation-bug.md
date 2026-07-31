@@ -4,8 +4,8 @@ Status: resolved.
 
 ## Original Failure
 
-React `T` Messages with `Var` placeholders could previously render the raw placeholder after a translated Locale value became
-available:
+React `T` Messages with Variable placeholders authored through `Var` could previously render the raw placeholder after a
+translated Locale value became available:
 
 ```tsx
 <T>
@@ -58,10 +58,11 @@ The same runtime path supports `Var` values inside safe inline elements and sour
 </T>
 ```
 
-The Vite plugin represents the source renderer as a numbered tag while keeping the variable as `{name}`. The React runtime:
+The Vite plugin represents the source renderer as a numbered Rich-text slot while keeping the Variable placeholder as
+`{name}`. The React runtime:
 
 1. looks up the translated string by stable lookup id
-2. verifies that variables and numbered rich-text tags preserve the source structure
+2. verifies that Variable placeholders and numbered Rich-text slots preserve the source structure
 3. interpolates React values without converting them to strings
 4. clones only the source-owned elements and components authored inside `T`
 5. renders the authored JSX if the translated structure is malformed or incompatible
@@ -96,7 +97,7 @@ packages/better-translation/test/runtime.test.tsx
 packages/better-translation/test/vite-plugin.test.ts
 ```
 
-Coverage includes ReactNode placeholder values, Svelte values, source-owned components, nested and reordered elements,
+Coverage includes ReactNode Variable placeholder values, Svelte values, source-owned components, nested and reordered elements,
 malformed translations, structure repair, source fallback, and prototype-like lookup ids.
 
 Run the complete regression and scaling gate:

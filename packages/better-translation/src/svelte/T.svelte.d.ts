@@ -16,7 +16,7 @@ type TProps = {
  *
  * Static supported inline elements such as `<strong>`, `<b>`, and `<i>`, plus
  * arbitrary source-owned Svelte components, are represented as numbered
- * rich-text tags in the Message. At runtime `T` invokes only Vite-plugin-generated
+ * Rich-text slots in the Message. At runtime `T` invokes only Vite-plugin-generated
  * Snippets for the authored elements and components, retaining their authored
  * props and behavior. Locale values are never rendered as arbitrary HTML.
  * Nested elements are supported, and an invalid translated structure safely

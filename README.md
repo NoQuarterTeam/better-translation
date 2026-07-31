@@ -9,7 +9,7 @@ Add the plugin, mark UI copy in your source, and Better Translation generates fl
 ## What You Get
 
 - A Vite plugin that scans source files for Translation markers.
-- Stable lookup ids generated from Message text, placeholders, and context.
+- Stable lookup ids generated from Message text, Variable placeholders, and context.
 - Local Runtime bundles as flat `id -> translated string` JSON objects.
 - React and Svelte helpers for marking UI copy and reading Locale values at runtime.
 - Optional dev-time translation through your own async `translate()` function.
@@ -142,7 +142,7 @@ Static inline elements inside React and Svelte `<T>` markers are preserved autom
 This works with supported inline elements such as `<strong>`, `<b>`, `<i>`, `<em>`, `<span>`, `<a>`, and `<br />`, including
 nested elements. Source-owned React components such as `<B>` or `<Text.Italic>` and normal Svelte components work too, so a
 design-system component can render `<b>` or another element under the hood. Better Translation represents each authored
-element or component as a numbered rich-text tag in the Message, then restores that same source-owned renderer and its props
+element or component as a numbered rich-text slot in the Message, then restores that same source-owned renderer and its props
 at runtime. Consumer apps do not import a parser, register tag callbacks, or validate translations themselves. Translated
 strings never become arbitrary HTML, and dynamic values should still use `<Var>`.
 

@@ -61,7 +61,7 @@ export function interpolateMessageTemplate(template: string, values: Record<stri
 
 /**
  * Verifies that a Locale value preserves placeholder multiplicity and every
- * Rich-text tag's paired/self-closing kind and authored parent topology.
+ * Rich-text slot's paired/self-closing kind and authored parent topology.
  */
 export function hasSameMessageStructure(sourceMessage: string, translatedMessage: string) {
   const source = getMessageStructure(sourceMessage)

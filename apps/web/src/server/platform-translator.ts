@@ -36,7 +36,7 @@ export async function translateMessageWithPlatform({
   const translated = (await translateWithAi({ glossaryTerms, locale, message, prompt })).trim()
   if (!translated) throw new Error(`The Platform translator returned no value for ${message.id}.`)
   if (!hasSameMessageStructure(message.defaultMessage, translated)) {
-    throw new Error(`The Platform translator did not preserve the placeholders and rich-text elements for ${message.id}.`)
+    throw new Error(`The Platform translator did not preserve the Variable placeholders and Rich-text slots for ${message.id}.`)
   }
   return translated
 }
@@ -106,7 +106,7 @@ ${createGlossaryPrompt(glossaryTerms)}
 ## Output Contract
 Return only the translated text for the provided source Message.
 Do not include the lookup id, labels, explanations, markdown, code fences, or surrounding quotes.
-Keep variable placeholders and numbered rich-text tags exactly as provided.
+Keep Variable placeholders and numbered Rich-text slots exactly as provided.
 Use the Message context when provided.`,
   ].join("\n\n")
 }

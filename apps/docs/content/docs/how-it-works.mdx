@@ -37,14 +37,14 @@ of translated strings for the active Locale, so your components keep rendering n
 
 Better Translation looks for markers such as `T`, `useT`, `getT`, and `t()` inside your
 configured source roots. Each discovered Message records the Default locale text,
-placeholders, optional context, and durable source references in the private Manifest.
+Variable placeholders, optional context, and durable source references in the private Manifest.
 
 The lookup id is stable, so moving a Message through the codebase does not create a new runtime
 key. If two Messages need different translations, add context or an explicit id to separate
 them.
 
 When a `T` Message contains a supported inline element or source-owned component, the plugin
-represents that authored renderer with a numbered tag such as `<0>...</0>` or `<1/>`. The
+represents that authored renderer with a numbered Rich-text slot such as `<0>...</0>` or `<1/>`. The
 numbered form is the Message translators see; component implementations, props, events, and
 bindings remain in source code.
 
@@ -73,7 +73,7 @@ plugin generates that module from your runtime mode:
 Every loader returns the same shape: a flat lookup id to translated string object. Runtime
 bundles do not contain Manifest metadata, source ownership, editor state, or write credentials.
 
-Rich-text Locale values are still strings. React and Svelte render numbered tags through the
+Rich-text Locale values are still strings. React and Svelte render numbered slots through the
 elements and components authored in the original `T` marker; they never turn a translated
 value into arbitrary HTML. The runtime verifies that a translated value preserves the source
 variables and numbered-tag topology. If it does not, `T` renders the authored source content

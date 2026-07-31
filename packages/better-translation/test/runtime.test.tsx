@@ -223,7 +223,7 @@ describe("rich-text rendering", () => {
     }
   })
 
-  test("reorders translated rich-text elements while preserving their JSX props", () => {
+  test("reorders translated Rich-text slots while preserving their JSX props", () => {
     const html = renderToStaticMarkup(
       <TranslateProvider
         messages={{
@@ -249,7 +249,7 @@ describe("rich-text rendering", () => {
     )
   })
 
-  test("interpolates Var values inside translated rich-text elements", () => {
+  test("interpolates Var values inside translated Rich-text slots", () => {
     const html = renderToStaticMarkup(
       <TranslateProvider messages={{ delete: "<0>{name}</0> verwijderen" }}>
         <TransformedT id="delete" message="Delete <0>{name}</0>" values={{ name: "Event" }}>
@@ -291,7 +291,7 @@ describe("rich-text rendering", () => {
     expect(html).toBe("Value <strong>42</strong>")
   })
 
-  test("preserves meaningful spaces inside rich-text elements", () => {
+  test("preserves meaningful spaces inside Rich-text slots", () => {
     const html = renderToStaticMarkup(
       <TranslateProvider messages={{ spacing: "Hallo<0> heel <1>veilig</1> persoon </0>vandaag" }}>
         <TransformedT id="spacing" message="Hello<0> very <1>safe</1> person </0>today">
@@ -356,7 +356,7 @@ describe("runtime regressions", () => {
     expect(Object.keys(await import("../src/runtime.js"))).toEqual(["createT"])
   })
 
-  test("allows a translated rich-text element to intentionally have no children", () => {
+  test("allows a translated Rich-text slot to intentionally have no children", () => {
     const html = renderToStaticMarkup(
       <TranslateProvider messages={{ safety: "Before <0></0> after" }}>
         <TransformedT id="safety" message="Before <0>safe</0> after">

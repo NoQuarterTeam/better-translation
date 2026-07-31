@@ -132,7 +132,7 @@ type TranslateFn = (
 ```
 
 The returned record may omit a Message when no value was produced. Every returned value must
-preserve the source placeholders and numbered rich-text tags. The plugin rejects incompatible
+preserve the source Variable placeholders and numbered Rich-text slots. The plugin rejects incompatible
 results before adding them to the cache or Runtime bundle.
 
 ## Local editor
@@ -334,12 +334,12 @@ Import these from `better-translation/svelte`.
 
 Rich text is part of `T`; it is not a separate package export. Put supported native inline
 elements or source-owned React and Svelte components directly inside the marker. The Vite
-plugin represents them as numbered tags in the Message, and each runtime renders translated
+plugin represents them as numbered Rich-text slots in the Message, and each runtime renders translated
 children through the exact authored renderer while retaining its props and behavior.
 
 Consumer apps do not import a Message parser or structure validator, and they do not register
 tag callbacks. Those are private plugin/runtime details. A translated Locale value must retain
-the source variables, numbered tags, paired/self-closing form, and parent topology. When that
+the source Variable placeholders, numbered slots, paired/self-closing form, and parent topology. When that
 contract is not met, `T` falls back to its authored source content rather than interpreting the
 value as HTML.
 

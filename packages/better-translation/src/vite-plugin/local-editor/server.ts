@@ -233,7 +233,7 @@ function updateLocalEditorLocaleValue(
   const message = context.manifest[lookupId]
   if (!message) throw new Error("Unknown Message.")
   if (!hasSameMessageStructure(message.defaultMessage, value)) {
-    throw new Error("Locale value must preserve the Message placeholders and rich-text elements.")
+    throw new Error("Locale value must preserve the Message's Variable placeholders and Rich-text slots.")
   }
 
   const localeMessages = context.readLocaleMessages(locale)

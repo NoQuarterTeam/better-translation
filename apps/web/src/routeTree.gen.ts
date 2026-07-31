@@ -9,83 +9,57 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AppLayoutRouteImport } from './routes/app/layout'
-import { Route as AuthLayoutRouteImport } from './routes/_auth/layout'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppIndexRouteImport } from './routes/app/index'
-import { Route as ApiUploadRouteImport } from './routes/api/upload'
-import { Route as AcceptInvitationInvitationIdRouteImport } from './routes/accept-invitation/$invitationId'
-import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
-import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
-import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
-import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
+import { Route as AuthLayoutRouteImport } from './routes/_auth/layout'
+import { Route as AppLayoutRouteImport } from './routes/app/layout'
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password'
-import { Route as AppAccountLayoutRouteImport } from './routes/app/account/layout'
+import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
+import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
+import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
+import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
+import { Route as AcceptInvitationInvitationIdRouteImport } from './routes/accept-invitation/$invitationId'
+import { Route as ApiUploadRouteImport } from './routes/api/upload'
+import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppOrgSlugLayoutRouteImport } from './routes/app/$orgSlug/layout'
-import { Route as AppCreateOrgIndexRouteImport } from './routes/app/create-org/index'
-import { Route as AppAccountIndexRouteImport } from './routes/app/account/index'
-import { Route as ApiGithubWebhooksRouteImport } from './routes/api/github/webhooks'
-import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
+import { Route as AppAccountLayoutRouteImport } from './routes/app/account/layout'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
+import { Route as ApiGithubSetupRouteImport } from './routes/api/github/setup'
+import { Route as ApiGithubWebhooksRouteImport } from './routes/api/github/webhooks'
 import { Route as AppOrgSlugOrgLayoutRouteImport } from './routes/app/$orgSlug/_org/layout'
-import { Route as AppAccountAuthenticationIndexRouteImport } from './routes/app/account/authentication/index'
+import { Route as AppAccountIndexRouteImport } from './routes/app/account/index'
+import { Route as AppCreateOrgIndexRouteImport } from './routes/app/create-org/index'
 import { Route as AppOrgSlugOrgIndexRouteImport } from './routes/app/$orgSlug/_org/index'
 import { Route as AppOrgSlugProjectsProjectSlugLayoutRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/layout'
-import { Route as AppOrgSlugProjectsProjectSlugIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/index'
-import { Route as AppOrgSlugOrgUsersIndexRouteImport } from './routes/app/$orgSlug/_org/users/index'
-import { Route as AppOrgSlugOrgSettingsIndexRouteImport } from './routes/app/$orgSlug/_org/settings/index'
+import { Route as AppAccountAuthenticationIndexRouteImport } from './routes/app/account/authentication/index'
 import { Route as AppOrgSlugOrgNewIndexRouteImport } from './routes/app/$orgSlug/_org/new/index'
-import { Route as AppOrgSlugProjectsProjectSlugTranslatorIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/translator/index'
-import { Route as AppOrgSlugProjectsProjectSlugSettingsIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/settings/index'
-import { Route as AppOrgSlugProjectsProjectSlugBranchesIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/branches/index'
-import { Route as AppOrgSlugProjectsProjectSlugApiKeysIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/api-keys/index'
-import { Route as AppOrgSlugProjectsProjectSlugBranchNameIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/$branchName/index'
-import { Route as ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRouteImport } from './routes/projects/$projectId/branches/$branchName/locales/{$locale}[.]json'
+import { Route as AppOrgSlugOrgSettingsIndexRouteImport } from './routes/app/$orgSlug/_org/settings/index'
+import { Route as AppOrgSlugOrgUsersIndexRouteImport } from './routes/app/$orgSlug/_org/users/index'
+import { Route as AppOrgSlugProjectsProjectSlugIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/index'
 import { Route as ApiProjectsProjectIdBranchesBranchNameManifestRouteImport } from './routes/api/projects/$projectId/branches/$branchName/manifest'
+import { Route as AppOrgSlugProjectsProjectSlugBranchNameIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/$branchName/index'
+import { Route as AppOrgSlugProjectsProjectSlugApiKeysIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/api-keys/index'
+import { Route as AppOrgSlugProjectsProjectSlugBranchesIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/branches/index'
+import { Route as AppOrgSlugProjectsProjectSlugSettingsIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/settings/index'
+import { Route as AppOrgSlugProjectsProjectSlugTranslatorIndexRouteImport } from './routes/app/$orgSlug/_projects/$projectSlug/translator/index'
+import { Route as ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRouteImport } from './routes/projects/$projectId/branches/$branchName/locales/{$locale}[.]json'
 
-const AppLayoutRoute = AppLayoutRouteImport.update({
-  id: '/app',
-  path: '/app',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthLayoutRoute = AuthLayoutRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AppLayoutRoute = AppLayoutRouteImport.update({
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppIndexRoute = AppIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppLayoutRoute,
-} as any)
-const ApiUploadRoute = ApiUploadRouteImport.update({
-  id: '/api/upload',
-  path: '/api/upload',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AcceptInvitationInvitationIdRoute =
-  AcceptInvitationInvitationIdRouteImport.update({
-    id: '/accept-invitation/$invitationId',
-    path: '/accept-invitation/$invitationId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
-  id: '/verify-email',
-  path: '/verify-email',
-  getParentRoute: () => AuthLayoutRoute,
-} as any)
-const AuthSignUpRoute = AuthSignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => AuthLayoutRoute,
-} as any)
-const AuthSignInRoute = AuthSignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => AuthLayoutRoute,
 } as any)
 const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
@@ -93,14 +67,35 @@ const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => AuthLayoutRoute,
 } as any)
-const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
+const AuthSignInRoute = AuthSignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
   getParentRoute: () => AuthLayoutRoute,
 } as any)
-const AppAccountLayoutRoute = AppAccountLayoutRouteImport.update({
-  id: '/account',
-  path: '/account',
+const AuthSignUpRoute = AuthSignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => AuthLayoutRoute,
+} as any)
+const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => AuthLayoutRoute,
+} as any)
+const AcceptInvitationInvitationIdRoute =
+  AcceptInvitationInvitationIdRouteImport.update({
+    id: '/accept-invitation/$invitationId',
+    path: '/accept-invitation/$invitationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiUploadRoute = ApiUploadRouteImport.update({
+  id: '/api/upload',
+  path: '/api/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => AppLayoutRoute,
 } as any)
 const AppOrgSlugLayoutRoute = AppOrgSlugLayoutRouteImport.update({
@@ -108,19 +103,14 @@ const AppOrgSlugLayoutRoute = AppOrgSlugLayoutRouteImport.update({
   path: '/$orgSlug',
   getParentRoute: () => AppLayoutRoute,
 } as any)
-const AppCreateOrgIndexRoute = AppCreateOrgIndexRouteImport.update({
-  id: '/create-org/',
-  path: '/create-org/',
+const AppAccountLayoutRoute = AppAccountLayoutRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AppLayoutRoute,
 } as any)
-const AppAccountIndexRoute = AppAccountIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppAccountLayoutRoute,
-} as any)
-const ApiGithubWebhooksRoute = ApiGithubWebhooksRouteImport.update({
-  id: '/api/github/webhooks',
-  path: '/api/github/webhooks',
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGithubSetupRoute = ApiGithubSetupRouteImport.update({
@@ -128,21 +118,25 @@ const ApiGithubSetupRoute = ApiGithubSetupRouteImport.update({
   path: '/api/github/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
+const ApiGithubWebhooksRoute = ApiGithubWebhooksRouteImport.update({
+  id: '/api/github/webhooks',
+  path: '/api/github/webhooks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppOrgSlugOrgLayoutRoute = AppOrgSlugOrgLayoutRouteImport.update({
   id: '/_org',
   getParentRoute: () => AppOrgSlugLayoutRoute,
 } as any)
-const AppAccountAuthenticationIndexRoute =
-  AppAccountAuthenticationIndexRouteImport.update({
-    id: '/authentication/',
-    path: '/authentication/',
-    getParentRoute: () => AppAccountLayoutRoute,
-  } as any)
+const AppAccountIndexRoute = AppAccountIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAccountLayoutRoute,
+} as any)
+const AppCreateOrgIndexRoute = AppCreateOrgIndexRouteImport.update({
+  id: '/create-org/',
+  path: '/create-org/',
+  getParentRoute: () => AppLayoutRoute,
+} as any)
 const AppOrgSlugOrgIndexRoute = AppOrgSlugOrgIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -154,15 +148,15 @@ const AppOrgSlugProjectsProjectSlugLayoutRoute =
     path: '/$projectSlug',
     getParentRoute: () => AppOrgSlugLayoutRoute,
   } as any)
-const AppOrgSlugProjectsProjectSlugIndexRoute =
-  AppOrgSlugProjectsProjectSlugIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
+const AppAccountAuthenticationIndexRoute =
+  AppAccountAuthenticationIndexRouteImport.update({
+    id: '/authentication/',
+    path: '/authentication/',
+    getParentRoute: () => AppAccountLayoutRoute,
   } as any)
-const AppOrgSlugOrgUsersIndexRoute = AppOrgSlugOrgUsersIndexRouteImport.update({
-  id: '/users/',
-  path: '/users/',
+const AppOrgSlugOrgNewIndexRoute = AppOrgSlugOrgNewIndexRouteImport.update({
+  id: '/new/',
+  path: '/new/',
   getParentRoute: () => AppOrgSlugOrgLayoutRoute,
 } as any)
 const AppOrgSlugOrgSettingsIndexRoute =
@@ -171,27 +165,27 @@ const AppOrgSlugOrgSettingsIndexRoute =
     path: '/settings/',
     getParentRoute: () => AppOrgSlugOrgLayoutRoute,
   } as any)
-const AppOrgSlugOrgNewIndexRoute = AppOrgSlugOrgNewIndexRouteImport.update({
-  id: '/new/',
-  path: '/new/',
+const AppOrgSlugOrgUsersIndexRoute = AppOrgSlugOrgUsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
   getParentRoute: () => AppOrgSlugOrgLayoutRoute,
 } as any)
-const AppOrgSlugProjectsProjectSlugTranslatorIndexRoute =
-  AppOrgSlugProjectsProjectSlugTranslatorIndexRouteImport.update({
-    id: '/translator/',
-    path: '/translator/',
+const AppOrgSlugProjectsProjectSlugIndexRoute =
+  AppOrgSlugProjectsProjectSlugIndexRouteImport.update({
+    id: '/',
+    path: '/',
     getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
   } as any)
-const AppOrgSlugProjectsProjectSlugSettingsIndexRoute =
-  AppOrgSlugProjectsProjectSlugSettingsIndexRouteImport.update({
-    id: '/settings/',
-    path: '/settings/',
-    getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
+const ApiProjectsProjectIdBranchesBranchNameManifestRoute =
+  ApiProjectsProjectIdBranchesBranchNameManifestRouteImport.update({
+    id: '/api/projects/$projectId/branches/$branchName/manifest',
+    path: '/api/projects/$projectId/branches/$branchName/manifest',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AppOrgSlugProjectsProjectSlugBranchesIndexRoute =
-  AppOrgSlugProjectsProjectSlugBranchesIndexRouteImport.update({
-    id: '/branches/',
-    path: '/branches/',
+const AppOrgSlugProjectsProjectSlugBranchNameIndexRoute =
+  AppOrgSlugProjectsProjectSlugBranchNameIndexRouteImport.update({
+    id: '/$branchName/',
+    path: '/$branchName/',
     getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
   } as any)
 const AppOrgSlugProjectsProjectSlugApiKeysIndexRoute =
@@ -200,10 +194,22 @@ const AppOrgSlugProjectsProjectSlugApiKeysIndexRoute =
     path: '/api-keys/',
     getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
   } as any)
-const AppOrgSlugProjectsProjectSlugBranchNameIndexRoute =
-  AppOrgSlugProjectsProjectSlugBranchNameIndexRouteImport.update({
-    id: '/$branchName/',
-    path: '/$branchName/',
+const AppOrgSlugProjectsProjectSlugBranchesIndexRoute =
+  AppOrgSlugProjectsProjectSlugBranchesIndexRouteImport.update({
+    id: '/branches/',
+    path: '/branches/',
+    getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
+  } as any)
+const AppOrgSlugProjectsProjectSlugSettingsIndexRoute =
+  AppOrgSlugProjectsProjectSlugSettingsIndexRouteImport.update({
+    id: '/settings/',
+    path: '/settings/',
+    getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
+  } as any)
+const AppOrgSlugProjectsProjectSlugTranslatorIndexRoute =
+  AppOrgSlugProjectsProjectSlugTranslatorIndexRouteImport.update({
+    id: '/translator/',
+    path: '/translator/',
     getParentRoute: () => AppOrgSlugProjectsProjectSlugLayoutRoute,
   } as any)
 const ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute =
@@ -214,12 +220,6 @@ const ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRoute
       getParentRoute: () => rootRouteImport,
     } as any,
   )
-const ApiProjectsProjectIdBranchesBranchNameManifestRoute =
-  ApiProjectsProjectIdBranchesBranchNameManifestRouteImport.update({
-    id: '/api/projects/$projectId/branches/$branchName/manifest',
-    path: '/api/projects/$projectId/branches/$branchName/manifest',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -434,11 +434,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppLayoutRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
@@ -448,53 +448,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/': {
-      id: '/app/'
-      path: '/'
-      fullPath: '/app/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppLayoutRoute
-    }
-    '/api/upload': {
-      id: '/api/upload'
-      path: '/api/upload'
-      fullPath: '/api/upload'
-      preLoaderRoute: typeof ApiUploadRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/accept-invitation/$invitationId': {
-      id: '/accept-invitation/$invitationId'
-      path: '/accept-invitation/$invitationId'
-      fullPath: '/accept-invitation/$invitationId'
-      preLoaderRoute: typeof AcceptInvitationInvitationIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_auth/verify-email': {
-      id: '/_auth/verify-email'
-      path: '/verify-email'
-      fullPath: '/verify-email'
-      preLoaderRoute: typeof AuthVerifyEmailRouteImport
-      parentRoute: typeof AuthLayoutRoute
-    }
-    '/_auth/sign-up': {
-      id: '/_auth/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof AuthSignUpRouteImport
-      parentRoute: typeof AuthLayoutRoute
-    }
-    '/_auth/sign-in': {
-      id: '/_auth/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof AuthSignInRouteImport
+    '/_auth/forgot-password': {
+      id: '/_auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof AuthLayoutRoute
     }
     '/_auth/reset-password': {
@@ -504,18 +469,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthResetPasswordRouteImport
       parentRoute: typeof AuthLayoutRoute
     }
-    '/_auth/forgot-password': {
-      id: '/_auth/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+    '/_auth/sign-in': {
+      id: '/_auth/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof AuthSignInRouteImport
       parentRoute: typeof AuthLayoutRoute
     }
-    '/app/account': {
-      id: '/app/account'
-      path: '/account'
-      fullPath: '/app/account'
-      preLoaderRoute: typeof AppAccountLayoutRouteImport
+    '/_auth/sign-up': {
+      id: '/_auth/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof AuthSignUpRouteImport
+      parentRoute: typeof AuthLayoutRoute
+    }
+    '/_auth/verify-email': {
+      id: '/_auth/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof AuthVerifyEmailRouteImport
+      parentRoute: typeof AuthLayoutRoute
+    }
+    '/accept-invitation/$invitationId': {
+      id: '/accept-invitation/$invitationId'
+      path: '/accept-invitation/$invitationId'
+      fullPath: '/accept-invitation/$invitationId'
+      preLoaderRoute: typeof AcceptInvitationInvitationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/upload': {
+      id: '/api/upload'
+      path: '/api/upload'
+      fullPath: '/api/upload'
+      preLoaderRoute: typeof ApiUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppLayoutRoute
     }
     '/app/$orgSlug': {
@@ -525,25 +518,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSlugLayoutRouteImport
       parentRoute: typeof AppLayoutRoute
     }
-    '/app/create-org/': {
-      id: '/app/create-org/'
-      path: '/create-org'
-      fullPath: '/app/create-org/'
-      preLoaderRoute: typeof AppCreateOrgIndexRouteImport
+    '/app/account': {
+      id: '/app/account'
+      path: '/account'
+      fullPath: '/app/account'
+      preLoaderRoute: typeof AppAccountLayoutRouteImport
       parentRoute: typeof AppLayoutRoute
     }
-    '/app/account/': {
-      id: '/app/account/'
-      path: '/'
-      fullPath: '/app/account/'
-      preLoaderRoute: typeof AppAccountIndexRouteImport
-      parentRoute: typeof AppAccountLayoutRoute
-    }
-    '/api/github/webhooks': {
-      id: '/api/github/webhooks'
-      path: '/api/github/webhooks'
-      fullPath: '/api/github/webhooks'
-      preLoaderRoute: typeof ApiGithubWebhooksRouteImport
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/github/setup': {
@@ -553,11 +539,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGithubSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
+    '/api/github/webhooks': {
+      id: '/api/github/webhooks'
+      path: '/api/github/webhooks'
+      fullPath: '/api/github/webhooks'
+      preLoaderRoute: typeof ApiGithubWebhooksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/$orgSlug/_org': {
@@ -567,12 +553,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSlugOrgLayoutRouteImport
       parentRoute: typeof AppOrgSlugLayoutRoute
     }
-    '/app/account/authentication/': {
-      id: '/app/account/authentication/'
-      path: '/authentication'
-      fullPath: '/app/account/authentication/'
-      preLoaderRoute: typeof AppAccountAuthenticationIndexRouteImport
+    '/app/account/': {
+      id: '/app/account/'
+      path: '/'
+      fullPath: '/app/account/'
+      preLoaderRoute: typeof AppAccountIndexRouteImport
       parentRoute: typeof AppAccountLayoutRoute
+    }
+    '/app/create-org/': {
+      id: '/app/create-org/'
+      path: '/create-org'
+      fullPath: '/app/create-org/'
+      preLoaderRoute: typeof AppCreateOrgIndexRouteImport
+      parentRoute: typeof AppLayoutRoute
     }
     '/app/$orgSlug/_org/': {
       id: '/app/$orgSlug/_org/'
@@ -588,18 +581,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRouteImport
       parentRoute: typeof AppOrgSlugLayoutRoute
     }
-    '/app/$orgSlug/_projects/$projectSlug/': {
-      id: '/app/$orgSlug/_projects/$projectSlug/'
-      path: '/'
-      fullPath: '/app/$orgSlug/$projectSlug/'
-      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugIndexRouteImport
-      parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
+    '/app/account/authentication/': {
+      id: '/app/account/authentication/'
+      path: '/authentication'
+      fullPath: '/app/account/authentication/'
+      preLoaderRoute: typeof AppAccountAuthenticationIndexRouteImport
+      parentRoute: typeof AppAccountLayoutRoute
     }
-    '/app/$orgSlug/_org/users/': {
-      id: '/app/$orgSlug/_org/users/'
-      path: '/users'
-      fullPath: '/app/$orgSlug/users/'
-      preLoaderRoute: typeof AppOrgSlugOrgUsersIndexRouteImport
+    '/app/$orgSlug/_org/new/': {
+      id: '/app/$orgSlug/_org/new/'
+      path: '/new'
+      fullPath: '/app/$orgSlug/new/'
+      preLoaderRoute: typeof AppOrgSlugOrgNewIndexRouteImport
       parentRoute: typeof AppOrgSlugOrgLayoutRoute
     }
     '/app/$orgSlug/_org/settings/': {
@@ -609,32 +602,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSlugOrgSettingsIndexRouteImport
       parentRoute: typeof AppOrgSlugOrgLayoutRoute
     }
-    '/app/$orgSlug/_org/new/': {
-      id: '/app/$orgSlug/_org/new/'
-      path: '/new'
-      fullPath: '/app/$orgSlug/new/'
-      preLoaderRoute: typeof AppOrgSlugOrgNewIndexRouteImport
+    '/app/$orgSlug/_org/users/': {
+      id: '/app/$orgSlug/_org/users/'
+      path: '/users'
+      fullPath: '/app/$orgSlug/users/'
+      preLoaderRoute: typeof AppOrgSlugOrgUsersIndexRouteImport
       parentRoute: typeof AppOrgSlugOrgLayoutRoute
     }
-    '/app/$orgSlug/_projects/$projectSlug/translator/': {
-      id: '/app/$orgSlug/_projects/$projectSlug/translator/'
-      path: '/translator'
-      fullPath: '/app/$orgSlug/$projectSlug/translator/'
-      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugTranslatorIndexRouteImport
+    '/app/$orgSlug/_projects/$projectSlug/': {
+      id: '/app/$orgSlug/_projects/$projectSlug/'
+      path: '/'
+      fullPath: '/app/$orgSlug/$projectSlug/'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugIndexRouteImport
       parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
     }
-    '/app/$orgSlug/_projects/$projectSlug/settings/': {
-      id: '/app/$orgSlug/_projects/$projectSlug/settings/'
-      path: '/settings'
-      fullPath: '/app/$orgSlug/$projectSlug/settings/'
-      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugSettingsIndexRouteImport
-      parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
+    '/api/projects/$projectId/branches/$branchName/manifest': {
+      id: '/api/projects/$projectId/branches/$branchName/manifest'
+      path: '/api/projects/$projectId/branches/$branchName/manifest'
+      fullPath: '/api/projects/$projectId/branches/$branchName/manifest'
+      preLoaderRoute: typeof ApiProjectsProjectIdBranchesBranchNameManifestRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/app/$orgSlug/_projects/$projectSlug/branches/': {
-      id: '/app/$orgSlug/_projects/$projectSlug/branches/'
-      path: '/branches'
-      fullPath: '/app/$orgSlug/$projectSlug/branches/'
-      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugBranchesIndexRouteImport
+    '/app/$orgSlug/_projects/$projectSlug/$branchName/': {
+      id: '/app/$orgSlug/_projects/$projectSlug/$branchName/'
+      path: '/$branchName'
+      fullPath: '/app/$orgSlug/$projectSlug/$branchName/'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugBranchNameIndexRouteImport
       parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
     }
     '/app/$orgSlug/_projects/$projectSlug/api-keys/': {
@@ -644,11 +637,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugApiKeysIndexRouteImport
       parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
     }
-    '/app/$orgSlug/_projects/$projectSlug/$branchName/': {
-      id: '/app/$orgSlug/_projects/$projectSlug/$branchName/'
-      path: '/$branchName'
-      fullPath: '/app/$orgSlug/$projectSlug/$branchName/'
-      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugBranchNameIndexRouteImport
+    '/app/$orgSlug/_projects/$projectSlug/branches/': {
+      id: '/app/$orgSlug/_projects/$projectSlug/branches/'
+      path: '/branches'
+      fullPath: '/app/$orgSlug/$projectSlug/branches/'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugBranchesIndexRouteImport
+      parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
+    }
+    '/app/$orgSlug/_projects/$projectSlug/settings/': {
+      id: '/app/$orgSlug/_projects/$projectSlug/settings/'
+      path: '/settings'
+      fullPath: '/app/$orgSlug/$projectSlug/settings/'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugSettingsIndexRouteImport
+      parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
+    }
+    '/app/$orgSlug/_projects/$projectSlug/translator/': {
+      id: '/app/$orgSlug/_projects/$projectSlug/translator/'
+      path: '/translator'
+      fullPath: '/app/$orgSlug/$projectSlug/translator/'
+      preLoaderRoute: typeof AppOrgSlugProjectsProjectSlugTranslatorIndexRouteImport
       parentRoute: typeof AppOrgSlugProjectsProjectSlugLayoutRoute
     }
     '/projects/$projectId/branches/$branchName/locales/{$locale}.json': {
@@ -656,13 +663,6 @@ declare module '@tanstack/react-router' {
       path: '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
       fullPath: '/projects/$projectId/branches/$branchName/locales/{$locale}.json'
       preLoaderRoute: typeof ProjectsProjectIdBranchesBranchNameLocalesChar123localeChar125DotjsonRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/projects/$projectId/branches/$branchName/manifest': {
-      id: '/api/projects/$projectId/branches/$branchName/manifest'
-      path: '/api/projects/$projectId/branches/$branchName/manifest'
-      fullPath: '/api/projects/$projectId/branches/$branchName/manifest'
-      preLoaderRoute: typeof ApiProjectsProjectIdBranchesBranchNameManifestRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

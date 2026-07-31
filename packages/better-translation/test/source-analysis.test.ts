@@ -245,7 +245,7 @@ describe("TypeScript and JSX components", () => {
     expect(analysis.messages[0]?.placeholders).toEqual([])
   })
 
-  test("encodes source-owned React components as rich-text elements", () => {
+  test("encodes source-owned React components as Rich-text slots", () => {
     const analysis = analyzeTypeScriptSourceFile(
       `const content = <T>Stay <B tone="important">safe with <Text.Italic>care</Text.Italic></B>.</T>`,
       "components.tsx",
@@ -869,7 +869,7 @@ describe("source-analysis regressions", () => {
 })
 
 describe("rich-text extraction", () => {
-  test("extracts static intrinsic JSX elements as numbered rich-text tags", () => {
+  test("extracts static intrinsic JSX elements as numbered Rich-text slots", () => {
     const analysis = analyzeTypeScriptSourceFile(
       `
         const content = (
@@ -895,7 +895,7 @@ describe("rich-text extraction", () => {
     expect(analysis.edits.some((edit) => edit.replacement.includes('message={"Always make sure <0>'))).toBe(true)
   })
 
-  test("extracts Var placeholders nested inside rich-text elements", () => {
+  test("extracts Variable placeholders nested inside Rich-text slots", () => {
     const analysis = analyzeTypeScriptSourceFile(
       `const content = <T>Delete <strong><Var name={event.name} /></strong></T>`,
       "example.tsx",

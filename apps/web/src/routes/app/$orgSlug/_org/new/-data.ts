@@ -23,7 +23,7 @@ const defaultTranslationPrompt = "Translate the provided UI messages as concise,
 
 export const createProjectFn = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       projectInsertSchema
         .pick({
@@ -80,7 +80,7 @@ export const createProjectFn = createServerFn({ method: "POST" })
 
 export const createProjectFromGitHubRepositoryFn = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       z.object({
         defaultBranchName: z.string().trim().min(1).max(100),
@@ -148,7 +148,7 @@ export const createProjectFromGitHubRepositoryFn = createServerFn({ method: "POS
 
 export const suggestProjectSlugFn = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
-  .inputValidator(parseZod(z.object({ baseSlug: projectInsertSchema.shape.slug })))
+  .validator(parseZod(z.object({ baseSlug: projectInsertSchema.shape.slug })))
   .handler(async ({ context, data }) => {
     const projects = await db.query.projectsTable.findMany({
       columns: { slug: true },
@@ -177,7 +177,7 @@ export const getNewProjectGitHubSetupFn = createServerFn({ method: "GET" })
 
 export const listNewProjectGitHubRepositoriesFn = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       z.object({
         installationId: z.string().trim().min(1),
@@ -204,7 +204,7 @@ export const listNewProjectGitHubRepositoriesFn = createServerFn({ method: "GET"
 
 export const listNewProjectGitHubBranchesFn = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
-  .inputValidator(
+  .validator(
     parseZod(
       z.object({
         installationId: z.string().trim().min(1),

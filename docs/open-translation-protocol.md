@@ -95,7 +95,7 @@ Useful Manifest fields:
 - lookup id
 - Default locale message
 - description or context
-- placeholders
+- Variable placeholders
 - source file path
 - marker kind
 - marker name

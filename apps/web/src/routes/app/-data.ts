@@ -23,7 +23,7 @@ export const listUserOrganizationsFn = createServerFn({ method: "GET" })
 
 export const setSelectedOrganizationFn = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .inputValidator(parseZod(z.object({ organizationId: z.string().trim().min(1) })))
+  .validator(parseZod(z.object({ organizationId: z.string().trim().min(1) })))
   .handler(async ({ context, data }) => {
     const organizations = await listUserOrganizations({ id: context.user.id })
     if (!organizations.some((organization) => organization.id === data.organizationId)) throw redirect({ to: "/app" })

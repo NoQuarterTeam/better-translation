@@ -45,7 +45,7 @@ export const getLocale = createServerFn({ method: "GET" }).handler(() => {
 })
 
 export const setLocale = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ locale: z.string() }))
+  .validator(z.object({ locale: z.string() }))
   .handler(({ data }) => {
     setCookie(LOCALE_COOKIE, resolveLocale(data.locale), {
       httpOnly: true,
