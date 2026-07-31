@@ -1,5 +1,13 @@
 # better-translation
 
+## 0.6.5
+
+### Patch Changes
+
+- [`9c3ea16`](https://github.com/NoQuarterTeam/better-translation/commit/9c3ea16d1d65c2280fe87e98cd6186639eeaec8b) Thanks [@JClackett](https://github.com/JClackett)! - Show rich-text Message previews without editor annotations
+
+- [`0f328eb`](https://github.com/NoQuarterTeam/better-translation/commit/0f328ebeae0b6d5b641fa518f3b225e6a3d258c8) Thanks [@JClackett](https://github.com/JClackett)! - Distinguish Variable placeholders from Rich-text slots across the editor, diagnostics, and documentation.
+
 ## 0.6.4
 
 ### Patch Changes
