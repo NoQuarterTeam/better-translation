@@ -53,7 +53,7 @@
     "lucide-react": "catalog:",
     "nitro": "catalog:",
     "pg": "8.22.0",
-    "posthog-js": "1.412.0",
+    "posthog-js": "1.413.2",
     "posthog-node": "5.47.11",
     "react": "catalog:",
     "react-dom": "catalog:",
