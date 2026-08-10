@@ -1,5 +1,4 @@
 {
-  "m_12uub37": "Un pequeño ejemplo de las API de runtime de Better Translation.",
   "m_182dx5h": "API usadas en esta página",
   "m_1gxf1d5": "Selecciona un Locale",
   "m_1lxxwvs": "Contenido visible traducido",
@@ -8,7 +7,6 @@
   "m_1qmov4l": "Atributos y otros textos",
   "m_1xpqs5m": "El código fuente sigue siendo legible y el plugin de Vite descubre cada mensaje.",
   "m_fkcc5u": "Tienes {count} mensajes listos.",
-  "m_kae6vw": "Ejemplo de SvelteKit",
   "m_smd3wv": "Valores de runtime dentro de los mensajes",
   "m_xddk8j": "Buscar mensajes",
   "m_xkiivk": "Locale actual",
