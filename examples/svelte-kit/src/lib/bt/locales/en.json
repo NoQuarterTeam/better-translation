@@ -1,15 +1,7 @@
 {
-  "m_182dx5h": "APIs used on this page",
   "m_1gxf1d5": "Select locale",
-  "m_1lxxwvs": "Visible translated content",
   "m_1nd831t": "Good afternoon, {name}.",
   "m_1pfta5z": "Locale",
-  "m_1qmov4l": "Attributes and other strings",
-  "m_1xpqs5m": "The source stays readable and the Vite plugin discovers each Message.",
   "m_fkcc5u": "You have {count} Messages ready.",
-  "m_smd3wv": "Runtime values inside Messages",
-  "m_xddk8j": "Search Messages",
-  "m_xkiivk": "Current Locale",
-  "m_y7zsa": "Edit this page, switch Locale, and watch the Runtime bundle update.",
-  "m_z16ijz": "Live preview"
+  "m_xddk8j": "Search Messages"
 }

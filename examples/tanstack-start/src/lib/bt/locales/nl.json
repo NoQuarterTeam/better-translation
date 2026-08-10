@@ -1,15 +1,7 @@
 {
-  "m_182dx5h": "API's die op deze pagina worden gebruikt",
   "m_1gxf1d5": "Selecteer een locale",
-  "m_1lxxwvs": "Zichtbare vertaalde inhoud",
   "m_1nd831t": "Goedemiddag, {name}.",
   "m_1pfta5z": "Landinstelling",
-  "m_1qmov4l": "Attributen en andere teksten",
-  "m_1xpqs5m": "De broncode blijft leesbaar en de Vite-plug-in ontdekt elk bericht.",
   "m_fkcc5u": "Je hebt {count} berichten klaarstaan.",
-  "m_smd3wv": "Runtimewaarden in berichten",
-  "m_xddk8j": "Berichten zoeken",
-  "m_xkiivk": "Huidige locale",
-  "m_y7zsa": "Bewerk deze pagina, wissel van locale en zie hoe de runtime-bundel wordt bijgewerkt.",
-  "m_z16ijz": "Livevoorbeeld"
+  "m_xddk8j": "Berichten zoeken"
 }
