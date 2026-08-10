@@ -1,0 +1,28 @@
+{
+  "name": "@better-translation/promo-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts BetterTranslationDemo out/better-translation-vite-plugin-demo.mp4 --codec h264 --crf 18 --overwrite",
+    "render:teasers": "bun run render:teaser:landscape && bun run render:teaser:square && bun run render:teaser:vertical",
+    "render:teaser:landscape": "remotion render src/index.ts BetterTranslationTeaserLandscape out/better-translation-teaser-landscape.mp4 --codec h264 --crf 18 --overwrite",
+    "render:teaser:square": "remotion render src/index.ts BetterTranslationTeaserSquare out/better-translation-teaser-square.mp4 --codec h264 --crf 18 --overwrite",
+    "render:teaser:vertical": "remotion render src/index.ts BetterTranslationTeaserVertical out/better-translation-teaser-vertical.mp4 --codec h264 --crf 18 --overwrite",
+    "still": "remotion still src/index.ts BetterTranslationDemo out/better-translation-vite-plugin-cover.png --frame 1140 --overwrite",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "remotion": "4.0.507"
+  },
+  "devDependencies": {
+    "@better-translation/tsconfig": "workspace:*",
+    "@remotion/cli": "4.0.507",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "catalog:"
+  }
+}

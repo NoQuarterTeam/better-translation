@@ -8,6 +8,7 @@ import {
   GitPullRequestIcon,
   LanguagesIcon,
   PackageIcon,
+  PlayIcon,
   ScanIcon,
   SparklesIcon,
   ZapIcon,
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/")({
   head: () => {
     const title = "Better Translation · Local-first i18n for Vite apps"
     const description =
-      "Mark copy in React or Svelte and generate flat Locale value JSON during development. Bring your own AI translator or edit locally; no account required."
+      "Mark copy in React or Svelte and generate flat Locale value JSON during development. Edit ordinary JSON or bring your own AI translator; no account required."
 
     return {
       meta: [
@@ -38,9 +39,11 @@ export const Route = createFileRoute("/")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: "https://www.better-translation.dev" },
+        { property: "og:image", content: "https://www.better-translation.dev/better-translation-demo-poster.webp" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
+        { name: "twitter:image", content: "https://www.better-translation.dev/better-translation-demo-poster.webp" },
       ],
       links: [{ rel: "canonical", href: "https://www.better-translation.dev" }],
     }
@@ -52,6 +55,7 @@ function HomePage() {
     <main className="min-h-dvh bg-background">
       <LandingHeader />
       <Hero />
+      <DemoSection />
       <LogoStrip />
       <QuickStart />
       <Workflow />
@@ -121,7 +125,7 @@ function Hero() {
           <p className="mt-6 text-lg leading-8 text-balance text-muted-foreground">
             <T>
               Mark copy where you author it. The Vite plugin discovers Messages, generates flat Locale value JSON, and keeps React
-              and Svelte apps in sync. Bring your own AI translator or edit locally, with no account required.
+              and Svelte apps in sync. Edit ordinary JSON or bring your own AI translator, with no account required.
             </T>
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -145,6 +149,42 @@ function Hero() {
         </div>
 
         <HeroVisual />
+      </div>
+    </section>
+  )
+}
+
+function DemoSection() {
+  return (
+    <section id="demo" className="scroll-mt-16 border-b bg-muted/20">
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+        <SectionHeading
+          eyebrow={
+            <span className="inline-flex items-center gap-1.5">
+              <PlayIcon className="size-4" />
+              <T>See it in action</T>
+            </span>
+          }
+          title={<T>The local workflow, end to end</T>}
+          description={
+            <T>
+              Mark UI copy, let the Vite plugin discover it, then edit a flat Locale JSON file and see the translated app update
+              during development. Add AI translation only when it helps.
+            </T>
+          }
+        />
+        <div className="mt-12 overflow-hidden rounded-xl border bg-card shadow-sm">
+          <video
+            className="block aspect-video w-full bg-black"
+            controls
+            playsInline
+            preload="metadata"
+            poster="/better-translation-demo-poster.webp"
+            aria-label="Better Translation Vite plugin workflow demo"
+          >
+            <source src="/better-translation-demo.mp4" type="video/mp4" />
+          </video>
+        </div>
       </div>
     </section>
   )
@@ -225,7 +265,7 @@ function QuickStart() {
     <section className="border-b">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-center">
-          <div>
+          <div className="min-w-0">
             <Badge variant="outline" className="mb-5 gap-1.5">
               <PackageIcon />
               <T>Local-first setup</T>
@@ -236,12 +276,12 @@ function QuickStart() {
             <p className="mt-5 text-lg leading-8 text-muted-foreground">
               <T>
                 List your Locales and the plugin generates flat Runtime bundles in your app. Commit them with your code, fill
-                missing values with your own translator, or edit them in the local browser editor.
+                missing Locale values with your own translator, or edit the JSON directly.
               </T>
             </p>
           </div>
 
-          <div className="rounded-xl border bg-card shadow-sm">
+          <div className="min-w-0 rounded-xl border bg-card shadow-sm">
             <div className="flex items-center gap-2 border-b px-4 py-3">
               <span className="size-2.5 rounded-full bg-muted-foreground/30" />
               <span className="size-2.5 rounded-full bg-muted-foreground/30" />
@@ -315,7 +355,7 @@ function Workflow() {
             step="03"
             icon={<SparklesIcon />}
             title={<T>Fill</T>}
-            text={<T>Write Locale values locally, edit them in the browser, or fill missing values with your own translator.</T>}
+            text={<T>Edit flat Locale JSON directly or fill missing Locale values with your own translator.</T>}
           />
           <WorkflowStep
             step="04"

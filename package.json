@@ -74,6 +74,9 @@
     "test:types": "bun --filter better-translation test:types",
     "check": "vp check",
     "check:publish": "bun run build:packages && vp check packages/better-translation",
+    "video:preview": "bun --cwd apps/promo-video dev",
+    "video:render": "bun --cwd apps/promo-video render",
+    "video:render:teasers": "bun --cwd apps/promo-video render:teasers",
     "version-packages": "changeset version && bun install",
     "release": "bun run build:packages && changeset publish"
   },

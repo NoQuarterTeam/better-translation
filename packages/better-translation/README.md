@@ -2,7 +2,7 @@
 
 Local-first internationalization for Vite apps.
 
-Mark copy where you author it in React or Svelte. The Better Translation Vite plugin discovers Messages, generates flat Locale value JSON, and creates the runtime loader your app uses to render them. Add your own AI translator or edit Locale values locally; no account or hosted runtime is required.
+Mark copy where you author it in React or Svelte. The Better Translation Vite plugin discovers Messages, generates flat Locale value JSON, and creates the runtime loader your app uses to render them. Edit the JSON directly or add your own AI translator; no account or hosted runtime is required.
 
 ```tsx
 import { T, useT } from "better-translation/react"
@@ -17,6 +17,12 @@ export function CheckoutButton() {
   )
 }
 ```
+
+## See it in action
+
+[![Better Translation Vite plugin demo](https://www.better-translation.dev/better-translation-demo-poster.webp)](https://www.better-translation.dev/#demo)
+
+Watch the end-to-end local workflow: mark UI copy, discover Messages with Vite, edit a Locale JSON file, and see the translated app update during development.
 
 ## Why Better Translation
 
