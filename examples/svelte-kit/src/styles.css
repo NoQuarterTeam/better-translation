@@ -20,7 +20,7 @@ select {
 
 .starter-shell {
   display: grid;
-  width: min(100% - 2rem, 64rem);
+  width: min(100% - 2rem, 56rem);
   height: 100dvh;
   margin-inline: auto;
   grid-template-rows: auto 1fr;
@@ -52,8 +52,11 @@ select {
   border-radius: 0.55rem;
   color: white;
   background: #286044;
-  font-family: Georgia, serif;
-  font-weight: 700;
+}
+
+.starter-mark svg {
+  width: 1.05rem;
+  height: 1.05rem;
 }
 
 .locale-control {
@@ -64,7 +67,7 @@ select {
 }
 
 .locale-control select,
-.starter-content input {
+.starter-preview input {
   height: 2rem;
   border: 1px solid #d8ddd9;
   border-radius: 0.5rem;
@@ -75,19 +78,24 @@ select {
 }
 
 .locale-control select:focus,
-.starter-content input:focus {
+.starter-preview input:focus {
   border-color: #73917f;
   box-shadow: 0 0 0 3px rgb(40 96 68 / 12%);
 }
 
 .starter-content {
-  display: flex;
-  width: min(100%, 34rem);
-  align-items: flex-start;
+  display: grid;
+  width: 100%;
+  min-height: 0;
+  align-items: center;
   justify-content: center;
-  justify-self: center;
-  flex-direction: column;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 7vw, 4.5rem);
   padding-bottom: 4.5rem;
+}
+
+.starter-preview {
+  min-width: 0;
 }
 
 .framework-badge {
@@ -99,7 +107,7 @@ select {
   font-weight: 600;
 }
 
-.starter-content h1 {
+.starter-preview h1 {
   margin: 1.25rem 0 0;
   font-size: clamp(3rem, 7vw, 5rem);
   font-weight: 650;
@@ -107,22 +115,56 @@ select {
   line-height: 0.98;
 }
 
-.starter-content p {
+.starter-preview p {
   margin: 1rem 0 1.5rem;
   color: #68716b;
   font-size: 1rem;
 }
 
-.starter-content input {
+.starter-preview input {
   width: min(100%, 22rem);
+}
+
+.code-panel {
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 0.75rem;
+  color: #dce8df;
+  background: #18211c;
+  box-shadow: 0 1.5rem 4rem rgb(18 32 24 / 14%);
+}
+
+.code-header {
+  border-bottom: 1px solid rgb(255 255 255 / 8%);
+  padding: 0.7rem 0.9rem;
+  color: #89978f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.68rem;
+}
+
+.code-panel pre {
+  overflow: auto;
+  margin: 0;
+  padding: 1.1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
 }
 
 @media (max-width: 560px) {
   .starter-shell {
-    width: min(100% - 1.25rem, 64rem);
+    width: min(100% - 1.25rem, 56rem);
+    height: auto;
+    min-height: 100dvh;
   }
 
   .locale-control > span {
     display: none;
+  }
+
+  .starter-content {
+    grid-template-columns: 1fr;
+    padding-block: 3rem;
   }
 }
