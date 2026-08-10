@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.6.7
+
+### Patch Changes
+
+- [`3261373`](https://github.com/NoQuarterTeam/better-translation/commit/3261373debb159b6a25feab01050a9830e67cd78) Thanks [@JClackett](https://github.com/JClackett)! - Link the package README to the end-to-end Vite plugin demo.
+
 ## 0.6.6
 
 ### Patch Changes
