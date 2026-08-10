@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.6.6
+
+### Patch Changes
+
+- [`c92d1d2`](https://github.com/NoQuarterTeam/better-translation/commit/c92d1d27062a47f6d00863f6ee53a6032a823726) Thanks [@JClackett](https://github.com/JClackett)! - Improve npm discoverability with searchable package metadata, a focused README, and bundled license information.
+
 ## 0.6.5
 
 ### Patch Changes
