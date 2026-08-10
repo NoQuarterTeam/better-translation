@@ -73,14 +73,3 @@ jobs:
             --current ../performance-current.json \
             | tee ../performance-comparison.md
           cat ../performance-comparison.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload benchmark reports
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: compiler-performance-${{ github.sha }}
-          retention-days: 90
-          path: |
-            performance-base.json
-            performance-current.json
-            performance-comparison.md
