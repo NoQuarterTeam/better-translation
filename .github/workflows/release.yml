@@ -41,7 +41,7 @@ jobs:
   canary:
     needs: changes
     if: ${{ needs.changes.outputs.package == 'true' }}
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
@@ -107,7 +107,7 @@ jobs:
         run: npm publish -w better-translation --tag canary --access public --provenance
 
   stable:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write
