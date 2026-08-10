@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.6.8
+
+### Patch Changes
+
+- [`4313595`](https://github.com/NoQuarterTeam/better-translation/commit/4313595046161dba304dbd29bc89d7a6e73f618a) Thanks [@JClackett](https://github.com/JClackett)! - Emit the hot Locale values runtime module used by the packaged Svelte provider.
+
 ## 0.6.7
 
 ### Patch Changes

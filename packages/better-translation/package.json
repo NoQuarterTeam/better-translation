@@ -1,6 +1,6 @@
 {
   "name": "better-translation",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "description": "Local-first Vite i18n plugin for React and Svelte that turns source copy into flat Locale value JSON, with optional AI translation.",
   "keywords": [
     "ai-translation",
