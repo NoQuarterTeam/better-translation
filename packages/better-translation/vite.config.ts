@@ -11,6 +11,7 @@ export default {
       vite: "src/vite.ts",
       react: "src/react.tsx",
       runtime: "src/runtime.ts",
+      "runtime/hot-locale-values": "src/runtime/hot-locale-values.ts",
       svelte: "src/svelte.ts",
       "svelte-runtime": "src/svelte/runtime.ts",
       ai: "src/ai.ts",
@@ -28,6 +29,9 @@ export default {
       { from: "src/svelte/Var.svelte.d.ts", to: "dist/svelte" },
     ],
     format: ["esm"],
+    outputOptions: {
+      entryFileNames: (chunk) => (chunk.name === "runtime/hot-locale-values" ? "[name].js" : "[name].mjs"),
+    },
     sourcemap: true,
     target: "node24",
   },
