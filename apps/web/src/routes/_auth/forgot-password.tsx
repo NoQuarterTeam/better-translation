@@ -29,9 +29,12 @@ function ForgotPasswordPage() {
     defaultValues: {
       email: "",
     },
-    validators: {
-      onSubmit: z.object({ email: z.email().min(3) }),
-    },
+    validators: [
+      {
+        run: z.object({ email: z.email().min(3) }),
+        triggers: [],
+      },
+    ],
     onSubmit: async ({ value }) => {
       setApiError(null)
       await authClient.requestPasswordReset(
@@ -83,11 +86,11 @@ function ForgotPasswordPage() {
                 void form.handleSubmit()
               }}
             >
-              <form.AppField name="email">
+              <form.Field name="email">
                 {(field) => (
                   <field.TextField label={t("Email")} type="email" autoComplete="email" placeholder="you@example.com" />
                 )}
-              </form.AppField>
+              </form.Field>
 
               <form.SubmitButton>
                 {(isSubmitting) => (isSubmitting ? <T>Sending link…</T> : <T>Send reset link</T>)}

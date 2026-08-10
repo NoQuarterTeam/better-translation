@@ -200,18 +200,21 @@ function InviteUsersDialog() {
     defaultValues: {
       invites: [{ email: "", role: "viewer" as ManageableOrganizationRole }],
     },
-    validators: {
-      onSubmit: ({ value }) => {
-        if (value.invites.length === 0) return t("Add at least one invite")
+    validators: [
+      {
+        run: ({ value }) => {
+          if (value.invites.length === 0) return t("Add at least one invite")
 
-        for (const invite of value.invites) {
-          const parsedEmail = z.email().trim().toLowerCase().safeParse(invite.email)
-          if (!parsedEmail.success) return t("Each invite must have a valid email")
-        }
+          for (const invite of value.invites) {
+            const parsedEmail = z.email().trim().toLowerCase().safeParse(invite.email)
+            if (!parsedEmail.success) return t("Each invite must have a valid email")
+          }
 
-        return undefined
+          return undefined
+        },
+        triggers: [],
       },
-    },
+    ],
     onSubmit: ({ value }) => {
       inviteMembers.mutate({
         data: {
@@ -249,17 +252,17 @@ function InviteUsersDialog() {
               void form.handleSubmit()
             }}
           >
-            <form.AppField name="invites">
-              {(field) => (
+            <form.ArrayField name="invites">
+              {(array) => (
                 <div className="space-y-3">
-                  {field.state.value.map((_, index) => (
+                  {array.value.map((_, index) => (
                     <div key={index} className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center">
                       <form.Field name={`invites[${index}].email`}>
                         {(emailField) => (
                           <Input
                             type="email"
                             placeholder="person@company.com"
-                            value={emailField.state.value}
+                            value={emailField.value}
                             onBlur={emailField.handleBlur}
                             onChange={(event) => emailField.handleChange(event.target.value)}
                             className="min-w-0 flex-1"
@@ -270,7 +273,7 @@ function InviteUsersDialog() {
                       <form.Field name={`invites[${index}].role`}>
                         {(roleField) => (
                           <Select
-                            value={roleField.state.value}
+                            value={roleField.value}
                             onValueChange={(value) => roleField.handleChange(value as ManageableOrganizationRole)}
                             items={MANAGEABLE_ORGANIZATION_ROLE_OPTIONS}
                           >
@@ -295,8 +298,8 @@ function InviteUsersDialog() {
                         variant="ghost"
                         size="icon"
                         className="shrink-0"
-                        disabled={field.state.value.length === 1}
-                        onClick={() => field.removeValue(index)}
+                        disabled={array.value.length === 1}
+                        onClick={() => array.removeValue(index)}
                       >
                         <Trash2Icon />
                       </Button>
@@ -304,15 +307,15 @@ function InviteUsersDialog() {
                   ))}
 
                   <div className="flex items-center justify-between gap-2">
-                    <Button type="button" variant="outline" onClick={() => field.pushValue({ email: "", role: "viewer" })}>
+                    <Button type="button" variant="outline" onClick={() => array.pushValue({ email: "", role: "viewer" })}>
                       <PlusIcon />
                       <T>Add another</T>
                     </Button>
-                    <form.FormError>{field.state.meta.errors[0] as string | undefined}</form.FormError>
+                    <form.FormError>{array.errors[0]?.message}</form.FormError>
                   </div>
                 </div>
               )}
-            </form.AppField>
+            </form.ArrayField>
 
             <DialogFooter showCloseButton>
               <form.SubmitButton disabled={inviteMembers.isPending}>

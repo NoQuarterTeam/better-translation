@@ -37,12 +37,15 @@ function SignInPage() {
       email: "",
       password: "",
     },
-    validators: {
-      onSubmit: z.object({
-        email: z.email({ message: t("Email is required") }).min(3),
-        password: z.string().min(8, { error: t("Password must be at least 8 characters long") }),
-      }),
-    },
+    validators: [
+      {
+        run: z.object({
+          email: z.email({ message: t("Email is required") }).min(3),
+          password: z.string().min(8, { error: t("Password must be at least 8 characters long") }),
+        }),
+        triggers: [],
+      },
+    ],
     onSubmit: async ({ value }) => {
       setApiError(null)
       await authClient.signIn.email(
@@ -91,15 +94,15 @@ function SignInPage() {
               void form.handleSubmit()
             }}
           >
-            <form.AppField name="email">
+            <form.Field name="email">
               {(field) => <field.TextField label={t("Email")} type="email" autoComplete="email" placeholder="you@example.com" />}
-            </form.AppField>
+            </form.Field>
 
-            <form.AppField name="password">
+            <form.Field name="password">
               {(field) => (
                 <field.TextField label={t("Password")} type="password" autoComplete="current-password" placeholder="••••••••" />
               )}
-            </form.AppField>
+            </form.Field>
 
             <form.SubmitButton className="w-full">
               {(isSubmitting) => (isSubmitting ? <T>Signing in…</T> : <T>Sign in</T>)}

@@ -152,16 +152,19 @@ function ProjectSettingsPage() {
 
   const profileForm = useAppForm({
     defaultValues: { name: project.name, slug: project.slug },
-    validators: {
-      onSubmit: z.object({
-        name: z
-          .string()
-          .trim()
-          .min(1, { error: t("Project name is required") })
-          .max(120),
-        slug: z.string().trim(),
-      }),
-    },
+    validators: [
+      {
+        run: z.object({
+          name: z
+            .string()
+            .trim()
+            .min(1, { error: t("Project name is required") })
+            .max(120),
+          slug: z.string().trim(),
+        }),
+        triggers: [],
+      },
+    ],
     onSubmit: ({ value }) => {
       updateProfileMutation.mutate({ data: { orgSlug, projectSlug, name: value.name.trim(), slug: value.slug.trim() } })
     },
@@ -196,7 +199,7 @@ function ProjectSettingsPage() {
                 void profileForm.handleSubmit()
               }}
             >
-              <profileForm.AppField name="name">
+              <profileForm.Field name="name">
                 {(field) => (
                   <field.TextField
                     label={t("Project name")}
@@ -210,8 +213,8 @@ function ProjectSettingsPage() {
                     }}
                   />
                 )}
-              </profileForm.AppField>
-              <profileForm.AppField name="slug">
+              </profileForm.Field>
+              <profileForm.Field name="slug">
                 {(field) => (
                   <field.TextField
                     label={t("URL slug")}
@@ -223,7 +226,7 @@ function ProjectSettingsPage() {
                     }}
                   />
                 )}
-              </profileForm.AppField>
+              </profileForm.Field>
               <profileForm.SubmitButton className="w-fit">
                 {(isSubmitting) => (isSubmitting || updateProfileMutation.isPending ? <T>Saving...</T> : <T>Save</T>)}
               </profileForm.SubmitButton>

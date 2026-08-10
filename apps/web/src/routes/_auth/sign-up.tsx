@@ -39,23 +39,26 @@ function SignUpPage() {
       password: "",
       confirmPassword: "",
     },
-    validators: {
-      onSubmit: z
-        .object({
-          email: z.email().trim().toLowerCase(),
-          name: z
-            .string()
-            .trim()
-            .min(1, { error: t("Name is required") }),
-          password: z.string().min(MIN_PASSWORD),
-          confirmPassword: z.string().min(1, { error: t("Confirm password is required") }),
-        })
-        .superRefine((data, ctx) => {
-          if (data.password !== data.confirmPassword) {
-            ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: t("Passwords do not match") })
-          }
-        }),
-    },
+    validators: [
+      {
+        run: z
+          .object({
+            email: z.email().trim().toLowerCase(),
+            name: z
+              .string()
+              .trim()
+              .min(1, { error: t("Name is required") }),
+            password: z.string().min(MIN_PASSWORD),
+            confirmPassword: z.string().min(1, { error: t("Confirm password is required") }),
+          })
+          .superRefine((data, ctx) => {
+            if (data.password !== data.confirmPassword) {
+              ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: t("Passwords do not match") })
+            }
+          }),
+        triggers: [],
+      },
+    ],
     onSubmit: async ({ value }) => {
       setApiError(null)
       await authClient.signUp.email(
@@ -105,15 +108,15 @@ function SignUpPage() {
               void form.handleSubmit()
             }}
           >
-            <form.AppField name="email">
+            <form.Field name="email">
               {(field) => <field.TextField label={t("Email")} type="email" autoComplete="email" placeholder="you@example.com" />}
-            </form.AppField>
+            </form.Field>
 
-            <form.AppField name="name">
+            <form.Field name="name">
               {(field) => <field.TextField label={t("Name")} autoComplete="name" placeholder="Jane Doe" />}
-            </form.AppField>
+            </form.Field>
 
-            <form.AppField name="password">
+            <form.Field name="password">
               {(field) => (
                 <field.TextField
                   label={t("Password")}
@@ -123,9 +126,9 @@ function SignUpPage() {
                   description={t("At least 8 characters")}
                 />
               )}
-            </form.AppField>
+            </form.Field>
 
-            <form.AppField name="confirmPassword">
+            <form.Field name="confirmPassword">
               {(field) => (
                 <field.TextField
                   label={t("Confirm password")}
@@ -134,7 +137,7 @@ function SignUpPage() {
                   placeholder="••••••••"
                 />
               )}
-            </form.AppField>
+            </form.Field>
 
             <form.SubmitButton className="w-full">
               {(isSubmitting) => (isSubmitting ? <T>Creating account…</T> : <T>Create account</T>)}

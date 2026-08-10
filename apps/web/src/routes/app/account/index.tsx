@@ -83,14 +83,17 @@ function ProfilePage() {
     defaultValues: {
       name: user?.name ?? "",
     },
-    validators: {
-      onSubmit: z.object({
-        name: z
-          .string()
-          .trim()
-          .min(1, { error: t("Name is required") }),
-      }),
-    },
+    validators: [
+      {
+        run: z.object({
+          name: z
+            .string()
+            .trim()
+            .min(1, { error: t("Name is required") }),
+        }),
+        triggers: [],
+      },
+    ],
     onSubmit: ({ value }) => {
       updateProfile.mutate({ data: { name: value.name } })
     },
@@ -126,9 +129,9 @@ function ProfilePage() {
               }}
             >
               <FieldGroup>
-                <form.AppField name="name">
+                <form.Field name="name">
                   {(field) => <field.TextField label={t("Name")} placeholder="Jane Smith" autoComplete="name" />}
-                </form.AppField>
+                </form.Field>
                 <Field>
                   <FieldLabel>
                     <T>Profile image</T>

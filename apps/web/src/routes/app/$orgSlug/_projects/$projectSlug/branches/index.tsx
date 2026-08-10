@@ -182,16 +182,19 @@ function CreateProductionBranchDialog() {
 
   const form = useAppForm({
     defaultValues: { name: "main" },
-    validators: {
-      onSubmit: z.object({
-        name: z
-          .string()
-          .trim()
-          .min(1, { error: t("Branch name is required") })
-          .max(120)
-          .regex(/^[A-Za-z0-9._/-]+$/, { error: t("Use letters, numbers, dots, slashes, underscores, or dashes") }),
-      }),
-    },
+    validators: [
+      {
+        run: z.object({
+          name: z
+            .string()
+            .trim()
+            .min(1, { error: t("Branch name is required") })
+            .max(120)
+            .regex(/^[A-Za-z0-9._/-]+$/, { error: t("Use letters, numbers, dots, slashes, underscores, or dashes") }),
+        }),
+        triggers: [],
+      },
+    ],
     onSubmit: ({ value }) => {
       createBranch.mutate({
         data: {
@@ -226,9 +229,7 @@ function CreateProductionBranchDialog() {
               void form.handleSubmit()
             }}
           >
-            <form.AppField name="name">
-              {(field) => <field.TextField label={t("Branch name")} placeholder="main" />}
-            </form.AppField>
+            <form.Field name="name">{(field) => <field.TextField label={t("Branch name")} placeholder="main" />}</form.Field>
             <DialogFooter>
               <form.SubmitButton className="w-fit">
                 {(isSubmitting) =>
@@ -348,16 +349,19 @@ function EditBranchDialog({
 
   const form = useAppForm({
     defaultValues: { name: branch.name },
-    validators: {
-      onSubmit: z.object({
-        name: z
-          .string()
-          .trim()
-          .min(1, { error: t("Branch name is required") })
-          .max(120)
-          .regex(/^[A-Za-z0-9._/-]+$/, { error: t("Use letters, numbers, dots, slashes, underscores, or dashes") }),
-      }),
-    },
+    validators: [
+      {
+        run: z.object({
+          name: z
+            .string()
+            .trim()
+            .min(1, { error: t("Branch name is required") })
+            .max(120)
+            .regex(/^[A-Za-z0-9._/-]+$/, { error: t("Use letters, numbers, dots, slashes, underscores, or dashes") }),
+        }),
+        triggers: [],
+      },
+    ],
     onSubmit: ({ value }) => {
       updateBranch.mutate({ data: { orgSlug, projectSlug, branchId: branch.id, name: value.name.trim() } })
     },
@@ -382,9 +386,7 @@ function EditBranchDialog({
               void form.handleSubmit()
             }}
           >
-            <form.AppField name="name">
-              {(field) => <field.TextField label={t("Branch name")} placeholder="main" />}
-            </form.AppField>
+            <form.Field name="name">{(field) => <field.TextField label={t("Branch name")} placeholder="main" />}</form.Field>
             <DialogFooter>
               <form.SubmitButton className="w-fit">
                 {(isSubmitting) => (isSubmitting || updateBranch.isPending ? <T>Saving...</T> : <T>Save Branch</T>)}
