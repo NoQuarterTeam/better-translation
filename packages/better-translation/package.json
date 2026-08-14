@@ -1,11 +1,29 @@
 {
   "name": "better-translation",
-  "version": "0.6.5",
-  "description": "Vite plugin and runtime helpers for Better Translation.",
+  "version": "0.6.8",
+  "description": "Local-first Vite i18n plugin for React and Svelte that turns source copy into flat Locale value JSON, with optional AI translation.",
+  "keywords": [
+    "ai-translation",
+    "i18n",
+    "internationalization",
+    "localization",
+    "react",
+    "svelte",
+    "tanstack",
+    "translation",
+    "typescript",
+    "vite",
+    "vite-plugin"
+  ],
   "homepage": "https://www.better-translation.dev",
+  "bugs": {
+    "url": "https://github.com/NoQuarterTeam/better-translation/issues"
+  },
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/NoQuarterTeam/better-translation.git"
+    "url": "https://github.com/NoQuarterTeam/better-translation.git",
+    "directory": "packages/better-translation"
   },
   "bin": {
     "better-translation": "./dist/cli.mjs",

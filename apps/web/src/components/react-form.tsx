@@ -7,7 +7,7 @@ import { NativeSelect, type NativeSelectProps } from "@better-translation/ui/com
 import type { Select as BaseSelect } from "@better-translation/ui/components/select"
 import { Textarea } from "@better-translation/ui/components/textarea"
 import { cn } from "@better-translation/ui/lib/utils"
-import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
+import { createFormHook, getFormHookHelpers, type FieldWithValue } from "@tanstack/react-form"
 import { AlertCircleIcon } from "lucide-react"
 import * as React from "react"
 import { Suspense } from "react"
@@ -64,22 +64,23 @@ const AppSelect = React.lazy(async () => {
   return { default: LazySelect }
 }) as React.ComponentType<SelectInputProps>
 
-const { fieldContext, formContext, useFormContext, useFieldContext } = createFormHookContexts()
+const { fieldComponent } = getFormHookHelpers()
 
 function TextField({
+  field,
   label,
   placeholder,
   description,
   fieldProps,
   ...rest
 }: {
+  field: FieldWithValue<string>
   label?: string
   placeholder?: string
   description?: React.ReactNode
   fieldProps?: React.ComponentProps<typeof Field>
 } & React.ComponentProps<"input">) {
-  const field = useFieldContext<string>()
-  const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
+  const isInvalid = field.meta.isTouched && field.errors.length > 0
   return (
     <Field {...fieldProps} data-invalid={isInvalid || undefined} className={cn("gap-1", fieldProps?.className)}>
       {(label || description) && (
@@ -94,31 +95,32 @@ function TextField({
           placeholder={placeholder}
           aria-invalid={isInvalid}
           aria-describedby={isInvalid ? `${field.name}-error` : undefined}
-          value={field.state.value ?? ""}
+          value={field.value ?? ""}
           onBlur={field.handleBlur}
           onChange={(e) => field.handleChange(e.target.value)}
           {...rest}
         />
-        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+        {isInvalid && <FieldError errors={field.errors} />}
       </FieldContent>
     </Field>
   )
 }
 
 function TextareaField({
+  field,
   label,
   placeholder,
   description,
   fieldProps,
   ...rest
 }: {
+  field: FieldWithValue<string>
   label?: string
   placeholder: string
   description?: React.ReactNode
   fieldProps?: React.ComponentProps<typeof Field>
 } & React.ComponentProps<"textarea">) {
-  const field = useFieldContext<string>()
-  const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
+  const isInvalid = field.meta.isTouched && field.errors.length > 0
   return (
     <Field {...fieldProps} data-invalid={isInvalid || undefined} className={cn("gap-1", fieldProps?.className)}>
       {label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
@@ -127,7 +129,7 @@ function TextareaField({
         placeholder={placeholder}
         aria-invalid={isInvalid}
         aria-describedby={isInvalid ? `${field.name}-error` : undefined}
-        value={field.state.value ?? ""}
+        value={field.value ?? ""}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
         {...rest}
@@ -135,7 +137,7 @@ function TextareaField({
       {(description || isInvalid) && (
         <FieldContent className="gap-0">
           {description && <FieldDescription>{description}</FieldDescription>}
-          {isInvalid && <FieldError errors={field.state.meta.errors} />}
+          {isInvalid && <FieldError errors={field.errors} />}
         </FieldContent>
       )}
     </Field>
@@ -143,19 +145,20 @@ function TextareaField({
 }
 
 function NativeSelectField({
+  field,
   label,
   description,
   children,
   fieldProps,
   ...rest
 }: {
+  field: FieldWithValue<string>
   label?: string
   description?: React.ReactNode
   children: React.ReactNode
   fieldProps?: React.ComponentProps<typeof Field>
 } & NativeSelectProps) {
-  const field = useFieldContext<string>()
-  const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
+  const isInvalid = field.meta.isTouched && field.errors.length > 0
   return (
     <Field {...fieldProps} data-invalid={isInvalid || undefined} className={cn("gap-1", fieldProps?.className)}>
       {(label || description) && (
@@ -169,7 +172,7 @@ function NativeSelectField({
           id={field.name}
           aria-invalid={isInvalid}
           aria-describedby={isInvalid ? `${field.name}-error` : undefined}
-          value={field.state.value}
+          value={field.value}
           onBlur={field.handleBlur}
           onChange={(e) => field.handleChange(e.target.value)}
           className="w-full"
@@ -177,30 +180,32 @@ function NativeSelectField({
         >
           {children}
         </NativeSelect>
-        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+        {isInvalid && <FieldError errors={field.errors} />}
       </FieldContent>
     </Field>
   )
 }
 
 function CheckboxField({
+  field,
   label,
   description,
   fieldProps,
   ...rest
-}: { label?: string; description?: React.ReactNode; fieldProps?: React.ComponentProps<typeof Field> } & Omit<
-  React.ComponentProps<typeof Checkbox>,
-  "checked" | "onCheckedChange"
->) {
-  const field = useFieldContext<boolean>()
-  const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
+}: {
+  field: FieldWithValue<boolean>
+  label?: string
+  description?: React.ReactNode
+  fieldProps?: React.ComponentProps<typeof Field>
+} & Omit<React.ComponentProps<typeof Checkbox>, "checked" | "onCheckedChange">) {
+  const isInvalid = field.meta.isTouched && field.errors.length > 0
   return (
     <Field orientation="horizontal" {...fieldProps} data-invalid={isInvalid || undefined}>
       <Checkbox
         id={field.name}
         aria-invalid={isInvalid}
         aria-describedby={isInvalid ? `${field.name}-error` : undefined}
-        checked={field.state.value}
+        checked={field.value}
         onCheckedChange={(checked) => field.handleChange(checked === true)}
         {...rest}
       />
@@ -212,7 +217,7 @@ function CheckboxField({
             </FieldLabel>
           )}
           {description && <FieldDescription>{description}</FieldDescription>}
-          {isInvalid && <FieldError errors={field.state.meta.errors} />}
+          {isInvalid && <FieldError errors={field.errors} />}
         </FieldContent>
       )}
     </Field>
@@ -222,18 +227,19 @@ function CheckboxField({
 type AsyncPrimitive = AsyncSelectPrimitive
 
 function AsyncSelectField<Item, StoredValue extends AsyncPrimitive = Extract<Item, AsyncPrimitive>>({
+  field,
   label,
   description,
   fieldProps,
   placeholder = "Select an option",
   ...rest
 }: {
+  field: FieldWithValue<StoredValue | undefined>
   label: string
   description?: React.ReactNode
   fieldProps?: React.ComponentProps<typeof Field>
 } & Omit<AsyncSelectProps<Item, StoredValue>, "id" | "isInvalid" | "onBlur" | "onChange" | "value">) {
-  const field = useFieldContext<StoredValue | undefined>()
-  const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
+  const isInvalid = field.meta.isTouched && field.errors.length > 0
 
   return (
     <Field {...fieldProps} data-invalid={isInvalid || undefined} className={cn("gap-1", fieldProps?.className)}>
@@ -259,11 +265,11 @@ function AsyncSelectField<Item, StoredValue extends AsyncPrimitive = Extract<Ite
             onBlur={field.handleBlur}
             onChange={(value) => field.handleChange(value)}
             placeholder={placeholder}
-            value={field.state.value}
+            value={field.value}
             {...rest}
           />
         </Suspense>
-        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+        {isInvalid && <FieldError errors={field.errors} />}
       </FieldContent>
     </Field>
   )
@@ -272,19 +278,20 @@ function AsyncSelectField<Item, StoredValue extends AsyncPrimitive = Extract<Ite
 type MultiPrimitive = MultiSelectPrimitive
 
 function MultiSelectField<Item, StoredValue extends MultiPrimitive = Extract<Item, MultiPrimitive>>({
+  field,
   label,
   description,
   fieldProps,
   placeholder,
   ...rest
 }: {
+  field: FieldWithValue<StoredValue[]>
   label: string
   description?: React.ReactNode
   fieldProps?: React.ComponentProps<typeof Field>
   placeholder?: string
 } & Omit<MultiSelectProps<Item, StoredValue>, "id" | "isInvalid" | "onChange" | "value">) {
-  const field = useFieldContext<StoredValue[]>()
-  const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
+  const isInvalid = field.meta.isTouched && field.errors.length > 0
 
   return (
     <Field {...fieldProps} data-invalid={isInvalid || undefined} className={cn("gap-1", fieldProps?.className)}>
@@ -299,17 +306,18 @@ function MultiSelectField<Item, StoredValue extends MultiPrimitive = Extract<Ite
             isInvalid={isInvalid}
             onChange={(value) => field.handleChange(value)}
             placeholder={placeholder}
-            value={field.state.value}
+            value={field.value}
             {...rest}
           />
         </Suspense>
-        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+        {isInvalid && <FieldError errors={field.errors} />}
       </FieldContent>
     </Field>
   )
 }
 
 function SelectField({
+  field,
   label,
   description,
   placeholder,
@@ -317,14 +325,14 @@ function SelectField({
   fieldProps,
   ...rest
 }: {
+  field: FieldWithValue<string>
   label: string
   placeholder?: string
   description?: React.ReactNode
   children: React.ReactNode
   fieldProps?: React.ComponentProps<typeof Field>
 } & Omit<React.ComponentProps<typeof AppSelect>, "id" | "isInvalid" | "onBlur" | "onChange" | "value">) {
-  const field = useFieldContext<string>()
-  const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
+  const isInvalid = field.meta.isTouched && field.errors.length > 0
 
   return (
     <Field {...fieldProps} data-invalid={isInvalid || undefined} className={cn("gap-1", fieldProps?.className)}>
@@ -340,13 +348,13 @@ function SelectField({
             onBlur={field.handleBlur}
             onChange={(value) => field.handleChange(value)}
             placeholder={placeholder}
-            value={field.state.value}
+            value={field.value}
             {...rest}
           >
             {children}
           </AppSelect>
         </Suspense>
-        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+        {isInvalid && <FieldError errors={field.errors} />}
       </FieldContent>
     </Field>
   )
@@ -406,17 +414,23 @@ function FormFieldErrors({ error }: { error: Error | null }) {
   )
 }
 
-export const { useAppForm } = createFormHook({
-  fieldContext,
-  formContext,
+const AppTextField = fieldComponent.strict(TextField, "field")
+const AppTextareaField = fieldComponent.strict(TextareaField, "field")
+const AppNativeSelectField = fieldComponent.loose(NativeSelectField, "field")
+const AppCheckboxField = fieldComponent.strict(CheckboxField, "field")
+const AppSelectField = fieldComponent.loose(SelectField, "field")
+const AppAsyncSelectField = fieldComponent.loose(AsyncSelectField, "field")
+const AppMultiSelectField = fieldComponent.loose(MultiSelectField, "field")
+
+export const { useAppForm, useFormContext } = createFormHook({
   fieldComponents: {
-    TextField,
-    TextareaField,
-    NativeSelectField,
-    CheckboxField,
-    SelectField,
-    AsyncSelectField,
-    MultiSelectField,
+    TextField: AppTextField,
+    TextareaField: AppTextareaField,
+    NativeSelectField: AppNativeSelectField,
+    CheckboxField: AppCheckboxField,
+    SelectField: AppSelectField,
+    AsyncSelectField: AppAsyncSelectField,
+    MultiSelectField: AppMultiSelectField,
   },
   formComponents: {
     SubmitButton,

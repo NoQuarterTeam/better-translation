@@ -1,6 +1,7 @@
 {
-  "m_1pfta5z": "Locale",
-  "m_1rdx4ne": "Este ejemplo de SvelteKit usa Runtime bundles locales generados por el plugin de Vite.",
-  "m_24ahol": "Bienvenido {name}, la fecha es {date}!",
-  "m_xp4bmw": "Hola!"
+  "m_1gxf1d5": "Selecciona un Locale",
+  "m_1nd831t": "Buenas tardes, {name}.",
+  "m_1pfta5z": "Configuración regional",
+  "m_fkcc5u": "Tienes {count} mensajes listos.",
+  "m_xddk8j": "Buscar mensajes"
 }

@@ -1,55 +1,81 @@
+import { Badge } from "@better-translation/ui/components/badge"
+import { Input } from "@better-translation/ui/components/input"
 import { createFileRoute } from "@tanstack/react-router"
 
-import { T, Var } from "better-translation/react"
-import { createT } from "better-translation/runtime"
+import { T, Var, useT } from "better-translation/react"
 
 import { LocaleSwitcher } from "@/components/locale-switcher"
 
 export const Route = createFileRoute("/")({
   component: HomePage,
-  head: ({ match }) => {
-    const t = createT(match.context.messages)
-
-    return {
-      meta: [
-        { title: `${t("Better Translation")} · ${t("Developer-first localization that stays in your stack")}` },
-        {
-          name: "description",
-          content: t(
-            "Wrap text in T, generate local locale files today, and manage branch-local translations in the hosted platform next.",
-          ),
-        },
-      ],
-    }
-  },
+  head: () => ({ meta: [{ title: "Better Translation · React example" }] }),
 })
 
-const name = "Jack"
-const date = formatExampleDate(new Date())
+const visitor = "Maya"
+const messageCount = 4
 
 function HomePage() {
+  const t = useT()
+
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <LocaleSwitcher />
+    <main className="starter-shell">
+      <header className="starter-header">
+        <div className="starter-brand">
+          <span className="starter-mark">
+            <TranslationLogo />
+          </span>
+          <strong>Better Translation</strong>
+        </div>
+        <LocaleSwitcher />
+      </header>
 
-      <h1>
-        <T>Hello there!</T>
-      </h1>
-      <p>
-        <T context="A welcome greeting to the user, be super friendly.">
-          Welcome <Var name={name} />, the date is <Var date={date} />!
-        </T>
-      </p>
+      <section className="starter-content">
+        <div className="starter-preview">
+          <Badge variant="secondary">React + Vite</Badge>
+          <h1>
+            <T>
+              Good afternoon, <Var name={visitor} />.
+            </T>
+          </h1>
+          <p>
+            <T>
+              You have <Var count={messageCount} /> Messages ready.
+            </T>
+          </p>
+          <Input aria-label={t("Search Messages")} placeholder={t("Search Messages")} />
+        </div>
 
-      <p>
-        <T>
-          And more <strong>things</strong>
-        </T>
-      </p>
-    </div>
+        <div className="code-panel">
+          <div className="code-header">
+            <span>src/routes/index.tsx</span>
+          </div>
+          <pre>
+            <code>{`const t = useT()
+
+<T>
+  Good afternoon,
+  <Var name={visitor} />.
+</T>
+
+<Input
+  placeholder={t("Search Messages")}
+/>`}</code>
+          </pre>
+        </div>
+      </section>
+    </main>
   )
 }
 
-function formatExampleDate(date: Date) {
-  return date.toISOString().slice(0, 10)
+function TranslationLogo() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m5 8 6 6" />
+      <path d="m4 14 6-6 2-3" />
+      <path d="M2 5h12" />
+      <path d="M7 2h1" />
+      <path d="m22 22-5-10-5 10" />
+      <path d="M14 18h6" />
+    </svg>
+  )
 }

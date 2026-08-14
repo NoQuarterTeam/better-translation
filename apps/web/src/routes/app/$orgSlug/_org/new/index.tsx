@@ -393,21 +393,24 @@ function GitHubRepositoryConfigureForm({
       name: repository.name,
       slug: initialSlug,
     },
-    validators: {
-      onSubmit: z.object({
-        defaultBranchName: z
-          .string()
-          .trim()
-          .min(1, { error: t("Production Branch is required") })
-          .max(100),
-        name: z
-          .string()
-          .trim()
-          .min(1, { error: t("Project name is required") })
-          .max(120),
-        slug: z.string().trim(),
-      }),
-    },
+    validators: [
+      {
+        run: z.object({
+          defaultBranchName: z
+            .string()
+            .trim()
+            .min(1, { error: t("Production Branch is required") })
+            .max(100),
+          name: z
+            .string()
+            .trim()
+            .min(1, { error: t("Project name is required") })
+            .max(120),
+          slug: z.string().trim(),
+        }),
+        triggers: [],
+      },
+    ],
     onSubmit: ({ value }) => onCreate(value),
   })
 
@@ -430,7 +433,7 @@ function GitHubRepositoryConfigureForm({
               void form.handleSubmit()
             }}
           >
-            <form.AppField name="name">
+            <form.Field name="name">
               {(field) => (
                 <field.TextField
                   label={t("Project name")}
@@ -444,8 +447,8 @@ function GitHubRepositoryConfigureForm({
                   }}
                 />
               )}
-            </form.AppField>
-            <form.AppField name="slug">
+            </form.Field>
+            <form.Field name="slug">
               {(field) => (
                 <field.TextField
                   label={t("URL slug")}
@@ -457,8 +460,8 @@ function GitHubRepositoryConfigureForm({
                   }}
                 />
               )}
-            </form.AppField>
-            <form.AppField name="defaultBranchName">
+            </form.Field>
+            <form.Field name="defaultBranchName">
               {(field) => (
                 <field.NativeSelectField
                   label={t("Production Branch")}
@@ -476,7 +479,7 @@ function GitHubRepositoryConfigureForm({
                   )}
                 </field.NativeSelectField>
               )}
-            </form.AppField>
+            </form.Field>
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" size="icon" aria-label={t("Back")} title={t("Back")} onClick={onBack}>
                 <ArrowLeftIcon />
@@ -558,17 +561,20 @@ function ManualProjectCard() {
       name: "",
       slug: "",
     },
-    validators: {
-      onSubmit: z.object({
-        defaultBranchName: z.string().trim(),
-        name: z
-          .string()
-          .trim()
-          .min(1, { error: t("Project name is required") })
-          .max(120),
-        slug: z.string().trim(),
-      }),
-    },
+    validators: [
+      {
+        run: z.object({
+          defaultBranchName: z.string().trim(),
+          name: z
+            .string()
+            .trim()
+            .min(1, { error: t("Project name is required") })
+            .max(120),
+          slug: z.string().trim(),
+        }),
+        triggers: [],
+      },
+    ],
     onSubmit: ({ value }) => {
       const defaultBranchName = value.defaultBranchName.trim()
       createMutation.mutate({
@@ -601,7 +607,7 @@ function ManualProjectCard() {
               void form.handleSubmit()
             }}
           >
-            <form.AppField name="name">
+            <form.Field name="name">
               {(field) => (
                 <field.TextField
                   label={t("Project name")}
@@ -615,8 +621,8 @@ function ManualProjectCard() {
                   }}
                 />
               )}
-            </form.AppField>
-            <form.AppField name="slug">
+            </form.Field>
+            <form.Field name="slug">
               {(field) => (
                 <field.TextField
                   label={t("URL slug")}
@@ -628,8 +634,8 @@ function ManualProjectCard() {
                   }}
                 />
               )}
-            </form.AppField>
-            <form.AppField name="defaultBranchName">
+            </form.Field>
+            <form.Field name="defaultBranchName">
               {(field) => (
                 <field.TextField
                   label={t("Production Branch")}
@@ -637,7 +643,7 @@ function ManualProjectCard() {
                   description={t("Optional. If omitted, the first Vite plugin sync sets the Production Branch.")}
                 />
               )}
-            </form.AppField>
+            </form.Field>
             <form.SubmitButton className="w-full">
               {(isSubmitting) => (isSubmitting || createMutation.isPending ? <T>Creating...</T> : <T>Create Project</T>)}
             </form.SubmitButton>

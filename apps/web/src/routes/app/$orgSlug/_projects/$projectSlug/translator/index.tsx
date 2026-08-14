@@ -81,11 +81,14 @@ function ProjectTranslatorPage() {
     defaultValues: {
       translationPrompt: project.translationPrompt,
     },
-    validators: {
-      onSubmit: z.object({
-        translationPrompt: z.string().trim().min(1).max(4000),
-      }),
-    },
+    validators: [
+      {
+        run: z.object({
+          translationPrompt: z.string().trim().min(1).max(4000),
+        }),
+        triggers: [],
+      },
+    ],
     onSubmit: ({ value }) => {
       updateTranslatorMutation.mutate({
         data: {
@@ -147,7 +150,7 @@ function ProjectTranslatorPage() {
                 void translatorForm.handleSubmit()
               }}
             >
-              <translatorForm.AppField name="translationPrompt">
+              <translatorForm.Field name="translationPrompt">
                 {(field) => (
                   <field.TextareaField
                     aria-label={t("Custom instructions")}
@@ -155,7 +158,7 @@ function ProjectTranslatorPage() {
                     rows={5}
                   />
                 )}
-              </translatorForm.AppField>
+              </translatorForm.Field>
               <translatorForm.SubmitButton className="w-fit">
                 {(isSubmitting) =>
                   isSubmitting || updateTranslatorMutation.isPending ? <T>Saving...</T> : <T>Save translator</T>
@@ -382,9 +385,12 @@ function GlossaryTermDialog({
       targetLocale: term?.targetLocale ?? "",
       targetTerm: term?.targetTerm ?? "",
     },
-    validators: {
-      onSubmit: glossaryTermInputSchema,
-    },
+    validators: [
+      {
+        run: glossaryTermInputSchema,
+        triggers: [],
+      },
+    ],
     onSubmit: ({ value }) => {
       const data = {
         orgSlug,
@@ -418,10 +424,10 @@ function GlossaryTermDialog({
             void form.handleSubmit()
           }}
         >
-          <form.AppField name="sourceTerm">
+          <form.Field name="sourceTerm">
             {(field) => <field.TextField label={t("Source term")} placeholder={t("Better Translation")} />}
-          </form.AppField>
-          <form.AppField name="action">
+          </form.Field>
+          <form.Field name="action">
             {(field) => (
               <field.NativeSelectField label={t("Rule")}>
                 <NativeSelectOption value="preserve">{t("Do not translate")}</NativeSelectOption>
@@ -429,8 +435,8 @@ function GlossaryTermDialog({
                 <NativeSelectOption value="avoid">{t("Avoid term")}</NativeSelectOption>
               </field.NativeSelectField>
             )}
-          </form.AppField>
-          <form.AppField name="targetLocale">
+          </form.Field>
+          <form.Field name="targetLocale">
             {(field) => (
               <field.NativeSelectField label={t("Target Locale")}>
                 <NativeSelectOption value="">{t("All Locales")}</NativeSelectOption>
@@ -441,27 +447,27 @@ function GlossaryTermDialog({
                 ))}
               </field.NativeSelectField>
             )}
-          </form.AppField>
+          </form.Field>
           <form.Subscribe selector={(state) => state.values.action}>
             {(action) =>
               action === "preserve" ? null : (
-                <form.AppField name="targetTerm">
+                <form.Field name="targetTerm">
                   {(field) => (
                     <field.TextField
                       label={action === "translate_as" ? t("Translate to") : t("Do not use")}
                       placeholder={action === "translate_as" ? t("Preferred translation") : t("Forbidden term")}
                     />
                   )}
-                </form.AppField>
+                </form.Field>
               )
             }
           </form.Subscribe>
-          <form.AppField name="note">
+          <form.Field name="note">
             {(field) => <field.TextareaField label={t("Note")} placeholder={t("Context for the translator")} rows={3} />}
-          </form.AppField>
-          <form.AppField name="enabled">
+          </form.Field>
+          <form.Field name="enabled">
             {(field) => <field.CheckboxField label={t("Enabled")} description={t("Use this term in AI generation")} />}
-          </form.AppField>
+          </form.Field>
           <DialogFooter>
             <form.SubmitButton className="w-fit">
               {(isSubmitting) =>

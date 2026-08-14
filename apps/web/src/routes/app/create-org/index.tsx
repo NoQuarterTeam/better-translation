@@ -51,16 +51,19 @@ function CreateOrgPage() {
 
   const form = useAppForm({
     defaultValues: { name: "", slug: "" },
-    validators: {
-      onSubmit: z.object({
-        name: z
-          .string()
-          .trim()
-          .min(1, { error: t("Organization name is required") })
-          .max(120),
-        slug: z.string(),
-      }),
-    },
+    validators: [
+      {
+        run: z.object({
+          name: z
+            .string()
+            .trim()
+            .min(1, { error: t("Organization name is required") })
+            .max(120),
+          slug: z.string(),
+        }),
+        triggers: [],
+      },
+    ],
     onSubmit: async ({ value }) => {
       setApiError(null)
       const rawSlug = value.slug.trim() || slugify(value.name)
@@ -103,7 +106,7 @@ function CreateOrgPage() {
                 void form.handleSubmit()
               }}
             >
-              <form.AppField name="name">
+              <form.Field name="name">
                 {(field) => (
                   <field.TextField
                     label={t("Organization name")}
@@ -118,8 +121,8 @@ function CreateOrgPage() {
                     }}
                   />
                 )}
-              </form.AppField>
-              <form.AppField name="slug">
+              </form.Field>
+              <form.Field name="slug">
                 {(field) => (
                   <field.TextField
                     label={t("URL slug")}
@@ -131,7 +134,7 @@ function CreateOrgPage() {
                     }}
                   />
                 )}
-              </form.AppField>
+              </form.Field>
               <form.SubmitButton className="w-full">
                 {(isSubmitting) => (isSubmitting ? <T>Creating…</T> : <T>Create organization</T>)}
               </form.SubmitButton>

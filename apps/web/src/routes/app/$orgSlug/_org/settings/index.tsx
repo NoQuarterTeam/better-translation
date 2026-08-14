@@ -88,15 +88,18 @@ function OrganizationSettingsPage() {
 
   const form = useAppForm({
     defaultValues: { name: organization.name },
-    validators: {
-      onSubmit: z.object({
-        name: z
-          .string()
-          .trim()
-          .min(1, { error: t("Organization name is required") })
-          .max(120),
-      }),
-    },
+    validators: [
+      {
+        run: z.object({
+          name: z
+            .string()
+            .trim()
+            .min(1, { error: t("Organization name is required") })
+            .max(120),
+        }),
+        triggers: [],
+      },
+    ],
     onSubmit: ({ value }) => {
       updateMutation.mutate({ data: { orgSlug, name: value.name.trim() } })
     },
@@ -130,9 +133,9 @@ function OrganizationSettingsPage() {
                 void form.handleSubmit()
               }}
             >
-              <form.AppField name="name">
+              <form.Field name="name">
                 {(field) => <field.TextField label={t("Organization name")} placeholder="Acme Localization" />}
-              </form.AppField>
+              </form.Field>
               <form.SubmitButton className="w-fit">
                 {(isSubmitting) => (isSubmitting || updateMutation.isPending ? <T>Saving...</T> : <T>Save profile</T>)}
               </form.SubmitButton>

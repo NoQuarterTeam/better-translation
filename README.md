@@ -1,10 +1,10 @@
 # Better Translation
 
-Better Translation is a Vite plugin and runtime for adding AI-assisted translations to Vite apps.
+Better Translation is local-first internationalization for Vite apps.
 
-Add the plugin, mark UI copy in your source, and Better Translation generates flat Locale value JSON files plus the virtual runtime loader your app uses to render translated Messages.
+Mark copy where you author it in React or Svelte. The Vite plugin discovers Messages, generates flat Locale value JSON, and creates the runtime loader your app uses to render them. Add your own AI translator or edit Locale values locally; no account or hosted runtime is required.
 
-[Website](https://www.better-translation.dev) · [Documentation](https://docs.better-translation.dev)
+[Website](https://www.better-translation.dev) · [Documentation](https://docs.better-translation.dev) · [npm](https://www.npmjs.com/package/better-translation)
 
 ## What You Get
 

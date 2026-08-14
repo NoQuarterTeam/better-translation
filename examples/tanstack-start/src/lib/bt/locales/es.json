@@ -1,8 +1,7 @@
 {
-  "m_120ti6a": "Marca texto con T, genera archivos de locale locales hoy y gestiona traducciones locales de Branch en la plataforma alojada mas adelante.",
-  "m_24ahol": "Bienvenido {name}, la fecha es {date}!",
-  "m_3zem1w": "Better Translation",
-  "m_9zsws8": "Localizacion para developers que permanece en tu stack",
-  "m_lve77c": "Y mas cosas",
-  "m_xp4bmw": "Hola!"
+  "m_1gxf1d5": "Selecciona un Locale",
+  "m_1nd831t": "Buenas tardes, {name}.",
+  "m_1pfta5z": "Configuración regional",
+  "m_fkcc5u": "Tienes {count} mensajes listos.",
+  "m_xddk8j": "Buscar mensajes"
 }

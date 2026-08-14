@@ -37,18 +37,21 @@ function ResetPasswordPage() {
       newPassword: "",
       confirmPassword: "",
     },
-    validators: {
-      onSubmit: z
-        .object({
-          newPassword: z.string().min(MIN_PASSWORD),
-          confirmPassword: z.string().min(MIN_PASSWORD),
-        })
-        .superRefine((data, ctx) => {
-          if (data.newPassword !== data.confirmPassword) {
-            ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: t("Passwords do not match") })
-          }
-        }),
-    },
+    validators: [
+      {
+        run: z
+          .object({
+            newPassword: z.string().min(MIN_PASSWORD),
+            confirmPassword: z.string().min(MIN_PASSWORD),
+          })
+          .superRefine((data, ctx) => {
+            if (data.newPassword !== data.confirmPassword) {
+              ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: t("Passwords do not match") })
+            }
+          }),
+        triggers: [],
+      },
+    ],
     onSubmit: async ({ value }) => {
       setApiError(null)
 
@@ -97,7 +100,7 @@ function ResetPasswordPage() {
               void form.handleSubmit()
             }}
           >
-            <form.AppField name="newPassword">
+            <form.Field name="newPassword">
               {(field) => (
                 <field.TextField
                   label={t("New password")}
@@ -107,9 +110,9 @@ function ResetPasswordPage() {
                   description={t("At least 8 characters")}
                 />
               )}
-            </form.AppField>
+            </form.Field>
 
-            <form.AppField name="confirmPassword">
+            <form.Field name="confirmPassword">
               {(field) => (
                 <field.TextField
                   label={t("Confirm password")}
@@ -118,7 +121,7 @@ function ResetPasswordPage() {
                   placeholder="••••••••"
                 />
               )}
-            </form.AppField>
+            </form.Field>
 
             <form.SubmitButton disabled={!token}>
               {(isSubmitting) => (isSubmitting ? <T>Resetting password…</T> : <T>Reset password</T>)}

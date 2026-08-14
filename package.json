@@ -20,7 +20,7 @@
       "@tanstack/react-pacer": "0.22.1",
       "@tanstack/react-db": "0.1.95",
       "@tanstack/react-devtools": "0.10.9",
-      "@tanstack/react-form": "1.33.2",
+      "@tanstack/react-form": "2.0.0-alpha.0",
       "@tanstack/react-query": "5.101.4",
       "@tanstack/react-router-devtools": "1.167.0",
       "@tanstack/react-router-ssr-query": "1.167.1",
@@ -74,6 +74,9 @@
     "test:types": "bun --filter better-translation test:types",
     "check": "vp check",
     "check:publish": "bun run build:packages && vp check packages/better-translation",
+    "video:preview": "bun --cwd apps/promo-video dev",
+    "video:render": "bun --cwd apps/promo-video render",
+    "video:render:teasers": "bun --cwd apps/promo-video render:teasers",
     "version-packages": "changeset version && bun install",
     "release": "bun run build:packages && changeset publish"
   },

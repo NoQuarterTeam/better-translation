@@ -8,8 +8,8 @@ import {
   GitPullRequestIcon,
   LanguagesIcon,
   PackageIcon,
+  PlayIcon,
   ScanIcon,
-  ServerIcon,
   SparklesIcon,
   ZapIcon,
 } from "lucide-react"
@@ -27,9 +27,9 @@ export const Route = createFileRoute("/")({
     </div>
   ),
   head: () => {
-    const title = "Better Translation · Ship every language without leaving your code"
+    const title = "Better Translation · Local-first i18n for Vite apps"
     const description =
-      "Stop dancing between source and locale files. Wrap copy in one component and translations sync themselves, with no keys and no file-hopping. Open source, self-hostable, with an optional cloud platform."
+      "Mark copy in React or Svelte and generate flat Locale value JSON during development. Edit ordinary JSON or bring your own AI translator; no account required."
 
     return {
       meta: [
@@ -39,9 +39,11 @@ export const Route = createFileRoute("/")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: "https://www.better-translation.dev" },
+        { property: "og:image", content: "https://www.better-translation.dev/better-translation-demo-poster.webp" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
+        { name: "twitter:image", content: "https://www.better-translation.dev/better-translation-demo-poster.webp" },
       ],
       links: [{ rel: "canonical", href: "https://www.better-translation.dev" }],
     }
@@ -53,6 +55,7 @@ function HomePage() {
     <main className="min-h-dvh bg-background">
       <LandingHeader />
       <Hero />
+      <DemoSection />
       <LogoStrip />
       <QuickStart />
       <Workflow />
@@ -95,8 +98,8 @@ function LandingHeader() {
           <Button variant="ghost" nativeButton={false} render={<Link to="/sign-in" />}>
             <T>Sign in</T>
           </Button>
-          <Button nativeButton={false} render={<Link to="/sign-up" />}>
-            <T>Get started</T>
+          <Button nativeButton={false} render={<a href="https://docs.better-translation.dev" />}>
+            <T>Install plugin</T>
           </Button>
         </nav>
       </div>
@@ -117,29 +120,71 @@ function Hero() {
             npm i better-translation
           </Badge>
           <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-            <T>Ship every language without leaving your code.</T>
+            <T>Local-first translation for Vite apps.</T>
           </h1>
           <p className="mt-6 text-lg leading-8 text-balance text-muted-foreground">
             <T>
-              No more dancing between source and locale files. Most tools make you invent a key, then jump to a JSON file to fill
-              it in. Wrap your copy in a single component and the translations sync themselves, with no keys and no file-hopping.
+              Mark copy where you author it. The Vite plugin discovers Messages, generates flat Locale value JSON, and keeps React
+              and Svelte apps in sync. Edit ordinary JSON or bring your own AI translator, with no account required.
             </T>
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button size="lg" nativeButton={false} render={<a href="https://docs.better-translation.dev" />}>
-              <T>Read the docs</T>
+              <T>Install the Vite plugin</T>
               <ArrowRightIcon />
             </Button>
-            <Button size="lg" variant="outline" nativeButton={false} render={<a href="#cloud" />}>
-              <T>Explore the platform</T>
+            <Button
+              size="lg"
+              variant="outline"
+              nativeButton={false}
+              render={<a href="https://github.com/NoQuarterTeam/better-translation" />}
+            >
+              <GitHubMark />
+              <T>View on GitHub</T>
             </Button>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
-            <T>Open source and self-hostable. The hosted platform is optional.</T>
+            <T>Open source. No account, API key, or hosted runtime required.</T>
           </p>
         </div>
 
         <HeroVisual />
+      </div>
+    </section>
+  )
+}
+
+function DemoSection() {
+  return (
+    <section id="demo" className="scroll-mt-16 border-b bg-muted/20">
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+        <SectionHeading
+          eyebrow={
+            <span className="inline-flex items-center gap-1.5">
+              <PlayIcon className="size-4" />
+              <T>See it in action</T>
+            </span>
+          }
+          title={<T>The local workflow, end to end</T>}
+          description={
+            <T>
+              Mark UI copy, let the Vite plugin discover it, then edit a flat Locale JSON file and see the translated app update
+              during development. Add AI translation only when it helps.
+            </T>
+          }
+        />
+        <div className="mt-12 overflow-hidden rounded-xl border bg-card shadow-sm">
+          <video
+            className="block aspect-video w-full bg-black"
+            controls
+            playsInline
+            preload="metadata"
+            poster="/better-translation-demo-poster.webp"
+            aria-label="Better Translation Vite plugin workflow demo"
+          >
+            <source src="/better-translation-demo.mp4" type="video/mp4" />
+          </video>
+        </div>
       </div>
     </section>
   )
@@ -200,14 +245,15 @@ function LogoStrip() {
     <section className="border-b">
       <div className="mx-auto max-w-6xl px-4 py-10 text-center sm:px-6 lg:px-8">
         <p className="text-sm text-muted-foreground">
-          <T>Built for the modern Vite and React stack</T>
+          <T>Built for modern Vite apps</T>
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-medium text-muted-foreground">
           <span>Vite</span>
           <span>React</span>
           <span>TanStack Start</span>
+          <span>Svelte</span>
+          <span>SvelteKit</span>
           <span>TypeScript</span>
-          <span>Vercel</span>
         </div>
       </div>
     </section>
@@ -219,23 +265,23 @@ function QuickStart() {
     <section className="border-b">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-center">
-          <div>
+          <div className="min-w-0">
             <Badge variant="outline" className="mb-5 gap-1.5">
               <PackageIcon />
-              <T>Drop-in setup</T>
+              <T>Local-first setup</T>
             </Badge>
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              <T>One plugin. That is the whole config.</T>
+              <T>Add the plugin. Keep ordinary JSON.</T>
             </h2>
             <p className="mt-5 text-lg leading-8 text-muted-foreground">
               <T>
-                Add the plugin, list your Locales, and you get local locale files out of the box. The runtime is optional: point
-                it at the hosted platform, your own self-hosted server, or any custom endpoint URL.
+                List your Locales and the plugin generates flat Runtime bundles in your app. Commit them with your code, fill
+                missing Locale values with your own translator, or edit the JSON directly.
               </T>
             </p>
           </div>
 
-          <div className="rounded-xl border bg-card shadow-sm">
+          <div className="min-w-0 rounded-xl border bg-card shadow-sm">
             <div className="flex items-center gap-2 border-b px-4 py-3">
               <span className="size-2.5 rounded-full bg-muted-foreground/30" />
               <span className="size-2.5 rounded-full bg-muted-foreground/30" />
@@ -272,7 +318,7 @@ function QuickStart() {
               </code>
             </pre>
             <div className="border-t bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-              <T>Self-host or use the hosted platform: set runtime to a custom endpoint URL.</T>
+              <T>No account, API key, or hosted runtime required.</T>
             </div>
           </div>
         </div>
@@ -288,7 +334,9 @@ function Workflow() {
         <SectionHeading
           eyebrow={<T>End-to-end localization</T>}
           title={<T>From source copy to shipped translations</T>}
-          description={<T>The Vite plugin does the heavy lifting so translations follow your code, branch by branch.</T>}
+          description={
+            <T>The Vite plugin owns discovery, generation, and runtime loading while your app keeps ordinary flat files.</T>
+          }
         />
         <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <WorkflowStep
@@ -300,14 +348,14 @@ function Workflow() {
           <WorkflowStep
             step="02"
             icon={<PackageIcon />}
-            title={<T>Sync</T>}
-            text={<T>The Vite plugin discovers Messages and uploads the Manifest for the current Branch.</T>}
+            title={<T>Discover</T>}
+            text={<T>The Vite plugin discovers Messages and gives each one a stable lookup id.</T>}
           />
           <WorkflowStep
             step="03"
             icon={<SparklesIcon />}
-            title={<T>Translate</T>}
-            text={<T>Generate Locale values locally, or with your own translator, ready for review.</T>}
+            title={<T>Fill</T>}
+            text={<T>Edit flat Locale JSON directly or fill missing Locale values with your own translator.</T>}
           />
           <WorkflowStep
             step="04"
@@ -342,34 +390,34 @@ function CloudPlatform() {
           <div>
             <Badge variant="secondary" className="mb-5 gap-1.5">
               <SparklesIcon />
-              <T>Cloud platform · Optional</T>
+              <T>Hosted workflow · Optional</T>
             </Badge>
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              <T>Add the hosted platform when you want it</T>
+              <T>Add a shared dashboard when the team needs it</T>
             </h2>
             <p className="mt-5 text-lg leading-8 text-muted-foreground">
               <T>
-                Everything above works without an account. When you want branch-aware translations, AI generation, and a visual
-                editor, connect the cloud platform, or self-host the same thing.
+                Everything above works without an account. When developers and translators need a shared workflow, connect the
+                hosted service for branch-aware editing while your Consumer app keeps the same runtime API.
               </T>
             </p>
             <ul className="mt-8 space-y-3">
               <EditorPoint>
-                <T>Let non-developers update translations in real time, no code access required</T>
+                <T>Edit shared Locale values without giving everyone code access</T>
               </EditorPoint>
               <EditorPoint>
-                <T>Branch overrides that never touch Production</T>
+                <T>Keep feature Branch changes isolated from Production</T>
               </EditorPoint>
               <EditorPoint>
-                <T>AI translations generated in context</T>
+                <T>Generate missing Locale values with Project translation guidance</T>
               </EditorPoint>
               <EditorPoint>
-                <T>A visual editor built for clarity first</T>
+                <T>Serve branch-addressed Runtime bundles to every environment</T>
               </EditorPoint>
             </ul>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button nativeButton={false} render={<Link to="/sign-up" />}>
-                <T>Get started free</T>
+                <T>Create a cloud Project</T>
                 <ArrowRightIcon />
               </Button>
               <Button variant="outline" nativeButton={false} render={<Link to="/sign-in" />}>
@@ -417,8 +465,8 @@ function Features() {
           />
           <Feature
             icon={<CodeIcon />}
-            title={<T>React and server helpers</T>}
-            text={<T>Render Messages in React components and translate on the server with the same lookup ids.</T>}
+            title={<T>React, Svelte, and server helpers</T>}
+            text={<T>Render Messages across your app with the same lookup ids and flat Runtime bundles.</T>}
           />
           <Feature
             icon={<ScanIcon />}
@@ -432,13 +480,13 @@ function Features() {
           />
           <Feature
             icon={<ZapIcon />}
-            title={<T>Local locale files</T>}
-            text={<T>Generated snapshot fallbacks keep your app working with no network at runtime.</T>}
+            title={<T>Bring your own translator</T>}
+            text={<T>Fill missing Locale values with any async function, including the optional built-in AI helper.</T>}
           />
           <Feature
-            icon={<ServerIcon />}
-            title={<T>Open source and self-hostable</T>}
-            text={<T>Run entirely local, self-host the platform, or point the runtime at any custom endpoint URL.</T>}
+            icon={<SparklesIcon />}
+            title={<T>Local editor</T>}
+            text={<T>Search Messages and edit local Locale values in the browser during Vite development.</T>}
           />
         </div>
       </div>
@@ -474,11 +522,17 @@ function FinalCta() {
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Button size="lg" nativeButton={false} render={<a href="https://docs.better-translation.dev" />}>
-                <T>Read the docs</T>
+                <T>Install the Vite plugin</T>
                 <ArrowRightIcon />
               </Button>
-              <Button size="lg" variant="outline" nativeButton={false} render={<a href="#cloud" />}>
-                <T>Explore the cloud platform</T>
+              <Button
+                size="lg"
+                variant="outline"
+                nativeButton={false}
+                render={<a href="https://github.com/NoQuarterTeam/better-translation" />}
+              >
+                <GitHubMark />
+                <T>View on GitHub</T>
               </Button>
             </div>
           </div>

@@ -176,15 +176,18 @@ function CreateApiKeyDialogContent() {
 
   const form = useAppForm({
     defaultValues: { name: "" },
-    validators: {
-      onSubmit: z.object({
-        name: z
-          .string()
-          .trim()
-          .min(1, { error: t("API key name is required") })
-          .max(120),
-      }),
-    },
+    validators: [
+      {
+        run: z.object({
+          name: z
+            .string()
+            .trim()
+            .min(1, { error: t("API key name is required") })
+            .max(120),
+        }),
+        triggers: [],
+      },
+    ],
     onSubmit: ({ value }) => {
       createApiKeyMutation.mutate({ data: { orgSlug, projectSlug, name: value.name.trim() } })
     },
@@ -230,9 +233,9 @@ function CreateApiKeyDialogContent() {
               void form.handleSubmit()
             }}
           >
-            <form.AppField name="name">
+            <form.Field name="name">
               {(field) => <field.TextField label={t("Key name")} placeholder="Production deploy sync" />}
-            </form.AppField>
+            </form.Field>
             <form.SubmitButton className="w-fit">
               {(isSubmitting) => (isSubmitting || createApiKeyMutation.isPending ? <T>Creating...</T> : <T>Create API key</T>)}
             </form.SubmitButton>
