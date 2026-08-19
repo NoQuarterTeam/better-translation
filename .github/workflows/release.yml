@@ -137,7 +137,7 @@ jobs:
         run: bun run check:publish
 
       - name: Create release PR or publish
-        uses: changesets/action@v2.1.0
+        uses: changesets/action@v2.1.1
         with:
           version-script: bun run version-packages
           publish-script: bun run release
