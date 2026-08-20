@@ -220,7 +220,7 @@ describe("TypeScript and JSX components", () => {
     expect(first.edits).toContainEqual({
       start: expect.any(Number),
       end: expect.any(Number),
-      replacement: "<Var name={name} />",
+      replacement: '<Var name="name" value={name} />',
     })
 
     const transformed = applyEdits(code, first.edits)
@@ -229,6 +229,23 @@ describe("TypeScript and JSX components", () => {
     const second = analyzeTypeScriptSourceFile(transformed, "vars.tsx", markers)
     expect(second.messages).toEqual(first.messages)
     expect(second.edits).toEqual([])
+  })
+
+  test("normalizes concise React Var props to explicit name and value props", () => {
+    const code = `
+      const content = (
+        <T>
+          <Var selectedCount={field.state.value.length} data-tsd-source="counter.tsx:4" />/
+          <Var maxCount={MAX_EVENT_TAGS} data-tsd-source="counter.tsx:5" /> selected
+        </T>
+      )
+    `
+    const first = analyzeTypeScriptSourceFile(code, "counter.tsx", markers)
+    const transformed = applyEdits(code, first.edits)
+
+    expect(transformed).toContain('<Var name="selectedCount" value={field.state.value.length} />')
+    expect(transformed).toContain('<Var name="maxCount" value={MAX_EVENT_TAGS} />')
+    expect(analyzeTypeScriptSourceFile(transformed, "counter.tsx", markers).edits).toEqual([])
   })
 
   test("encodes intrinsic elements in deterministic preorder while leaving element props in source", () => {
@@ -605,7 +622,7 @@ describe("source-analysis regressions", () => {
     const transformed = applyEdits(source, first.edits)
 
     expect(transformed).toContain("const unrelated = <Var>{outside}</Var>")
-    expect(transformed).toContain("<Var name={name} />")
+    expect(transformed).toContain('<Var name="name" value={name} />')
     expect(analyzeSourceFile(transformed, "message.tsx", markers).edits).toEqual([])
   })
 

@@ -37,6 +37,10 @@ export type ParsedRichTextMessage = {
   structure: MessageStructure
 }
 
+export function isValidPlaceholderName(name: string) {
+  return /^\w+$/.test(name)
+}
+
 export function getMessagePlaceholderNames(message: string) {
   const names = new Set<string>()
   for (const match of message.matchAll(new RegExp(PLACEHOLDER_PATTERN_SOURCE, "g"))) {

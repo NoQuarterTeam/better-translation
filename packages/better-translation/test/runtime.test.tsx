@@ -476,6 +476,22 @@ describe("runtime regressions", () => {
     ).toBe("")
   })
 
+  test("ignores injected non-placeholder props on concise Var values", () => {
+    const sourceMessage = "{selectedCount}/{maxCount} selected"
+    const renderCounter = (message: string) =>
+      renderToStaticMarkup(
+        <TranslateProvider messages={{ counter: message }}>
+          <TransformedT id="counter" message={sourceMessage}>
+            <Var selectedCount={0} data-tsd-source="event-form.tsx:397" />/
+            <Var maxCount={10} data-tsd-source="event-form.tsx:398" /> selected
+          </TransformedT>
+        </TranslateProvider>,
+      )
+
+    expect(renderCounter(sourceMessage)).toBe("0/10 selected")
+    expect(renderCounter("{selectedCount}/{maxCount} geselecteerd")).toBe("0/10 geselecteerd")
+  })
+
   test("preserves authored JSX on the compiled Default-locale fast path", () => {
     const sourceMessage = "Always <0>{status}</0>"
     const html = renderToStaticMarkup(

@@ -2,6 +2,8 @@ import type { ExtractedMessage, MessageSource } from "../../types.js"
 
 import { getMessagePlaceholderNames } from "../../message/template.js"
 
+export { isValidPlaceholderName } from "../../message/template.js"
+
 export interface SourceMarkers {
   call: string[]
   component: string[]
@@ -26,10 +28,6 @@ export interface SourceAnalysis {
   messages: ExtractedMessage[]
   edits: SourceEdit[]
   diagnostics?: SourceDiagnostic[]
-}
-
-export function isValidPlaceholderName(name: string) {
-  return /^\w+$/.test(name)
 }
 
 export function recordPlaceholder(

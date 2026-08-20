@@ -21,6 +21,7 @@ import { isSupportedRichTextElement, isVoidRichTextElement } from "./message/ric
 import {
   getMessageStructure,
   hasSameRichTextStructure,
+  isValidPlaceholderName,
   parseRichTextMessage,
   type MessageStructure,
   type ParsedRichTextMessage,
@@ -403,7 +404,9 @@ function getRuntimeVarEntry(props: VarProps) {
     return { name: props.name, value: props.children }
   }
 
-  const entries = Object.entries(props).filter(([key]) => key !== "children")
+  // Development tooling can inject metadata props into JSX components. Only
+  // names that can form Variable placeholders participate in concise Var syntax.
+  const entries = Object.entries(props).filter(([key]) => key !== "children" && isValidPlaceholderName(key))
   if (entries.length !== 1) return undefined
 
   const [name, value] = entries[0]!

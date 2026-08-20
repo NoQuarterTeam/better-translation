@@ -289,8 +289,8 @@ function extractJSXChildren(code: string, children: Array<JSXChild>, componentMa
               return undefined
             }
 
-            const shorthandEdit = createVarShorthandEdit(child)
-            if (shorthandEdit) edits.push(shorthandEdit)
+            const normalizationEdit = createVarNormalizationEdit(code, child, entry)
+            if (normalizationEdit) edits.push(normalizationEdit)
             if (!placeholders.includes(entry.name)) placeholders.push(entry.name)
             parts.push(`{${entry.name}}`)
             break
@@ -365,19 +365,25 @@ function getStaticStringExpressionValue(node: { type: string; value?: unknown })
   return typeof template.quasis[0]?.value?.cooked === "string" ? template.quasis[0].value.cooked : undefined
 }
 
-function createVarShorthandEdit(node: {
-  start: number
-  end: number
-  openingElement: { attributes: Array<unknown> }
-  children: Array<JSXChild>
-}): SourceEdit | undefined {
-  if (node.openingElement.attributes.length > 0) return undefined
-  const identifier = getVarChildIdentifier(node.children)
-  if (!identifier) return undefined
+function createVarNormalizationEdit(
+  code: string,
+  node: {
+    start: number
+    end: number
+    openingElement: { attributes: Array<unknown> }
+    children: Array<JSXChild>
+  },
+  entry: { name: string; value: string },
+): SourceEdit | undefined {
+  const explicitName = getJSXStringAttribute(node.openingElement.attributes, "name")
+  const explicitValue = getJSXExpressionAttributeSource(code, node.openingElement.attributes, "value")
+  const childValue = getVarChildrenSource(code, node.children)
+  if (explicitName && (explicitValue || childValue)) return undefined
+
   return {
     start: node.start,
     end: node.end,
-    replacement: `<Var ${identifier}={${identifier}} />`,
+    replacement: `<Var name=${JSON.stringify(entry.name)} value={${entry.value}} />`,
   }
 }
 
@@ -426,7 +432,14 @@ function getSingleJSXAttributeEntry(code: string, attributes: Array<unknown>): {
         }
       | undefined
 
-    if (attribute?.type !== "JSXAttribute" || attribute.name?.type !== "JSXIdentifier" || !attribute.name.name) return []
+    if (
+      attribute?.type !== "JSXAttribute" ||
+      attribute.name?.type !== "JSXIdentifier" ||
+      !attribute.name.name ||
+      !isValidPlaceholderName(attribute.name.name)
+    ) {
+      return []
+    }
     const value = getJSXAttributeValueSource(code, attribute.value)
     return value ? [{ name: attribute.name.name, value }] : []
   })
