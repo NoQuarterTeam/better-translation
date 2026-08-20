@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.6.9
+
+### Patch Changes
+
+- [`357d771`](https://github.com/NoQuarterTeam/better-translation/commit/357d7719bb0cb3ae885a80611b3d62b370dfc254) Thanks [@JClackett](https://github.com/JClackett)! - Preserve React Var values when development tooling injects metadata props.
+
 ## 0.6.8
 
 ### Patch Changes
