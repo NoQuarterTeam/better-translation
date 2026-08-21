@@ -380,6 +380,25 @@ function createVarNormalizationEdit(
   const childValue = getVarChildrenSource(code, node.children)
   if (explicitName && (explicitValue || childValue)) return undefined
 
+  const customProp = getSingleJSXAttributeEntry(code, node.openingElement.attributes)
+  if (customProp?.name === entry.name) {
+    if (customProp.valueType === "JSXExpressionContainer") {
+      // Keep the edit outside the value expression so nested translation calls
+      // can receive their own source edits without overlapping this one.
+      return {
+        start: customProp.nameStart,
+        end: customProp.nameEnd,
+        replacement: `name=${JSON.stringify(entry.name)} value`,
+      }
+    }
+
+    return {
+      start: customProp.start,
+      end: customProp.end,
+      replacement: `name=${JSON.stringify(entry.name)} value={${entry.value}}`,
+    }
+  }
+
   return {
     start: node.start,
     end: node.end,
@@ -422,26 +441,44 @@ function getVarEntry(
   return childIdentifier ? { name: childIdentifier, value: childIdentifier } : undefined
 }
 
-function getSingleJSXAttributeEntry(code: string, attributes: Array<unknown>): { name: string; value: string } | undefined {
+function getSingleJSXAttributeEntry(code: string, attributes: Array<unknown>) {
   const keys = attributes.flatMap((attr) => {
     const attribute = attr as
       | {
+          start?: number
+          end?: number
           type?: string
-          name?: { type?: string; name?: string }
+          name?: { start?: number; end?: number; type?: string; name?: string }
           value?: { type?: string; value?: unknown; expression?: { start: number; end: number } } | null
         }
       | undefined
 
     if (
       attribute?.type !== "JSXAttribute" ||
+      typeof attribute.start !== "number" ||
+      typeof attribute.end !== "number" ||
       attribute.name?.type !== "JSXIdentifier" ||
+      typeof attribute.name.start !== "number" ||
+      typeof attribute.name.end !== "number" ||
       !attribute.name.name ||
       !isValidPlaceholderName(attribute.name.name)
     ) {
       return []
     }
     const value = getJSXAttributeValueSource(code, attribute.value)
-    return value ? [{ name: attribute.name.name, value }] : []
+    return value
+      ? [
+          {
+            start: attribute.start,
+            end: attribute.end,
+            nameStart: attribute.name.start,
+            nameEnd: attribute.name.end,
+            name: attribute.name.name,
+            value,
+            valueType: attribute.value?.type,
+          },
+        ]
+      : []
   })
 
   return keys.length === 1 ? keys[0] : undefined

@@ -17,11 +17,15 @@ const markers = {
 }
 
 function applyEdits(code: string, edits: SourceEdit[]) {
-  let transformed = code
+  const reversedChunks: string[] = []
+  let cursor = code.length
   for (const edit of [...edits].sort((a, b) => b.start - a.start)) {
-    transformed = `${transformed.slice(0, edit.start)}${edit.replacement}${transformed.slice(edit.end)}`
+    if (edit.end > cursor) throw new Error("Source edits overlap")
+    reversedChunks.push(code.slice(edit.end, cursor), edit.replacement)
+    cursor = edit.start
   }
-  return transformed
+  reversedChunks.push(code.slice(0, cursor))
+  return reversedChunks.reverse().join("")
 }
 
 describe("source analyzer dispatch", () => {
@@ -243,9 +247,18 @@ describe("TypeScript and JSX components", () => {
     const first = analyzeTypeScriptSourceFile(code, "counter.tsx", markers)
     const transformed = applyEdits(code, first.edits)
 
-    expect(transformed).toContain('<Var name="selectedCount" value={field.state.value.length} />')
-    expect(transformed).toContain('<Var name="maxCount" value={MAX_EVENT_TAGS} />')
+    expect(transformed).toContain('<Var name="selectedCount" value={field.state.value.length}')
+    expect(transformed).toContain('<Var name="maxCount" value={MAX_EVENT_TAGS}')
     expect(analyzeTypeScriptSourceFile(transformed, "counter.tsx", markers).edits).toEqual([])
+  })
+
+  test("keeps nested translation call edits outside concise Var normalization ranges", () => {
+    const code = `const content = <T><Var label={t("Fallback")} /></T>`
+    const first = analyzeTypeScriptSourceFile(code, "nested-call.tsx", markers)
+    const transformed = applyEdits(code, first.edits)
+
+    expect(transformed).toContain('<Var name="label" value={t("Fallback", { id:')
+    expect(analyzeTypeScriptSourceFile(transformed, "nested-call.tsx", markers).edits).toEqual([])
   })
 
   test("encodes intrinsic elements in deterministic preorder while leaving element props in source", () => {
