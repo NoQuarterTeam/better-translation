@@ -26,7 +26,7 @@
     "@faker-js/faker": "10.6.0",
     "@neondatabase/serverless": "catalog:",
     "@paralleldrive/cuid2": "^3.3.0",
-    "@posthog/react": "1.10.3",
+    "@posthog/react": "1.10.4",
     "@react-email/render": "^2.1.0",
     "@sentry/tanstackstart-react": "10.70.0",
     "@t3-oss/env-core": "0.13.11",
