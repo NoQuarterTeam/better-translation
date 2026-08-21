@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.6.10
+
+### Patch Changes
+
+- [`0a3ce19`](https://github.com/NoQuarterTeam/better-translation/commit/0a3ce19f4a5f6826b8790d7d2186a2eb741621c3) Thanks [@JClackett](https://github.com/JClackett)! - Avoid overlapping source edits when a React Var value contains a translation call.
+
 ## 0.6.9
 
 ### Patch Changes
