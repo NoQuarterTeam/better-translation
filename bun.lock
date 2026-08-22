@@ -181,7 +181,7 @@
         "bt": "./dist/cli.mjs",
       },
       "dependencies": {
-        "ai": "7.0.73",
+        "ai": "7.0.76",
         "oxc-parser": "0.146.0",
       },
       "devDependencies": {
@@ -3686,7 +3686,7 @@
 
     "better-call/rou3": ["rou3@0.7.12", "", {}, "sha512-iFE4hLDuloSWcD7mjdCDhx2bKcIsYbtOTpfH5MHHLSKMOUyjqQXTeZVa289uuwEGEKFoE/BAPbhaU4B774nceg=="],
 
-    "better-translation/ai": ["ai@7.0.73", "", { "dependencies": { "@ai-sdk/gateway": "4.0.59", "@ai-sdk/provider": "4.0.7", "@ai-sdk/provider-utils": "5.0.28" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-rm2Rk68seeyhfgXl1JA/oaHcQHL018AfgydkJWx7Bgz0wGDHyvl30SnRIU2V7ZVR60A5K0SOLyP78EZmEJ2tOw=="],
+    "better-translation/ai": ["ai@7.0.76", "", { "dependencies": { "@ai-sdk/gateway": "4.0.61", "@ai-sdk/provider": "4.0.7", "@ai-sdk/provider-utils": "5.0.28" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-Mytm/RFJzwJ0nzXiHYAE3dgNpFG/2K2Tks5alwm+PzAQeB6RJAJ97eGuZ8wssy66PcvtGWGIscS4tRi6dg0KLQ=="],
 
     "binary-version/execa": ["execa@8.0.1", "", { "dependencies": { "cross-spawn": "^7.0.3", "get-stream": "^8.0.1", "human-signals": "^5.0.0", "is-stream": "^3.0.0", "merge-stream": "^2.0.0", "npm-run-path": "^5.1.0", "onetime": "^6.0.0", "signal-exit": "^4.1.0", "strip-final-newline": "^3.0.0" } }, "sha512-VyhnebXciFV2DESc+p6B+y0LjSm0krU4OgJN44qFAhBY0TJ+1V61tYD2+wHusZ6F9n5K+vl8k0sTy7PEfV4qpg=="],
 
@@ -4032,7 +4032,7 @@
 
     "ansi-align/string-width/strip-ansi": ["strip-ansi@6.0.1", "", { "dependencies": { "ansi-regex": "^5.0.1" } }, "sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A=="],
 
-    "better-translation/ai/@ai-sdk/gateway": ["@ai-sdk/gateway@4.0.59", "", { "dependencies": { "@ai-sdk/provider": "4.0.7", "@ai-sdk/provider-utils": "5.0.28", "@vercel/oidc": "3.2.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-9MPyBBXU5snhuvqMa3OSOYtHP+wlyepJ+E0E+9lVNoxLGmi4sZqGeLbIxSYZeTf7qQ2xPshtfo5qDJHaOmAHvw=="],
+    "better-translation/ai/@ai-sdk/gateway": ["@ai-sdk/gateway@4.0.61", "", { "dependencies": { "@ai-sdk/provider": "4.0.7", "@ai-sdk/provider-utils": "5.0.28", "@vercel/oidc": "3.2.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-b+PRdwM9/x0427CKqfd4zpCRgSzQeZsCZ9PtBOaLU2S1l+eRj8++Bwt766VnLerd/F5snKWAq13miV+OPcvclA=="],
 
     "better-translation/ai/@ai-sdk/provider": ["@ai-sdk/provider@4.0.7", "", { "dependencies": { "json-schema": "^0.4.0" } }, "sha512-6or44XprPzKbr8zkmzosowSE0pxkvJcoojBL+mCZvPUt3kvXp3XSNqeVun9golb1acEfSo6yaEBRT18h2VU+1Q=="],
 
