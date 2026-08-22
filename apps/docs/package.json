@@ -12,7 +12,7 @@
     "@tanstack/react-start": "catalog:",
     "@vercel/functions": "catalog:",
     "fumadocs-core": "16.14.5",
-    "fumadocs-mdx": "15.3.0",
+    "fumadocs-mdx": "15.3.1",
     "fumadocs-ui": "16.14.5",
     "lucide-react": "catalog:",
     "nitro": "catalog:",
