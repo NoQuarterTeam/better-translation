@@ -54,7 +54,7 @@
     "nitro": "catalog:",
     "pg": "8.23.0",
     "posthog-js": "1.422.5",
-    "posthog-node": "5.51.4",
+    "posthog-node": "5.51.6",
     "react": "catalog:",
     "react-dom": "catalog:",
     "resend": "6.25.0",
