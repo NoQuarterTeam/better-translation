@@ -83,7 +83,7 @@
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.0",
     "@changesets/cli": "^3.0.0",
-    "@tsdown/css": "^0.22.14",
+    "@tsdown/css": "^0.23.0",
     "@typescript/native": "catalog:",
     "better-translation": "workspace:*",
     "oxlint": "1.81.0",
