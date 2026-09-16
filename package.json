@@ -86,7 +86,7 @@
     "@tsdown/css": "^0.23.0",
     "@typescript/native": "catalog:",
     "better-translation": "workspace:*",
-    "oxlint": "1.82.0",
+    "oxlint": "1.83.0",
     "oxlint-tsgolint": "7.0.2001",
     "typescript": "catalog:",
     "vite-plus": "0.3.2"
