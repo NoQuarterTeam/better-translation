@@ -87,7 +87,7 @@
     "@typescript/native": "catalog:",
     "better-translation": "workspace:*",
     "oxlint": "1.85.0",
-    "oxlint-tsgolint": "7.0.2002",
+    "oxlint-tsgolint": "7.0.2003",
     "typescript": "catalog:",
     "vite-plus": "0.3.3"
   },
