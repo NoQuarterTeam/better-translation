@@ -52,7 +52,7 @@
     "drizzle-orm": "1.0.0-rc.5-ab785fc",
     "lucide-react": "catalog:",
     "nitro": "catalog:",
-    "pg": "8.23.0",
+    "pg": "8.23.1",
     "posthog-js": "1.434.17",
     "posthog-node": "5.54.1",
     "react": "catalog:",
