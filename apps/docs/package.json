@@ -11,7 +11,7 @@
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",
     "@vercel/functions": "catalog:",
-    "fumadocs-core": "16.15.17",
+    "fumadocs-core": "16.15.18",
     "fumadocs-mdx": "15.4.6",
     "fumadocs-ui": "16.15.17",
     "lucide-react": "catalog:",
