@@ -22,7 +22,7 @@
     "@better-translation/locale-editor": "workspace:*",
     "@better-translation/ui": "workspace:*",
     "@better-upload/client": "3.0.20",
-    "@better-upload/server": "3.0.19",
+    "@better-upload/server": "3.0.20",
     "@faker-js/faker": "10.6.0",
     "@neondatabase/serverless": "catalog:",
     "@paralleldrive/cuid2": "^3.3.0",
