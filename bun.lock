@@ -66,7 +66,7 @@
         "@better-translation/email": "workspace:*",
         "@better-translation/locale-editor": "workspace:*",
         "@better-translation/ui": "workspace:*",
-        "@better-upload/client": "3.0.19",
+        "@better-upload/client": "3.0.20",
         "@better-upload/server": "3.0.19",
         "@faker-js/faker": "10.6.0",
         "@neondatabase/serverless": "catalog:",
@@ -444,7 +444,7 @@
 
     "@better-translation/web": ["@better-translation/web@workspace:apps/web"],
 
-    "@better-upload/client": ["@better-upload/client@3.0.19", "", { "peerDependencies": { "react": "*" } }, "sha512-PA/ByeTmeOS37SzkxrkxuyqNh/YQopsL9FeNpxu4IAbaKm3i7bGY6iupaoHi7p2HboGdeEgTIb7lHbZXXttMgg=="],
+    "@better-upload/client": ["@better-upload/client@3.0.20", "", { "peerDependencies": { "react": "*" } }, "sha512-vBR60E4WNdX3shKGH9qAVS755i99WR1vB9D9BIksUFaHnHMgt8QR/kbhxTOrXocFFcK5JWjdhpSgg7FQAP4Bqw=="],
 
     "@better-upload/server": ["@better-upload/server@3.0.19", "", { "dependencies": { "aws4fetch": "^1.0.20", "fast-xml-parser": "^5.7.2", "zod": "^4.3.6" } }, "sha512-Rd+gTRH1oWw8lHtrJgw7XYSwGXlr3RNSi38K7dupfK9Uc3wt2CSSvOZ7f71AHBM+KQcRJRuOgpkGT3TUQsgn+w=="],
 
