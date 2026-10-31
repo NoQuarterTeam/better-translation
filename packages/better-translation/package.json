@@ -76,7 +76,7 @@
     "test:types": "vp pack && tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "ai": "7.0.158",
+    "ai": "7.0.159",
     "oxc-parser": "0.156.0"
   },
   "devDependencies": {
