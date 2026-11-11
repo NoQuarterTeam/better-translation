@@ -50,6 +50,7 @@ Add `betterTranslation()` before the framework plugin in `vite.config.ts`:
 ```ts
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
+
 import { betterTranslation } from "better-translation/vite"
 
 export default defineConfig({

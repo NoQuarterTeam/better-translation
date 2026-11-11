@@ -49,8 +49,8 @@ function AuthenticationPage() {
   })
 
   const unlinkProvider = useMutation({
-    mutationFn: async (provider: AuthProvider) => {
-      const result = await authClient.unlinkAccount({ providerId: provider })
+    mutationFn: async (accountId: string) => {
+      const result = await authClient.unlinkAccount({ accountId })
       if (result.error) throw new Error(result.error.message ?? t("Could not disconnect account"))
     },
     onSuccess: async () => {
@@ -114,12 +114,12 @@ function AuthenticationPage() {
                       </div>
                     </div>
 
-                    {isConnected ? (
+                    {linkedAccount ? (
                       <Button
                         variant="outline"
                         size="sm"
                         disabled={!canUnlink || unlinkProvider.isPending}
-                        onClick={() => unlinkProvider.mutate(provider.id)}
+                        onClick={() => unlinkProvider.mutate(linkedAccount.id)}
                       >
                         <UnlinkIcon />
                         <T>Disconnect</T>

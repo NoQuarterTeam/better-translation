@@ -27,7 +27,7 @@ function DefaultError({ error, reset }: ErrorComponentProps) {
         <h1 className="text-2xl font-semibold">The docs could not load this page.</h1>
         <details className="bg-fd-muted/40 rounded-lg border p-3 text-left text-sm">
           <summary className="text-fd-muted-foreground cursor-pointer">Error details</summary>
-          <pre className="mt-3 overflow-auto whitespace-pre-wrap">{error.message}</pre>
+          <pre className="mt-3 overflow-auto whitespace-pre-wrap">{error instanceof Error ? error.message : String(error)}</pre>
         </details>
       </div>
       <div className="flex flex-wrap justify-center gap-3 text-sm">

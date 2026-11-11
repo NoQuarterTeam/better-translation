@@ -1,20 +1,21 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-translation/ui/components/table"
 import { cn } from "@better-translation/ui/lib/utils"
-import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
+import { type ColumnDef, type RowData, tableFeatures, useTable } from "@tanstack/react-table"
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
+const dataTableFeatures = tableFeatures({})
+// A stable empty input keeps the table from rebuilding its row model on every render while data loads.
+const emptyRows: never[] = []
+
+export type DataTableColumnDef<TData extends RowData> = ColumnDef<typeof dataTableFeatures, TData>
+
+interface DataTableProps<TData extends RowData> {
+  columns: DataTableColumnDef<TData>[]
   data: TData[] | undefined
   isLoading?: boolean
 }
 
-export function DataTable<TData, TValue>({ columns, data, isLoading = false }: DataTableProps<TData, TValue>) {
-  const table = useReactTable({
-    data: data ?? [],
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    manualSorting: true,
-  })
+export function DataTable<TData extends RowData>({ columns, data, isLoading = false }: DataTableProps<TData>) {
+  const table = useTable({ features: dataTableFeatures, columns, data: data ?? emptyRows })
 
   return (
     <Table className={cn(isLoading && "animate-pulse")}>
@@ -22,11 +23,7 @@ export function DataTable<TData, TValue>({ columns, data, isLoading = false }: D
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
             {headerGroup.headers.map((header) => {
-              return (
-                <TableHead key={header.id}>
-                  {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              )
+              return <TableHead key={header.id}>{header.isPlaceholder ? null : <table.FlexRender header={header} />}</TableHead>
             })}
           </TableRow>
         ))}
@@ -34,9 +31,11 @@ export function DataTable<TData, TValue>({ columns, data, isLoading = false }: D
       <TableBody>
         {table.getRowModel().rows?.length ? (
           table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+            <TableRow key={row.id}>
+              {row.getAllCells().map((cell) => (
+                <TableCell key={cell.id}>
+                  <table.FlexRender cell={cell} />
+                </TableCell>
               ))}
             </TableRow>
           ))

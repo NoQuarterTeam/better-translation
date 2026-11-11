@@ -3,17 +3,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev --host --port ${PORT:-5173}",
-    "build": "vite build",
+    "dev": "vp dev --host --port ${PORT:-5173}",
+    "build": "vp build",
     "start": "node .output/server/index.mjs"
   },
   "dependencies": {
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",
     "@vercel/functions": "catalog:",
-    "fumadocs-core": "16.14.5",
-    "fumadocs-mdx": "15.3.0",
-    "fumadocs-ui": "16.14.5",
+    "fumadocs-core": "16.19.0",
+    "fumadocs-mdx": "15.6.0",
+    "fumadocs-ui": "16.19.0",
     "lucide-react": "catalog:",
     "nitro": "catalog:",
     "react": "catalog:",

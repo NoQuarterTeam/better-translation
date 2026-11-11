@@ -1,5 +1,7 @@
+import adapter from "@sveltejs/adapter-auto"
 import { sveltekit } from "@sveltejs/kit/vite"
-import { defineConfig } from "vite"
+import { vitePreprocess } from "@sveltejs/vite-plugin-svelte"
+import { defineConfig } from "vite-plus"
 
 import { betterTranslation } from "better-translation/vite"
 
@@ -14,6 +16,6 @@ export default defineConfig({
         editor: true,
       },
     }),
-    sveltekit(),
+    sveltekit({ adapter: adapter(), preprocess: vitePreprocess() }),
   ],
 })
