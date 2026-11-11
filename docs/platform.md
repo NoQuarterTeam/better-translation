@@ -117,6 +117,12 @@ For public local runtime, the default output is Vite `publicDir` plus `bt`, and 
 
 `translate?: TranslateFn` belongs to local runtime options. It fills missing non-default Locale values during dev and writes those values into local artifacts/cache. Production local builds do not call `translate`.
 
+While a translation is pending, the plugin writes the Default locale message as a fallback Locale value and records that
+fallback in the translation cache. Only a value that still equals its recorded fallback is retranslated; any other valid
+Locale value wins over the cache, including one that matches the Default locale message. Because the cache is per
+checkout, a committed fallback is treated as an accepted value in a checkout that did not write it; remove that Lookup
+id from the Locale values to have it translated again.
+
 `translationBatchSize` is available when `translate` is configured. It controls both the number of missing Messages passed
 to each translation call and the boundary at which cache and Locale values are persisted; it defaults to 25.
 
