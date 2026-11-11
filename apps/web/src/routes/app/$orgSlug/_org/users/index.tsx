@@ -38,7 +38,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@better-translation/ui/components/tabs"
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import type { ColumnDef } from "@tanstack/react-table"
 import { CrownIcon, MoreVerticalIcon, PlusIcon, ShieldIcon, Trash2Icon } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -47,7 +46,7 @@ import * as z from "zod"
 import { T, useT } from "better-translation/react"
 import { createT } from "better-translation/runtime"
 
-import { DataTable } from "@/components/data-table"
+import { DataTable, type DataTableColumnDef } from "@/components/data-table"
 import { useAppForm } from "@/components/react-form"
 import type { OrganizationRole } from "@/lib/auth/permissions"
 import { getInvitationStatusBadgeVariant, getInvitationStatusLabel } from "@/lib/static/invitation"
@@ -96,7 +95,7 @@ function UsersPage() {
   const pageContext = useSuspenseQuery(organizationUsersPageContextQueryOptions(orgSlug)).data
   const members = useSuspenseQuery(organizationMembersQueryOptions(orgSlug)).data
 
-  const memberColumns: ColumnDef<MemberRow>[] = useMemo(
+  const memberColumns: DataTableColumnDef<MemberRow>[] = useMemo(
     () => [
       {
         accessorKey: "userName",
@@ -624,7 +623,7 @@ function InvitesList({ canInviteMembers }: { canInviteMembers: boolean }) {
   const { orgSlug } = Route.useParams()
   const { data: invitations, isPending } = useQuery(organizationInvitationsQueryOptions(orgSlug))
 
-  const invitationColumns: ColumnDef<InvitationRow>[] = useMemo(
+  const invitationColumns: DataTableColumnDef<InvitationRow>[] = useMemo(
     () => [
       {
         accessorKey: "email",

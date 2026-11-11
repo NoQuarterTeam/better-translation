@@ -20,7 +20,6 @@ import {
 } from "@better-translation/ui/components/dropdown-menu"
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import type { ColumnDef } from "@tanstack/react-table"
 import { CopyIcon, KeyRoundIcon, MoreHorizontalIcon, ShieldOffIcon } from "lucide-react"
 import { useMemo } from "react"
 import { toast } from "sonner"
@@ -29,7 +28,7 @@ import * as z from "zod"
 import { T, useT } from "better-translation/react"
 import { createT } from "better-translation/runtime"
 
-import { DataTable } from "@/components/data-table"
+import { DataTable, type DataTableColumnDef } from "@/components/data-table"
 import { useAppForm } from "@/components/react-form"
 
 import { createProjectApiKeyFn, projectApiKeysQueryOptions, revokeProjectApiKeyFn, type listProjectApiKeysFn } from "./-data"
@@ -56,7 +55,7 @@ function ProjectApiKeysPage() {
   const t = useT()
   const apiKeysQuery = useSuspenseQuery(projectApiKeysQueryOptions(orgSlug, projectSlug))
 
-  const apiKeyColumns = useMemo<ColumnDef<ApiKeyRow>[]>(
+  const apiKeyColumns = useMemo<DataTableColumnDef<ApiKeyRow>[]>(
     () => [
       {
         accessorKey: "name",

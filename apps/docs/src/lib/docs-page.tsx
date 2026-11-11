@@ -4,7 +4,8 @@ import browserCollections from "collections/browser"
 import { useFumadocsLoader } from "fumadocs-core/source/client"
 import { DocsLayout } from "fumadocs-ui/layouts/docs"
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page"
-import { Suspense } from "react"
+import type { MDXProps } from "mdx/types"
+import { type FC, Suspense } from "react"
 
 import { getMDXComponents } from "@/components/mdx"
 import { baseOptions } from "@/lib/layout.shared"
@@ -23,9 +24,13 @@ const serverLoader = createServerFn({ method: "GET" })
   })
 
 const clientLoader = browserCollections.docs.createClientLoader({
-  component({ toc, frontmatter, default: MDX }, _props: undefined) {
+  component(page, _props: undefined) {
+    // fumadocs-mdx 15.6 widens compiled page exports to unknown when it merges page outputs, so restore the shapes this
+    // page renders.
+    const frontmatter = page.frontmatter as { title: string; description?: string }
+    const MDX = page.default as FC<MDXProps>
     return (
-      <DocsPage toc={toc} tableOfContent={{ style: "clerk" }}>
+      <DocsPage toc={page.toc} tableOfContent={{ style: "clerk" }}>
         <DocsTitle>{frontmatter.title}</DocsTitle>
         <DocsDescription>{frontmatter.description}</DocsDescription>
         <DocsBody>

@@ -19,7 +19,6 @@ import {
 } from "@better-translation/ui/components/dropdown-menu"
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import type { ColumnDef } from "@tanstack/react-table"
 import { ArchiveIcon, CheckIcon, GitBranchIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, StarIcon } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -28,7 +27,7 @@ import * as z from "zod"
 import { T, useT } from "better-translation/react"
 import { createT } from "better-translation/runtime"
 
-import { DataTable } from "@/components/data-table"
+import { DataTable, type DataTableColumnDef } from "@/components/data-table"
 import { useAppForm } from "@/components/react-form"
 
 import {
@@ -69,7 +68,7 @@ function ProjectBranchesPage() {
   const t = useT()
   const branchesQuery = useSuspenseQuery(projectBranchesQueryOptions(orgSlug, projectSlug))
 
-  const branchColumns = useMemo<ColumnDef<BranchRow>[]>(
+  const branchColumns = useMemo<DataTableColumnDef<BranchRow>[]>(
     () => [
       {
         accessorKey: "name",

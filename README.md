@@ -41,8 +41,9 @@ Add the Vite plugin before the TanStack Start and React plugins:
 ```ts
 // vite.config.ts
 import { tanstackStart } from "@tanstack/react-start/plugin/vite"
-import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
+import { defineConfig } from "vite"
+
 import { betterTranslation } from "better-translation/vite"
 
 export default defineConfig({
@@ -65,6 +66,7 @@ For Svelte apps, keep `betterTranslation()` before the Svelte plugin:
 // vite.config.ts
 import { svelte } from "@sveltejs/vite-plugin-svelte"
 import { defineConfig } from "vite"
+
 import { betterTranslation } from "better-translation/vite"
 
 export default defineConfig({
@@ -85,6 +87,7 @@ Load messages in your root route's `beforeLoad`, then wrap the route outlet:
 ```tsx
 // src/routes/__root.tsx
 import { createRootRoute, Outlet } from "@tanstack/react-router"
+
 import { loadMessages } from "better-translation/messages"
 import { TranslateProvider } from "better-translation/react"
 

@@ -25,7 +25,7 @@ export function DefaultError({ error, reset }: ErrorComponentProps) {
           <details>
             <summary className="text-sm text-muted-foreground">View error details</summary>
             <div className="mx-auto max-h-[400px] max-w-xl overflow-y-auto rounded-xl border border-border/70 bg-muted/30 p-4 text-left text-sm">
-              <pre className="whitespace-pre-wrap">{error.message}</pre>
+              <pre className="whitespace-pre-wrap">{error instanceof Error ? error.message : String(error)}</pre>
             </div>
           </details>
 

@@ -70,14 +70,14 @@
     "bench:performance:compare": "bun run bench/compare-performance.ts",
     "bench:performance:guard": "bun run bench/performance.bench.ts --guard",
     "bench:performance:json": "bun run bench/performance.bench.ts --json",
-    "build": "vp pack && vite build",
+    "build": "vp pack && vp build",
     "prepack": "bun run build",
     "test": "bun test && bun run bench:performance:guard",
     "test:types": "vp pack && tsc -p tsconfig.test.json"
   },
   "dependencies": {
-    "ai": "7.0.70",
-    "oxc-parser": "0.146.0"
+    "ai": "7.0.170",
+    "oxc-parser": "0.158.0"
   },
   "devDependencies": {
     "@better-translation/locale-editor": "workspace:*",
