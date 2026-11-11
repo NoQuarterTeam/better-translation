@@ -20,12 +20,11 @@ type LocalEditorOptions = {
 
 export type LocalEditorRuntimeContext = {
   defaultLocale: string
-  isUntranslatedLocaleValue: (value: string, entry: Pick<ManifestEntry, "defaultMessage">) => boolean
   locales: string[]
   log: (message: string) => void
   manifest: MessageManifest
   readLocaleMessages: (locale: string) => RuntimeMessages
-  writeLocaleMessages: (locale: string, localeMessages: RuntimeMessages) => void
+  writeLocaleValue: (locale: string, lookupId: string, value: string) => void
 }
 
 export function getLocalEditorOptions({
@@ -236,9 +235,7 @@ function updateLocalEditorLocaleValue(
     throw new Error("Locale value must preserve the Message's Variable placeholders and Rich-text slots.")
   }
 
-  const localeMessages = context.readLocaleMessages(locale)
-  localeMessages[lookupId] = value
-  context.writeLocaleMessages(locale, localeMessages)
+  context.writeLocaleValue(locale, lookupId, value)
 }
 
 function createLocalEditorHtml(editorPath: string) {

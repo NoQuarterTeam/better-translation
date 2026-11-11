@@ -7,7 +7,7 @@ const CURRENT_VERSION = 1
 let temporaryFileSequence = 0
 
 export function createEmptyCache(): TranslationCache {
-  return { version: CURRENT_VERSION, entries: createCacheEntries() }
+  return { version: CURRENT_VERSION, entries: createCacheEntries(), defaultLocaleFallbacks: createCacheEntries() }
 }
 
 /** Loads the translation cache from disk, resetting it when the schema version changes. */
@@ -19,6 +19,7 @@ export function loadCache(path: string): TranslationCache {
     return {
       version: data.version,
       entries: createCacheEntries(Object.entries(data.entries)),
+      defaultLocaleFallbacks: createCacheEntries(Object.entries(data.defaultLocaleFallbacks ?? {})),
     }
   } catch {
     return createEmptyCache()
@@ -45,16 +46,27 @@ export function getCacheKey(lookupId: string, locale: string) {
   return `${lookupId}\0${locale}`
 }
 
-function createCacheEntries(entries: Iterable<readonly [string, TranslationCache["entries"][string]]> = []) {
-  const cacheEntries = Object.create(null) as TranslationCache["entries"]
+function createCacheEntries<T>(entries: Iterable<readonly [string, T]> = []) {
+  const cacheEntries = Object.create(null) as Record<string, T>
   for (const [key, entry] of entries) cacheEntries[key] = entry
   return cacheEntries
 }
 
-function isTranslationCache(input: unknown): input is TranslationCache {
+function isTranslationCache(
+  input: unknown,
+): input is Omit<TranslationCache, "defaultLocaleFallbacks"> & Partial<Pick<TranslationCache, "defaultLocaleFallbacks">> {
   if (typeof input !== "object" || input === null || Array.isArray(input)) return false
   if (!("version" in input) || input.version !== CURRENT_VERSION) return false
   if (!("entries" in input) || typeof input.entries !== "object" || input.entries === null || Array.isArray(input.entries)) {
+    return false
+  }
+  if (
+    "defaultLocaleFallbacks" in input &&
+    (typeof input.defaultLocaleFallbacks !== "object" ||
+      input.defaultLocaleFallbacks === null ||
+      Array.isArray(input.defaultLocaleFallbacks) ||
+      !Object.values(input.defaultLocaleFallbacks).every((value) => typeof value === "string"))
+  ) {
     return false
   }
 

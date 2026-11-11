@@ -579,6 +579,7 @@ describe("plugin state regressions", () => {
     expect(await invalidHooks.buildStart()).toBeUndefined()
     await invalidHooks.closeBundle()
     expect(JSON.parse(readFileSync(join(invalidRoot, ".cache/better-translation/cache.json"), "utf8"))).toEqual({
+      defaultLocaleFallbacks: {},
       entries: {},
       version: 1,
     })
@@ -1605,6 +1606,160 @@ describe("plugin lifecycle serialization", () => {
     } finally {
       globalThis.fetch = originalFetch
     }
+  })
+})
+
+describe("plugin Default locale fallbacks", () => {
+  function writeCachedTranslation(root: string, translations: Record<string, string>) {
+    const cache = createEmptyCache()
+    for (const [id, translation] of Object.entries(translations)) {
+      cache.entries[`${id}\u0000nl`] = { locale: "nl", meta: {}, sourceText: "Links", timestamp: 1, translation }
+    }
+    mkdirSync(join(root, ".cache/better-translation"), { recursive: true })
+    writeFileSync(join(root, ".cache/better-translation/cache.json"), JSON.stringify(cache))
+  }
+
+  function createLinksRoot({ cachedTranslation }: { cachedTranslation?: string }) {
+    const root = createPluginRoot()
+    mkdirSync(join(root, "src/lib/bt/locales"), { recursive: true })
+    writeFileSync(join(root, "src/message.tsx"), `<T id="links">Links</T>`)
+    writeFileSync(join(root, "src/lib/bt/locales/nl.json"), `${JSON.stringify({ links: "Links" }, null, 2)}\n`)
+    if (cachedTranslation) writeCachedTranslation(root, { links: cachedTranslation })
+    const calls: string[][] = []
+    const plugin = betterTranslation({
+      locales: ["en", "nl"],
+      logging: false,
+      runtime: {
+        type: "local",
+        translate: async (messages) => {
+          calls.push(messages.map(({ id }) => id))
+          return Object.fromEntries(messages.map(({ id, text }) => [id, id === "links" ? "Koppelingen" : `NL ${text}`]))
+        },
+      },
+    })
+    return { calls, plugin, root }
+  }
+
+  const readDutchLocaleValues = (root: string) =>
+    JSON.parse(readFileSync(join(root, "src/lib/bt/locales/nl.json"), "utf8")) as Record<string, string>
+
+  test.each([
+    { cache: "an empty cache", cachedTranslation: undefined },
+    { cache: "a different cached translation", cachedTranslation: "Koppelingen" },
+  ])("keeps a generated Locale value that matches the Default locale Message with $cache", async ({ cachedTranslation }) => {
+    const { calls, plugin, root } = createLinksRoot({ cachedTranslation })
+    resolvePlugin(plugin, root)
+    const api = getBetterTranslationPluginApi(plugin)
+    if (!api) throw new Error("Expected the Better Translation plugin lifecycle API")
+
+    await api.generate()
+    await api.generate()
+
+    expect(calls).toEqual([])
+    expect(readDutchLocaleValues(root)).toEqual({ links: "Links" })
+  })
+
+  test("keeps a Locale value that matches the Default locale Message through dev regeneration", async () => {
+    accelerateLifecycleTimers()
+    const { calls, plugin, root } = createLinksRoot({ cachedTranslation: "Koppelingen" })
+    const hooks = resolvePlugin(plugin, root)
+    await hooks.buildStart()
+    const watcher = configureWatcher(hooks)
+
+    const file = join(root, "src/message.tsx")
+    writeFileSync(file, `<><T id="links">Links</T><T id="other">Other</T></>`)
+    watcher.change!(file)
+    await waitFor(() => expect(calls).toEqual([["other"]]))
+    await hooks.closeWatcher()
+
+    expect(readDutchLocaleValues(root)).toEqual({ links: "Links", other: "NL Other" })
+  })
+
+  test("translates a Default locale fallback the plugin wrote on a later run", async () => {
+    const root = createPluginRoot()
+    writeFileSync(join(root, "src/message.tsx"), `<T id="greeting">Hello</T>`)
+    const generate = async (translation: string | undefined) => {
+      const calls: string[][] = []
+      const plugin = betterTranslation({
+        locales: ["en", "nl"],
+        logging: false,
+        runtime: {
+          type: "local",
+          translate: async (messages) => {
+            calls.push(messages.map(({ id }) => id))
+            return translation ? Object.fromEntries(messages.map(({ id }) => [id, translation])) : {}
+          },
+        },
+      })
+      resolvePlugin(plugin, root)
+      await getBetterTranslationPluginApi(plugin)!.generate()
+      return calls
+    }
+
+    expect(await generate(undefined)).toEqual([["greeting"]])
+    expect(readDutchLocaleValues(root)).toEqual({ greeting: "Hello" })
+
+    expect(await generate("Hallo")).toEqual([["greeting"]])
+    expect(readDutchLocaleValues(root)).toEqual({ greeting: "Hallo" })
+    expect(loadCache(join(root, ".cache/better-translation/cache.json")).defaultLocaleFallbacks).toEqual({})
+  })
+
+  test("accepts a local editor value that matches the Default locale fallback", async () => {
+    accelerateLifecycleTimers()
+    const root = createPluginRoot()
+    writeFileSync(join(root, "src/message.tsx"), `<T id="links">Links</T>`)
+    const calls: string[][] = []
+    const createHooks = () =>
+      resolvePlugin(
+        betterTranslation({
+          locales: ["en", "nl"],
+          logging: false,
+          runtime: {
+            type: "local",
+            editor: true,
+            translate: async (messages) => {
+              calls.push(messages.map(({ id }) => id))
+              return {}
+            },
+          },
+        }),
+        root,
+      )
+    const hooks = createHooks()
+    await hooks.buildStart()
+    await waitFor(() => expect(calls).toEqual([["links"]]))
+    expect(readDutchLocaleValues(root)).toEqual({ links: "Links" })
+
+    let middleware!: (request: unknown, response: unknown, next: () => void) => Promise<void>
+    hooks.configureServer({
+      httpServer: null,
+      middlewares: {
+        use(handler: typeof middleware) {
+          middleware = handler
+        },
+      },
+      watcher: { add() {}, on() {} },
+      ws: { send() {} },
+    })
+    const response = { statusCode: 0, setHeader() {}, end() {} }
+    await middleware(
+      Object.assign([Buffer.from(JSON.stringify({ value: "Links" }))], {
+        method: "PATCH",
+        url: "/__better-translation/api/messages/links/locales/nl",
+      }),
+      response,
+      () => {},
+    )
+    expect(response.statusCode).toBe(200)
+    await hooks.closeWatcher()
+
+    const restartedHooks = createHooks()
+    await restartedHooks.buildStart()
+    await Bun.sleep(20)
+    await restartedHooks.closeWatcher()
+    expect(calls).toEqual([["links"]])
+    expect(loadCache(join(root, ".cache/better-translation/cache.json")).defaultLocaleFallbacks).toEqual({})
+    expect(readDutchLocaleValues(root)).toEqual({ links: "Links" })
   })
 })
 

@@ -92,6 +92,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
   const configuredRuntime = normalizeRuntimeOptions(runtime)
   let manifestState = new ManifestState("", logging)
   let cache: TranslationCache = createEmptyCache()
+  let defaultLocaleFallbacksChanged = false
   let resolvedRuntime = configuredRuntime
   let usesLocalStorage = shouldUseLocalStorage(configuredRuntime, false)
   let resolvedTranslate: TranslateFn | undefined = configuredRuntime.type === "local" ? configuredRuntime.translate : undefined
@@ -224,8 +225,11 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     writeFileIfChanged(path, JSON.stringify(manifestState.snapshot(), null, 2) + "\n")
   }
 
-  function buildLocalLocaleMessages(locale: string, manifestEntries: Array<[string, ManifestEntry]>): RuntimeMessages {
-    const existingMessages = readLocaleMessages(locale)
+  function buildLocalLocaleMessages(
+    locale: string,
+    manifestEntries: Array<[string, ManifestEntry]>,
+    existingMessages = readLocaleMessages(locale),
+  ): RuntimeMessages {
     const messages = createRuntimeMessages()
 
     if (locale === defaultLocale) {
@@ -237,19 +241,26 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
 
     for (const [id, entry] of manifestEntries) {
       if (Object.hasOwn(messages, id)) continue
+      const cacheKey = getCacheKey(id, locale)
       const existingMessage = existingMessages[id]
       const cachedMessage = getFreshCachedMessage(id, locale)
       const existingMessageIsValid =
         existingMessage !== undefined && hasSameMessageStructure(entry.defaultMessage, existingMessage)
 
-      if (existingMessageIsValid && !isUntranslatedLocaleValue(existingMessage, entry)) {
+      if (existingMessageIsValid && !isDefaultLocaleFallback(id, locale, existingMessage)) {
         messages[id] = existingMessage
+        setDefaultLocaleFallback(cacheKey, undefined)
         continue
       }
 
-      if (cachedMessage !== undefined) messages[id] = cachedMessage
-      else if (existingMessage !== undefined) messages[id] = existingMessage
-      else if (shouldWriteDefaultLocaleFallback()) messages[id] = entry.defaultMessage
+      if (cachedMessage !== undefined) {
+        messages[id] = cachedMessage
+        setDefaultLocaleFallback(cacheKey, undefined)
+      } else if (existingMessage !== undefined) messages[id] = existingMessage
+      else if (shouldWriteDefaultLocaleFallback()) {
+        messages[id] = entry.defaultMessage
+        setDefaultLocaleFallback(cacheKey, entry.defaultMessage)
+      }
     }
     return messages
   }
@@ -263,6 +274,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
       contents: JSON.stringify(buildLocalLocaleMessages(locale, manifestEntries), null, 2) + "\n",
       path: resolve(dir, `${locale}.json`),
     }))
+    saveDefaultLocaleFallbackChanges()
     for (const artifact of localeArtifacts) writeFileIfChanged(artifact.path, artifact.contents)
   }
 
@@ -278,7 +290,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
         const hasExistingMessage =
           existingMessage !== undefined &&
           hasSameMessageStructure(entry.defaultMessage, existingMessage) &&
-          !isUntranslatedLocaleValue(existingMessage, entry)
+          !isDefaultLocaleFallback(id, locale, existingMessage)
         if (!hasExistingMessage && getFreshCachedMessage(id, locale) === undefined) {
           const misses = missingByLocale.get(locale) ?? []
           misses.push({
@@ -376,12 +388,14 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
             translation: translated,
             timestamp: Date.now(),
           }
+          setDefaultLocaleFallback(getCacheKey(miss.id, locale), undefined)
           localeMessages[miss.id] = translated
           translatedMessages[miss.id] = translated
           translatedCount += 1
         }
 
         saveCache(resolve(root, cacheFile), cache)
+        defaultLocaleFallbacksChanged = false
         writeFileIfChanged(getLocalePath(locale), JSON.stringify(localeMessages, null, 2) + "\n")
         if (Object.keys(translatedMessages).length > 0) {
           viteDevServer?.ws.send({
@@ -412,9 +426,7 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
 
   function pruneTranslationCache() {
     for (const [key, cachedMessage] of Object.entries(cache.entries)) {
-      const separatorIndex = key.lastIndexOf("\0")
-      const id = separatorIndex === -1 ? "" : key.slice(0, separatorIndex)
-      const locale = separatorIndex === -1 ? "" : key.slice(separatorIndex + 1)
+      const { id, locale } = parseCacheKey(key)
       if (
         locale !== cachedMessage.locale ||
         !locales.includes(locale) ||
@@ -424,10 +436,31 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
         delete cache.entries[key]
       }
     }
+    for (const key of Object.keys(cache.defaultLocaleFallbacks)) {
+      const { id, locale } = parseCacheKey(key)
+      if (!locales.includes(locale) || !manifestState.manifest[id]) setDefaultLocaleFallback(key, undefined)
+    }
   }
 
-  function isUntranslatedLocaleValue(value: string, entry: Pick<ManifestEntry, "defaultMessage">) {
-    return resolvedTranslate !== undefined && value.trim() === entry.defaultMessage.trim()
+  // Equal text alone cannot tell a fallback the plugin wrote from an accepted Locale value that matches the Default
+  // locale Message, so only a value that still equals its recorded fallback counts as untranslated.
+  function isDefaultLocaleFallback(id: string, locale: string, value: string) {
+    return cache.defaultLocaleFallbacks[getCacheKey(id, locale)] === value
+  }
+
+  function setDefaultLocaleFallback(cacheKey: string, value: string | undefined) {
+    if (cache.defaultLocaleFallbacks[cacheKey] === value) return
+    if (value === undefined) delete cache.defaultLocaleFallbacks[cacheKey]
+    else cache.defaultLocaleFallbacks[cacheKey] = value
+    defaultLocaleFallbacksChanged = true
+  }
+
+  // Persist fallback records before the Locale values that contain them, so an interrupted run cannot leave an
+  // unrecorded fallback that later looks like an accepted Locale value.
+  function saveDefaultLocaleFallbackChanges() {
+    if (!defaultLocaleFallbacksChanged) return
+    saveCache(resolve(root, cacheFile), cache)
+    defaultLocaleFallbacksChanged = false
   }
 
   function shouldWriteDefaultLocaleFallback() {
@@ -491,24 +524,15 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
     })
   }
 
-  function writeLocaleMessages(locale: string, localeMessages: RuntimeMessages) {
+  function writeLocaleValue(locale: string, lookupId: string, value: string) {
     const dir = getLocalesDirPath()
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
 
-    const messages = createRuntimeMessages()
-    for (const [id, entry] of Object.entries(manifestState.snapshot())) {
-      if (locale === defaultLocale) {
-        messages[id] = entry.defaultMessage
-        continue
-      }
-
-      const existingMessage = localeMessages[id]
-      const cachedMessage = getFreshCachedMessage(id, locale)
-      if (existingMessage !== undefined) messages[id] = existingMessage
-      else if (cachedMessage !== undefined) messages[id] = cachedMessage
-      else if (shouldWriteDefaultLocaleFallback()) messages[id] = entry.defaultMessage
-    }
-
+    const localeMessages = readLocaleMessages(locale)
+    localeMessages[lookupId] = value
+    setDefaultLocaleFallback(getCacheKey(lookupId, locale), undefined)
+    const messages = buildLocalLocaleMessages(locale, Object.entries(manifestState.snapshot()), localeMessages)
+    saveDefaultLocaleFallbackChanges()
     writeFileIfChanged(getLocalePath(locale), JSON.stringify(messages, null, 2) + "\n")
   }
 
@@ -696,12 +720,11 @@ export function betterTranslation(options: BetterTranslatePluginOptions): Plugin
           server,
           {
             defaultLocale,
-            isUntranslatedLocaleValue,
             locales,
             log,
             manifest: manifestState.manifest,
             readLocaleMessages,
-            writeLocaleMessages,
+            writeLocaleValue,
           },
           localEditorOptions,
         )
@@ -1029,6 +1052,14 @@ function normalizeLocaleMessages(input: unknown): RuntimeMessages | null {
     return createRuntimeMessages(entries.map(([id, entry]) => [id, entry.translation]))
   }
   return null
+}
+
+function parseCacheKey(key: string) {
+  const separatorIndex = key.lastIndexOf("\0")
+  return {
+    id: separatorIndex === -1 ? "" : key.slice(0, separatorIndex),
+    locale: separatorIndex === -1 ? "" : key.slice(separatorIndex + 1),
+  }
 }
 
 function createRuntimeMessages(entries: Iterable<readonly [string, string]> = []) {

@@ -69,6 +69,12 @@ export interface TranslationCache {
       timestamp: number
     }
   >
+  /**
+   * Default locale fallbacks the Vite plugin wrote into Locale values while a translation was pending, keyed by Lookup id
+   * and Locale. The plugin only retranslates a Locale value that still equals its recorded fallback, so any other value
+   * is kept, including one that intentionally matches the Default locale Message.
+   */
+  defaultLocaleFallbacks: Record<string, string>
 }
 
 /** Options that disambiguate or explicitly identify a Message. */
