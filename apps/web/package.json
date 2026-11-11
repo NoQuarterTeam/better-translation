@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun with-env vite dev --host",
-    "build": "bun --cwd ../.. --filter better-translation build && bun with-env vite build",
+    "dev": "bun with-env vp dev --host",
+    "build": "bun --cwd ../.. --filter better-translation build && bun with-env vp build",
     "start": "node .output/server/index.mjs",
     "lint": "vp lint",
     "format": "vp fmt",
