@@ -1,5 +1,11 @@
 # better-translation
 
+## 0.6.11
+
+### Patch Changes
+
+- [#721](https://github.com/NoQuarterTeam/better-translation/pull/721) [`948c9a5`](https://github.com/NoQuarterTeam/better-translation/commit/948c9a5ca6655309c6d0e3afae28c47ee11daf84) Thanks [@JClackett](https://github.com/JClackett)! - Keep Locale values that match the Default locale Message instead of retranslating them. The Vite plugin now records the Default locale fallbacks it writes and only retranslates those.
+
 ## 0.6.10
 
 ### Patch Changes
