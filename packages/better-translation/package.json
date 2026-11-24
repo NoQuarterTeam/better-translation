@@ -77,7 +77,7 @@
   },
   "dependencies": {
     "ai": "7.0.181",
-    "oxc-parser": "0.159.0"
+    "oxc-parser": "0.160.0"
   },
   "devDependencies": {
     "@better-translation/locale-editor": "workspace:*",
