@@ -89,7 +89,7 @@
     "oxlint": "1.95.0",
     "oxlint-tsgolint": "7.0.2009",
     "typescript": "catalog:",
-    "vite-plus": "0.3.3"
+    "vite-plus": "1.8.0"
   },
   "engines": {
     "node": ">=24"
